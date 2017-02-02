@@ -3,8 +3,7 @@
     <name>teleop_vision</name>
     <version>0.0.0</version>
     <description>The teleop_vision package</description>
-
-    <maintainer email="thibaud.chupin@gmail.com">nearlab</maintainer>
+    <maintainer email="nima@todo.todo">Nima</maintainer>
 
     <!-- One license tag required, multiple allowed, one license per tag -->
     <!-- Commonly used license strings: -->

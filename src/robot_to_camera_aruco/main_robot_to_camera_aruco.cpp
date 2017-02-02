@@ -41,25 +41,21 @@ int main(int argc, char *argv[]) {
 
 	//	Eigen::MatrixXf A = Eigen::MatrixXf::Random(3, 1);
 	std::vector<Eigen::Vector3d> A = {
-			Eigen::Vector3d(0.0100, -0.0010,    0.000),
-			Eigen::Vector3d(0.0200 ,  0.0010,    0.001),
-			Eigen::Vector3d(0.0400 , 0.0000,    0.000),
-			Eigen::Vector3d( 0.000,  0.0200,    0.0010),
-			Eigen::Vector3d(-0.001,  0.040,    -0.0010),
-			Eigen::Vector3d( 0.001,  0.0500,   -0.0000)};
-
-	std::cout <<"A.size()  " << A.size() << std::endl;
-	std::cout <<"A.[0]  " << A[0] << std::endl;
-	auto a_pair = FitLineToPoints(A);
-	std::cout <<"a_pair.first:  \n" << a_pair.first << std::endl;
-	std::cout <<"a_pair.second:  \n" << a_pair.second << std::endl;
-
+			Eigen::Vector3d(0.0100, -0.0010,   0.100),
+			Eigen::Vector3d(0.0200 ,  0.0010,  0.101),
+			Eigen::Vector3d(0.0400 , 0.0000,   0.100),
+			Eigen::Vector3d( 0.000,  0.0200,   0.1010),
+			Eigen::Vector3d(-0.001,  0.040,    0.1010),
+			Eigen::Vector3d( 0.001,  0.0500,   0.1000)};
 
 
 	cv::Matx33d rotm_;
 	cv::Vec3d br_tvec_;
 
 	r.CalculateTransformationN(A, rotm_, br_tvec_);
+
+	std::cout << "\n rotm_ \n" <<  rotm_ << std::endl;
+	std::cout << "\n br_tvec_ \n" <<  br_tvec_ << std::endl;
 
 
 

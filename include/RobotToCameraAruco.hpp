@@ -48,7 +48,8 @@ public:
     		std::vector <Eigen::Vector3d> axis_points ,
     		cv::Matx33d &rotm, cv::Vec3d &br_tvec);
 
-    Eigen::Vector3d FindAxis(const Eigen::MatrixXd &axis_points);
+    std::pair<Eigen::Vector3d, Eigen::Vector3d>
+    FindAxis(const Eigen::MatrixXd &axis_points);
 
 //    template<typename Vector3>
 //    std::pair<Vector3, Vector3> FitLineToPoints(const std::vector<Vector3> & c);
