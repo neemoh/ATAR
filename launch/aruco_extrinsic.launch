@@ -1,0 +1,7 @@
+<launch>
+        <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" >
+ 		<rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_extrinsic.yaml" />
+        	<param name="cam_intrinsic_calibration_file_path" value="$(find teleop_vision)/resources/ecml_camera_data.xml" />
+         </node>
+
+</launch>

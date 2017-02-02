@@ -1,0 +1,29 @@
+<launch>
+        <node pkg="teleop_vision"
+              type="hand_eye_calib"
+              name="hand_eye_calib"
+              output="screen" >
+ 		    <rosparam command="load" file="$(find teleop_vision)/calib_params.yaml" />
+        	<param name="camera_data_path" value="$(find teleop_vision)/resources/ecmr_camera_data.xml" />
+         </node>
+
+	<node pkg="decklink_video_tool"
+	      type="ros_bridge"
+	      name="ros_bridge"
+	      respawn="false"
+	      required="true" >
+	</node>
+
+	<arg name="dvrk_json_file"
+	     default="/home/tibo/members/tibo/polimi-daVinci/console-MTML-PSM1-ECM-Teleop.json" />
+	<arg name="dvrk_ros_io_file"
+	     default="/home/tibo/members/tibo/polimi-daVinci/ros/ros-io-MTML-PSM1-ECM.json" />
+
+	<node pkg="dvrk_robot"
+	      type="dvrk_console_json"
+	      name="dvrk_console_json"
+	      args="--json-config $(arg dvrk_json_file) --ros-io-config $(arg dvrk_ros_io_file)"
+	      required="true" >
+	</node>
+
+</launch>

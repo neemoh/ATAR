@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+    <name>teleop_vision</name>
+    <version>0.0.0</version>
+    <description>The teleop_vision package</description>
+
+    <maintainer email="thibaud.chupin@gmail.com">nearlab</maintainer>
+
+    <!-- One license tag required, multiple allowed, one license per tag -->
+    <!-- Commonly used license strings: -->
+    <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+    <license>MIT</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <build_depend>roscpp</build_depend>
+    <build_depend>rospy</build_depend>
+    <build_depend>std_msgs</build_depend>
+    <build_depend>rostime</build_depend>
+    <build_depend>cv_bridge</build_depend>
+
+
+    <run_depend>roscpp</run_depend>
+    <run_depend>rospy</run_depend>
+    <run_depend>std_msgs</run_depend>
+    <run_depend>rostime</run_depend>
+    <run_depend>cv_bridge</run_depend>
+
+</package>
