@@ -5,172 +5,154 @@
  *      Author: nearlab
  */
 
-
-
-#include "utils/Colors.hpp"
-#include "utils/Drawings.hpp"
-#include "utils/Conversions.hpp"
 #include "RobotToCameraAruco.hpp"
+#include "utils/Colors.hpp"
+#include "utils/Conversions.hpp"
+#include "utils/Drawings.hpp"
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-
-
 
 /**
  * Enum used to track the progress of the calibration procedure.
  */
 enum class CalibProgress { Idle, Ready, Calibrating, Finished };
 
-
-
-
-
 int main(int argc, char *argv[]) {
 
+     std::string ros_node_name("robot_to_camera_aruco");
 
-	std::string ros_node_name("robot_to_camera_aruco");
+     ros::init(argc, argv, ros_node_name);
 
-	ros::init(argc, argv, ros_node_name);
+     RobotToCameraAruco r(ros_node_name);
 
-	RobotToCameraAruco r(ros_node_name);
+     //	Eigen::MatrixXf A = Eigen::MatrixXf::Random(3, 1);
+     std::vector<Eigen::Vector3d> A = {Eigen::Vector3d(0.0100, -0.0010, 0.100),
+                                       Eigen::Vector3d(0.0200, 0.0010, 0.101),
+                                       Eigen::Vector3d(0.0400, 0.0000, 0.100),
+                                       Eigen::Vector3d(0.000, 0.0200, 0.1010),
+                                       Eigen::Vector3d(-0.001, 0.040, 0.1010),
+                                       Eigen::Vector3d(0.001, 0.0500, 0.1000)};
 
+     cv::Matx33d rotm_;
+     cv::Vec3d br_tvec_;
 
+     r.CalculateTransformationN(A, rotm_, br_tvec_);
 
+     std::cout << "\n rotm_ \n" << rotm_ << std::endl;
+     std::cout << "\n br_tvec_ \n" << br_tvec_ << std::endl;
 
+     //-----------------------------------------------------------------------------------
+     // Construct the drawing object
+     //-----------------------------------------------------------------------------------
+     Drawings drawings(
+         r.camera_intrinsics.camMatrix, r.camera_intrinsics.distCoeffs,
+         r.board_to_robot_frame,
+         //        r.Board.MarkerLength_px / r.Board.MarkerLength);
+         1);
 
+     //	drawings.setSquare(Point3d(500,350,0),  Point2d(500,100));
+     //	drawings.createEllipse(525,350,220,150,400);
 
-	//	Eigen::MatrixXf A = Eigen::MatrixXf::Random(3, 1);
-	std::vector<Eigen::Vector3d> A = {
-			Eigen::Vector3d(0.0100, -0.0010,   0.100),
-			Eigen::Vector3d(0.0200 ,  0.0010,  0.101),
-			Eigen::Vector3d(0.0400 , 0.0000,   0.100),
-			Eigen::Vector3d( 0.000,  0.0200,   0.1010),
-			Eigen::Vector3d(-0.001,  0.040,    0.1010),
-			Eigen::Vector3d( 0.001,  0.0500,   0.1000)};
+     // Create the window in which to render the video feed
+     cvNamedWindow("PSM to Board Calib", CV_WINDOW_AUTOSIZE);
+     //    cvSetWindowProperty("teleop", CV_WND_PROP_FULLSCREEN,
+     //    CV_WINDOW_FULLSCREEN);
 
+     // This is the image that will be rendered at every loop. We'll be drawing
+     // the hints on it.
+     cv::Mat back_buffer;
+     cv::String instructions = "Waiting ...";
 
-	cv::Matx33d rotm_;
-	cv::Vec3d br_tvec_;
+     ros::Rate loop_rate(r.ros_freq);
 
-	r.CalculateTransformationN(A, rotm_, br_tvec_);
+     CalibProgress progress = CalibProgress::Ready;
 
-	std::cout << "\n rotm_ \n" <<  rotm_ << std::endl;
-	std::cout << "\n br_tvec_ \n" <<  br_tvec_ << std::endl;
+     while (ros::ok()) {
 
+          back_buffer = r.Image(ros::Duration(1));
 
+          // todo add a way of checking if the board is seen
+          //        if (progress == CalibProgress::Idle) {
+          //            if (boardDetector.Ready()) {
+          //		progress = CalibProgress::Ready;
+          //            }
+          //            continue;
+          //        }
 
+          instructions = "Press k to begin calibration.";
+          char key = (char)cv::waitKey(1);
+          if (key == 27) // Esc
+               ros::shutdown();
 
-	//-----------------------------------------------------------------------------------
-	// Construct the drawing object
-	//-----------------------------------------------------------------------------------
-	Drawings drawings(
-			r.camera_intrinsics.camMatrix,
-			r.camera_intrinsics.distCoeffs,
-			r.board_to_robot_frame,
-			//        r.Board.MarkerLength_px / r.Board.MarkerLength);
-			1);
+          if (key == 'k') { // Start calibration
+               r.Reset();
+               progress = CalibProgress::Calibrating;
+          }
 
-	//	drawings.setSquare(Point3d(500,350,0),  Point2d(500,100));
-	//	drawings.createEllipse(525,350,220,150,400);
+          if (progress == CalibProgress::Calibrating) {
 
-	// Create the window in which to render the video feed
-	cvNamedWindow("PSM to Board Calib", CV_WINDOW_AUTOSIZE);
-	//    cvSetWindowProperty("teleop", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+               //			r.DrawToolTarget(instructions,
+               // back_buffer);
+               r.DrawCalibrationAxis(instructions, back_buffer);
 
-	// This is the image that will be rendered at every loop. We'll be drawing the hints on it.
-	cv::Mat back_buffer;
-	cv::String instructions = "Waiting ...";
+               if (key == ' ') {
+                    // save the position of the end effector
+                    r.SaveCalibrationPoint(r.robot_pose.pose.position);
 
-	ros::Rate loop_rate(r.ros_freq);
+                    // was adding the point enough to complete the calibration?
+                    if (r.IsCalibrated()) {
+                         progress = CalibProgress::Finished;
 
-	CalibProgress progress = CalibProgress::Ready;
+                         // get the calibration data
+                         r.GetTr();
+                         drawings.update_board_to_robot_frame(
+                             r.board_to_robot_frame);
+                    }
+               }
+          }
 
-	while (ros::ok()) {
+          if (progress == CalibProgress::Finished) {
+               instructions = "Calibration finished. Press 'Esc' to exit";
 
-		back_buffer = r.Image(ros::Duration(1));
+               //            if (boardDetector.Ready()) {
+               drawings.update_cam_2_board_ref(r.board_to_cam_rvec,
+                                               r.board_to_cam_tvec);
 
+               // draw the tool tip point
+               drawings.drawToolTip(back_buffer, r.robot_pose.pose.position,
+                                    Colors::Redish);
 
-		//todo add a way of checking if the board is seen
-		//        if (progress == CalibProgress::Idle) {
-		//            if (boardDetector.Ready()) {
-//		progress = CalibProgress::Ready;
-		//            }
-		//            continue;
-		//        }
+               //-----------------------------------------------------------------------------------
+               // publish camera to robot pose
+               //-----------------------------------------------------------------------------------
+               //                KDL::Frame cam_to_robot = board_to_psm_frame *
+               //                board_to_cam_frame.Inverse();
+               //
+               //                geometry_msgs::Pose cr_pose_msg;
+               //                // convert pixel to meters
+               //                //cam_to_robot.p = cam_to_robot.p /
+               //                drawings.m_to_px;
+               //                tf::poseKDLToMsg(cam_to_robot, cr_pose_msg);
+               //
+               //                r.pub_board_to_robot_pose.publish(cr_pose_msg);
+               //                r.pub_board_to_robot_pose.publish(board_to_psm_pose_msg);
+               //            }
+          }
 
-		instructions = "Press k to begin calibration.";
-		char key = (char) cv::waitKey(1);
-		if (key == 27) // Esc
-			ros::shutdown();
+          drawings.showTransientNotification(back_buffer);
 
-		if (key == 'k') { // Start calibration
-			r.Reset();
-			progress = CalibProgress::Calibrating;
-		}
+          cv::Point textOrigin(10, 20);
+          auto text_color = (!r.IsCalibrated()) ? Colors::Red : Colors::Green;
+          cv::putText(back_buffer, instructions, textOrigin, 1, 1, text_color);
 
-		if (progress == CalibProgress::Calibrating) {
+          cv::imshow("PSM to Board Calib", back_buffer);
 
-//			r.DrawToolTarget(instructions, back_buffer);
-			r.DrawCalibrationAxis(instructions, back_buffer);
+          ros::spinOnce();
+          loop_rate.sleep();
+     }
 
-			if (key == ' ') {
-				// save the position of the end effector
-				r.SaveCalibrationPoint(r.robot_pose.pose.position);
+     ROS_INFO("Ending Session...\n");
+     ros::shutdown();
 
-				// was adding the point enough to complete the calibration?
-				if (r.IsCalibrated()) {
-					progress = CalibProgress::Finished;
-
-					// get the calibration data
-					r.GetTr();
-					drawings.update_board_to_robot_frame(r.board_to_robot_frame);
-				}
-			}
-		}
-
-		if (progress == CalibProgress::Finished){
-			instructions = "Calibration finished. Press 'Esc' to exit";
-
-			//            if (boardDetector.Ready()) {
-			drawings.update_cam_2_board_ref(r.board_to_cam_rvec, r.board_to_cam_tvec);
-
-			// draw the tool tip point
-			drawings.drawToolTip(
-					back_buffer, r.robot_pose.pose.position, Colors::Redish);
-
-			//-----------------------------------------------------------------------------------
-			// publish camera to robot pose
-			//-----------------------------------------------------------------------------------
-			//                KDL::Frame cam_to_robot = board_to_psm_frame * board_to_cam_frame.Inverse();
-			//
-			//                geometry_msgs::Pose cr_pose_msg;
-			//                // convert pixel to meters
-			//                //cam_to_robot.p = cam_to_robot.p / drawings.m_to_px;
-			//                tf::poseKDLToMsg(cam_to_robot, cr_pose_msg);
-			//
-			//                r.pub_board_to_robot_pose.publish(cr_pose_msg);
-			//                r.pub_board_to_robot_pose.publish(board_to_psm_pose_msg);
-			//            }
-
-		}
-
-		drawings.showTransientNotification(back_buffer);
-
-		cv::Point textOrigin(10, 20);
-		auto text_color = (!r.IsCalibrated()) ? Colors::Red : Colors::Green;
-		cv::putText(back_buffer, instructions, textOrigin, 1, 1, text_color);
-
-		cv::imshow("PSM to Board Calib", back_buffer);
-
-		ros::spinOnce();
-		loop_rate.sleep();
-	}
-
-	ROS_INFO("Ending Session...\n");
-	ros::shutdown();
-
-	return 0;
+     return 0;
 }
-
-
-
