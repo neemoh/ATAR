@@ -35,7 +35,6 @@ class RobotToCameraAruco {
       */
      void DrawToolTarget(cv::String &instructions, cv::Mat img);
 
-     void SaveCalibrationPointOld(geometry_msgs::Pose::_position_type position);
      void SaveCalibrationPoint(geometry_msgs::Pose::_position_type position);
 
      void MakeTr(std::vector<cv::Point3d> axisPoints, cv::Matx33d &_rotm,

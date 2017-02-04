@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     BoardDetector boardDetector(ae.Board, ae.Camera, 2);
 
     // Create the window in which to render the video feed
-    cvNamedWindow("Aruco extrinsic", CV_WINDOW_NORMAL);
+    // cvNamedWindow("Aruco extrinsic", CV_WINDOW_NORMAL);
     //    cvSetWindowProperty("teleop", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 
     // This is the image that will be rendered at every loop. We'll be drawing the hints on it.
@@ -57,8 +57,8 @@ int main(int argc, char *argv[]) {
     		ae.pub_board_to_cam_pose.publish(board_to_cam_msg);
     	}
 
-    	cv::waitKey(1);
-    	cv::imshow("Aruco extrinsic", back_buffer);
+    	//cv::waitKey(1);
+    	//cv::imshow("Aruco extrinsic", back_buffer);
 
     	loop_rate.sleep();
     	ros::spinOnce();

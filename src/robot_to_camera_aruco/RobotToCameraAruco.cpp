@@ -88,23 +88,6 @@ void RobotToCameraAruco::DrawToolTarget(cv::String &instructions, cv::Mat img) {
      }
 }
 
-void RobotToCameraAruco::SaveCalibrationPointOld(
-    geometry_msgs::Pose::_position_type position) {
-
-     axis_points_Old.push_back(cv::Point3d(position.x, position.y, position.z));
-     std::cout << "Added calibration point <" << axis_points_Old.size() + 1
-               << "> : " << position.x << " " << position.y << " " << position.z
-               << std::endl;
-
-     size_t pointsGot = axis_points_Old.size();
-     if (pointsGot == 3) {
-          // got all the 3 points, find the transformation
-          MakeTr(axis_points_Old, calib_rotm, calib_tvec);
-
-          // set the status as done
-          calib_finished = true;
-     }
-}
 
 void RobotToCameraAruco::SaveCalibrationPoint(
     geometry_msgs::Pose::_position_type position) {
@@ -205,8 +188,8 @@ void RobotToCameraAruco::CalculateTransformationN(
     std::vector<Eigen::Vector3d> axis_points, cv::Matx33d &rotm,
     cv::Vec3d &br_tvec) {
 
-     int n_points = axis_points.size();
-     int n_points_per_axis = (n_points) / 2;
+     auto n_points = axis_points.size();
+     auto n_points_per_axis = (n_points) / 2;
 
      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> points(n_points, 3);
      for (uint i = 0; i < n_points; i++)
@@ -269,6 +252,7 @@ void RobotToCameraAruco::CalculateTransformationN(
           rotm(i, 2) = z_axis(i);
           br_tvec(i) = origin(i);
      }
+     calib_finished = true;
 }
 
 void RobotToCameraAruco::GetTr() {
@@ -286,6 +270,9 @@ void RobotToCameraAruco::GetTr() {
      n.setParam("board_to_robot_tr", board_to_psm_vec7);
      std::cout << "The board_to_robot_tr parameter was set to: "
                << board_to_psm_vec7 << std::endl;
+
+    std::cout << "\n calib_rotm \n" << calib_rotm << std::endl;
+    std::cout << "\n calib_tvec \n" << calib_tvec << std::endl;
 
      // print the pose of board_to_cam
      geometry_msgs::Pose temp_pose;

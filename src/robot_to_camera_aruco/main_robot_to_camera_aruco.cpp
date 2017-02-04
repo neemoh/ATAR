@@ -7,7 +7,6 @@
 
 #include "RobotToCameraAruco.hpp"
 #include "utils/Colors.hpp"
-#include "utils/Conversions.hpp"
 #include "utils/Drawings.hpp"
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -25,21 +24,21 @@ int main(int argc, char *argv[]) {
 
      RobotToCameraAruco r(ros_node_name);
 
-     //	Eigen::MatrixXf A = Eigen::MatrixXf::Random(3, 1);
-     std::vector<Eigen::Vector3d> A = {Eigen::Vector3d(0.0100, -0.0010, 0.100),
-                                       Eigen::Vector3d(0.0200, 0.0010, 0.101),
-                                       Eigen::Vector3d(0.0400, 0.0000, 0.100),
-                                       Eigen::Vector3d(0.000, 0.0200, 0.1010),
-                                       Eigen::Vector3d(-0.001, 0.040, 0.1010),
-                                       Eigen::Vector3d(0.001, 0.0500, 0.1000)};
-
-     cv::Matx33d rotm_;
-     cv::Vec3d br_tvec_;
-
-     r.CalculateTransformationN(A, rotm_, br_tvec_);
-
-     std::cout << "\n rotm_ \n" << rotm_ << std::endl;
-     std::cout << "\n br_tvec_ \n" << br_tvec_ << std::endl;
+//     //	Eigen::MatrixXf A = Eigen::MatrixXf::Random(3, 1);
+//     std::vector<Eigen::Vector3d> A = {Eigen::Vector3d(0.0100, -0.0010, 0.100),
+//                                       Eigen::Vector3d(0.0200, 0.0010, 0.101),
+//                                       Eigen::Vector3d(0.0400, 0.0000, 0.100),
+//                                       Eigen::Vector3d(0.000, 0.0200, 0.1010),
+//                                       Eigen::Vector3d(-0.001, 0.040, 0.1010),
+//                                       Eigen::Vector3d(0.001, 0.0500, 0.1000)};
+//
+//     cv::Matx33d rotm_;
+//     cv::Vec3d br_tvec_;
+//
+//     r.CalculateTransformationN(A, rotm_, br_tvec_);
+//
+//     std::cout << "\n rotm_ \n" << rotm_ << std::endl;
+//     std::cout << "\n br_tvec_ \n" << br_tvec_ << std::endl;
 
      //-----------------------------------------------------------------------------------
      // Construct the drawing object
