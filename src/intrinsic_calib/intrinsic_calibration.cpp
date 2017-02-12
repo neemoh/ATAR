@@ -24,11 +24,10 @@
 
 using namespace cv;
 using namespace std;
-#define WITH_ROS
 cv::Mat image;
 
 static void help() {
-    cout << "This is a camera calibration sample." << endl
+    cout << "This is a camera  calibration sample." << endl
          << "Usage: calibration configurationFile" << endl
          << "Near the sample file you'll find the configuration file, which has detailed help of "
              "how to edit it.  It may be any OpenCV supported file format XML/YAML." << endl;
@@ -123,7 +122,6 @@ public:
                          << "with ROS. To enabled ros pass '-DWITH_ROS=ON' to CMake or add "
                          << "'#define WITH_ROS' to the top of 'opencv_cam_calib.cpp'" << endl;
 #endif
-
                 } else if (readStringList(input, imageList)) {
                     inputType = InputType::IMAGE_LIST;
                     nrFrames = (nrFrames < (int) imageList.size()) ? nrFrames
@@ -191,6 +189,7 @@ public:
 
                 ros::spinOnce();
                 loop_rate.sleep();
+                cout << "yo 0" << endl;
             }
 
         }
@@ -266,7 +265,7 @@ static inline void write(FileStorage &fs, const String &, const Settings &s) {
 
 
 #ifdef WITH_ROS
-void OnNewCameraImage(const sensor_msgs::ImageConstPtr& msg) {
+void CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
         image = cv_bridge::toCvShare(msg, "bgr8")->image;
     } catch (cv_bridge::Exception& e) {
@@ -286,10 +285,11 @@ int main(int argc, char *argv[]) {
     help();
 
 #ifdef WITH_ROS
-    ros::init(argc, argv, "camera_calibration");
+    cout << "yo!" << endl;
+
+    ros::init(argc, argv, "intrinsic_calibration");
     ros::NodeHandle node;
 #endif
-
     //! [file_read]
     Settings s;
     const string inputSettingsFile = argc > 1 ? argv[1] : "default.xml";
@@ -311,7 +311,9 @@ int main(int argc, char *argv[]) {
     }
 
 #ifdef WITH_ROS
-    ros::Subscriber img_source = node.subscribe(s.ros_topic, 1, OnNewCameraImage);
+    ros::Subscriber img_source = node.subscribe(s.ros_topic, 1,
+                                                CameraImageCallback);
+    ros::Rate rate(24);
 #endif
 
     vector<vector<Point2f> > imagePoints;
@@ -323,9 +325,6 @@ int main(int argc, char *argv[]) {
     const Scalar RED(0, 0, 255), GREEN(0, 255, 0);
     const char ESC_KEY = 27;
 
-#ifdef WITH_ROS
-    ros::Rate rate(24);
-#endif
 
     //! [get_input]
     for (;;) {
