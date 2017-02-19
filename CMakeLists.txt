@@ -18,12 +18,13 @@ find_package(catkin REQUIRED COMPONENTS
         std_msgs
         tf_conversions
         cv_bridge
+        image_transport
         )
 
 find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 
 catkin_package(
@@ -45,10 +46,13 @@ include_directories(
 
 
 # Bundle all the common functionality into a single library
-add_library(arucoUtils
+add_library(
+        arucoUtils
         src/utils/BoardDetector.cpp
-        )
-target_link_libraries(arucoUtils ${OpenCV_LIBRARIES})
+)
+target_link_libraries(
+        arucoUtils
+        ${OpenCV_LIBRARIES})
 
 # List all the executables that we should build and link
 #set(_executables teleop_ac_vision_node intrinsic_calibration )
@@ -62,29 +66,58 @@ target_link_libraries(arucoUtils ${OpenCV_LIBRARIES})
 #endforeach ()
 
 add_executable(
-	intrinsic_calib
-        src/intrinsic_calib/intrinsic_calibration.cpp   
+        intrinsic_calib
+        src/intrinsic_calib/intrinsic_calibration.cpp
 )
 
 add_executable(
-	robot_to_camera_aruco
-        src/robot_to_camera_aruco/main_robot_to_camera_aruco.cpp  
-	src/robot_to_camera_aruco/RobotToCameraAruco.cpp 
-	src/utils/Drawings.cpp src/utils/Conversions.cpp)
+        robot_to_camera_aruco
+        src/robot_to_camera_aruco/main_robot_to_camera_aruco.cpp
+        src/robot_to_camera_aruco/RobotToCameraAruco.cpp
+        src/utils/Drawings.cpp src/utils/Conversions.cpp)
 
 
 add_executable(
-	extrinsic_calib_aruco
-        src/extrinsic_calib_aruco/main_extrinsic_aruco.cpp 
-	src/extrinsic_calib_aruco/ExtrinsicAruco.cpp
-	src/utils/Conversions.cpp)
+        extrinsic_calib_aruco
+        src/extrinsic_calib_aruco/main_extrinsic_aruco.cpp
+        src/extrinsic_calib_aruco/ExtrinsicAruco.cpp
+        src/utils/Conversions.cpp)
+
+add_executable(
+        camera_capture_flea3
+        src/camera_capture_flea3/main_camera_capture_flea3.cpp
+        src/camera_capture_flea3/Fla3Camera.cpp
+        src/camera_capture_flea3/Fla3Camera.h
+)
+# Find the Flycapture include files and libraries
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
 
 
+# MESSAGE(${FLYCAPTURE2_INCLUDE_DIR})
+find_package (Flycapture2 REQUIRED)
+if (FLYCAPTURE2_FOUND)
+    MESSAGE("FLYCAPTURE2 found!")
+    include_directories(${FLYCAPTURE2_INCLUDE_DIR})
+endif (FLYCAPTURE2_FOUND)
+
+target_link_libraries(
+        camera_capture_flea3
+        ${FLYCAPTURE2_LIBRARIES})
 
 
-set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco )
+add_executable(
+        create_aruco_board
+        src/utils/create_aruco_board.cpp
+)
+target_link_libraries(
+        create_aruco_board
+        ${OpenCV_LIBRARIES})
+
+
+set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco camera_capture_flea3)
 foreach (_executable ${_executables})
-    target_link_libraries(${_executable}
+    target_link_libraries(
+            ${_executable}
             ${OpenCV_LIBRARIES}
             ${catkin_LIBRARIES}
             arucoUtils)
