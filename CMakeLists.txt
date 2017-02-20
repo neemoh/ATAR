@@ -49,6 +49,7 @@ include_directories(
 add_library(
         arucoUtils
         src/utils/BoardDetector.cpp
+        src/utils/Conversions.cpp
 )
 target_link_libraries(
         arucoUtils
@@ -74,14 +75,14 @@ add_executable(
         robot_to_camera_aruco
         src/robot_to_camera_aruco/main_robot_to_camera_aruco.cpp
         src/robot_to_camera_aruco/RobotToCameraAruco.cpp
-        src/utils/Drawings.cpp src/utils/Conversions.cpp)
+        src/utils/Drawings.cpp )
 
 
 add_executable(
         extrinsic_calib_aruco
         src/extrinsic_calib_aruco/main_extrinsic_aruco.cpp
         src/extrinsic_calib_aruco/ExtrinsicAruco.cpp
-        src/utils/Conversions.cpp)
+        )
 
 add_executable(
         camera_capture_flea3
@@ -96,7 +97,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
 # MESSAGE(${FLYCAPTURE2_INCLUDE_DIR})
 find_package (Flycapture2 REQUIRED)
 if (FLYCAPTURE2_FOUND)
-    MESSAGE("FLYCAPTURE2 found!")
+    MESSAGE("FLYCAPTURE2 found.")
     include_directories(${FLYCAPTURE2_INCLUDE_DIR})
 endif (FLYCAPTURE2_FOUND)
 
@@ -114,7 +115,26 @@ target_link_libraries(
         ${OpenCV_LIBRARIES})
 
 
-set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco camera_capture_flea3)
+find_package(glfw3)
+if(GLFW3_FOUND)
+    MESSAGE("GLFW3 found.")
+    include_directories(${GLFW3_INCLUDE_DIR})
+endif(GLFW3_FOUND)
+
+find_package(OpenGL)
+
+add_executable(
+	overlay 
+	src/overlay/main_overlay.cpp)
+MESSAGE("here ", ${GLFW3_LIBRARIES})
+target_link_libraries(
+        overlay
+        arucoUtils
+        ${OPENGL_LIBRARIES}
+        glfw3 X11 Xxf86vm Xrandr Xinerama Xcursor
+        )
+
+set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco camera_capture_flea3 overlay)
 foreach (_executable ${_executables})
     target_link_libraries(
             ${_executable}
