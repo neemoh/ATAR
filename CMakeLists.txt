@@ -124,9 +124,11 @@ endif(GLFW3_FOUND)
 find_package(OpenGL)
 
 add_executable(
-	overlay 
-	src/overlay/main_overlay.cpp)
-MESSAGE("here ", ${GLFW3_LIBRARIES})
+	    overlay
+        src/overlay/main_overlay.cpp
+        src/overlay/OverlayGraphics.cpp
+        src/overlay/OverlayGraphics.h)
+
 target_link_libraries(
         overlay
         arucoUtils

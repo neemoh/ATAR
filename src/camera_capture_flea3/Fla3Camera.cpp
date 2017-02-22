@@ -18,6 +18,8 @@ Fla3Camera::~Fla3Camera()
     delete[] cameras;
 }
 
+
+
 // ----------------------------------------------------------------------------
 void Fla3Camera::Init()
 {
@@ -35,6 +37,7 @@ void Fla3Camera::Init()
         capture_running[i] = false;
     }
 
+
 }
 
 // ----------------------------------------------------------------------------
@@ -48,7 +51,6 @@ void Fla3Camera::ConnectCamera(uint a_cameraNum)
 {
     if ((a_cameraNum +1) > num_cams)
         throw std::runtime_error("Trying to connect to an invalid camera!");
-
 
     if (!p_osaFlea3CameraConnect[a_cameraNum])
     {
@@ -74,6 +76,7 @@ void Fla3Camera::ConnectCamera(uint a_cameraNum)
             }
         }
     }
+    FlyCapture2::PixelFormat a;
 }
 
 // ----------------------------------------------------------------------------

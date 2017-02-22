@@ -17,7 +17,7 @@
 		To use an image list   -> give the path to the XML or YAML file containing the list of the images, like "/tmp/circles_list.xml"
 		To use a ros topic     -> give the name of the topics prepended with "ros://".
 		-->
-  <Input>"0"</Input>
+  <Input>"ros://left_cam"</Input>
   <!--  If true (non-zero) we flip the input images around the horizontal axis.-->
   <Input_FlipAroundHorizontalAxis>0</Input_FlipAroundHorizontalAxis>
   

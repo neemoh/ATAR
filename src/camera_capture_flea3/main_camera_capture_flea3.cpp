@@ -64,29 +64,42 @@ int main(int argc, char *argv[]){
     // Initialize ROS variables
 
     // Override SIGINT handler
-    ros::init(argc, argv, "camera_capture_flea3", ros::init_options::NoSigintHandler);
+
+    ros::init(argc, argv, "flea3", ros::init_options::NoSigintHandler);
     signal(SIGINT, mySigIntHandler);
 
     // Override XMLRPC shutdown
     ros::XMLRPCManager::instance()->unbind("shutdown");
     ros::XMLRPCManager::instance()->bind("shutdown", shutdownCallback);
 
-    ros::NodeHandle nh;
-    ros::Rate loop_rate(30);
+    ros::NodeHandle nh(ros::this_node::getName());
+    double ros_freq;
+    nh.param<double>("frequency", ros_freq, 30);
+
+    ros::Rate loop_rate(ros_freq);
+
+    // Get ros parameters
+    std::string left_image_topic_name;
+    if (!nh.getParam("left_image_topic_name", left_image_topic_name))
+        left_image_topic_name = "/left_cam";
+
+    std::string right_image_topic_name;
+    if (!nh.getParam("right_image_topic_name", right_image_topic_name))
+        right_image_topic_name = "/right_cam";
 
     //determine left and right cams
     std::string img_topic_names[num_cams];
 
     if(num_cams>0){
         if(cam_serial_nums[0]==left_cam_serial_num){
-            img_topic_names[0] = nh.resolveName("left");
+            img_topic_names[0] = nh.resolveName(left_image_topic_name);
             if(num_cams>1)
-                img_topic_names[1] = nh.resolveName("right");
+                img_topic_names[1] = nh.resolveName(right_image_topic_name);
         }
         else{
-            img_topic_names[0] = nh.resolveName("right");
+            img_topic_names[0] = nh.resolveName(right_image_topic_name);
             if(num_cams>1)
-                img_topic_names[1] = nh.resolveName("left");
+                img_topic_names[1] = nh.resolveName(left_image_topic_name);
         }
     }
 
