@@ -57,8 +57,9 @@ int main(int argc, char *argv[]) {
     		ae.pub_board_to_cam_pose.publish(board_to_cam_msg);
     	}
 
-    	//cv::waitKey(1);
-    	//cv::imshow("Aruco extrinsic", back_buffer);
+
+    	cv::imshow("Aruco extrinsic", back_buffer);
+        cv::waitKey(1);
 
     	loop_rate.sleep();
     	ros::spinOnce();

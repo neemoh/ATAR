@@ -84,26 +84,35 @@ add_executable(
         src/extrinsic_calib_aruco/ExtrinsicAruco.cpp
         )
 
-add_executable(
-        camera_capture_flea3
-        src/camera_capture_flea3/main_camera_capture_flea3.cpp
-        src/camera_capture_flea3/Fla3Camera.cpp
-        src/camera_capture_flea3/Fla3Camera.h
-)
+
 # Find the Flycapture include files and libraries
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
 
 
 # MESSAGE(${FLYCAPTURE2_INCLUDE_DIR})
-find_package (Flycapture2 REQUIRED)
+find_package (Flycapture2)
 if (FLYCAPTURE2_FOUND)
-    MESSAGE("FLYCAPTURE2 found.")
-    include_directories(${FLYCAPTURE2_INCLUDE_DIR})
+    	MESSAGE("FLYCAPTURE2 found.")
+    	include_directories(${FLYCAPTURE2_INCLUDE_DIR})
+
+	add_executable(
+        	camera_capture_flea3
+        	src/camera_capture_flea3/main_camera_capture_flea3.cpp
+        	src/camera_capture_flea3/Fla3Camera.cpp
+        	src/camera_capture_flea3/Fla3Camera.h
+		)
+	target_link_libraries(
+	        camera_capture_flea3
+        	${FLYCAPTURE2_LIBRARIES}
+		)
+    target_link_libraries(
+            camera_capture_flea3
+            ${OpenCV_LIBRARIES}
+            ${catkin_LIBRARIES}
+            arucoUtils)
+
 endif (FLYCAPTURE2_FOUND)
 
-target_link_libraries(
-        camera_capture_flea3
-        ${FLYCAPTURE2_LIBRARIES})
 
 
 add_executable(
@@ -114,29 +123,36 @@ target_link_libraries(
         create_aruco_board
         ${OpenCV_LIBRARIES})
 
-
+find_package(OpenGL)
 find_package(glfw3)
 if(GLFW3_FOUND)
     MESSAGE("GLFW3 found.")
     include_directories(${GLFW3_INCLUDE_DIR})
+	add_executable(
+		    overlay
+		src/overlay/main_overlay.cpp
+		src/overlay/OverlayGraphics.cpp
+		src/overlay/OverlayGraphics.h)
+
+	target_link_libraries(
+		overlay
+		arucoUtils
+		${OPENGL_LIBRARIES}
+		glfw3 X11 Xxf86vm Xrandr Xinerama Xcursor
+		)
+
+    target_link_libraries(
+            overlay
+            ${OpenCV_LIBRARIES}
+            ${catkin_LIBRARIES}
+            arucoUtils)
 endif(GLFW3_FOUND)
 
-find_package(OpenGL)
 
-add_executable(
-	    overlay
-        src/overlay/main_overlay.cpp
-        src/overlay/OverlayGraphics.cpp
-        src/overlay/OverlayGraphics.h)
 
-target_link_libraries(
-        overlay
-        arucoUtils
-        ${OPENGL_LIBRARIES}
-        glfw3 X11 Xxf86vm Xrandr Xinerama Xcursor
-        )
 
-set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco camera_capture_flea3 overlay)
+
+set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco )
 foreach (_executable ${_executables})
     target_link_libraries(
             ${_executable}
