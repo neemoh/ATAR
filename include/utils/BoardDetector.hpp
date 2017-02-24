@@ -12,8 +12,8 @@
 #include <opencv2/aruco.hpp>
 
 struct ArucoBoard {
-    int MarkersX;
-    int MarkersY;
+    int Width;
+    int Height;
 
     float MarkerLength;
     float MarkerSeparation;

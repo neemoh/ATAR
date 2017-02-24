@@ -13,6 +13,7 @@
 #include <opencv2/core.hpp>
 
 #include "utils/BoardDetector.hpp"
+#include <image_transport/image_transport.h>
 
 
 class ArucoExtrinsic {
@@ -60,8 +61,8 @@ public:
     cv::Mat image_msg;
     CameraDistortion Camera;
     int camId_param = 0;
-    char image_input_type = 'R';
-
+    image_transport::Subscriber sub;
+    image_transport::ImageTransport *it;
     ros::Subscriber camera_imgae_subscriber;
     ros::Publisher pub_board_to_cam_pose;
 

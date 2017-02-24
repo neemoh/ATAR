@@ -37,7 +37,9 @@ int main(int argc, char *argv[]) {
 
     while (ros::ok()) {
 
-
+        char key = (char)cv::waitKey(1);
+        if (key == 27) // Esc
+            ros::shutdown();
 
     	// DETECT BOARD
     	boardDetector.PushImage(ae.Image());
@@ -59,7 +61,6 @@ int main(int argc, char *argv[]) {
 
 
     	cv::imshow("Aruco extrinsic", back_buffer);
-        cv::waitKey(1);
 
     	loop_rate.sleep();
     	ros::spinOnce();

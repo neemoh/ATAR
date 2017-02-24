@@ -29,7 +29,7 @@ BoardDetector::BoardDetector(ArucoBoard board, CameraDistortion camera, double n
 			cv::aruco::PREDEFINED_DICTIONARY_NAME(Board.DictionaryID));
 
 	_aruco.Gridboard = cv::aruco::GridBoard::create(
-			Board.MarkersX, Board.MarkersY, Board.MarkerLength, Board.MarkerSeparation,
+			Board.Height, Board.Width, Board.MarkerLength, Board.MarkerSeparation,
 			_aruco.Dictionary
 	);
 	_aruco.Board = _aruco.Gridboard.staticCast<cv::aruco::Board>();

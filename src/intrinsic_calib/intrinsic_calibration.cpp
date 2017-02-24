@@ -8,6 +8,10 @@
 #ifdef WITH_ROS
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/CompressedImage.h>
+#include <sensor_msgs/image_encodings.h>
+#include <image_transport/image_transport.h>
+
 #include <cv_bridge/cv_bridge.h>
 #endif
 
@@ -135,7 +139,7 @@ public:
                 inputCapture.open(input);
 #ifdef WITH_ROS
             if (inputType == InputType::ROS_TOPIC) {
-                auto img = ros::topic::waitForMessage<sensor_msgs::Image>(ros_topic, ros::Duration(1));
+                auto img = ros::topic::waitForMessage<sensor_msgs::Image>(ros_topic, ros::Duration(5));
                 if (!img) {
                     cerr << "Warning: ROS topic does not seem to be publishing any frames" << endl;
                     inputType = InputType::INVALID;
@@ -189,7 +193,7 @@ public:
 
                 ros::spinOnce();
                 loop_rate.sleep();
-                cout << "yo 0" << endl;
+                cout << "Waiting for image." << endl;
             }
 
         }
@@ -267,7 +271,7 @@ static inline void write(FileStorage &fs, const String &, const Settings &s) {
 #ifdef WITH_ROS
 void CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
-        image = cv_bridge::toCvShare(msg, "bgr8")->image;
+        image = cv_bridge::toCvCopy(msg, "bgr8")->image;
     } catch (cv_bridge::Exception& e) {
         ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
     }
@@ -285,8 +289,6 @@ int main(int argc, char *argv[]) {
     help();
 
 #ifdef WITH_ROS
-    cout << "yo!" << endl;
-
     ros::init(argc, argv, "intrinsic_calibration");
     ros::NodeHandle node;
 #endif
@@ -311,8 +313,10 @@ int main(int argc, char *argv[]) {
     }
 
 #ifdef WITH_ROS
-    ros::Subscriber img_source = node.subscribe(s.ros_topic, 1,
-                                                CameraImageCallback);
+    image_transport::ImageTransport it(node);
+    image_transport::Subscriber sub = it.subscribe(s.ros_topic, 1, CameraImageCallback);
+    //ros::Subscriber img_source = node.subscribe(s.ros_topic, 1,
+      //                                          CameraImageCallback);
     ros::Rate rate(24);
 #endif
 

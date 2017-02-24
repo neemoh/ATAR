@@ -1,11 +1,7 @@
   
-
-  camera_image_topic_name: /near/ecm/left
-  board_to_cam_pose_topic_name: board_to_camera
-  camId: 0
   
-  aruco_markers_x: 6
-  aruco_markers_y: 4
+  aruco_board_h: 6
+  aruco_board_w: 4
   aruco_marker_length_in_meters: 0.0112
   aruco_marker_separation_in_meters: 0.0022
   aruco_dictionary_id: 0

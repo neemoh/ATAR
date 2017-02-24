@@ -12,13 +12,16 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 #include <ExtrinsicAruco.hpp>
+#include <image_transport/image_transport.h>
 
 using namespace std;
 
 ArucoExtrinsic::ArucoExtrinsic(string node_name)
     : n(node_name)
 {
+    it = new image_transport::ImageTransport(n);
     GetROSParameterValues();
+
 }
 
 
@@ -41,39 +44,37 @@ void ArucoExtrinsic::GetROSParameterValues() {
     }
 
 
-    // if input is ROS, a topic name is required for the images
-    if(image_input_type=='R'){
 
-    	std::string cam_image_topic_name;
-    	if (n.getParam("camera_image_topic_name", cam_image_topic_name)) {
 
-    		// if the topic name is found, check if something is being published on it
-    		if (!ros::topic::waitForMessage<sensor_msgs::Image>( cam_image_topic_name, ros::Duration(2))) {
-    			ROS_ERROR("Topic '%s' is not publishing.", cam_image_topic_name.c_str());
-    			all_required_params_found = false;
-    		}
-    		else
-    			ROS_INFO("Reading camera images from topic '%s'", cam_image_topic_name.c_str());
+    std::string image_transport_namespace;
+    if (n.getParam("image_transport_namespace", image_transport_namespace)) {
 
-    	} else {
-    		ROS_ERROR("Parameter '%s' is required.", n.resolveName("camera_image_topic_name").c_str());
-    		all_required_params_found = false;
-    	}
+        // if the topic name is found, check if something is being published on it
+        if (!ros::topic::waitForMessage<sensor_msgs::Image>( image_transport_namespace, ros::Duration(5))) {
+            ROS_ERROR("Topic '%s' is not publishing.", image_transport_namespace.c_str());
+            all_required_params_found = false;
+        }
+        else
+            ROS_INFO("Reading camera images from transport '%s'", image_transport_namespace.c_str());
 
-    	// register image subscriber
-    	camera_imgae_subscriber = n.subscribe(cam_image_topic_name, 10, &ArucoExtrinsic::CameraImageCallback, this);
+    } else {
+        ROS_ERROR("Parameter '%s' is required.", n.resolveName("image_transport_namespace").c_str());
+        all_required_params_found = false;
     }
 
-    //TODO add reading from camera mode
-    n.param<int>("camId", camId_param, 0);
+    // register image transport subscriber
+    sub = it->subscribe(
+            image_transport_namespace, 1, &ArucoExtrinsic::CameraImageCallback, this);
+
+
 
     // Load the description of the aruco board from the parameters
-    if (!n.getParam("aruco_markers_x", Board.MarkersX)){
-    	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_markers_x").c_str());
+    if (!n.getParam("aruco_board_w", Board.Width)){
+    	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_board_w").c_str());
     	all_required_params_found = false;
     }
-    if (!n.getParam("aruco_markers_y", Board.MarkersY)){
-    	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_markers_x").c_str());
+    if (!n.getParam("aruco_board_h", Board.Height)){
+    	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_board_h").c_str());
     	all_required_params_found = false;
     }
     if (!n.getParam("aruco_marker_length_in_meters", Board.MarkerLength)){
@@ -133,7 +134,7 @@ void ArucoExtrinsic::ReadCameraParameters(std::string file_path) {
 void ArucoExtrinsic::CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) {
   try
   {
-    image_msg = cv_bridge::toCvShare(msg, "bgr8")->image;
+    image_msg = cv_bridge::toCvCopy(msg, "bgr8")->image;
   }
   catch (cv_bridge::Exception& e)
   {
@@ -144,7 +145,7 @@ void ArucoExtrinsic::CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) 
 
 
 cv::Mat& ArucoExtrinsic::Image(ros::Duration timeout) {
-    ros::Rate loop_rate(100);
+    ros::Rate loop_rate(1);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
     while(image_msg.empty()) {
@@ -152,7 +153,7 @@ cv::Mat& ArucoExtrinsic::Image(ros::Duration timeout) {
         loop_rate.sleep();
 
         if (ros::Time::now() > timeout_time) {
-            ROS_ERROR("Timeout whilst waiting for a new image from the image topic. "
+            ROS_WARN("Timeout whilst waiting for a new image from the image topic. "
                 "Is the camera still publishing ?");
         }
     }

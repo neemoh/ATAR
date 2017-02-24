@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(teleop_vision)
 
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 11)
 
 option(WITH_ROS "Enable support for ROS topics in opencv_cam_calib" OFF)
@@ -16,10 +16,26 @@ find_package(catkin REQUIRED COMPONENTS
         roscpp
         rospy
         std_msgs
+	sensor_msgs
         tf_conversions
         cv_bridge
         image_transport
+	message_generation
         )
+
+
+# add the resized image message
+add_message_files(DIRECTORY msg
+   FILES ResizedImage.msg
+)
+generate_messages(DEPENDENCIES sensor_msgs)
+
+catkin_package(CATKIN_DEPENDS 
+	message_runtime
+	cv_bridge 
+	image_transport  
+	sensor_msgs)
+
 
 find_package(OpenCV REQUIRED)
 
@@ -161,4 +177,11 @@ foreach (_executable ${_executables})
             arucoUtils)
 endforeach ()
 
+#add_library(resized_publisher src/resize_transport/manifest.cpp src/resize_transport/resized_publisher.cpp src/resize_transport/resized_subscriber.cpp)
+#add_dependencies(resized_publisher ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(resized_publisher ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
+#install(FILES resized_plugins.xml
+#        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#)
 
