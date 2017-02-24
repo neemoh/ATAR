@@ -57,7 +57,7 @@ public:
     ros::NodeHandle n;
     ArucoBoard Board;
     double ros_freq = 0.0;
-
+    bool show_image = false;
     cv::Mat image_msg;
     CameraDistortion Camera;
     int camId_param = 0;

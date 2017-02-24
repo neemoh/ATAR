@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
     		ae.pub_board_to_cam_pose.publish(board_to_cam_msg);
     	}
 
-
-    	cv::imshow("Aruco extrinsic", back_buffer);
+        if(ae.show_image)
+            cv::imshow("Aruco extrinsic", back_buffer);
 
     	loop_rate.sleep();
     	ros::spinOnce();

@@ -34,7 +34,7 @@ void ArucoExtrinsic::GetROSParameterValues() {
     bool all_required_params_found = true;
 
     n.param<double>("frequency", ros_freq, 25);
-
+    n.param<bool>("show_image", show_image, false);
     // load the intrinsic calibration file
     std::string cam_intrinsic_calibration_file_path;
     if (n.getParam("cam_intrinsic_calibration_file_path", cam_intrinsic_calibration_file_path)) {

@@ -3,11 +3,14 @@
 	<arg name="camera_name" default="/camera/left"/>
 
         <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
- 		<rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_extrinsic.yaml" />
+ 		<rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
         	<param name="cam_intrinsic_calibration_file_path" value="$(find teleop_vision)/resources/flea_left_intrinsic.xml" />
 		<param name="image_transport_namespace" value="$(arg camera_name)/image_color/"/>
 		<param name="board_to_cam_pose_topic_name" value="board_to_camera"/>
+		<param name="show_image" value="true"/>		
+		<param name="frequency" value="30"/>		
 		<param name="image_transport" value="resized"/>
         </node>
 	<param name="$(arg camera_name)/image_color/resized/downscaling_factor" value="2"/>
+
 </launch>

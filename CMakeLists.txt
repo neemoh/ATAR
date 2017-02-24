@@ -24,12 +24,6 @@ find_package(catkin REQUIRED COMPONENTS
         )
 
 
-# add the resized image message
-add_message_files(DIRECTORY msg
-   FILES ResizedImage.msg
-)
-generate_messages(DEPENDENCIES sensor_msgs)
-
 catkin_package(CATKIN_DEPENDS 
 	message_runtime
 	cv_bridge 
