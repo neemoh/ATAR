@@ -4,6 +4,8 @@
 
 #include "OverlayGraphics.h"
 #include <math.h>
+#include <utils/Conversions.hpp>
+#include "opencv2/calib3d/calib3d.hpp"
 
 OverlayGraphics::OverlayGraphics(std::string node_name, int width, int height)
 : n(node_name), image_width_(width), image_height_(height)
@@ -42,7 +44,47 @@ void OverlayGraphics::ReadCameraParameters(std::string file_path) {
 
 
 
+void OverlayGraphics::DrawCube(cv::InputOutputArray image, const cv::Mat cameraMatrix, const cv::Mat distCoeffs,
+                               const cv::Vec3d rvec, const cv::Vec3d tvec){
 
+    CV_Assert(image.getMat().total() != 0 &&
+              (image.getMat().channels() == 1 || image.getMat().channels() == 3));
+
+    // project axis points
+    std::vector<cv::Point3f> axisPoints;
+    double w = 0.014;
+    double h = 0.014;
+    double d = 0.02;
+    double x_start = 0;
+    double y_start = 0;
+    double z_start = 0;
+    axisPoints.push_back(cv::Point3f(x_start, y_start + h, z_start));
+    axisPoints.push_back(cv::Point3f(x_start + w, y_start + h, z_start));
+    axisPoints.push_back(cv::Point3f(x_start + w, y_start, z_start));
+    axisPoints.push_back(cv::Point3f(x_start, y_start, z_start));
+
+    axisPoints.push_back(cv::Point3f(x_start, y_start + h, z_start + d));
+    axisPoints.push_back(cv::Point3f(x_start + w, y_start + h, z_start + d));
+    axisPoints.push_back(cv::Point3f(x_start + w, y_start, z_start + d));
+    axisPoints.push_back(cv::Point3f(x_start, y_start, z_start + d));
+
+    std::vector<cv::Point2f> imagePoints;
+    cv::projectPoints(axisPoints, rvec, tvec, cameraMatrix, distCoeffs, imagePoints);
+
+    // draw axis lines
+    int points[7] = {0, 1, 2, 4, 5, 6};
+    for (int i = 0; i < 6; i++) {
+        line(image, imagePoints[points[i]], imagePoints[points[i] + 1],
+             cv::Scalar(200, 100, 10), 2, CV_AA);
+    }
+    for (int i = 0; i < 4; i++) {
+        line(image, imagePoints[i], imagePoints[i + 4], cv::Scalar(200, 100, 10), 2, CV_AA);
+    }
+    line(image, imagePoints[3], imagePoints[0], cv::Scalar(200, 100, 10), 2, CV_AA);
+    line(image, imagePoints[7], imagePoints[4], cv::Scalar(200, 100, 10), 2, CV_AA);
+    cv::imshow("Aruco extrinsic", image);
+
+}
 
 
 //-----------------------------------------------------------------------------------
@@ -71,19 +113,19 @@ void OverlayGraphics::GetROSParameterValues() {
     if (n.getParam("left_image_topic_name", left_image_topic_name)) {
 
         // if the topic name is found, check if something is being published on it
-        if (!ros::topic::waitForMessage<sensor_msgs::Image>(
-                left_image_topic_name, ros::Duration(2))) {
-            ROS_WARN("Topic '%s' is not publishing.", left_image_topic_name.c_str());
-            all_required_params_found = false;
-        }
-        else
+//        if (!ros::topic::waitForMessage<sensor_msgs::Image>(
+//                left_image_topic_name, ros::Duration(5))) {
+//            ROS_WARN("Topic '%s' is not publishing.", left_image_topic_name.c_str());
+//            all_required_params_found = false;
+//        }
+//        else
             ROS_INFO("Reading left camera images from topic '%s'", left_image_topic_name.c_str());
 
     } else {
-        ROS_ERROR("Parameter '%s' is required.", n.resolveName("camera_image_topic_name").c_str());
+        ROS_ERROR("Parameter '%s' is required.", n.resolveName("cameraimage_topic_name").c_str());
         all_required_params_found = false;
     }
-    image_transport::Subscriber ImageLeftSubscriber = it->subscribe(
+    image_subscriber_left = it->subscribe(
             left_image_topic_name, 1, &OverlayGraphics::ImageLeftCallback, this);
 
     //--------
@@ -92,19 +134,19 @@ void OverlayGraphics::GetROSParameterValues() {
     if (n.getParam("right_image_topic_name", right_image_topic_name)) {
 
         // if the topic name is found, check if something is being published on it
-        if (!ros::topic::waitForMessage<sensor_msgs::Image>(
-                right_image_topic_name, ros::Duration(2))) {
-            ROS_WARN("Topic '%s' is not publishing.", right_image_topic_name.c_str());
-            all_required_params_found = false;
-        }
-        else
+//        if (!ros::topic::waitForMessage<sensor_msgs::Image>(
+//                right_image_topic_name, ros::Duration(5))) {
+//            ROS_WARN("Topic '%s' is not publishing.", right_image_topic_name.c_str());
+//            all_required_params_found = false;
+//        }
+//        else
             ROS_INFO("Reading right camera images from topic '%s'", right_image_topic_name.c_str());
 
     } else {
         ROS_ERROR("Parameter '%s' is required.", n.resolveName("right_image_topic_name").c_str());
         all_required_params_found = false;
     }
-    image_transport::Subscriber ImageRightSubscriber = it->subscribe(
+    image_subscriber_right = it->subscribe(
             right_image_topic_name, 1, &OverlayGraphics::ImageRightCallback, this);
 
 
@@ -125,12 +167,12 @@ void OverlayGraphics::GetROSParameterValues() {
         ROS_ERROR("Parameter '%s' is required.", n.resolveName("left_cam_pose_topic_name").c_str());
         all_required_params_found = false;
     }
-    ros::Subscriber PoseLeftCameraSubscriber = n.subscribe(
+    camera_pose_subscriber_left = n.subscribe(
             left_cam_pose_topic_name, 1, &OverlayGraphics::LeftCamPoseCallback, this);
 
 
-//    if (!all_required_params_found)
-//        throw std::runtime_error("ERROR: some required topics are not set");
+    if (!all_required_params_found)
+        throw std::runtime_error("ERROR: some required topics are not set");
 
 
 
@@ -150,7 +192,7 @@ void OverlayGraphics::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
-        image_right_ = cv_bridge::toCvShare(msg, "bgr8")->image;
+        image_right_ = cv_bridge::toCvCopy(msg, "bgr8")->image;
     }
     catch (cv_bridge::Exception& e)
     {
@@ -162,7 +204,7 @@ void OverlayGraphics::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
-        image_left_ = cv_bridge::toCvShare(msg, "bgr8")->image;
+        image_left_ = cv_bridge::toCvCopy(msg, "bgr8")->image;
     }
     catch (cv_bridge::Exception& e)
     {
@@ -176,51 +218,49 @@ void OverlayGraphics::LeftCamPoseCallback(const geometry_msgs::PoseStampedConstP
 //	geometry_msgs::Pose CameraStreamPose;
 //	CameraStreamPose.orientation = t_s->pose.orientation;
 //	CameraStreamPose.position = t_s->pose.position;
-    tf::poseMsgToKDL(msg->pose, cameraPoseLeft);
+    tf::poseMsgToKDL(msg->pose, cam_pose_l);
+    conversions::kdlFrameToRvectvec(cam_pose_l, cam_rvec_l, cam_tvec_l);
 
     // Calculate position of rectified left and right cameras
-//    cameraPoseRight = cameraPoseLeft * R1_kdl * Tstereo * R2_kdl.Inverse();
-    cameraPoseRight = cameraPoseLeft;
-    //cameraPoseLeft = cameraPoseLeft * R1_kdl;
+//    cam_pose_r = cam_pose_l * R1_kdl * Tstereo * R2_kdl.Inverse();
+    cam_pose_r = cam_pose_l;
+    //cam_pose_l = cam_pose_l * R1_kdl;
 }
 
 
-//
-//cv::Mat& OverlayGraphics::ImageLeft(ros::Duration timeout) {
-//    ros::Rate loop_rate(100);
-//    ros::Time timeout_time = ros::Time::now() + timeout;
-//
-//    while(image_left_.empty()) {
-//        ros::spinOnce();
-//        loop_rate.sleep();
-//
-//        if (ros::Time::now() > timeout_time) {
-//            ROS_ERROR("Timeout whilst waiting for a new image from the image topic. "
-//                              "Is the camera still publishing ?");
-//        }
-//    }
-//
-//    return image_left_;
-//}
-//
-//
-//
-//cv::Mat& OverlayGraphics::ImageRight(ros::Duration timeout) {
-//    ros::Rate loop_rate(100);
-//    ros::Time timeout_time = ros::Time::now() + timeout;
-//
-//    while(image_right_.empty()) {
-//        ros::spinOnce();
-//        loop_rate.sleep();
-//
-//        if (ros::Time::now() > timeout_time) {
-//            ROS_ERROR("Timeout whilst waiting for a new image from the image topic. "
-//                              "Is the camera still publishing ?");
-//        }
-//    }
-//
-//    return image_right_;
-//}
+
+cv::Mat& OverlayGraphics::ImageLeft(ros::Duration timeout) {
+    ros::Rate loop_rate(1);
+    ros::Time timeout_time = ros::Time::now() + timeout;
+
+    while(image_left_.empty()) {
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        if (ros::Time::now() > timeout_time)
+            ROS_WARN("Timeout: No new left Image.");
+    }
+
+    return image_left_;
+}
+
+
+
+cv::Mat& OverlayGraphics::ImageRight(ros::Duration timeout) {
+    ros::Rate loop_rate(1);
+    ros::Time timeout_time = ros::Time::now() + timeout;
+
+    while(image_right_.empty()) {
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        if (ros::Time::now() > timeout_time) {
+            ROS_WARN("Timeout: No new right Image.");
+        }
+    }
+
+    return image_right_;
+}
 
 
 void OverlayGraphics::drawBoundinBox(
@@ -816,7 +856,7 @@ void fromMattoImageA(
     pics.image = img_in;
     pics.toImageMsg(*img_out);
     img_out->header.stamp = ros::Time::now();
-    img_out->header.frame_id = "depth_image";
+    img_out->header.frame_id = "depthimage";
     img_out->encoding = pics.encoding;
     img_out->width = img_in.cols;
     img_out->height = img_in.rows;

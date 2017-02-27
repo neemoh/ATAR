@@ -37,19 +37,19 @@ public:
 
     void DrawDetectedMarkers();
 
-    void PushImage(cv::Mat &image);
+    void DetectBoardAndDrawAxis(cv::Mat &image);
 
     /**
      * @brief
      *  To avoid jitter in the position and orientation we smooth them over the last several frames.
      *  This means that for the first frames the results may be wonky.
      * */
-    bool Ready() const { return _ready; }
+    bool Ready() const { return ready_; }
 
 private:
     // coppied from Aruco just to add anti-aliasing
     void drawAxisAntiAliased(
-        cv::InputOutputArray _image, cv::InputArray _cameraMatrix, cv::InputArray _distCoeffs,
+        cv::InputOutputArray _image, cv::InputArray camera_Matrix, cv::InputArray _distCoeffs,
         cv::InputArray _rvec, cv::InputArray _tvec, float length);
 
 
@@ -87,17 +87,17 @@ private:
         bool RefindStrategy = 0;
     };
 
-    ArucoParams _aruco;
+    ArucoParams aruco_;
 
-    CameraDistortion _camera;
+    CameraDistortion camera_;
 
     //! Number of frames processed since start.
-    unsigned int frame_counter = 0;
+    unsigned int frame_counter_ = 0;
 
     //! Do we have a valid pose estimation ?
-    bool _pose_estimated = false;
+    bool pose_estimated_ = false;
 
-    bool _ready = false;
+    bool ready_ = false;
 
 };
 

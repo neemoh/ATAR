@@ -87,9 +87,11 @@ void imageRight_rectCallback(const sensor_msgs::ImageConstPtr& img)
 int main(int argc, char **argv)
 {
 
-//	std::string path = CONFIG_FILE_FOLDER;
 	ros::init(argc, argv, "aug");
 
+
+
+    //	std::string path = CONFIG_FILE_FOLDER;
 
 //	ros::Subscriber sub = n.subscribe("/camera/pose", 1, cameraPoseCallback);
 //	image_transport::Subscriber image_left_rect_sub = it.subscribe("/image/left/rectified", 1, &imageLeft_rectCallback);
@@ -154,7 +156,7 @@ int main(int argc, char **argv)
 //	GLFWwindow* window;
 //
 //
-//
+//Share
 //	/* Initialize the library */
 //	if (!glfwInit())
 //		return -1;
@@ -179,6 +181,21 @@ int main(int argc, char **argv)
 //    while (ros::ok() && !glfwWindowShouldClose(window))
     while (ros::ok())
     {
+
+
+
+
+        char key = (char)cv::waitKey(1);
+        if (key == 27) // Esc
+            ros::shutdown();
+
+        og.DrawCube(og.ImageLeft(), og.Camera.camMatrix,
+                                     og.Camera.distCoeffs,
+                og.cam_rvec_l, og.cam_tvec_l);
+
+//        cv::imshow("Aruco extrinsic", og.ImageLeft());
+
+
 
 //		if(!image_left_.empty() && !image_right_.empty())
 //		{

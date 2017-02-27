@@ -34,7 +34,6 @@ int main(int argc, char *argv[]) {
 
     ros::Rate loop_rate(ae.ros_freq);
 
-
     while (ros::ok()) {
 
         char key = (char)cv::waitKey(1);
@@ -42,8 +41,7 @@ int main(int argc, char *argv[]) {
             ros::shutdown();
 
     	// DETECT BOARD
-    	boardDetector.PushImage(ae.Image());
-
+        boardDetector.DetectBoardAndDrawAxis(ae.Image());
     	conversions::rvectvecToKdlFrame(boardDetector.rvec, boardDetector.tvec, board_to_cam_frame);
 
     	// draw results

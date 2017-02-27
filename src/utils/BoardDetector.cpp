@@ -20,19 +20,19 @@ BoardDetector::BoardDetector(ArucoBoard board, CameraDistortion camera, double n
 : Board(board),
   n_avg(n_avg),
   Image(),
-  _camera(camera)
+  camera_(camera)
 {
-	_aruco.DetectorParams = cv::aruco::DetectorParameters::create();
-	_aruco.DetectorParams->doCornerRefinement = true;
+	aruco_.DetectorParams = cv::aruco::DetectorParameters::create();
+	aruco_.DetectorParams->doCornerRefinement = true;
 
-	_aruco.Dictionary = cv::aruco::getPredefinedDictionary(
+	aruco_.Dictionary = cv::aruco::getPredefinedDictionary(
 			cv::aruco::PREDEFINED_DICTIONARY_NAME(Board.DictionaryID));
 
-	_aruco.Gridboard = cv::aruco::GridBoard::create(
+	aruco_.Gridboard = cv::aruco::GridBoard::create(
 			Board.Height, Board.Width, Board.MarkerLength, Board.MarkerSeparation,
-			_aruco.Dictionary
+			aruco_.Dictionary
 	);
-	_aruco.Board = _aruco.Gridboard.staticCast<cv::aruco::Board>();
+	aruco_.Board = aruco_.Gridboard.staticCast<cv::aruco::Board>();
 }
 
 
@@ -45,27 +45,27 @@ void BoardDetector::Detect() {
 
 	// detect markers
 	cv::aruco::detectMarkers(
-			Image, _aruco.Dictionary, _aruco.DetectedCorners, _aruco.DetectedMarkerIds,
-			_aruco.DetectorParams, _aruco.RejectedCorners
+			Image, aruco_.Dictionary, aruco_.DetectedCorners, aruco_.DetectedMarkerIds,
+			aruco_.DetectorParams, aruco_.RejectedCorners
 	);
 
 	// Should we try to find the other markers ?
-	if (_aruco.RefindStrategy)
+	if (aruco_.RefindStrategy)
 		cv::aruco::refineDetectedMarkers(
-				Image, _aruco.Board, _aruco.DetectedCorners, _aruco.DetectedMarkerIds,
-				_aruco.RejectedCorners, _camera.camMatrix, _camera.distCoeffs
+				Image, aruco_.Board, aruco_.DetectedCorners, aruco_.DetectedMarkerIds,
+				aruco_.RejectedCorners, camera_.camMatrix, camera_.distCoeffs
 		);
 
 	// if we have found some markers on the image we can estimate the pose
-	if (_aruco.DetectedMarkerIds.size() > 0) {
+	if (aruco_.DetectedMarkerIds.size() > 0) {
 
 		try{
 			auto num_markers_used = cv::aruco::estimatePoseBoard(
-					_aruco.DetectedCorners, _aruco.DetectedMarkerIds, _aruco.Board,
-					_camera.camMatrix, _camera.distCoeffs,
+					aruco_.DetectedCorners, aruco_.DetectedMarkerIds, aruco_.Board,
+					camera_.camMatrix, camera_.distCoeffs,
 					rotation_current, translation_current
 			);
-			_pose_estimated = (num_markers_used > 0);
+			pose_estimated_ = (num_markers_used > 0);
 		}
 		catch (const cv::Exception& e){
 			ROS_ERROR("Something went wrong in cv::aruco::estimatePoseBoard");
@@ -80,24 +80,24 @@ void BoardDetector::Detect() {
 		tvec += translation_current / n_avg;
 
 		// wait for the initialization of the averaging (4 times the avg window should be enough)
-		if (frame_counter < n_avg * 4)
-			frame_counter++;
+		if (frame_counter_ < n_avg * 4)
+			frame_counter_++;
 		else
-			_ready = true;
+			ready_ = true;
 	} else
-		_ready = false;
+		ready_ = false;
 
 }
 
 
 void BoardDetector::DrawAxis() {
-	if (_pose_estimated)
-		drawAxisAntiAliased(Image, _camera.camMatrix, _camera.distCoeffs, rvec, tvec, 0.01);
+	if (pose_estimated_)
+		drawAxisAntiAliased(Image, camera_.camMatrix, camera_.distCoeffs, rvec, tvec, 0.01);
 }
 
 
 void BoardDetector::drawAxisAntiAliased(
-		const cv::_InputOutputArray &_image, const cv::_InputArray &_cameraMatrix,
+		const cv::_InputOutputArray &_image, const cv::_InputArray &camera_Matrix,
 		const cv::_InputArray &_distCoeffs, const cv::_InputArray &_rvec, const cv::_InputArray &_tvec,
 		float length)
 {
@@ -114,7 +114,7 @@ void BoardDetector::drawAxisAntiAliased(
 	};
 
 	std::vector<cv::Point2f> imagePoints;
-	cv::projectPoints(axisPoints, _rvec, _tvec, _cameraMatrix, _distCoeffs, imagePoints);
+	cv::projectPoints(axisPoints, _rvec, _tvec, camera_Matrix, _distCoeffs, imagePoints);
 
 	// draw axis lines
 	cv::line(_image, imagePoints[0], imagePoints[1], Colors::Blue, 2, CV_AA);
@@ -124,23 +124,21 @@ void BoardDetector::drawAxisAntiAliased(
 
 
 void BoardDetector::DrawDetectedMarkers() {
-	if (_aruco.DetectedMarkerIds.size() > 0)
-		cv::aruco::drawDetectedMarkers(Image, _aruco.DetectedCorners, _aruco.DetectedMarkerIds);
+	if (aruco_.DetectedMarkerIds.size() > 0)
+		cv::aruco::drawDetectedMarkers(Image, aruco_.DetectedCorners, aruco_.DetectedMarkerIds);
 }
 
 
-void BoardDetector::PushImage(cv::Mat &image) {
+void BoardDetector::DetectBoardAndDrawAxis(cv::Mat &image) {
 	Image = image;
 
-	if (image.empty()) {
-		throw std::runtime_error("Error: BoardDetector::PushImage received an empty image.");
-	}
+	if (image.empty())
+		throw std::runtime_error("Error: BoardDetector::DetectBoardAndDrawAxis received an empty image.");
 
 	Detect();
 
-	if (_ready) {
+	if (ready_) {
 		DrawAxis();
 		// DrawDetectedMarkers();
-
 	}
 }

@@ -34,6 +34,7 @@ class OverlayGraphics {
 public:
 
     OverlayGraphics(std::string node_name, int width, int height);
+    cv::Mat& Image(ros::Duration timeout = ros::Duration(1));
 
     void drawBoundinBox(
             float x_min, float x_max,
@@ -64,7 +65,8 @@ public:
     void LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     cv::Mat& ImageLeft(ros::Duration timeout = ros::Duration(1));
     cv::Mat& ImageRight(ros::Duration timeout = ros::Duration(1));
-
+    void DrawCube(cv::InputOutputArray image, const cv::Mat cameraMatrix, const cv::Mat distCoeffs,
+                  const cv::Vec3d rvec, const cv::Vec3d tvec);
 
 private:
 
@@ -84,18 +86,24 @@ public:
 
     cv::Mat image_msg;
     CameraDistortion Camera;
-    KDL::Frame cameraPoseLeft;
-    KDL::Frame cameraPoseRight;
+    KDL::Frame cam_pose_l;
+    KDL::Frame cam_pose_r;
 
 //    ros::Publisher pub_board_to_cam_pose;
-    image_transport::ImageTransport *it;
 
+    cv::Vec3d cam_rvec_l, cam_tvec_l;
+    cv::Mat image_left_;
+    cv::Mat image_right_;
 
 private:
     int image_width_;
     int image_height_;
-    cv::Mat image_left_;
-    cv::Mat image_right_;
+
+    image_transport::ImageTransport *it;
+    image_transport::Subscriber image_subscriber_left;
+    image_transport::Subscriber image_subscriber_right;
+    ros::Subscriber camera_pose_subscriber_left;
+    ros::Subscriber camera_pose_subscriber_right;
 
     KDL::Frame camera_pose_left;
     KDL::Frame camera_pose_right;
