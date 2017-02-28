@@ -59,7 +59,7 @@ public:
     double ros_freq = 0.0;
     bool show_image = false;
     cv::Mat image_msg;
-    CameraDistortion Camera;
+    CameraIntrinsics Camera;
     int camId_param = 0;
     image_transport::Subscriber sub;
     image_transport::ImageTransport *it;

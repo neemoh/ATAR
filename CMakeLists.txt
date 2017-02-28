@@ -95,8 +95,12 @@ add_executable(
 		src/extrinsic_calib_aruco/ExtrinsicAruco.cpp
 		include/ExtrinsicAruco.hpp
 		include/utils/BoardDetector.hpp
-)
+		)
+add_library(ExtrinsicCalibArucoNodelet
+        src/extrinsic_calib_aruco/ExtrinsicArucoNodelet.cpp
+        )
 
+target_link_libraries(ExtrinsicCalibArucoNodelet ${catkin_LIBRARIES} arucoUtils)
 
 # Find the Flycapture include files and libraries
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
@@ -138,7 +142,7 @@ target_link_libraries(
 
 find_package(OpenGL)
 #find_package(glfw3 CONFIG REQUIRED)
-#if(GLFW3_FOUND)
+if(GLFW3_FOUND)
 MESSAGE("GLFW3 found.")
 include_directories(${GLFW3_INCLUDE_DIR})
 add_executable(
@@ -159,7 +163,7 @@ target_link_libraries(
 		${OpenCV_LIBRARIES}
 		${catkin_LIBRARIES}
 		arucoUtils)
-#endif(GLFW3_FOUND)
+endif(GLFW3_FOUND)
 
 
 
@@ -182,3 +186,9 @@ endforeach ()
 #        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 #)
 
+install(TARGETS
+		ExtrinsicCalibArucoNodelet
+		ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+		LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+		RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+		)

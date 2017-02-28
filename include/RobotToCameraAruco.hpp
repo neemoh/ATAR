@@ -18,7 +18,7 @@
 #include <sensor_msgs/Image.h>
 #include <tf_conversions/tf_kdl.h>
 
-struct CameraDistortion {
+struct CameraIntrinsics {
      cv::Mat camMatrix;
      cv::Mat distCoeffs;
 };
@@ -72,7 +72,7 @@ class RobotToCameraAruco {
      cv::Mat &Image(ros::Duration timeout);
 
    public:
-     CameraDistortion camera_intrinsics;
+     CameraIntrinsics camera_intrinsics;
      double ros_freq = 0.0;
      geometry_msgs::PoseStamped camera_pose;
      geometry_msgs::PoseStamped robot_pose;

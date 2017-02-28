@@ -108,7 +108,7 @@ void ArucoExtrinsic::GetROSParameterValues() {
 
 void ArucoExtrinsic::ReadCameraParameters(std::string file_path) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
-	ROS_INFO_STREAM("Reading camera intrinsic data from: " << file_path);
+	ROS_INFO("Reading camera intrinsic data from: '%s'", file_path.c_str());
 
     if (!fs.isOpened())
         throw std::runtime_error("Unable to read the camera parameters file.");

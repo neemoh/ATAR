@@ -16,20 +16,20 @@
 // BOARD DETECTOR CLASS METHODS
 //-----------------------------------------------------------------------------------
 
-BoardDetector::BoardDetector(ArucoBoard board, CameraDistortion camera, double n_avg)
-: Board(board),
+BoardDetector::BoardDetector(ArucoBoard board, CameraIntrinsics camera, double n_avg)
+: board(board),
   n_avg(n_avg),
-  Image(),
+  image(),
   camera_(camera)
 {
 	aruco_.DetectorParams = cv::aruco::DetectorParameters::create();
 	aruco_.DetectorParams->doCornerRefinement = true;
 
 	aruco_.Dictionary = cv::aruco::getPredefinedDictionary(
-			cv::aruco::PREDEFINED_DICTIONARY_NAME(Board.DictionaryID));
+			cv::aruco::PREDEFINED_DICTIONARY_NAME(board.DictionaryID));
 
 	aruco_.Gridboard = cv::aruco::GridBoard::create(
-			Board.Height, Board.Width, Board.MarkerLength, Board.MarkerSeparation,
+			board.Height, board.Width, board.MarkerLength, board.MarkerSeparation,
 			aruco_.Dictionary
 	);
 	aruco_.Board = aruco_.Gridboard.staticCast<cv::aruco::Board>();
@@ -40,19 +40,19 @@ void BoardDetector::Detect() {
 
 	cv::Vec3d rotation_current, translation_current;
 
-	if (Image.empty())
+	if (image.empty())
 		ROS_ERROR("Empty image received. Is an image source present?");
 
 	// detect markers
 	cv::aruco::detectMarkers(
-			Image, aruco_.Dictionary, aruco_.DetectedCorners, aruco_.DetectedMarkerIds,
+			image, aruco_.Dictionary, aruco_.DetectedCorners, aruco_.DetectedMarkerIds,
 			aruco_.DetectorParams, aruco_.RejectedCorners
 	);
 
 	// Should we try to find the other markers ?
 	if (aruco_.RefindStrategy)
 		cv::aruco::refineDetectedMarkers(
-				Image, aruco_.Board, aruco_.DetectedCorners, aruco_.DetectedMarkerIds,
+				image, aruco_.Board, aruco_.DetectedCorners, aruco_.DetectedMarkerIds,
 				aruco_.RejectedCorners, camera_.camMatrix, camera_.distCoeffs
 		);
 
@@ -92,7 +92,7 @@ void BoardDetector::Detect() {
 
 void BoardDetector::DrawAxis() {
 	if (pose_estimated_)
-		drawAxisAntiAliased(Image, camera_.camMatrix, camera_.distCoeffs, rvec, tvec, 0.01);
+		drawAxisAntiAliased(image, camera_.camMatrix, camera_.distCoeffs, rvec, tvec, 0.01);
 }
 
 
@@ -125,19 +125,19 @@ void BoardDetector::drawAxisAntiAliased(
 
 void BoardDetector::DrawDetectedMarkers() {
 	if (aruco_.DetectedMarkerIds.size() > 0)
-		cv::aruco::drawDetectedMarkers(Image, aruco_.DetectedCorners, aruco_.DetectedMarkerIds);
+		cv::aruco::drawDetectedMarkers(image, aruco_.DetectedCorners, aruco_.DetectedMarkerIds);
 }
 
 
-void BoardDetector::DetectBoardAndDrawAxis(cv::Mat &image) {
-	Image = image;
+void BoardDetector::DetectBoardAndDrawAxis(cv::Mat &in) {
+	image = in;
 
 	if (image.empty())
 		throw std::runtime_error("Error: BoardDetector::DetectBoardAndDrawAxis received an empty image.");
 
 	Detect();
 
-	if (ready_) {
+	if (ready_ && board.draw_axes) {
 		DrawAxis();
 		// DrawDetectedMarkers();
 	}

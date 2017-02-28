@@ -46,14 +46,14 @@ int main(int argc, char *argv[]) {
      Drawings drawings(
          r.camera_intrinsics.camMatrix, r.camera_intrinsics.distCoeffs,
          r.board_to_robot_frame,
-         //        r.Board.MarkerLength_px / r.Board.MarkerLength);
+         //        r.board.MarkerLength_px / r.board.MarkerLength);
          1);
 
      //	drawings.setSquare(Point3d(500,350,0),  Point2d(500,100));
      //	drawings.createEllipse(525,350,220,150,400);
 
      // Create the window in which to render the video feed
-     cvNamedWindow("PSM to Board Calib", CV_WINDOW_AUTOSIZE);
+     cvNamedWindow("PSM to board Calib", CV_WINDOW_AUTOSIZE);
      //    cvSetWindowProperty("teleop", CV_WND_PROP_FULLSCREEN,
      //    CV_WINDOW_FULLSCREEN);
 
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
           auto text_color = (!r.IsCalibrated()) ? Colors::Red : Colors::Green;
           cv::putText(back_buffer, instructions, textOrigin, 1, 1, text_color);
 
-          cv::imshow("PSM to Board Calib", back_buffer);
+          cv::imshow("PSM to board Calib", back_buffer);
 
           ros::spinOnce();
           loop_rate.sleep();

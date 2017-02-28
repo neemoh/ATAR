@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
 
     uint left_cam_serial_num =14150439;
 
-    // Camera related stuff
+    // camera_intrinsics related stuff
     Fla3Camera cameras;
     cameras.Init();
 
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]){
 //
 //    memcpy(a_image.Pointer(0), imageData[1], p_rowSize[1]*p_colSize[1]*3);
 //
-//    //CMN_LOG_CLASS_INIT_VERBOSE << "Image Left"  << std::endl;
+//    //CMN_LOG_CLASS_INIT_VERBOSE << "image Left"  << std::endl;
 //}
 //
 //// =========================================================================================
@@ -166,7 +166,7 @@ int main(int argc, char *argv[]){
 //
 //    memcpy(a_image.Pointer(0), imageData[0], p_rowSize[0]*p_colSize[0]*3);
 //
-//    //CMN_LOG_CLASS_INIT_VERBOSE << "Image Right"  << std::endl;
+//    //CMN_LOG_CLASS_INIT_VERBOSE << "image Right"  << std::endl;
 //}
 //
 //// =========================================================================================

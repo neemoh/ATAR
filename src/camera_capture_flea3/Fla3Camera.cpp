@@ -72,7 +72,7 @@ void Fla3Camera::ConnectCamera(uint a_cameraNum)
             {
                 // Set the camera to be connected
                 p_osaFlea3CameraConnect[a_cameraNum] = true;
-                printf("Camera %d connected!\n", a_cameraNum);
+                printf("camera_intrinsics %d connected!\n", a_cameraNum);
             }
         }
     }
@@ -89,7 +89,7 @@ void Fla3Camera::DisconnectCamera(uint a_cameraNum)
         throw std::runtime_error("Error: Fla3Camera::DisconnectCamera");
     else// Set the camera to be disconnected
         p_osaFlea3CameraConnect[a_cameraNum] = false;
-    std::cout << "Camera " << a_cameraNum << " disconnected." << std::endl;
+    std::cout << "camera_intrinsics " << a_cameraNum << " disconnected." << std::endl;
 
 }
 
@@ -121,7 +121,7 @@ void Fla3Camera::StartCameraCapture(uint a_cameraNum)
     else
     {
         capture_running[a_cameraNum] = true;
-        printf("Camera %d started!\n", a_cameraNum);
+        printf("camera_intrinsics %d started!\n", a_cameraNum);
     }
 
 }
@@ -141,7 +141,7 @@ void Fla3Camera::StopCameraCapture(uint a_cameraNum)
     error = cameras[a_cameraNum].StopCapture();
     HandleError("Fla3Camera::StopCameraCapture Failed to stop capturing", error);
     capture_running[a_cameraNum] = false;
-    std::cout << "Camera " << a_cameraNum << " stopped." << std::endl;
+    std::cout << "camera_intrinsics " << a_cameraNum << " stopped." << std::endl;
 
 
 }
@@ -306,7 +306,7 @@ void Fla3Camera::grabImage(uint cam_num, sensor_msgs::Image &image)
     if(cameras[cam_num].IsConnected() && capture_running[cam_num])
     {
 
-        // Make a FlyCapture2::Image to hold the buffer returned by the camera.
+        // Make a FlyCapture2::image to hold the buffer returned by the camera.
         Image rawImage;
         // Retrieve an image
         Error error = cameras[cam_num].RetrieveBuffer(&rawImage);
@@ -328,7 +328,7 @@ void Fla3Camera::grabImage(uint cam_num, sensor_msgs::Image &image)
     }
     else if(cameras[cam_num].IsConnected())
     {
-        throw std::runtime_error("PointGreyCamera::grabImage: Camera is currently not running.  Please start the capture.");
+        throw std::runtime_error("PointGreyCamera::grabImage: camera_intrinsics is currently not running.  Please start the capture.");
     }
     else
     {

@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     //-----------------------------------------------------------------------------------
     // Construct the board detector object
     //-----------------------------------------------------------------------------------
-    BoardDetector boardDetector(ae.Board, ae.Camera, 2);
+    BoardDetector board_detector(ae.Board, ae.Camera, 2);
 
     // Create the window in which to render the video feed
     // cvNamedWindow("Aruco extrinsic", CV_WINDOW_NORMAL);
@@ -41,13 +41,13 @@ int main(int argc, char *argv[]) {
             ros::shutdown();
 
     	// DETECT BOARD
-        boardDetector.DetectBoardAndDrawAxis(ae.Image());
-    	conversions::rvectvecToKdlFrame(boardDetector.rvec, boardDetector.tvec, board_to_cam_frame);
+        board_detector.DetectBoardAndDrawAxis(ae.Image());
+    	conversions::rvectvecToKdlFrame(board_detector.rvec, board_detector.tvec, board_to_cam_frame);
 
     	// draw results
-    	boardDetector.Image.copyTo(back_buffer);
+    	board_detector.image.copyTo(back_buffer);
 
-    	if (boardDetector.Ready()) {
+    	if (board_detector.Ready()) {
 
     		geometry_msgs::PoseStamped board_to_cam_msg;
     		// convert pixel to meters

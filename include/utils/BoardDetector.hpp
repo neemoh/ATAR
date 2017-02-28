@@ -19,9 +19,10 @@ struct ArucoBoard {
     float MarkerSeparation;
 
     int DictionaryID;
+    bool draw_axes = false;
 };
 
-struct CameraDistortion {
+struct CameraIntrinsics {
     cv::Mat camMatrix;
     cv::Mat distCoeffs;
 };
@@ -29,7 +30,7 @@ struct CameraDistortion {
 class BoardDetector {
 public:
 
-    BoardDetector(ArucoBoard board, CameraDistortion camera, double n_avg);
+    BoardDetector(ArucoBoard board, CameraIntrinsics camera, double n_avg);
 
     void Detect();
 
@@ -55,10 +56,10 @@ private:
 
 public:
     //! Information about the actual board we are using.
-    ArucoBoard Board;
+    ArucoBoard board;
 
     //! The image the the #BoardDetector is currently working on
-    cv::Mat Image;
+    cv::Mat image;
 
     // number of averaging points to prevent board frame oscillation
     double n_avg;
@@ -89,7 +90,7 @@ private:
 
     ArucoParams aruco_;
 
-    CameraDistortion camera_;
+    CameraIntrinsics camera_;
 
     //! Number of frames processed since start.
     unsigned int frame_counter_ = 0;

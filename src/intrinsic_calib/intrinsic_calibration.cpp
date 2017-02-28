@@ -98,7 +98,7 @@ public:
     void validate() {
         goodInput = true;
         if (boardSize.width <= 0 || boardSize.height <= 0) {
-            cerr << "Invalid Board size: " << boardSize.width << " " << boardSize.height << endl;
+            cerr << "Invalid board size: " << boardSize.width << " " << boardSize.height << endl;
             goodInput = false;
         }
         if (squareSize <= 10e-6) {
@@ -175,7 +175,7 @@ public:
         if (!patternToUse.compare("ASYMMETRIC_CIRCLES_GRID"))
             calibrationPattern = Pattern::ASYMMETRIC_CIRCLES_GRID;
         if (calibrationPattern == Pattern::NOT_EXISTING) {
-            cerr << " Camera calibration mode does not exist: " << patternToUse << endl;
+            cerr << " camera_intrinsics calibration mode does not exist: " << patternToUse << endl;
             goodInput = false;
         }
         atImageList = 0;
@@ -442,7 +442,7 @@ int main(int argc, char *argv[]) {
         //! [output_undistorted]
         //------------------------------ Show image and check for input commands -------------------
         //! [await_input]
-        imshow("Image View", view);
+        imshow("image View", view);
         char key = (char) waitKey(s.inputCapture.isOpened() ? 50 : s.delay);
 
         if (key == ESC_KEY)
@@ -452,7 +452,7 @@ int main(int argc, char *argv[]) {
             s.showUndistorsed = !s.showUndistorsed;
 
         // If the input is a ros topic then we should know by now that the topic exists and is
-        // publishing (otherwise nextImage would hang). If on the hand it is a Camera or Video
+        // publishing (otherwise nextImage would hang). If on the hand it is a camera_intrinsics or Video
         // topic then we need to check whether it was actually opened.
         if (key == 'g'
             && ((s.inputType == Settings::InputType::ROS_TOPIC)
@@ -489,7 +489,7 @@ int main(int argc, char *argv[]) {
             if (view.empty())
                 continue;
             remap(view, rview, map1, map2, INTER_LINEAR);
-            imshow("Image View", rview);
+            imshow("image View", rview);
             char c = (char) waitKey();
             if (c == ESC_KEY || c == 'q' || c == 'Q')
                 break;
