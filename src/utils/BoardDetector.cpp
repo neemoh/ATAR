@@ -60,6 +60,8 @@ void BoardDetector::Detect() {
 	if (aruco_.DetectedMarkerIds.size() > 0) {
 
 		try{
+			// "The returned transformation is the one that transforms points from
+			// the board coordinate system to the camera coordinate system."
 			auto num_markers_used = cv::aruco::estimatePoseBoard(
 					aruco_.DetectedCorners, aruco_.DetectedMarkerIds, aruco_.Board,
 					camera_.camMatrix, camera_.distCoeffs,

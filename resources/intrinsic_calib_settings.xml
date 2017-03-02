@@ -6,7 +6,7 @@
   <BoardSize_Height>6</BoardSize_Height>
   
   <!-- The size of a square in some user defined metric system (pixel, millimeter)-->
-  <Square_Size>0.012</Square_Size>
+  <Square_Size>0.00939</Square_Size>
   
   <!-- The type of input used for camera calibration. One of: CHESSBOARD CIRCLES_GRID ASYMMETRIC_CIRCLES_GRID -->
   <Calibrate_Pattern>"CHESSBOARD"</Calibrate_Pattern>
@@ -17,7 +17,7 @@
 		To use an image list   -> give the path to the XML or YAML file containing the list of the images, like "/tmp/circles_list.xml"
 		To use a ros topic     -> give the name of the topics prepended with "ros://".
 		-->
-  <Input>"ros://camera/right/image_color"</Input>
+  <Input>"ros://camera/left/image_color"</Input>
   <!--<Input>"ros://left_cam"</Input>-->
   <!--  If true (non-zero) we flip the input images around the horizontal axis.-->
   <Input_FlipAroundHorizontalAxis>0</Input_FlipAroundHorizontalAxis>

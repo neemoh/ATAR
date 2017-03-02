@@ -72,13 +72,13 @@ TabletInfo tablet_info;
 
 void imageLeft_rectCallback(const sensor_msgs::ImageConstPtr& img)
 {
-	int frame  = img->header.seq;
+    int frame  = img->header.seq;
 //	fromImagetoMat(*img, &image_left_rect, "bgr8");
 }
 
 void imageRight_rectCallback(const sensor_msgs::ImageConstPtr& img)
 {
-	int frame  = img->header.seq;
+    int frame  = img->header.seq;
 //	fromImagetoMat(*img, &image_right_rect, "bgr8");
 }
 
@@ -87,7 +87,7 @@ void imageRight_rectCallback(const sensor_msgs::ImageConstPtr& img)
 int main(int argc, char **argv)
 {
 
-	ros::init(argc, argv, "aug");
+    ros::init(argc, argv, "aug");
 
 
 
@@ -131,13 +131,14 @@ int main(int argc, char **argv)
 //	t.setTo(0.0);
 //
 //	// convert Matrices to KDL
-//	conversions::rvectvecToKdlFrame(Rstereo, tstereo, Tstereo);
-//	conversions::rvectvecToKdlFrame(R1, t, R1_kdl);
-//	conversions::rvectvecToKdlFrame(R2, t, R2_kdl);
+//	conversions::RvecTvecToKDLFrame(Rstereo, tstereo, Tstereo);
+//	conversions::RvecTvecToKDLFrame(R1, t, R1_kdl);
+//	conversions::RvecTvecToKDLFrame(R2, t, R2_kdl);
 //	//	std::cout<< "ML: " <<cameraMatrixL <<std::endl;
 //	//	std::cout<< "DS: " <<distCoeffL <<std::endl;
 //
 //	char fileNameGauge[256];
+
 //
 //	//load gauge images
 //	for(int i = 0; i <=10; i++)
@@ -174,24 +175,39 @@ int main(int argc, char **argv)
 //	og.InitGL(dWidth, dHeight );
 
 
-    OverlayGraphics og ("overlay",720, 576);
+    OverlayGraphics og (ros::this_node::getName(),720, 576);
 
     ros::Rate loop_rate(og.ros_freq);
+    // Create the window in which to render the video feed
+    cvNamedWindow("Overlay Left",CV_WINDOW_NORMAL);
 
 //    while (ros::ok() && !glfwWindowShouldClose(window))
     while (ros::ok())
     {
-
-
-
+        // --------------------------------------------------------------------------------------
+        // keyboard commands
+        std::string left_window_name = "Overlay Left";
+        std::string right_window_name = "Overlay Right";
 
         char key = (char)cv::waitKey(1);
         if (key == 27) // Esc
             ros::shutdown();
+        else if (key == 'f')  //full screen
+            VisualUtils::SwitchFullScreen(left_window_name);
 
-        og.DrawCube(og.ImageLeft(), og.Camera.camMatrix,
-                                     og.Camera.distCoeffs,
-                og.cam_rvec_l, og.cam_tvec_l);
+
+
+        // --------------------------------------------------------------------------------------
+        // Draw things
+        og.DrawCube(og.ImageLeft(), og.Camera,
+                    og.cam_rvec_l, og.cam_tvec_l);
+
+        og.DrawToolTip(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+                       og.pose_psm2.p, cv::Scalar(100, 50, 200));
+
+        cv::imshow("Overlay Left", og.ImageLeft());
+
+//        std::cout << og.pose_psm2.p[0] << std::endl;
 
 //        cv::imshow("Aruco extrinsic", og.ImageLeft());
 
@@ -274,13 +290,13 @@ int main(int argc, char **argv)
 //			std::cout << "Cannot read a frame from video stream" << std::endl;
 
 
-		ros::spinOnce();
-		loop_rate.sleep();
-	}
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 
 //	glfwDestroyWindow(window);
 //	glfwTerminate();
-	return 0;
+    return 0;
 }
 
 

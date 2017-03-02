@@ -37,11 +37,11 @@ void ArucoExtrinsic::GetROSParameterValues() {
     n.param<bool>("show_image", show_image, false);
     // load the intrinsic calibration file
     std::string cam_intrinsic_calibration_file_path;
-    if (n.getParam("cam_intrinsic_calibration_file_path", cam_intrinsic_calibration_file_path)) {
+    if (n.getParam("cam_intrinsic_calibration_file_path", cam_intrinsic_calibration_file_path))
         ReadCameraParameters(cam_intrinsic_calibration_file_path);
-    } else {
+    else
         ROS_ERROR("Parameter '%s' is required.", n.resolveName("cam_intrinsic_calibration_file_path").c_str());
-    }
+
 
 
 

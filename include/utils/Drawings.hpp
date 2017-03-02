@@ -42,7 +42,7 @@ public:
 
     void update_board_to_robot_frame(KDL::Frame br_frame){
     	board_to_robot_transl = cv::Point3d(br_frame.p[0], br_frame.p[1], br_frame.p[2]);
-    	conversions::kdlRotToMatx33d(br_frame.M, board_to_robot_rotm);
+    	conversions::KDLRotToMatx33d(br_frame.M, board_to_robot_rotm);
     }
 
     // transform and save to curr_tool_boardrf and dest_tool_boardrf

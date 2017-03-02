@@ -59,7 +59,8 @@ include_directories(
 add_library(
 		arucoUtils
 		src/utils/BoardDetector.cpp
-		src/utils/Conversions.cpp
+        src/utils/Conversions.cpp
+        include/utils/Conversions.hpp
 )
 target_link_libraries(
 		arucoUtils
@@ -85,7 +86,8 @@ add_executable(
 		robot_to_camera_aruco
 		src/robot_to_camera_aruco/main_robot_to_camera_aruco.cpp
 		src/robot_to_camera_aruco/RobotToCameraAruco.cpp
-		src/utils/Drawings.cpp
+        src/utils/Drawings.cpp
+        include/utils/Drawings.hpp
 		include/RobotToCameraAruco.hpp)
 
 
@@ -103,32 +105,32 @@ add_library(ExtrinsicCalibArucoNodelet
 target_link_libraries(ExtrinsicCalibArucoNodelet ${catkin_LIBRARIES} arucoUtils)
 
 # Find the Flycapture include files and libraries
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
+#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
 
 
 # MESSAGE(${FLYCAPTURE2_INCLUDE_DIR})
-find_package (Flycapture2)
-if (FLYCAPTURE2_FOUND)
-	MESSAGE("FLYCAPTURE2 found.")
-	include_directories(${FLYCAPTURE2_INCLUDE_DIR})
-
-	add_executable(
-			camera_capture_flea3
-			src/camera_capture_flea3/main_camera_capture_flea3.cpp
-			src/camera_capture_flea3/Fla3Camera.cpp
-			src/camera_capture_flea3/Fla3Camera.h
-	)
-	target_link_libraries(
-			camera_capture_flea3
-			${FLYCAPTURE2_LIBRARIES}
-	)
-	target_link_libraries(
-			camera_capture_flea3
-			${OpenCV_LIBRARIES}
-			${catkin_LIBRARIES}
-			arucoUtils)
-
-endif (FLYCAPTURE2_FOUND)
+#find_package (Flycapture2)
+#if (FLYCAPTURE2_FOUND)
+#	MESSAGE("FLYCAPTURE2 found.")
+#	include_directories(${FLYCAPTURE2_INCLUDE_DIR})
+#
+#	add_executable(
+#			camera_capture_flea3
+#			src/camera_capture_flea3/main_camera_capture_flea3.cpp
+#			src/camera_capture_flea3/Fla3Camera.cpp
+#			src/camera_capture_flea3/Fla3Camera.h
+#	)
+#	target_link_libraries(
+#			camera_capture_flea3
+#			${FLYCAPTURE2_LIBRARIES}
+#	)
+#	target_link_libraries(
+#			camera_capture_flea3
+#			${OpenCV_LIBRARIES}
+#			${catkin_LIBRARIES}
+#			arucoUtils)
+#
+#endif (FLYCAPTURE2_FOUND)
 
 
 
@@ -140,31 +142,35 @@ target_link_libraries(
 		create_aruco_board
 		${OpenCV_LIBRARIES})
 
-find_package(OpenGL)
-#find_package(glfw3 CONFIG REQUIRED)
-if(GLFW3_FOUND)
-MESSAGE("GLFW3 found.")
-include_directories(${GLFW3_INCLUDE_DIR})
+#find_package(OpenGL)
+##find_package(glfw3 CONFIG REQUIRED)
+#if(GLFW3_FOUND)
+#    MESSAGE("GLFW3 found.")
+#    include_directories(${GLFW3_INCLUDE_DIR})
+#    #add_executable(
+#    #	overlay
+#    #	src/overlay/main_overlay.cpp
+#    #	src/overlay/OverlayGraphics.cpp
+#    #	src/overlay/OverlayGraphics.h)
+#
+#    target_link_libraries(
+#            overlay
+#            arucoUtils
+#            ${OPENGL_LIBRARIES}
+#            glfw3 X11 Xxf86vm Xrandr Xinerama Xcursor
+#    )
+#endif(GLFW3_FOUND)
+
 add_executable(
-		overlay
-		src/overlay/main_overlay.cpp
-		src/overlay/OverlayGraphics.cpp
-		src/overlay/OverlayGraphics.h)
-
+        overlay
+        src/overlay/main_overlay.cpp
+        src/overlay/OverlayGraphics.cpp
+        src/overlay/OverlayGraphics.h)
 target_link_libraries(
-		overlay
-		arucoUtils
-		${OPENGL_LIBRARIES}
-		glfw3 X11 Xxf86vm Xrandr Xinerama Xcursor
-)
-
-target_link_libraries(
-		overlay
-		${OpenCV_LIBRARIES}
-		${catkin_LIBRARIES}
-		arucoUtils)
-endif(GLFW3_FOUND)
-
+        overlay
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES}
+        arucoUtils)
 
 
 

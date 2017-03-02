@@ -74,7 +74,7 @@ namespace teleop_vision {
         // DETECT BOARD
         if(!image_msg.empty()) {
             board_detector->DetectBoardAndDrawAxis(image_msg);
-            conversions::rvectvecToKdlFrame(board_detector->rvec,
+            conversions::RvecTvecToKDLFrame(board_detector->rvec,
                                             board_detector->tvec,
                                             board_to_cam_frame);
 

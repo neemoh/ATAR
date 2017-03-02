@@ -10,24 +10,33 @@
 #include <opencv2/core.hpp>
 #include <geometry_msgs/Pose.h>
 #include "kdl/frames.hpp"
-
+#include <tf_conversions/tf_kdl.h>
 
 namespace conversions {
     // some self explanatory conversions!
 
-    void rvecTokdlRot(const cv::Vec3d _rvec, KDL::Rotation &_kdl);
+    void RvecToKDLRot(const cv::Vec3d _rvec, KDL::Rotation &_kdl);
 
-    void rvectvecToKdlFrame(const cv::Vec3d _rvec, const cv::Vec3d _tvec, KDL::Frame &_kdl);
+    void RvecTvecToKDLFrame(const cv::Vec3d _rvec, const cv::Vec3d _tvec,
+                            KDL::Frame &_kdl);
 
-    void kdlFrameToRvectvec(const KDL::Frame _kdl, cv::Vec3d &_rvec, cv::Vec3d &_tvec);
+    void KDLFrameToRvectvec(const KDL::Frame _kdl, cv::Vec3d &_rvec,
+                            cv::Vec3d &_tvec);
 
-    void matx33dToKdlRot(const cv::Matx33d _mat, KDL::Rotation &_kdl);
+    void Matx33dToKdlRot(const cv::Matx33d _mat, KDL::Rotation &_kdl);
 
-    void kdlRotToMatx33d(const KDL::Rotation _kdl, cv::Matx33d &_mat);
+    void KDLRotToMatx33d(const KDL::Rotation _kdl, cv::Matx33d &_mat);
 
-    void poseMsgToVector(const geometry_msgs::Pose in_pose, std::vector<double> &out_vec);
+    void PoseMsgToVector(const geometry_msgs::Pose in_pose,
+                         std::vector<double> &out_vec);
 
-    void vectorToPoseMsg(const std::vector<double> in_vec, geometry_msgs::Pose &out_pose);
+    void VectorToPoseMsg(const std::vector<double> in_vec,
+                         geometry_msgs::Pose &out_pose);
+
+    void VectorToKDLFrame(const std::vector<double> &in_vec, KDL::Frame &out_pose);
+
+    void KDLFrameToVector(const KDL::Frame &in_pose,  std::vector<double> &out_vector);
+
 };
 
 #endif //TELEOP_VISION_CONVERSIONS_HPP_HPP

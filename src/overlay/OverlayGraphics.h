@@ -34,40 +34,51 @@ class OverlayGraphics {
 public:
 
     OverlayGraphics(std::string node_name, int width, int height);
-    cv::Mat& Image(ros::Duration timeout = ros::Duration(1));
 
-    void drawBoundinBox(
-            float x_min, float x_max,
-            float y_min, float y_max,
-            float z_min, float z_max);
 
-    void drawElipsoid(
-            float x_min, float x_max,
-            float y_min, float y_max,
-            float z_min, float z_max);
+//    void drawBoundinBox(
+//            float x_min, float x_max,
+//            float y_min, float y_max,
+//            float z_min, float z_max);
+//
+//    void drawElipsoid(
+//            float x_min, float x_max,
+//            float y_min, float y_max,
+//            float z_min, float z_max);
+//
+//    void InitGL(int w, int h);
+//
+//    void Render(GLFWwindow* window,  TabletInfo tablet_info,
+//                std::vector<cv::Point2f> safety_area);
+//
+//    void RenderSide(
+//            GLFWwindow* window,
+//            KDL::Frame &cameraPose,
+//            cv::Mat &cameraMatrix,
+//            unsigned char* buffer,
+//            int x, int width, int height,
+//            GLuint texId,
+//            std::vector<cv::Point2f> safety_area);
 
-    void InitGL(int w, int h);
-
-    void Render(GLFWwindow* window,  TabletInfo tablet_info,
-                std::vector<cv::Point2f> safety_area);
-
-    void RenderSide(
-            GLFWwindow* window,
-            KDL::Frame &cameraPose,
-            cv::Mat &cameraMatrix,
-            unsigned char* buffer,
-            int x, int width, int height,
-            GLuint texId,
-            std::vector<cv::Point2f> safety_area);
-
+    // CALLBACKS
     void ImageLeftCallback(const sensor_msgs::ImageConstPtr &msg);
     void ImageRightCallback(const sensor_msgs::ImageConstPtr &msg);
     void LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    void PSM1PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    void PSM2PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+
     cv::Mat& ImageLeft(ros::Duration timeout = ros::Duration(1));
     cv::Mat& ImageRight(ros::Duration timeout = ros::Duration(1));
-    void DrawCube(cv::InputOutputArray image, const cv::Mat cameraMatrix, const cv::Mat distCoeffs,
-                  const cv::Vec3d rvec, const cv::Vec3d tvec);
 
+    void DrawCube(cv::InputOutputArray image, const CameraDistortion &cam_intrinsics,
+                  const cv::Vec3d &rvec, const cv::Vec3d &tvec);
+
+    // position is in task reference frame
+    void DrawToolTip(cv::InputOutputArray image,
+                     const CameraDistortion &cam_intrinsics,
+                     const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+                     KDL::Vector position,
+                     const cv::Scalar color);
 private:
 
     void GetROSParameterValues();
@@ -86,8 +97,12 @@ public:
 
     cv::Mat image_msg;
     CameraDistortion Camera;
-    KDL::Frame cam_pose_l;
-    KDL::Frame cam_pose_r;
+    KDL::Frame pose_cam_l;
+    KDL::Frame pose_cam_r;
+    KDL::Frame pose_psm1;
+    KDL::Frame pose_psm2;
+    KDL::Frame taskspace_to_psm1_tr;
+    KDL::Frame taskspace_to_psm2_tr;
 
 //    ros::Publisher pub_board_to_cam_pose;
 
@@ -104,6 +119,8 @@ private:
     image_transport::Subscriber image_subscriber_right;
     ros::Subscriber camera_pose_subscriber_left;
     ros::Subscriber camera_pose_subscriber_right;
+    ros::Subscriber psm1_pose_sub;
+    ros::Subscriber psm2_pose_sub;
 
     KDL::Frame camera_pose_left;
     KDL::Frame camera_pose_right;
@@ -118,3 +135,10 @@ void fromMattoImageA(
         const cv::Mat& img_in,
         sensor_msgs::Image* img_out);
 #endif //TELEOP_VISION_OVERLAYGRAPHICS_H
+
+
+namespace VisualUtils{
+
+    void SwitchFullScreen(const std::string window_name);
+
+}

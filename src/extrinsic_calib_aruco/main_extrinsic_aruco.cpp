@@ -42,7 +42,8 @@ int main(int argc, char *argv[]) {
 
     	// DETECT BOARD
         board_detector.DetectBoardAndDrawAxis(ae.Image());
-    	conversions::rvectvecToKdlFrame(board_detector.rvec, board_detector.tvec, board_to_cam_frame);
+        conversions::RvecTvecToKDLFrame(board_detector.rvec,
+                                        board_detector.tvec, board_to_cam_frame);
 
     	// draw results
     	board_detector.image.copyTo(back_buffer);

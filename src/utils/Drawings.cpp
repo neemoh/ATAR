@@ -25,7 +25,7 @@ Drawings::Drawings(
     distCoeffs = _distCoeffs;
 
     board_to_robot_transl = Point3d(_br_frame.p[0], _br_frame.p[1], _br_frame.p[2]);
-    conversions::kdlRotToMatx33d(_br_frame.M, board_to_robot_rotm);
+    conversions::KDLRotToMatx33d(_br_frame.M, board_to_robot_rotm);
 
     m_to_px = _m_to_px;
     new_task = true;
