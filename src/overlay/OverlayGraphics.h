@@ -5,8 +5,8 @@
 #ifndef TELEOP_VISION_OVERLAYGRAPHICS_H
 #define TELEOP_VISION_OVERLAYGRAPHICS_H
 
-#include <GLFW/glfw3.h>
-#include <GL/glu.h>
+//#include <GLFW/glfw3.h>
+//#include <GL/glu.h>
 #include "ros/ros.h"
 
 #include "opencv2/highgui/highgui.hpp"
@@ -86,8 +86,8 @@ private:
     void ReadCameraParameters(std::string file_path);
 
 public:
-    GLuint texIdL;
-    GLuint texIdR;
+    //GLuint texIdL;
+    //GLuint texIdR;
     unsigned char* bufferL_;
     unsigned char* bufferR_;
 

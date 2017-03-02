@@ -4,12 +4,11 @@
 #include "utils/Conversions.hpp"
 #include "OverlayGraphics.h"
 #include <std_msgs/Float32.h>
-#include <sensor_msgs/Joy.h>
 
 
 #include <iostream>
-#include <GLFW/glfw3.h>
-#include <GL/glu.h>
+//#include <GLFW/glfw3.h>
+//#include <GL/glu.h>
 
 #include "opencv2/highgui/highgui.hpp"
 
