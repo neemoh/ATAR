@@ -1,9 +1,0 @@
-  
-  
-  aruco_board_h: 6
-  aruco_board_w: 4
-  aruco_marker_length_in_meters: 0.01413
-  aruco_marker_separation_in_meters: 0.00283
-  aruco_dictionary_id: 0
-
-

@@ -198,8 +198,14 @@ int main(int argc, char **argv)
 
         // --------------------------------------------------------------------------------------
         // Draw things
-        og.DrawCube(og.ImageLeft(), og.Camera,
-                    og.cam_rvec_l, og.cam_tvec_l);
+        og.DrawCube(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+                    cv::Point3d(0, 0, 0), cv::Point3d(0.0128, 0.0128, 0.04),
+                    cv::Scalar(200, 100, 10));
+
+        og.DrawCube(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+                 cv::Point3d(6*0.0128, 3.6*0.0128, 0),
+                    cv::Point3d(0.0128, 0.0128, 0.04),
+                    cv::Scalar(100, 100, 200));
 
         og.DrawToolTip(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                        og.pose_psm2.p, cv::Scalar(100, 50, 200));

@@ -71,7 +71,9 @@ public:
     cv::Mat& ImageRight(ros::Duration timeout = ros::Duration(1));
 
     void DrawCube(cv::InputOutputArray image, const CameraDistortion &cam_intrinsics,
-                  const cv::Vec3d &rvec, const cv::Vec3d &tvec);
+                  const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+                  const cv::Point3d &origin,   const cv::Point3d &whd,
+    const cv::Scalar &color);
 
     // position is in task reference frame
     void DrawToolTip(cv::InputOutputArray image,

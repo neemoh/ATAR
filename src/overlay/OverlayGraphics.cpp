@@ -43,28 +43,24 @@ void OverlayGraphics::ReadCameraParameters(std::string file_path) {
 
 
 void OverlayGraphics::DrawCube(cv::InputOutputArray image, const CameraDistortion &cam_intrinsics,
-                               const cv::Vec3d &rvec, const cv::Vec3d &tvec){
+                               const cv::Vec3d &rvec, const cv::Vec3d &tvec, const cv::Point3d &origin,
+                               const cv::Point3d &whd, const cv::Scalar & color){
 
     CV_Assert(image.getMat().total() != 0 &&
               (image.getMat().channels() == 1 || image.getMat().channels() == 3));
 
     // project axis points
     std::vector<cv::Point3f> axisPoints;
-    double w = 0.014;
-    double h = 0.014;
-    double d = 0.02;
-    double x_start = 0;
-    double y_start = 0;
-    double z_start = 0;
-    axisPoints.push_back(cv::Point3d(x_start, y_start + h, z_start));
-    axisPoints.push_back(cv::Point3d(x_start + w, y_start + h, z_start));
-    axisPoints.push_back(cv::Point3d(x_start + w, y_start, z_start));
-    axisPoints.push_back(cv::Point3d(x_start, y_start, z_start));
 
-    axisPoints.push_back(cv::Point3d(x_start, y_start + h, z_start + d));
-    axisPoints.push_back(cv::Point3d(x_start + w, y_start + h, z_start + d));
-    axisPoints.push_back(cv::Point3d(x_start + w, y_start, z_start + d));
-    axisPoints.push_back(cv::Point3d(x_start, y_start, z_start + d));
+    axisPoints.push_back(cv::Point3d(origin.x, origin.y + whd.y, origin.z));
+    axisPoints.push_back(cv::Point3d(origin.x + whd.x, origin.y + whd.y, origin.z));
+    axisPoints.push_back(cv::Point3d(origin.x + whd.x, origin.y, origin.z));
+    axisPoints.push_back(cv::Point3d(origin.x, origin.y, origin.z));
+
+    axisPoints.push_back(cv::Point3d(origin.x, origin.y + whd.y, origin.z + whd.z));
+    axisPoints.push_back(cv::Point3d(origin.x + whd.x, origin.y + whd.y, origin.z + whd.z));
+    axisPoints.push_back(cv::Point3d(origin.x + whd.x, origin.y, origin.z + whd.z));
+    axisPoints.push_back(cv::Point3d(origin.x, origin.y, origin.z + whd.z));
 
     std::vector<cv::Point2f> imagePoints;
     cv::projectPoints(axisPoints, rvec, tvec,
@@ -74,13 +70,13 @@ void OverlayGraphics::DrawCube(cv::InputOutputArray image, const CameraDistortio
     int points[7] = {0, 1, 2, 4, 5, 6};
     for (int i = 0; i < 6; i++) {
         line(image, imagePoints[points[i]], imagePoints[points[i] + 1],
-             cv::Scalar(200, 100, 10), 2, CV_AA);
+             color, 2, CV_AA);
     }
     for (int i = 0; i < 4; i++) {
-        line(image, imagePoints[i], imagePoints[i + 4], cv::Scalar(200, 100, 10), 2, CV_AA);
+        line(image, imagePoints[i], imagePoints[i + 4], color, 2, CV_AA);
     }
-    line(image, imagePoints[3], imagePoints[0], cv::Scalar(200, 100, 10), 2, CV_AA);
-    line(image, imagePoints[7], imagePoints[4], cv::Scalar(200, 100, 10), 2, CV_AA);
+    line(image, imagePoints[3], imagePoints[0], color, 2, CV_AA);
+    line(image, imagePoints[7], imagePoints[4], color, 2, CV_AA);
 
 }
 
@@ -338,7 +334,7 @@ void OverlayGraphics::DrawToolTip(cv::InputOutputArray image,
 
     projectPoints(toolPoint3d_vec_crf, rvec, tvec, cam_intrinsics.camMatrix,
                   cam_intrinsics.distCoeffs, toolPoint2d);
-    circle(image, toolPoint2d[0], 2, color, -1);
+    circle(image, toolPoint2d[0], 5, color, -1);
 
 }
 

@@ -7,7 +7,7 @@
         <param name= "left_cam_pose_topic_name" value= "/$(arg camera_name)/left/extrinsic_aruco/board_to_camera "/>
         <rosparam command="load" file="$(find teleop_vision)/launch/params_overlay.yaml" />
         <param name= "frequency" value= "50" />
-        <param name="image_transport" value="resized"/>
+        <param name="image_transport" value="compressed"/>
     </node>
     <param name="/camera/left/image_color/resized/downscaling_factor" value="3"/>
 
