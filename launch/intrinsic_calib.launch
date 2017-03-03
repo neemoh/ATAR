@@ -3,7 +3,7 @@
     <node pkg="teleop_vision" type="intrinsic_calib" name="intrinsic_calibration" output="screen" 
 	args="$(find teleop_vision)/resources/intrinsic_calib_settings.xml">
         <!-- <param name="image_transport" value="resized"/> -->
-	<param name="image_transport" value="compressed"/>
+	<!-- <param name="image_transport" value="compressed"/> -->
     </node>
     <param name="/camera/left/image_color/resized/downscaling_factor" value="3"/>
 </launch>

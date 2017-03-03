@@ -23,7 +23,7 @@
   <Input_FlipAroundHorizontalAxis>0</Input_FlipAroundHorizontalAxis>
   
   <!-- Time delay between frames in case of camera. -->
-  <Input_Delay>1000</Input_Delay>
+  <Input_Delay>500</Input_Delay>
   
   <!-- How many frames to use, for calibration. -->
   <Calibrate_NrOfFrameToUse>25</Calibrate_NrOfFrameToUse>
