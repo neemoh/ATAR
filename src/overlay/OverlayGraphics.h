@@ -15,6 +15,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
+#include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
 
 typedef struct
 {
@@ -64,6 +65,7 @@ public:
     void ImageLeftCallback(const sensor_msgs::ImageConstPtr &msg);
     void ImageRightCallback(const sensor_msgs::ImageConstPtr &msg);
     void LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    void RightCamPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     void PSM1PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     void PSM2PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
@@ -105,17 +107,21 @@ public:
     KDL::Frame pose_psm2;
     KDL::Frame taskspace_to_psm1_tr;
     KDL::Frame taskspace_to_psm2_tr;
+    KDL::Frame left_cam_to_right_cam_tr;
 
 //    ros::Publisher pub_board_to_cam_pose;
 
     cv::Vec3d cam_rvec_l, cam_tvec_l;
+    cv::Vec3d cam_rvec_r, cam_tvec_r;
     cv::Mat image_left_;
     cv::Mat image_right_;
+    ros::ServiceClient stereo_tr_calc_client;
+    teleop_vision::CalculateStereoCamsTransfromFromTopics stereo_tr_srv;
 
 private:
     int image_width_;
     int image_height_;
-
+    bool both_cam_poses_are_published;
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscriber_left;
     image_transport::Subscriber image_subscriber_right;

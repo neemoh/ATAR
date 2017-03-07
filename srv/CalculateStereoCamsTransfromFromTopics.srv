@@ -1,0 +1,4 @@
+string cam_1_pose_topic_name
+string cam_2_pose_topic_name
+---
+geometry_msgs/Pose cam_1_to_cam_2_pose

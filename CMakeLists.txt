@@ -21,14 +21,25 @@ find_package(catkin REQUIRED COMPONENTS
 		cv_bridge
 		image_transport
 		message_generation
+        geometry_msgs
 		)
 
+add_service_files(
+        FILES
+        CalculateStereoCamsTransfromFromTopics.srv)
+
+generate_messages(
+        DEPENDENCIES
+        geometry_msgs
+)
 
 catkin_package(CATKIN_DEPENDS
 		message_runtime
 		cv_bridge
 		image_transport
 		sensor_msgs)
+
+
 
 
 find_package(OpenCV REQUIRED)
@@ -65,6 +76,17 @@ add_library(
 target_link_libraries(
 		arucoUtils
 		${OpenCV_LIBRARIES})
+
+
+## Build service client and server
+# %Tag(SRVCLIENT)%
+add_executable(calculate_stereo_cams_transofrm_from_topics
+        src/utils/CalculateStereoCamsTransfromFromTopicsServer.cpp)
+target_link_libraries(calculate_stereo_cams_transofrm_from_topics
+        ${catkin_LIBRARIES})
+add_dependencies(calculate_stereo_cams_transofrm_from_topics
+        teleop_vision_gencpp)
+
 
 # List all the executables that we should build and link
 #set(_executables teleop_ac_vision_node intrinsic_calibration )

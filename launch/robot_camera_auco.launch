@@ -22,7 +22,7 @@
                value= "/dvrk/PSM2/position_cartesian_current"/>
 
         <param name= "frequency" value= "50" />
-        <param name= "number_of_points_per_axis" value= "4" />
+        <param name= "number_of_points_per_axis" value= "3" />
         <param name= "visual_axis_length" value= "0.0436" />
         <param name="image_transport" value="compressed"/>
 
