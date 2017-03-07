@@ -86,7 +86,7 @@ void imageRight_rectCallback(const sensor_msgs::ImageConstPtr& img)
 int main(int argc, char **argv)
 {
 
-    ros::init(argc, argv, "aug");
+    ros::init(argc, argv, "overlay");
 
 
 
@@ -184,6 +184,7 @@ int main(int argc, char **argv)
     // Create the window in which to render the video feed
     cvNamedWindow(left_window_name.c_str(),CV_WINDOW_NORMAL);
     cvNamedWindow(right_window_name.c_str(),CV_WINDOW_NORMAL);
+    cv::Mat left_image, right_image;
 
 //    while (ros::ok() && !glfwWindowShouldClose(window))
     while (ros::ok())
@@ -198,11 +199,6 @@ int main(int argc, char **argv)
         else if (key == 'f')  //full screen
             VisualUtils::SwitchFullScreen(left_window_name);
         else if(key == 't'){
-            std::cout << "og.stereo_tr_srv.1 " <<
-                      og.stereo_tr_srv.request.cam_1_pose_topic_name <<std::endl;
-            std::cout << "og.stereo_tr_srv.2 " <<
-                      og.stereo_tr_srv.request.cam_2_pose_topic_name <<std::endl;
-            std::cout << og.stereo_tr_calc_client.getService() << std::endl;
             if (og.stereo_tr_calc_client.call(og.stereo_tr_srv)) {
                 //
                 std::vector<double> pose_vec_out(7, 0.0);
@@ -222,35 +218,38 @@ int main(int argc, char **argv)
 
         // --------------------------------------------------------------------------------------
         // Draw things
-        og.DrawCube(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+        og.ImageLeft(ros::Duration(1)).copyTo(left_image);
+        og.ImageRight(ros::Duration(1)).copyTo(right_image);
+
+        og.DrawCube(left_image, og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                     cv::Point3d(0, 0, 0), cv::Point3d(0.0128, 0.0128, 0.04),
                     cv::Scalar(200, 100, 10));
 
-        og.DrawCube(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+        og.DrawCube(left_image, og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                  cv::Point3d(6*0.0128, 3.6*0.0128, 0),
                     cv::Point3d(0.0128, 0.0128, 0.04),
                     cv::Scalar(100, 100, 200));
 
-        og.DrawToolTip(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+        og.DrawToolTip(left_image, og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                        og.pose_psm2.p, cv::Scalar(100, 50, 200));
 
-        cv::imshow(left_window_name, og.ImageLeft());
+        cv::imshow(left_window_name, left_image);
 
 
         // Draw things
-        og.DrawCube(og.ImageRight(), og.Camera, og.cam_rvec_r, og.cam_tvec_r,
+        og.DrawCube(right_image, og.Camera, og.cam_rvec_r, og.cam_tvec_r,
                     cv::Point3d(0, 0, 0), cv::Point3d(0.0128, 0.0128, 0.04),
                     cv::Scalar(200, 100, 10));
 
-        og.DrawCube(og.ImageRight(), og.Camera, og.cam_rvec_r, og.cam_tvec_r,
+        og.DrawCube(right_image, og.Camera, og.cam_rvec_r, og.cam_tvec_r,
                     cv::Point3d(6*0.0128, 3.6*0.0128, 0),
                     cv::Point3d(0.0128, 0.0128, 0.04),
                     cv::Scalar(100, 100, 200));
 
-        og.DrawToolTip(og.ImageRight(), og.Camera, og.cam_rvec_r, og.cam_tvec_r,
+        og.DrawToolTip(right_image, og.Camera, og.cam_rvec_r, og.cam_tvec_r,
                        og.pose_psm2.p, cv::Scalar(100, 50, 200));
 
-        cv::imshow(right_window_name, og.ImageRight());
+        cv::imshow(right_window_name, right_image);
 
 
 //        std::cout << og.pose_psm2.p[0] << std::endl;

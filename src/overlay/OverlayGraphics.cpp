@@ -276,7 +276,7 @@ void OverlayGraphics::LeftCamPoseCallback(const geometry_msgs::PoseStampedConstP
 
     // If we don't have the transforms between the cameras
     if(!both_cam_poses_are_published) {
-        pose_cam_r = pose_cam_l * left_cam_to_right_cam_tr ;
+        pose_cam_r = left_cam_to_right_cam_tr * pose_cam_l ;
         conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec_r, cam_tvec_r);
     }
 }
@@ -286,8 +286,6 @@ void OverlayGraphics::RightCamPoseCallback(const geometry_msgs::PoseStampedConst
 
     tf::poseMsgToKDL(msg->pose, pose_cam_r);
     conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec_r, cam_tvec_r);
-    std::cout << "HELLO" << std::endl;
-
 
 }
 
@@ -316,7 +314,7 @@ void OverlayGraphics::PSM2PoseCallback(const geometry_msgs::PoseStampedConstPtr 
 
 
 cv::Mat& OverlayGraphics::ImageLeft(ros::Duration timeout) {
-    ros::Rate loop_rate(1);
+    ros::Rate loop_rate(10);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
     while(image_left_.empty()) {
@@ -333,7 +331,7 @@ cv::Mat& OverlayGraphics::ImageLeft(ros::Duration timeout) {
 
 
 cv::Mat& OverlayGraphics::ImageRight(ros::Duration timeout) {
-    ros::Rate loop_rate(1);
+    ros::Rate loop_rate(10);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
     while(image_right_.empty()) {
