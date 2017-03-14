@@ -206,7 +206,7 @@ int main(int argc, char **argv)
                         og.stereo_tr_srv.response.cam_1_to_cam_2_pose, pose_vec_out);
                 og.n.setParam("left_cam_to_right_cam_transform", pose_vec_out);
                 ROS_INFO_STREAM(
-                        "Set parameter " << og.n.resolveName("left_cam_to_right_cam_transform")
+                        std::string("Set parameter ") << og.n.resolveName("left_cam_to_right_cam_transform")
                                          << " as\n"
                                          << og.stereo_tr_srv.response.cam_1_to_cam_2_pose);
             }
@@ -233,12 +233,12 @@ int main(int argc, char **argv)
         og.DrawToolTip(left_image, og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                        og.pose_psm2.p, cv::Scalar(100, 50, 200));
 
-<<<<<<< HEAD
+
         og.DrawACPath(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                       cv::Scalar(100, 50, 200));
 
         cv::imshow("Overlay Left", og.ImageLeft());
-=======
+
         cv::imshow(left_window_name, left_image);
 
 
@@ -255,9 +255,11 @@ int main(int argc, char **argv)
         og.DrawToolTip(right_image, og.Camera, og.cam_rvec_r, og.cam_tvec_r,
                        og.pose_psm2.p, cv::Scalar(100, 50, 200));
 
+        og.DrawACPath(og.ImageLeft(), og.Camera, og.cam_rvec_r, og.cam_tvec_r,
+                      cv::Scalar(100, 50, 200));
         cv::imshow(right_window_name, right_image);
 
->>>>>>> f90ce9a90c70cd5bbb8b511c5e3a713cfc5d9b9c
+
 
 //        std::cout << og.pose_psm2.p[0] << std::endl;
 

@@ -15,12 +15,9 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
-<<<<<<< HEAD
 #include <geometry_msgs/PoseArray.h>
-
-=======
 #include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
->>>>>>> f90ce9a90c70cd5bbb8b511c5e3a713cfc5d9b9c
+
 
 typedef struct
 {
