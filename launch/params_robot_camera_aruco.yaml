@@ -1,9 +1,0 @@
-  
-
-  camera_image_topic_name: /near/ecm/left
-  cam_pose_topic_name: /extrinsic_aruco/board_to_camera
-  robot_pose_topic_name: /dvrk/PSM1/position_cartesian_current
-  number_of_points_per_axis: 6
-  visual_axis_length: 0.06
-
-

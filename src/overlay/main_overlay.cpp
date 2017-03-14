@@ -14,41 +14,41 @@
 
 
 
-
-cv::Mat image_left_rect;
-
-cv::Mat imgR;
-cv::Mat image_right_rect;
-
-cv::Mat cameraMatrixL;
-cv::Mat distCoeffL;
-cv::Mat cameraMatrixR;
-cv::Mat distCoeffR;
-cv::Mat Rstereo;
-cv::Mat tstereo;
-cv::Mat R1;
-cv::Mat R2;
-KDL::Frame Tstereo;
-KDL::Frame R1_kdl;
-KDL::Frame R2_kdl;
-KDL::Frame cameraPoseLeft;
-KDL::Frame cameraPoseRight;
-int dWidth = 0; //get the width of frames of the video
-int dHeight = 0;
-cv::Mat bufferLeft;
-cv::Mat bufferRight;
-//cv::Mat gauge[11];
-//GLuint gaugeTexId[11];
-bool enableHud = true;
-bool enableImage = true;
-
-int frame = 0;
-
-cv::Point2f point;
-std::vector<cv::Point2f> safety_area;
-
-
-TabletInfo tablet_info;
+//
+//cv::Mat image_left_rect;
+//
+//cv::Mat imgR;
+//cv::Mat image_right_rect;
+//
+//cv::Mat cameraMatrixL;
+//cv::Mat distCoeffL;
+//cv::Mat cameraMatrixR;
+//cv::Mat distCoeffR;
+//cv::Mat Rstereo;
+//cv::Mat tstereo;
+//cv::Mat R1;
+//cv::Mat R2;
+//KDL::Frame Tstereo;
+//KDL::Frame R1_kdl;
+//KDL::Frame R2_kdl;
+//KDL::Frame cameraPoseLeft;
+//KDL::Frame cameraPoseRight;
+//int dWidth = 0; //get the width of frames of the video
+//int dHeight = 0;
+//cv::Mat bufferLeft;
+//cv::Mat bufferRight;
+////cv::Mat gauge[11];
+////GLuint gaugeTexId[11];
+//bool enableHud = true;
+//bool enableImage = true;
+//
+//int frame = 0;
+//
+//cv::Point2f point;
+//std::vector<cv::Point2f> safety_area;
+//
+//
+//TabletInfo tablet_info;
 
 
 //void bb_coords_Callback(const enVisors2::bb_coords& bb)
@@ -86,7 +86,8 @@ void imageRight_rectCallback(const sensor_msgs::ImageConstPtr& img)
 int main(int argc, char **argv)
 {
 
-    ros::init(argc, argv, "aug");
+    ros::init(argc, argv, "overlay");
+
 
 
 
@@ -177,37 +178,86 @@ int main(int argc, char **argv)
     OverlayGraphics og (ros::this_node::getName(),720, 576);
 
     ros::Rate loop_rate(og.ros_freq);
+
+    std::string left_window_name = "Overlay Left";
+    std::string right_window_name = "Overlay Right";
     // Create the window in which to render the video feed
-    cvNamedWindow("Overlay Left",CV_WINDOW_NORMAL);
+    cvNamedWindow(left_window_name.c_str(),CV_WINDOW_NORMAL);
+    cvNamedWindow(right_window_name.c_str(),CV_WINDOW_NORMAL);
+    cv::Mat left_image, right_image;
 
 //    while (ros::ok() && !glfwWindowShouldClose(window))
     while (ros::ok())
     {
         // --------------------------------------------------------------------------------------
         // keyboard commands
-        std::string left_window_name = "Overlay Left";
-        std::string right_window_name = "Overlay Right";
+
 
         char key = (char)cv::waitKey(1);
         if (key == 27) // Esc
             ros::shutdown();
         else if (key == 'f')  //full screen
             VisualUtils::SwitchFullScreen(left_window_name);
+        else if(key == 't'){
+            if (og.stereo_tr_calc_client.call(og.stereo_tr_srv)) {
+                //
+                std::vector<double> pose_vec_out(7, 0.0);
+                conversions::PoseMsgToVector(
+                        og.stereo_tr_srv.response.cam_1_to_cam_2_pose, pose_vec_out);
+                og.n.setParam("left_cam_to_right_cam_transform", pose_vec_out);
+                ROS_INFO_STREAM(
+                        "Set parameter " << og.n.resolveName("left_cam_to_right_cam_transform")
+                                         << " as\n"
+                                         << og.stereo_tr_srv.response.cam_1_to_cam_2_pose);
+            }
+            else
+                ROS_ERROR("Failed to call service stereo_tr_calc_client");
+        }
 
 
 
         // --------------------------------------------------------------------------------------
         // Draw things
-        og.DrawCube(og.ImageLeft(), og.Camera,
-                    og.cam_rvec_l, og.cam_tvec_l);
+        og.ImageLeft(ros::Duration(1)).copyTo(left_image);
+        og.ImageRight(ros::Duration(1)).copyTo(right_image);
 
-        og.DrawToolTip(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+        og.DrawCube(left_image, og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+                    cv::Point3d(0, 0, 0), cv::Point3d(0.0128, 0.0128, 0.04),
+                    cv::Scalar(200, 100, 10));
+
+        og.DrawCube(left_image, og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+                 cv::Point3d(6*0.0128, 3.6*0.0128, 0),
+                    cv::Point3d(0.0128, 0.0128, 0.04),
+                    cv::Scalar(100, 100, 200));
+
+        og.DrawToolTip(left_image, og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                        og.pose_psm2.p, cv::Scalar(100, 50, 200));
 
+<<<<<<< HEAD
         og.DrawACPath(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                       cv::Scalar(100, 50, 200));
 
         cv::imshow("Overlay Left", og.ImageLeft());
+=======
+        cv::imshow(left_window_name, left_image);
+
+
+        // Draw things
+        og.DrawCube(right_image, og.Camera, og.cam_rvec_r, og.cam_tvec_r,
+                    cv::Point3d(0, 0, 0), cv::Point3d(0.0128, 0.0128, 0.04),
+                    cv::Scalar(200, 100, 10));
+
+        og.DrawCube(right_image, og.Camera, og.cam_rvec_r, og.cam_tvec_r,
+                    cv::Point3d(6*0.0128, 3.6*0.0128, 0),
+                    cv::Point3d(0.0128, 0.0128, 0.04),
+                    cv::Scalar(100, 100, 200));
+
+        og.DrawToolTip(right_image, og.Camera, og.cam_rvec_r, og.cam_tvec_r,
+                       og.pose_psm2.p, cv::Scalar(100, 50, 200));
+
+        cv::imshow(right_window_name, right_image);
+
+>>>>>>> f90ce9a90c70cd5bbb8b511c5e3a713cfc5d9b9c
 
 //        std::cout << og.pose_psm2.p[0] << std::endl;
 
