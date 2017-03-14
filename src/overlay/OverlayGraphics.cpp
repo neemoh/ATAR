@@ -199,7 +199,7 @@ void OverlayGraphics::GetROSParameterValues() {
     // PSM2 pose subscriber.
     std::string psm2_pose_topic_name = "/dvrk/PSM2/position_cartesian_current";
     psm2_pose_sub =
-            n.subscribe("/dvrk/PSM2/position_cartesian_current", 2,
+            n.subscribe(psm2_pose_topic_name, 2,
                         &OverlayGraphics::PSM2PoseCallback, this);
     ROS_INFO("Subscribing to %s ", psm2_pose_topic_name.c_str());
 
@@ -207,6 +207,9 @@ void OverlayGraphics::GetROSParameterValues() {
     if (!all_required_params_found)
         throw std::runtime_error("ERROR: some required topics are not set");
 
+    //--------
+    // PSM2 pose subscriber.
+    ac_path_subscriber = n.subscribe("/ac_path", 1, &OverlayGraphics::ACPathCallback, this);
 
     // advertise publishers
 //    std::string board_to_cam_pose_topic_name;
@@ -283,6 +286,17 @@ void OverlayGraphics::PSM2PoseCallback(const geometry_msgs::PoseStampedConstPtr 
 
 }
 
+void OverlayGraphics::ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg){
+
+    for (int n_point = 0; n_point < msg->poses.size(); ++n_point) {
+        ac_path.push_back(cv::Point3d(msg->poses[n_point].position.x,
+                                      msg->poses[n_point].position.y,
+                                      msg->poses[n_point].position.z));
+    }
+}
+
+
+
 
 cv::Mat& OverlayGraphics::ImageLeft(ros::Duration timeout) {
     ros::Rate loop_rate(1);
@@ -342,6 +356,20 @@ void OverlayGraphics::DrawToolTip(cv::InputOutputArray image,
 
 }
 
+
+void OverlayGraphics::DrawACPath(cv::InputOutputArray image,
+                                 const CameraDistortion &cam_intrinsics,
+                                 const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+                                 const cv::Scalar color){
+
+    std::vector<cv::Point2d> ac_points_2d;
+    projectPoints(ac_path, rvec, tvec, cam_intrinsics.camMatrix,
+                  cam_intrinsics.distCoeffs, ac_points_2d);
+    for (int i = 0; i < ac_path.size(); ++i) {
+        circle(image, ac_points_2d[i], 2, color, -1);
+    }
+    
+}
 
 
 

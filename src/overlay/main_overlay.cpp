@@ -204,6 +204,9 @@ int main(int argc, char **argv)
         og.DrawToolTip(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
                        og.pose_psm2.p, cv::Scalar(100, 50, 200));
 
+        og.DrawACPath(og.ImageLeft(), og.Camera, og.cam_rvec_l, og.cam_tvec_l,
+                      cv::Scalar(100, 50, 200));
+
         cv::imshow("Overlay Left", og.ImageLeft());
 
 //        std::cout << og.pose_psm2.p[0] << std::endl;

@@ -15,6 +15,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
+#include <geometry_msgs/PoseArray.h>
+
 
 typedef struct
 {
@@ -66,6 +68,7 @@ public:
     void LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     void PSM1PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     void PSM2PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    void ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg);
 
     cv::Mat& ImageLeft(ros::Duration timeout = ros::Duration(1));
     cv::Mat& ImageRight(ros::Duration timeout = ros::Duration(1));
@@ -79,6 +82,12 @@ public:
                      const cv::Vec3d &rvec, const cv::Vec3d &tvec,
                      KDL::Vector position,
                      const cv::Scalar color);
+
+    void DrawACPath(cv::InputOutputArray image,
+                    const CameraDistortion &cam_intrinsics,
+                    const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+                    const cv::Scalar color);
+
 private:
 
     void GetROSParameterValues();
@@ -94,6 +103,7 @@ public:
     //in-class initialization
     ros::NodeHandle n;
     double ros_freq = 0.0;
+    std::vector<cv::Point3d> ac_path;
 
     cv::Mat image_msg;
     CameraDistortion Camera;
@@ -122,6 +132,7 @@ private:
     ros::Subscriber psm1_pose_sub;
     ros::Subscriber psm2_pose_sub;
 
+    ros::Subscriber ac_path_subscriber;
     KDL::Frame camera_pose_left;
     KDL::Frame camera_pose_right;
     cv::Mat camera_matrix_l;
