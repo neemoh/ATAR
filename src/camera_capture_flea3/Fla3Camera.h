@@ -28,6 +28,7 @@ public:
 //    void GetImageFromCamera(int a_cameraNum, unsigned char **a_data, int *a_rowSize, int *a_colSize);
     void GetImageFromCamera(uint a_cameraNum, cv::Mat &image_out, int *a_rowSize, int *a_colSize);
     void grabImage(uint cam_num, sensor_msgs::Image &image);
+    sensor_msgs::ImagePtr ResizeImage(const sensor_msgs::Image &image_in);
     void HandleError(const std::string &prefix, const FlyCapture2::Error &error);
     std::vector<uint32_t> getAttachedCameras();
 

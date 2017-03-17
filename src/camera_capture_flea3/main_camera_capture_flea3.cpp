@@ -4,6 +4,7 @@
 #include <ros/xmlrpc_manager.h>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
+#include <opencv-3.2.0/opencv2/imgproc.hpp>
 #include "Fla3Camera.h"
 
 // Signal-safe flag for whether shutdown is requested
@@ -104,6 +105,7 @@ int main(int argc, char *argv[]){
     }
 
     sensor_msgs::Image image[num_cams];
+    sensor_msgs::Image image_resized[num_cams];
     image_transport::ImageTransport it(nh);
     image_transport::Publisher pub[num_cams];
     for (int l = 0; l < num_cams; ++l) {
@@ -114,9 +116,7 @@ int main(int argc, char *argv[]){
 
         for (uint i = 0; i < num_cams; i++) {
             cameras.grabImage(i, image[i]);
-            resize(src, dst, Size(), 0.5, 0.5, interpolation);
-
-            pub[i].publish(image[i]);
+            pub[i].publish(cameras.ResizeImage(image[i]));
         }
 
         loop_rate.sleep();

@@ -1,5 +1,6 @@
 #include "Fla3Camera.h"
 #include <sensor_msgs/fill_image.h>
+#include <cv_bridge/cv_bridge.h>
 
 //#include <stdexcept>
 
@@ -368,4 +369,14 @@ std::vector<uint32_t> Fla3Camera::getAttachedCameras()
         std::cout << "Found camera " << i << " with serial number: "<< this_serial<< std::endl;
     }
     return serials;
+}
+
+sensor_msgs::ImagePtr Fla3Camera::ResizeImage(
+        const sensor_msgs::Image &image_in) {
+    cv_bridge::CvImagePtr cv_ptr_in;
+    cv_ptr_in = cv_bridge::toCvCopy(image_in, sensor_msgs::image_encodings::BGR8);
+    cv_bridge::CvImagePtr cv_ptr_out;
+    cv::resize(cv_ptr_in->image, cv_ptr_out->image, cv::Size(), 0.5, 0.5, CV_INTER_AREA);
+    return cv_ptr_out->toImageMsg();
+
 }
