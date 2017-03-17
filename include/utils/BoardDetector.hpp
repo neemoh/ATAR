@@ -32,20 +32,20 @@ public:
 
     BoardDetector(ArucoBoard board, CameraIntrinsics camera, double n_avg);
 
-    void Detect();
+    void Detect(cv::InputOutputArray &image);
 
-    void DrawAxis();
+    void DrawAxis(cv::InputOutputArray &image);
 
-    void DrawDetectedMarkers();
+    void DrawDetectedMarkers(cv::InputOutputArray &image);
 
-    void DetectBoardAndDrawAxis(cv::Mat &image);
+    void DetectBoardAndDrawAxis(cv::InputOutputArray &image);
 
     /**
      * @brief
      *  To avoid jitter in the position and orientation we smooth them over the last several frames.
      *  This means that for the first frames the results may be wonky.
      * */
-    bool Ready() const { return ready_; }
+    bool Detected() const { return board_detected_; }
 
 private:
     // coppied from Aruco just to add anti-aliasing
@@ -58,11 +58,9 @@ public:
     //! Information about the actual board we are using.
     ArucoBoard board;
 
-    //! The image the the #BoardDetector is currently working on
-    cv::Mat image;
-
     // number of averaging points to prevent board frame oscillation
-    double n_avg;
+    // zero means no averaging
+    double n_avg_steps;
 
     cv::Vec3d rvec, tvec;
 
@@ -86,6 +84,8 @@ private:
         //! Should we try to find markers that were not detected in the cv::aruco::detectMarkers step
         //! with an extra call to cv::aruco::refineDetectedMarkers ?
         bool RefindStrategy = 0;
+
+
     };
 
     ArucoParams aruco_;
@@ -96,9 +96,7 @@ private:
     unsigned int frame_counter_ = 0;
 
     //! Do we have a valid pose estimation ?
-    bool pose_estimated_ = false;
-
-    bool ready_ = false;
+    bool board_detected_ = false;
 
 };
 

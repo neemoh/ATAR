@@ -23,14 +23,7 @@ int main(int argc, char *argv[]) {
     //-----------------------------------------------------------------------------------
     // Construct the board detector object
     //-----------------------------------------------------------------------------------
-    BoardDetector board_detector(ae.Board, ae.Camera, 2);
-
-    // Create the window in which to render the video feed
-    // cvNamedWindow("Aruco extrinsic", CV_WINDOW_NORMAL);
-    //    cvSetWindowProperty("teleop", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
-
-    // This is the image that will be rendered at every loop. We'll be drawing the hints on it.
-    cv::Mat back_buffer;
+    BoardDetector board_detector(ae.board, ae.cam_intrins, 0);
 
     ros::Rate loop_rate(ae.ros_freq);
 
@@ -45,23 +38,17 @@ int main(int argc, char *argv[]) {
         conversions::RvecTvecToKDLFrame(board_detector.rvec,
                                         board_detector.tvec, board_to_cam_frame);
 
-    	// draw results
-    	board_detector.image.copyTo(back_buffer);
+    	if (board_detector.Detected()) {
 
-    	if (board_detector.Ready()) {
+            geometry_msgs::PoseStamped board_to_cam_msg;
 
-    		geometry_msgs::PoseStamped board_to_cam_msg;
-    		// convert pixel to meters
-    		//cam_to_robot.p = cam_to_robot.p / drawings.m_to_px;
     		tf::poseKDLToMsg(board_to_cam_frame, board_to_cam_msg.pose);
 
     		ae.pub_board_to_cam_pose.publish(board_to_cam_msg);
     	}
 
         if(ae.show_image){
-            std::cout << "sdd" << std::endl;
-            cv::imshow("Aruco extrinsic", back_buffer);
-
+            cv::imshow("Aruco extrinsic", ae.image);
         }
 
     	loop_rate.sleep();

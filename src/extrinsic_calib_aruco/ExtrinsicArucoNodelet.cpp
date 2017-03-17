@@ -79,7 +79,7 @@ namespace teleop_vision {
                                             board_to_cam_frame);
 
 
-            if (board_detector->Ready()) {
+            if (board_detector->Detected()) {
 
                 geometry_msgs::PoseStamped board_to_cam_msg;
                 // convert pixel to meters
@@ -90,7 +90,7 @@ namespace teleop_vision {
             }
 
           //  if (board.draw_axes)
-               // cv::imshow("Aruco extrinsic", image_msg);
+               // cv::imshow("Aruco extrinsic", image);
 
         }
 

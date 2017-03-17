@@ -11,7 +11,6 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <opencv2/core.hpp>
-
 #include "utils/BoardDetector.hpp"
 #include <image_transport/image_transport.h>
 
@@ -55,12 +54,11 @@ public:
 
     //in-class initialization
     ros::NodeHandle n;
-    ArucoBoard Board;
+    ArucoBoard board;
     double ros_freq = 0.0;
     bool show_image = false;
-    cv::Mat image_msg;
-    CameraIntrinsics Camera;
-    int camId_param = 0;
+    cv::Mat image;
+    CameraIntrinsics cam_intrins;
     image_transport::Subscriber sub;
     image_transport::ImageTransport *it;
     ros::Subscriber camera_imgae_subscriber;

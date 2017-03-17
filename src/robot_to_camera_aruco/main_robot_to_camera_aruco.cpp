@@ -72,8 +72,8 @@ int main(int argc, char *argv[]) {
 
         // todo add a way of checking if the board is seen
         //        if (progress == CalibProgress::Idle) {
-        //            if (boardDetector.Ready()) {
-        //		progress = CalibProgress::Ready;
+        //            if (boardDetector.Detected()) {
+        //		progress = CalibProgress::Detected;
         //            }
         //            continue;
         //        }
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
         if (progress == CalibProgress::Finished) {
             instructions = "Calibration finished. Press 'Esc' to exit";
 
-            //            if (boardDetector.Ready()) {
+            //            if (boardDetector.Detected()) {
             drawings.update_cam_2_board_ref(r.board_to_cam_rvec,
                                             r.board_to_cam_tvec);
 

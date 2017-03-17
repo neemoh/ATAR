@@ -74,7 +74,7 @@ int main(int argc, char **argv){
 
     ros::ServiceServer service = n.advertiseService(
             "calculate_stereo_cams_transform_from_topics", GetTransform);
-    ROS_INFO("Ready!");
+    ROS_INFO("Detected!");
     ros::spin();
 
     return 0;

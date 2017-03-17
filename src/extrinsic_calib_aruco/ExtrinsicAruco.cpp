@@ -6,13 +6,9 @@
  */
 
 
-
-#include "utils/Conversions.hpp"
-#include <geometry_msgs/PoseStamped.h>
-#include <sensor_msgs/Image.h>
-#include <cv_bridge/cv_bridge.h>
 #include <ExtrinsicAruco.hpp>
-#include <image_transport/image_transport.h>
+#include "utils/Conversions.hpp"
+#include <cv_bridge/cv_bridge.h>
 
 using namespace std;
 
@@ -35,6 +31,8 @@ void ArucoExtrinsic::GetROSParameterValues() {
 
     n.param<double>("frequency", ros_freq, 25);
     n.param<bool>("show_image", show_image, false);
+
+    board.draw_axes = show_image;
     // load the intrinsic calibration file
     std::string cam_intrinsic_calibration_file_path;
     if (n.getParam("cam_intrinsic_calibration_file_path", cam_intrinsic_calibration_file_path))
@@ -69,23 +67,23 @@ void ArucoExtrinsic::GetROSParameterValues() {
 
 
     // Load the description of the aruco board from the parameters
-    if (!n.getParam("aruco_board_w", Board.Width)){
-    	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_board_w").c_str());
+    if (!n.getParam("aruco_board_w", board.Width)){
+    	ROS_ERROR("Parameter '%s' is reaequired.", n.resolveName("aruco_board_w").c_str());
     	all_required_params_found = false;
     }
-    if (!n.getParam("aruco_board_h", Board.Height)){
+    if (!n.getParam("aruco_board_h", board.Height)){
     	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_board_h").c_str());
     	all_required_params_found = false;
     }
-    if (!n.getParam("aruco_marker_length_in_meters", Board.MarkerLength)){
+    if (!n.getParam("aruco_marker_length_in_meters", board.MarkerLength)){
     	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_marker_length_in_meters").c_str());
     	all_required_params_found = false;
     }
-    if (!n.getParam("aruco_marker_separation_in_meters", Board.MarkerSeparation)){
+    if (!n.getParam("aruco_marker_separation_in_meters", board.MarkerSeparation)){
     	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_marker_separation_in_meters").c_str());
     	all_required_params_found = false;
     }
-    if (!n.getParam("aruco_dictionary_id", Board.DictionaryID)){
+    if (!n.getParam("aruco_dictionary_id", board.DictionaryID)){
     	ROS_ERROR("Parameter '%s' is required.", n.resolveName("aruco_dictionary_id").c_str());
     	all_required_params_found = false;
     }
@@ -113,15 +111,15 @@ void ArucoExtrinsic::ReadCameraParameters(std::string file_path) {
     if (!fs.isOpened())
         throw std::runtime_error("Unable to read the camera parameters file.");
 
-    fs["camera_matrix"] >> Camera.camMatrix;
-    fs["distortion_coefficients"] >> Camera.distCoeffs;
+    fs["camera_matrix"] >> cam_intrins.camMatrix;
+    fs["distortion_coefficients"] >> cam_intrins.distCoeffs;
 
     // check if we got osomething
-    if(Camera.distCoeffs.empty()){
+    if(cam_intrins.distCoeffs.empty()){
     	ROS_ERROR("distortion_coefficients was not found in '%s' ", file_path.c_str());
     	throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
     }
-    if(Camera.camMatrix.empty()){
+    if(cam_intrins.camMatrix.empty()){
     	ROS_ERROR("camera_matrix was not found in '%s' ", file_path.c_str());
     	throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
     }
@@ -129,12 +127,10 @@ void ArucoExtrinsic::ReadCameraParameters(std::string file_path) {
 
 }
 
-
-
 void ArucoExtrinsic::CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) {
   try
   {
-    image_msg = cv_bridge::toCvCopy(msg, "bgr8")->image;
+    image = cv_bridge::toCvCopy(msg, "bgr8")->image;
   }
   catch (cv_bridge::Exception& e)
   {
@@ -142,13 +138,11 @@ void ArucoExtrinsic::CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) 
   }
 }
 
-
-
 cv::Mat& ArucoExtrinsic::Image(ros::Duration timeout) {
     ros::Rate loop_rate(1);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
-    while(image_msg.empty()) {
+    while(image.empty()) {
         ros::spinOnce();
         loop_rate.sleep();
 
@@ -158,7 +152,7 @@ cv::Mat& ArucoExtrinsic::Image(ros::Duration timeout) {
         }
     }
 
-    return image_msg;
+    return image;
 }
 
 
