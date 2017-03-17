@@ -127,33 +127,32 @@ add_library(ExtrinsicCalibArucoNodelet
 target_link_libraries(ExtrinsicCalibArucoNodelet ${catkin_LIBRARIES} arucoUtils)
 
 # Find the Flycapture include files and libraries
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
 
 
 # MESSAGE(${FLYCAPTURE2_INCLUDE_DIR})
-#find_package (Flycapture2)
-#if (FLYCAPTURE2_FOUND)
-#	MESSAGE("FLYCAPTURE2 found.")
-#	include_directories(${FLYCAPTURE2_INCLUDE_DIR})
-#
-#	add_executable(
-#			camera_capture_flea3
-#			src/camera_capture_flea3/main_camera_capture_flea3.cpp
-#			src/camera_capture_flea3/Fla3Camera.cpp
-#			src/camera_capture_flea3/Fla3Camera.h
-#	)
-#	target_link_libraries(
-#			camera_capture_flea3
-#			${FLYCAPTURE2_LIBRARIES}
-#	)
-#	target_link_libraries(
-#			camera_capture_flea3
-#			${OpenCV_LIBRARIES}
-#			${catkin_LIBRARIES}
-#			arucoUtils)
-#
-#endif (FLYCAPTURE2_FOUND)
+find_package (Flycapture2)
+if (FLYCAPTURE2_FOUND)
+	MESSAGE("FLYCAPTURE2 found.")
+	include_directories(${FLYCAPTURE2_INCLUDE_DIR})
 
+	add_executable(
+			camera_capture_flea3
+			src/camera_capture_flea3/main_camera_capture_flea3.cpp
+			src/camera_capture_flea3/Fla3Camera.cpp
+			src/camera_capture_flea3/Fla3Camera.h
+	)
+	target_link_libraries(
+			camera_capture_flea3
+			${FLYCAPTURE2_LIBRARIES}
+	)
+	target_link_libraries(
+			camera_capture_flea3
+			${OpenCV_LIBRARIES}
+			${catkin_LIBRARIES}
+			arucoUtils)
+
+endif (FLYCAPTURE2_FOUND)
 
 
 add_executable(
