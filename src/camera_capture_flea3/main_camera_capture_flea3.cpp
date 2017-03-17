@@ -114,6 +114,8 @@ int main(int argc, char *argv[]){
 
         for (uint i = 0; i < num_cams; i++) {
             cameras.grabImage(i, image[i]);
+            resize(src, dst, Size(), 0.5, 0.5, interpolation);
+
             pub[i].publish(image[i]);
         }
 

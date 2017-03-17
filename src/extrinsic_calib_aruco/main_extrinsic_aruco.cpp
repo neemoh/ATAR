@@ -58,8 +58,11 @@ int main(int argc, char *argv[]) {
     		ae.pub_board_to_cam_pose.publish(board_to_cam_msg);
     	}
 
-        if(ae.show_image)
+        if(ae.show_image){
+            std::cout << "sdd" << std::endl;
             cv::imshow("Aruco extrinsic", back_buffer);
+
+        }
 
     	loop_rate.sleep();
     	ros::spinOnce();
