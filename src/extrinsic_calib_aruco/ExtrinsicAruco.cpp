@@ -53,10 +53,12 @@ void ArucoExtrinsic::GetROSParameterValues() {
             all_required_params_found = false;
         }
         else
-            ROS_INFO("Reading camera images from transport '%s'", image_transport_namespace.c_str());
+            ROS_INFO("%s Reading camera images from transport '%s'",
+                     ros::this_node::getName().c_str(), image_transport_namespace.c_str());
 
     } else {
-        ROS_ERROR("Parameter '%s' is required.", n.resolveName("image_transport_namespace").c_str());
+        ROS_ERROR("%s Parameter '%s' is required.",
+                  ros::this_node::getName().c_str(), n.resolveName("image_transport_namespace").c_str());
         all_required_params_found = false;
     }
 
@@ -100,7 +102,8 @@ void ArucoExtrinsic::GetROSParameterValues() {
 		board_to_cam_pose_topic_name = "board_to_camera";
 
     pub_board_to_cam_pose = n.advertise<geometry_msgs::PoseStamped>(board_to_cam_pose_topic_name, 1, 0);
-	ROS_INFO("Publishing board to camera pose on '%s'", n.resolveName(board_to_cam_pose_topic_name).c_str());
+	ROS_INFO("%s Publishing board to camera pose on '%s'",
+     ros::this_node::getName().c_str(), n.resolveName(board_to_cam_pose_topic_name).c_str());
 
 }
 

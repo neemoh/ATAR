@@ -143,12 +143,17 @@ void OverlayGraphics::GetROSParameterValues() {
     if (n.getParam("left_cam_pose_topic_name", left_cam_pose_topic_name)) {
         // if the topic name is found, check if something is being published on it
         if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-                left_cam_pose_topic_name, ros::Duration(2)))
-            ROS_WARN("Topic '%s' is not publishing.", left_cam_pose_topic_name.c_str());
+                left_cam_pose_topic_name, ros::Duration(4))) {
+            ROS_WARN("%s: Topic '%s' is not publishing.",
+                     ros::this_node::getName().c_str(),
+                     n.resolveName(left_cam_pose_topic_name).c_str());
+        }
         else
-            ROS_INFO("[SUBSCRIBERS] Left camera pose will be read from topic '%s'", left_cam_pose_topic_name.c_str());
+            ROS_INFO("[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
+                     n.resolveName(left_cam_pose_topic_name).c_str());
     } else {
-        ROS_ERROR("Parameter '%s' is required.", n.resolveName("left_cam_pose_topic_name").c_str());
+        ROS_ERROR("%s:Parameter '%s' is required.",
+                  ros::this_node::getName().c_str(), n.resolveName("left_cam_pose_topic_name").c_str());
         all_required_params_found = false;
     }
     camera_pose_subscriber_left = n.subscribe(
@@ -163,11 +168,13 @@ void OverlayGraphics::GetROSParameterValues() {
         if (n.getParam("right_cam_pose_topic_name", right_cam_pose_topic_name)) {
             // if the topic name is found, check if something is being published on it
             if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-                    right_cam_pose_topic_name, ros::Duration(2)))
-                ROS_WARN("left_cam_to_right_cam_transform parameter was not provided and "
-                                 "topic '%s' is not being published yet.", right_cam_pose_topic_name.c_str());
+                    right_cam_pose_topic_name, ros::Duration(4)))
+                ROS_WARN("%s parameter was not provided and topic '%s' is not being published yet.",
+                         n.resolveName("left_cam_to_right_cam_transform").c_str(),
+                         right_cam_pose_topic_name.c_str());
             else
-                ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'", right_cam_pose_topic_name.c_str());
+                ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
+                         n.resolveName(right_cam_pose_topic_name).c_str());
         } else {
             ROS_ERROR("Since left_cam_to_right_cam_transform parameter was not provided"
                               "parameter '%s' is required.", n.resolveName("right_cam_pose_topic_name").c_str());
