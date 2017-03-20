@@ -294,7 +294,7 @@ void RobotToCameraAruco::Reset() {
 }
 
 //-----------------------------------------------------------------------------------
-// GetROSParameterValues
+// SetupROS
 //-----------------------------------------------------------------------------------
 
 void RobotToCameraAruco::GetROSParameterValues() {

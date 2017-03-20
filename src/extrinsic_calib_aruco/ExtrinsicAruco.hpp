@@ -48,7 +48,8 @@ private:
      *
      * @param file_path The path to the camera parameters file.
      */
-    void ReadCameraParameters(std::string file_path);
+    void ReadCameraParameters(std::string file_path,
+                              CameraIntrinsics & camera);
 
 public:
 
@@ -58,7 +59,7 @@ public:
     double ros_freq = 0.0;
     bool show_image = false;
     cv::Mat image;
-    CameraIntrinsics cam_intrins;
+    CameraIntrinsics cam_intrinsics;
     image_transport::Subscriber sub;
     image_transport::ImageTransport *it;
     ros::Subscriber camera_imgae_subscriber;

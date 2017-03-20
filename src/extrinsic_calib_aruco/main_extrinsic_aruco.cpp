@@ -5,7 +5,7 @@
  *      Author: nearlab
  */
 
-#include <ExtrinsicAruco.hpp>
+#include "ExtrinsicAruco.hpp"
 #include <opencv2/highgui.hpp>
 #include <tf_conversions/tf_kdl.h>
 #include "utils/Conversions.hpp"
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     //-----------------------------------------------------------------------------------
     // Construct the board detector object
     //-----------------------------------------------------------------------------------
-    BoardDetector board_detector(ae.board, ae.cam_intrins, 0);
+    BoardDetector board_detector(ae.board, ae.cam_intrinsics, 0);
 
     ros::Rate loop_rate(ae.ros_freq);
 

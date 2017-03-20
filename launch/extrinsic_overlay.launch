@@ -1,17 +1,19 @@
 <launch>
     <arg name="camera_name" value="camera"/>
+    <arg name= "left_cam_name" value= "flea14150439" />
+    <arg name= "right_cam_name" value= "flea14150441" />
     <group ns="$(arg camera_name)" >
 
         <group ns="left" >
 
             <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
                 <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
-                <param name="cam_intrinsic_calibration_file_path" value="$(find teleop_vision)/resources/flea_left_intrinsic.xml" />
+                <param name="cam_name" value= "$(arg left_cam_name)" />
                 <param name="image_transport_namespace" value="/$(arg camera_name)/left/image_color"/>
                 <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/left/board_to_camera"/>
                 <param name="show_image" value="false"/>
                 <param name="frequency" value="30"/>
-                <param name="image_transport" value="compressed"/>
+                <param name="image_transport" value="compressed"/> <!-- Remove if image is not received over network -->
             </node>
 
         </group>
@@ -19,12 +21,12 @@
         <group ns="right" >
             <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
                 <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
-                <param name="cam_intrinsic_calibration_file_path" value="$(find teleop_vision)/resources/flea_left_intrinsic.xml" />
+                <param name= "cam_name" value= "$(arg left_cam_name)" /> <!-- ATTENTION USING the same file for right-->
                 <param name="image_transport_namespace" value="/$(arg camera_name)/right/image_color"/>
                 <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/right/board_to_camera"/>
                 <param name="show_image" value="false"/>
                 <param name="frequency" value="30"/>
-                <param name="image_transport" value="compressed"/>
+                <param name="image_transport" value="compressed"/> <!-- Remove if image is not received over network -->
             </node>
         </group>
     </group>
@@ -32,12 +34,13 @@
     <node pkg="teleop_vision" type="overlay" name="overlay" output="screen">
 <!--        <rosparam command="load" file="$(find teleop_vision)/launch/params_overlay.yaml" />
 -->
-        <param name= "cam_intrinsic_calibration_file_path" value="$(find teleop_vision)/resources/flea_left_intrinsic.xml" />
+        <param name= "left_cam_name" value= "$(arg left_cam_name)" />
+        <param name= "right_cam_name" value= "$(arg left_cam_name)" /> <!-- ATTENTION USING the same file for right-->
         <param name= "left_image_topic_name" value= "/$(arg camera_name)/left/image_color" />
         <param name= "right_image_topic_name" value= "/$(arg camera_name)/right/image_color"/>
         <param name= "left_cam_pose_topic_name" value= "/$(arg camera_name)/left/board_to_camera "/>
         <param name= "right_cam_pose_topic_name" value= "/$(arg camera_name)/right/board_to_camera "/>
         <param name= "frequency" value= "30" />
-        <param name= "image_transport" value="compressed"/>
+        <param name= "image_transport" value="compressed"/> <!-- Remove if image is not received over network -->
     </node>
 </launch>
