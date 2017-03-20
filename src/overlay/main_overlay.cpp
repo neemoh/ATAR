@@ -18,7 +18,6 @@ int main(int argc, char **argv)
 
     ros::init(argc, argv, "overlay");
 
-
     OverlayGraphics og (ros::this_node::getName(),720, 576);
 
     ros::Rate loop_rate(og.ros_freq);
@@ -57,12 +56,11 @@ int main(int argc, char **argv)
                 ROS_ERROR("Failed to call service stereo_tr_calc_client");
         }
 
-
+        og.ImageLeft(ros::Duration(1)).copyTo(left_image);
+        og.ImageRight(ros::Duration(1)).copyTo(right_image);
 
         // --------------------------------------------------------------------------------------
         // Draw things LEFT
-        og.ImageLeft(ros::Duration(1)).copyTo(left_image);
-        og.ImageRight(ros::Duration(1)).copyTo(right_image);
 
         DrawingsCV::DrawCubeCV(left_image, og.cam_intrinsics[0], og.cam_rvec_l, og.cam_tvec_l,
                       cv::Point3d(0, 0, 0),
@@ -105,6 +103,11 @@ int main(int argc, char **argv)
 
         cv::imshow(right_window_name, right_image);
 
+        // Publish the overlays
+        if (og.IsROSOVerlayEnabled()) {
+            og.PublishOverlayLeft(left_image);
+            og.PublishOverlayRight(right_image);
+        }
 
         ros::spinOnce();
         loop_rate.sleep();
