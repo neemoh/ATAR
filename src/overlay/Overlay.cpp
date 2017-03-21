@@ -76,7 +76,7 @@ void OverlayGraphics::SetupROS() {
                   ros::this_node::getName().c_str(), n.resolveName("left_cam_name").c_str());
 
     std::string right_cam_name;
-    if (n.getParam("left_cam_name", right_cam_name)) {
+    if (n.getParam("right_cam_name", right_cam_name)) {
         std::stringstream path;
         path << std::string(home_dir) << std::string("/.ros/camera_info/") << right_cam_name << "_intrinsics.xml";
         ReadCameraParameters(path.str(), cam_intrinsics[1]);

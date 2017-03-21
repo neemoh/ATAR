@@ -30,7 +30,6 @@ ArucoExtrinsic::ArucoExtrinsic(string node_name)
 void ArucoExtrinsic::GetROSParameterValues() {
     bool all_required_params_found = true;
 
-    n.param<double>("frequency", ros_freq, 25);
     n.param<bool>("show_image", show_image, false);
     board.draw_axes = show_image;
 
@@ -148,6 +147,7 @@ void ArucoExtrinsic::CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) 
   try
   {
     image = cv_bridge::toCvCopy(msg, "bgr8")->image;
+      new_image = true;
   }
   catch (cv_bridge::Exception& e)
   {

@@ -25,7 +25,10 @@ int main(int argc, char *argv[]) {
     //-----------------------------------------------------------------------------------
     BoardDetector board_detector(ae.board, ae.cam_intrinsics, 0);
 
-    ros::Rate loop_rate(ae.ros_freq);
+        // NOTE: board detection runs only when new image is arrived. so the frequency
+    // of the published pose depends on the frequency of the received images. The
+    // loop_rate is the rate of spinning, i.e checking for new images.
+    ros::Rate loop_rate(500);
 
     while (ros::ok()) {
 
@@ -33,26 +36,32 @@ int main(int argc, char *argv[]) {
         if (key == 27) // Esc
             ros::shutdown();
 
-    	// DETECT BOARD
-        board_detector.DetectBoardAndDrawAxis(ae.Image());
-        conversions::RvecTvecToKDLFrame(board_detector.rvec,
-                                        board_detector.tvec, board_to_cam_frame);
+        if(ae.new_image) {
 
-    	if (board_detector.Detected()) {
+            ae.new_image = false;
 
-            geometry_msgs::PoseStamped board_to_cam_msg;
+            // DETECT BOARD
+            board_detector.DetectBoardAndDrawAxis(ae.Image());
+            conversions::RvecTvecToKDLFrame(board_detector.rvec,
+                                            board_detector.tvec,
+                                            board_to_cam_frame);
 
-    		tf::poseKDLToMsg(board_to_cam_frame, board_to_cam_msg.pose);
+            if (board_detector.Detected()) {
 
-    		ae.pub_board_to_cam_pose.publish(board_to_cam_msg);
-    	}
+                geometry_msgs::PoseStamped board_to_cam_msg;
 
-        if(ae.show_image){
-            cv::imshow("Aruco extrinsic", ae.image);
+                tf::poseKDLToMsg(board_to_cam_frame, board_to_cam_msg.pose);
+
+                ae.pub_board_to_cam_pose.publish(board_to_cam_msg);
+            }
+
+            if (ae.show_image) {
+                cv::imshow("Aruco extrinsic", ae.image);
+            }
         }
 
-    	loop_rate.sleep();
-    	ros::spinOnce();
+        loop_rate.sleep();
+        ros::spinOnce();
 
     }
 
@@ -65,9 +74,9 @@ int main(int argc, char *argv[]) {
 
 // operator overload to print out vectors
 std::ostream &operator<<(std::ostream &out, const std::vector<double> &vect) {
-	for (unsigned int iter = 0; iter < vect.size(); ++iter) {
-		out << "[" << iter << "]: " << vect.at(iter) << "\t";
-	}
+    for (unsigned int iter = 0; iter < vect.size(); ++iter) {
+        out << "[" << iter << "]: " << vect.at(iter) << "\t";
+    }
 
     return out;
 }

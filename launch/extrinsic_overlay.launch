@@ -7,12 +7,11 @@
         <group ns="left" >
 
             <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
-                <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
+                <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board_4_3.yaml" />
                 <param name="cam_name" value= "$(arg left_cam_name)" />
                 <param name="image_transport_namespace" value="/$(arg camera_name)/left/image_color"/>
                 <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/left/board_to_camera"/>
-                <param name="show_image" value="false"/>
-                <param name="frequency" value="30"/>
+                <param name="show_image" value="true"/>
 <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
             </node>
 
@@ -20,12 +19,12 @@
 
         <group ns="right" >
             <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
-                <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
-                <param name= "cam_name" value= "$(arg left_cam_name)" /> <!-- ATTENTION USING the same file for right-->
+                <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board_4_3.yaml" />
+                <param name= "cam_name" value= "$(arg right_cam_name)" /> <!-- ATTENTION USING the same file for right-->
                 <param name="image_transport_namespace" value="/$(arg camera_name)/right/image_color"/>
                 <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/right/board_to_camera"/>
                 <param name="show_image" value="true"/>
-                <param name="frequency" value="30"/>
+
 <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
             </node>
         </group>
@@ -35,7 +34,7 @@
 <!--        <rosparam command="load" file="$(find teleop_vision)/launch/params_overlay.yaml" />
 -->
         <param name= "left_cam_name" value= "$(arg left_cam_name)" />
-        <param name= "right_cam_name" value= "$(arg left_cam_name)" /> <!-- ATTENTION USING the same file for right-->
+        <param name= "right_cam_name" value= "$(arg right_cam_name)" /> <!-- ATTENTION USING the same file for right-->
         <param name= "left_image_topic_name" value= "/$(arg camera_name)/left/image_color" />
         <param name= "right_image_topic_name" value= "/$(arg camera_name)/right/image_color"/>
         <param name= "left_cam_pose_topic_name" value= "/$(arg camera_name)/left/board_to_camera "/>
