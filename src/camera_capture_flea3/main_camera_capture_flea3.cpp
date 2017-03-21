@@ -66,7 +66,7 @@ int main(int argc, char *argv[]){
 
     // Override SIGINT handler
 
-    ros::init(argc, argv, "flea3", ros::init_options::NoSigintHandler);
+    ros::init(argc, argv, "camera", ros::init_options::NoSigintHandler);
     signal(SIGINT, mySigIntHandler);
 
     // Override XMLRPC shutdown
@@ -79,33 +79,23 @@ int main(int argc, char *argv[]){
 
     ros::Rate loop_rate(ros_freq);
 
-    // Get ros parameters
-    std::string left_image_topic_name;
-    if (!nh.getParam("left_image_topic_name", left_image_topic_name))
-        left_image_topic_name = "/left_cam";
-
-    std::string right_image_topic_name;
-    if (!nh.getParam("right_image_topic_name", right_image_topic_name))
-        right_image_topic_name = "/right_cam";
-
     //determine left and right cams
     std::string img_topic_names[num_cams];
 
     if(num_cams>0){
         if(cam_serial_nums[0]==left_cam_serial_num){
-            img_topic_names[0] = nh.resolveName(left_image_topic_name);
+            img_topic_names[0] = nh.resolveName("left/image_color");
             if(num_cams>1)
-                img_topic_names[1] = nh.resolveName(right_image_topic_name);
+                img_topic_names[1] = nh.resolveName("right/image_color");
         }
         else{
-            img_topic_names[0] = nh.resolveName(right_image_topic_name);
+            img_topic_names[0] = nh.resolveName("right/image_color");
             if(num_cams>1)
-                img_topic_names[1] = nh.resolveName(left_image_topic_name);
+                img_topic_names[1] = nh.resolveName("left/image_color");
         }
     }
 
     sensor_msgs::Image image[num_cams];
-    sensor_msgs::Image image_resized[num_cams];
     image_transport::ImageTransport it(nh);
     image_transport::Publisher pub[num_cams];
     for (int l = 0; l < num_cams; ++l) {
@@ -117,6 +107,7 @@ int main(int argc, char *argv[]){
         for (uint i = 0; i < num_cams; i++) {
             cameras.grabImage(i, image[i]);
             pub[i].publish(cameras.ResizeImage(image[i]));
+            //pub[i].publish(image[i]);
         }
 
         loop_rate.sleep();
