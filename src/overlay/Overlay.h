@@ -54,6 +54,8 @@ public:
     // Receives ac path from the ac geometry node as an array of poses.
     // Currently only the positions are used.
     void ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg);
+    void ACPoseDesiredLeftCallback(const geometry_msgs::PoseStampedConstPtr & msg);
+    void ACPoseDesiredRightCallback(const geometry_msgs::PoseStampedConstPtr & msg);
 
     // Locking call to retrieve the images
     cv::Mat& ImageLeft(ros::Duration timeout = ros::Duration(1));
@@ -66,7 +68,6 @@ public:
 public:
 
     ros::NodeHandle n;
-    double ros_freq = 0.0;
     std::vector<cv::Point3d> ac_path;
 
     cv::Mat image_msg;
@@ -79,17 +80,22 @@ public:
     KDL::Frame taskspace_to_psm2_tr;
     KDL::Frame left_cam_to_right_cam_tr;
 
+    KDL::Frame pose_desired_l;
+    KDL::Frame pose_desired_r;
+
     cv::Vec3d cam_rvec_l, cam_tvec_l;
     cv::Vec3d cam_rvec_r, cam_tvec_r;
     cv::Mat image_left_;
     cv::Mat image_right_;
+    bool new_right_image = false;
+    bool new_left_image = false;
     ros::ServiceClient stereo_tr_calc_client;
     teleop_vision::CalculateStereoCamsTransfromFromTopics stereo_tr_srv;
 
 private:
     int image_width_;
     int image_height_;
-    bool both_cam_poses_are_published;
+    int num_cam_pose_publishers;
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscribers[2];
 
@@ -102,6 +108,8 @@ private:
     ros::Subscriber psm2_pose_sub;
 
     ros::Subscriber ac_path_subscriber;
+    ros::Subscriber ac_pose_desired_right_subscriber;
+    ros::Subscriber ac_pose_desired_left_subscriber;
 };
 
 #endif //TELEOP_VISION_OVERLAYGRAPHICS_H

@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc.hpp>
+#include <pwd.h>
 
 RobotToCameraAruco::RobotToCameraAruco(std::string node_name)
         : calib_finished(true), n(node_name) {
@@ -317,17 +318,22 @@ void RobotToCameraAruco::GetROSParameterValues() {
                                 << n.resolveName("number_of_points_per_axis").c_str()
                                 << "with value " << num_points_per_axis
                                 << " points per axis. ");
+    // ------- load the intrinsic calibration files
+    // get home directory
+    struct passwd *pw = getpwuid(getuid());
+    const char *home_dir = pw->pw_dir;
+    std::string cam_name;
+    if (n.getParam("cam_name", cam_name)) {
 
-    // load the intrinsic calibration file
-    std::string cam_intrinsic_calibration_file_path;
-    if (n.getParam("cam_intrinsic_calibration_file_path",
-                   cam_intrinsic_calibration_file_path)) {
-        ReadCameraParameters(cam_intrinsic_calibration_file_path);
-    } else {
-        ROS_ERROR(
-                "Parameter '%s' is required.",
-                n.resolveName("cam_intrinsic_calibration_file_path").c_str());
-    }
+        std::stringstream path;
+        path << std::string(home_dir) << std::string("/.ros/camera_info/")
+             << cam_name << "_intrinsics.xml";
+        ReadCameraParameters(path.str(), camera_intrinsics);
+    } else
+        ROS_ERROR("%s Parameter '%s' is required. Place the intrinsic calibration "
+                          "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
+                  ros::this_node::getName().c_str(), n.resolveName("cam_name").c_str());
+
 
     // a topic name is required for the images
 
@@ -407,29 +413,28 @@ void RobotToCameraAruco::GetROSParameterValues() {
         throw std::runtime_error("ERROR: some required topics are not set");
 }
 
-void RobotToCameraAruco::ReadCameraParameters(std::string file_path) {
+void RobotToCameraAruco::ReadCameraParameters(const std::string file_path,
+                                           CameraIntrinsics & camera) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
-    ROS_INFO("Reading camera intrinsic data from: '%s'", file_path.c_str());
+    ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
 
     if (!fs.isOpened())
-        throw std::runtime_error(
-                "Unable to read the camera parameters file.");
+        throw std::runtime_error("Unable to read the camera parameters file.");
 
-    fs["camera_matrix"] >> camera_intrinsics.camMatrix;
-    fs["distortion_coefficients"] >> camera_intrinsics.distCoeffs;
+    fs["camera_matrix"] >> camera.camMatrix;
+    fs["distortion_coefficients"] >> camera.distCoeffs;
 
-    // check if we got something
-    if (camera_intrinsics.distCoeffs.empty()) {
-        ROS_ERROR("distortion_coefficients was not found in '%s' ",
-                  file_path.c_str());
-        throw std::runtime_error(
-                "ERROR: Intrinsic camera parameters not found.");
+    // check if we got osomething
+    if(camera.distCoeffs.empty()){
+        ROS_ERROR("distortion_coefficients was not found in '%s' ", file_path.c_str());
+        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
     }
-    if (camera_intrinsics.camMatrix.empty()) {
+    if(camera.camMatrix.empty()){
         ROS_ERROR("camera_matrix was not found in '%s' ", file_path.c_str());
-        throw std::runtime_error(
-                "ERROR: Intrinsic camera parameters not found.");
+        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
     }
+
+
 }
 
 void RobotToCameraAruco::CameraImageCallback(

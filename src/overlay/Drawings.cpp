@@ -2,6 +2,7 @@
 // Created by charm on 3/19/17.
 //
 
+#include <iostream>
 #include "Drawings.h"
 
 
@@ -73,9 +74,11 @@ void DrawingsCV::DrawACPathCV(cv::InputOutputArray image,
                               const cv::Vec3d &rvec, const cv::Vec3d &tvec,
                               const cv::Scalar color){
     if(ac_path.size() > 0) {
+
         std::vector<cv::Point2d> ac_points_2d;
         projectPoints(ac_path, rvec, tvec, cam_intrinsics.camMatrix,
                       cam_intrinsics.distCoeffs, ac_points_2d);
+
         for (int i = 0; i < ac_path.size(); ++i) {
             circle(image, ac_points_2d[i], 2, color, -1);
         }

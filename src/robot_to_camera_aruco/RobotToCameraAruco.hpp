@@ -85,7 +85,8 @@ public:
 private:
     void GetROSParameterValues();
 
-    void ReadCameraParameters(std::string file_path);
+    void ReadCameraParameters(const std::string file_path,
+                              CameraIntrinsics & camera);
 
     // the number of points recorded per axis. default value of 5 is used
     // if no parameter is found on the ros server.

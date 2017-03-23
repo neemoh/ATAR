@@ -13,9 +13,10 @@
 
 int main(int argc, char *argv[]) {
 
-    std::string ros_node_name("extrinsic_aruco");
 
-    ros::init(argc, argv, ros_node_name);
+    ros::init(argc, argv, "extrinsic_aruco");
+    std::string ros_node_name = ros::this_node::getName();
+
     ArucoExtrinsic ae(ros_node_name);
 
     KDL::Frame board_to_cam_frame;
@@ -56,7 +57,7 @@ int main(int argc, char *argv[]) {
             }
 
             if (ae.show_image) {
-                cv::imshow("Aruco extrinsic", ae.image);
+                cv::imshow(ros_node_name, ae.image);
             }
         }
 

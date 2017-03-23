@@ -21,7 +21,9 @@ int main(int argc, char **argv)
 
     OverlayGraphics og (ros::this_node::getName(),720, 576);
 
-    ros::Rate loop_rate(og.ros_freq);
+    // frequency of the generated images is based on the received images
+    // loop_rate is the frequency of spinning and checking for new messages
+    ros::Rate loop_rate(200);
 
     std::string left_window_name = "Overlay Left";
     std::string right_window_name = "Overlay Right";
@@ -29,6 +31,9 @@ int main(int argc, char **argv)
     cvNamedWindow(left_window_name.c_str(),CV_WINDOW_NORMAL);
     cvNamedWindow(right_window_name.c_str(),CV_WINDOW_NORMAL);
     cv::Mat left_image, right_image;
+
+    cv::Scalar color_desired_point(200, 100, 10);
+    cv::Scalar color_ac_path(100, 100, 200);
 
     while (ros::ok())
     {
@@ -57,54 +62,78 @@ int main(int argc, char **argv)
                 ROS_ERROR("Failed to call service stereo_tr_calc_client");
         }
 
+        if(og.new_left_image && og.new_right_image) {
+
+            og.ImageLeft(ros::Duration(1)).copyTo(left_image);
+            og.ImageRight(ros::Duration(1)).copyTo(right_image);
+
+            // --------------------------------------------------------------------------------------
+            // Draw things LEFT
+
+            DrawingsCV::DrawCubeCV(left_image, og.cam_intrinsics[0],
+                                   og.cam_rvec_l, og.cam_tvec_l,
+                                   cv::Point3d(0, 0, 0),
+                                   cv::Point3d(0.0128, 0.0128, 0.04),
+                                   cv::Scalar(200, 100, 10));
+
+            DrawingsCV::DrawCubeCV(left_image, og.cam_intrinsics[0],
+                                   og.cam_rvec_l, og.cam_tvec_l,
+                                   cv::Point3d(6 * 0.0128, 3.6 * 0.0128, 0),
+                                   cv::Point3d(0.0128, 0.0128, 0.04),
+                                   cv::Scalar(10, 100, 200));
+
+            DrawingsCV::DrawToolTipCV(left_image, og.cam_intrinsics[0],
+                                      og.cam_rvec_l, og.cam_tvec_l,
+                                      og.pose_tool2.p,
+                                      cv::Scalar(100, 50, 200));
 
 
-        // --------------------------------------------------------------------------------------
-        // Draw things LEFT
-        og.ImageLeft(ros::Duration(1)).copyTo(left_image);
-        og.ImageRight(ros::Duration(1)).copyTo(right_image);
+            DrawingsCV::DrawACPathCV(left_image, og.ac_path,
+                                     og.cam_intrinsics[0], og.cam_rvec_l,
+                                     og.cam_tvec_l, color_ac_path);
 
-        DrawingsCV::DrawCubeCV(left_image, og.cam_intrinsics[0], og.cam_rvec_l, og.cam_tvec_l,
-                      cv::Point3d(0, 0, 0),
-                      cv::Point3d(0.0128, 0.0128, 0.04),
-                      cv::Scalar(200, 100, 10));
+            // draw desired point right tool
+            DrawingsCV::DrawToolTipCV(left_image, og.cam_intrinsics[0],
+                                      og.cam_rvec_l, og.cam_tvec_l,
+                                      og.pose_desired_r.p,
+                                      color_desired_point);
 
-        DrawingsCV::DrawCubeCV(left_image, og.cam_intrinsics[0], og.cam_rvec_l, og.cam_tvec_l,
-                      cv::Point3d(6 * 0.0128, 3.6 * 0.0128, 0),
-                      cv::Point3d(0.0128, 0.0128, 0.04),
-                      cv::Scalar(100, 100, 200));
+            cv::imshow("Overlay Left", og.ImageLeft());
 
-        DrawingsCV::DrawToolTipCV(left_image, og.cam_intrinsics[0], og.cam_rvec_l, og.cam_tvec_l,
-                         og.pose_tool2.p, cv::Scalar(100, 50, 200));
+            cv::imshow(left_window_name, left_image);
+
+            // --------------------------------------------------------------------------------------
+            //  Draw things RIGHT
+            DrawingsCV::DrawCubeCV(right_image, og.cam_intrinsics[1],
+                                   og.cam_rvec_r, og.cam_tvec_r,
+                                   cv::Point3d(0, 0, 0),
+                                   cv::Point3d(0.0128, 0.0128, 0.04),
+                                   cv::Scalar(200, 100, 10));
+
+            DrawingsCV::DrawCubeCV(right_image, og.cam_intrinsics[1],
+                                   og.cam_rvec_r, og.cam_tvec_r,
+                                   cv::Point3d(6 * 0.0128, 3.6 * 0.0128, 0),
+                                   cv::Point3d(0.0128, 0.0128, 0.04),
+                                   cv::Scalar(10, 100, 200));
+
+            DrawingsCV::DrawToolTipCV(right_image, og.cam_intrinsics[1],
+                                      og.cam_rvec_r, og.cam_tvec_r,
+                                      og.pose_tool2.p,
+                                      cv::Scalar(10, 50, 100));
 
 
-        DrawingsCV::DrawACPathCV(og.ImageLeft(), og.ac_path, og.cam_intrinsics[0], og.cam_rvec_l,
-                                 og.cam_tvec_l, cv::Scalar(100, 50, 200));
 
-        cv::imshow("Overlay Left", og.ImageLeft());
+            DrawingsCV::DrawACPathCV(right_image, og.ac_path,
+                                     og.cam_intrinsics[1], og.cam_rvec_r,
+                                     og.cam_tvec_r, color_ac_path);
+            // draw desired point right tool
+            DrawingsCV::DrawToolTipCV(right_image, og.cam_intrinsics[1],
+                                      og.cam_rvec_r, og.cam_tvec_r,
+                                      og.pose_desired_r.p,
+                                      color_desired_point);
 
-        cv::imshow(left_window_name, left_image);
-
-
-        // Draw things RIGHT
-        DrawingsCV::DrawCubeCV(right_image, og.cam_intrinsics[1], og.cam_rvec_r, og.cam_tvec_r,
-                      cv::Point3d(0, 0, 0),
-                      cv::Point3d(0.0128, 0.0128, 0.04),
-                      cv::Scalar(200, 100, 10));
-
-        DrawingsCV::DrawCubeCV(right_image, og.cam_intrinsics[1], og.cam_rvec_r, og.cam_tvec_r,
-                      cv::Point3d(6 * 0.0128, 3.6 * 0.0128, 0),
-                      cv::Point3d(0.0128, 0.0128, 0.04),
-                      cv::Scalar(100, 100, 200));
-
-        DrawingsCV::DrawToolTipCV(right_image, og.cam_intrinsics[1], og.cam_rvec_r, og.cam_tvec_r,
-                         og.pose_tool2.p, cv::Scalar(100, 50, 200));
-
-        DrawingsCV::DrawACPathCV(og.ImageLeft(), og.ac_path, og.cam_intrinsics[1], og.cam_rvec_r,
-                                 og.cam_tvec_r, cv::Scalar(100, 50, 200));
-
-        cv::imshow(right_window_name, right_image);
-
+            cv::imshow(right_window_name, right_image);
+        }
 
         ros::spinOnce();
         loop_rate.sleep();
