@@ -70,33 +70,38 @@ int main(int argc, char **argv)
             // --------------------------------------------------------------------------------------
             // Draw things LEFT
 
-            DrawingsCV::DrawCubeCV(left_image, og.cam_intrinsics[0],
-                                   og.cam_rvec_l, og.cam_tvec_l,
-                                   cv::Point3d(0, 0, 0),
-                                   cv::Point3d(0.0128, 0.0128, 0.04),
-                                   cv::Scalar(200, 100, 10));
+            DrawingsCV::DrawCube(left_image, og.cam_intrinsics[0],
+                                 og.cam_rvec_l, og.cam_tvec_l,
+                                 cv::Point3d(0, 4 * 0.0128, 0),
+                                 cv::Point3d(0.0128, 0.0128, 0.04),
+                                 cv::Scalar(200, 100, 10));
 
-            DrawingsCV::DrawCubeCV(left_image, og.cam_intrinsics[0],
-                                   og.cam_rvec_l, og.cam_tvec_l,
-                                   cv::Point3d(6 * 0.0128, 3.6 * 0.0128, 0),
-                                   cv::Point3d(0.0128, 0.0128, 0.04),
-                                   cv::Scalar(10, 100, 200));
+            DrawingsCV::DrawCube(left_image, og.cam_intrinsics[0],
+                                 og.cam_rvec_l, og.cam_tvec_l,
+                                 cv::Point3d(6 * 0.0128, 4 * 0.0128, 0),
+                                 cv::Point3d(0.0128, 0.0128, 0.04),
+                                 cv::Scalar(10, 100, 200));
 
-            DrawingsCV::DrawToolTipCV(left_image, og.cam_intrinsics[0],
-                                      og.cam_rvec_l, og.cam_tvec_l,
-                                      og.pose_tool2.p,
-                                      cv::Scalar(100, 50, 200));
+            DrawingsCV::DrawPoint(left_image, og.cam_intrinsics[0],
+                                  og.cam_rvec_l, og.cam_tvec_l,
+                                  og.pose_tool2.p,
+                                  cv::Scalar(100, 50, 200));
 
 
-            DrawingsCV::DrawACPathCV(left_image, og.ac_path,
-                                     og.cam_intrinsics[0], og.cam_rvec_l,
-                                     og.cam_tvec_l, color_ac_path);
+            DrawingsCV::DrawACPath(left_image, og.ac_path,
+                                   og.cam_intrinsics[0], og.cam_rvec_l,
+                                   og.cam_tvec_l, color_ac_path);
 
+            DrawingsCV::DrawCurrentToDesiredLine(left_image, og.cam_intrinsics[0],
+                                                 og.cam_rvec_l, og.cam_tvec_l,
+                                                 og.pose_tool2.p,
+                                                 og.pose_desired_r.p,
+                                                 color_desired_point);
             // draw desired point right tool
-            DrawingsCV::DrawToolTipCV(left_image, og.cam_intrinsics[0],
-                                      og.cam_rvec_l, og.cam_tvec_l,
-                                      og.pose_desired_r.p,
-                                      color_desired_point);
+            DrawingsCV::DrawPoint(left_image, og.cam_intrinsics[0],
+                                  og.cam_rvec_l, og.cam_tvec_l,
+                                  og.pose_desired_r.p,
+                                  color_desired_point);
 
             cv::imshow("Overlay Left", og.ImageLeft());
 
@@ -104,33 +109,39 @@ int main(int argc, char **argv)
 
             // --------------------------------------------------------------------------------------
             //  Draw things RIGHT
-            DrawingsCV::DrawCubeCV(right_image, og.cam_intrinsics[1],
-                                   og.cam_rvec_r, og.cam_tvec_r,
-                                   cv::Point3d(0, 0, 0),
-                                   cv::Point3d(0.0128, 0.0128, 0.04),
-                                   cv::Scalar(200, 100, 10));
+            DrawingsCV::DrawCube(right_image, og.cam_intrinsics[1],
+                                 og.cam_rvec_r, og.cam_tvec_r,
+                                 cv::Point3d(0, 4 * 0.0128, 0),
+                                 cv::Point3d(0.0128, 0.0128, 0.04),
+                                 cv::Scalar(200, 100, 10));
 
-            DrawingsCV::DrawCubeCV(right_image, og.cam_intrinsics[1],
-                                   og.cam_rvec_r, og.cam_tvec_r,
-                                   cv::Point3d(6 * 0.0128, 3.6 * 0.0128, 0),
-                                   cv::Point3d(0.0128, 0.0128, 0.04),
-                                   cv::Scalar(10, 100, 200));
+            DrawingsCV::DrawCube(right_image, og.cam_intrinsics[1],
+                                 og.cam_rvec_r, og.cam_tvec_r,
+                                 cv::Point3d(6 * 0.0128, 4 * 0.0128, 0),
+                                 cv::Point3d(0.0128, 0.0128, 0.04),
+                                 cv::Scalar(10, 100, 200));
 
-            DrawingsCV::DrawToolTipCV(right_image, og.cam_intrinsics[1],
-                                      og.cam_rvec_r, og.cam_tvec_r,
-                                      og.pose_tool2.p,
-                                      cv::Scalar(10, 50, 100));
+            DrawingsCV::DrawPoint(right_image, og.cam_intrinsics[1],
+                                  og.cam_rvec_r, og.cam_tvec_r,
+                                  og.pose_tool2.p,
+                                  cv::Scalar(10, 50, 100));
 
 
+            DrawingsCV::DrawCurrentToDesiredLine(right_image, og.cam_intrinsics[1],
+                                                 og.cam_rvec_r, og.cam_tvec_r,
+                                                 og.pose_tool2.p,
+                                                 og.pose_desired_r.p,
+                                                 color_desired_point);
 
-            DrawingsCV::DrawACPathCV(right_image, og.ac_path,
+            DrawingsCV::DrawACPath(right_image, og.ac_path,
                                      og.cam_intrinsics[1], og.cam_rvec_r,
                                      og.cam_tvec_r, color_ac_path);
+
             // draw desired point right tool
-            DrawingsCV::DrawToolTipCV(right_image, og.cam_intrinsics[1],
-                                      og.cam_rvec_r, og.cam_tvec_r,
-                                      og.pose_desired_r.p,
-                                      color_desired_point);
+            DrawingsCV::DrawPoint(right_image, og.cam_intrinsics[1],
+                                  og.cam_rvec_r, og.cam_tvec_r,
+                                  og.pose_desired_r.p,
+                                  color_desired_point);
 
             cv::imshow(right_window_name, right_image);
         }

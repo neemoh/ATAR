@@ -137,40 +137,39 @@ void OverlayGraphics::SetupROS() {
     if(num_cam_pose_publishers < 2){
 
         std::vector<double> left_to_right_cam_transform = std::vector<double>(7, 0.0);
-        if(n.getParam("left_cam_to_right_cam_transform", left_to_right_cam_transform))
+        if(n.getParam("/left_cam_to_right_cam_transform", left_to_right_cam_transform))
             conversions::VectorToKDLFrame(left_to_right_cam_transform, left_cam_to_right_cam_tr);
         else
             ROS_ERROR("%s Expecting %d camera pose publishers. "
-                              " Parameter %s is not set. If both of the camera poses are not "
+                              " Parameter /left_cam_to_right_cam_transform is not set. If both of the camera poses are not "
                               "published this parameter is needed.",
-                      ros::this_node::getName().c_str(), num_cam_pose_publishers,
-                      n.resolveName("left_cam_to_right_cam_transform").c_str());
+                      ros::this_node::getName().c_str(), num_cam_pose_publishers);
     }
 
     if (num_cam_pose_publishers == 0) {
         // fixed case
         std::vector<double> taskspace_to_left_cam_transform = std::vector<double>(
                 7, 0.0);
-        if (n.getParam("taskspace_to_left_cam_transform",
+        if (n.getParam("/taskspace_to_left_cam_transform",
                        taskspace_to_left_cam_transform)) {
             conversions::VectorToKDLFrame(taskspace_to_left_cam_transform,
                                           pose_cam_l);
             conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec_l, cam_tvec_l);
         } else
             ROS_ERROR("%s Expecting 0 camera pose publishers. Parameter "
-                              "taskspace_to_left_cam_transform is not set.",
+                              "/taskspace_to_left_cam_transform is not set.",
                       ros::this_node::getName().c_str());
 
         std::vector<double> taskspace_to_right_cam_transform = std::vector<double>(
                 7, 0.0);
-        if (n.getParam("taskspace_to_right_cam_transform",
+        if (n.getParam("/taskspace_to_right_cam_transform",
                        taskspace_to_right_cam_transform)) {
             conversions::VectorToKDLFrame(taskspace_to_right_cam_transform,
                                           pose_cam_r);
             conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec_r, cam_tvec_r);
         } else
             ROS_ERROR("%s [SUBSCRIBERS] Expecting 0 camera pose publishers. "
-                              " Parameter taskspace_to_right_cam_transform is not set.",
+                              " Parameter /taskspace_to_right_cam_transform is not set.",
                       ros::this_node::getName().c_str());
 
     }
@@ -211,14 +210,14 @@ void OverlayGraphics::SetupROS() {
                 if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
                         right_cam_pose_topic_name, ros::Duration(4)))
                     ROS_WARN("%s parameter was not provided and topic '%s' is not being published yet.",
-                             n.resolveName("left_cam_to_right_cam_transform").c_str(),
+                             n.resolveName("right_cam_pose_topic_name").c_str(),
                              right_cam_pose_topic_name.c_str());
                 else
                     ROS_INFO("%s [SUBSCRIBERS] Right camera pose will be read from topic '%s'",
                              ros::this_node::getName().c_str(),
                              n.resolveName(right_cam_pose_topic_name).c_str());
             } else {
-                ROS_ERROR("Since left_cam_to_right_cam_transform parameter was not provided"
+                ROS_ERROR("Since right_cam_pose_topic_name parameter was not provided"
                                   "parameter '%s' is required.", n.resolveName("right_cam_pose_topic_name").c_str());
                 all_required_params_found = false;
             }
@@ -258,7 +257,6 @@ void OverlayGraphics::SetupROS() {
     if(!n.getParam("/taskspace_to_PSM2_tr", taskspace_to_psm2_vec))
         ROS_WARN("%s Parameter /taskspace_to_PSM2_tr is not set. This parameter is required"
                          "if PSM2 is used.",ros::this_node::getName().c_str());
-
     conversions::VectorToKDLFrame(taskspace_to_psm2_vec, taskspace_to_psm2_tr);
 
     //--------
