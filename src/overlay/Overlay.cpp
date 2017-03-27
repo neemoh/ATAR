@@ -195,7 +195,7 @@ void OverlayGraphics::SetupROS() {
                       n.resolveName("left_cam_pose_topic_name").c_str());
             all_required_params_found = false;
         }
-        camera_pose_subscriber_left = n.subscribe(
+        subscriber_camera_pose_left = n.subscribe(
                 left_cam_pose_topic_name, 1, &OverlayGraphics::LeftCamPoseCallback,
                 this);
 
@@ -221,7 +221,7 @@ void OverlayGraphics::SetupROS() {
                                   "parameter '%s' is required.", n.resolveName("right_cam_pose_topic_name").c_str());
                 all_required_params_found = false;
             }
-            camera_pose_subscriber_right = n.subscribe(
+            subscriber_camera_pose_right = n.subscribe(
                     right_cam_pose_topic_name, 1, &OverlayGraphics::RightCamPoseCallback, this);
 
 
@@ -262,7 +262,7 @@ void OverlayGraphics::SetupROS() {
     //--------
     // PSM1 pose subscriber.
     std::string psm1_pose_topic_name = "/dvrk/PSM1/position_cartesian_current";
-    psm1_pose_sub =
+    subscriber_pose_psm1 =
             n.subscribe(psm1_pose_topic_name, 2,
                         &OverlayGraphics::Tool1PoseCallback, this);
     ROS_INFO("%s [SUBSCRIBERS] Tool 1 pose will be read from topic '%s'",
@@ -272,7 +272,7 @@ void OverlayGraphics::SetupROS() {
     //--------
     // PSM2 pose subscriber.
     std::string psm2_pose_topic_name = "/dvrk/PSM2/position_cartesian_current";
-    psm2_pose_sub =
+    subscriber_pose__sub =
             n.subscribe(psm2_pose_topic_name, 2,
                         &OverlayGraphics::Tool2PoseCallback, this);
     ROS_INFO("%s [SUBSCRIBERS] Tool 2 pose will be read from topic '%s'",
@@ -282,7 +282,7 @@ void OverlayGraphics::SetupROS() {
 
     //--------
     // PSM2 pose subscriber.
-    ac_path_subscriber = n.subscribe("/ac_path", 1, &OverlayGraphics::ACPathCallback, this);
+    subscriber_ac_path = n.subscribe("/ac_path", 1, &OverlayGraphics::ACPathCallback, this);
 
     ac_pose_desired_right_subscriber = n.subscribe("/PSM2/tool_pose_desired", 1,
                                              &OverlayGraphics::ACPoseDesiredRightCallback, this);

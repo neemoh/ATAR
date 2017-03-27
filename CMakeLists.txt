@@ -196,7 +196,19 @@ target_link_libraries(
         ${catkin_LIBRARIES}
         arucoUtils)
 
-
+add_executable(
+        ac_overlay
+        src/ac_overlay/main_ac_overlay.cpp
+        src/ac_overlay/ACOverlay.cpp
+        src/ac_overlay/ACOverlay.h
+        src/ac_overlay/Drawings.cpp
+        src/ac_overlay/Drawings.h
+)
+target_link_libraries(
+        ac_overlay
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES}
+        arucoUtils)
 
 
 set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco )

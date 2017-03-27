@@ -4,7 +4,7 @@
 #include <ros/xmlrpc_manager.h>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
-#include <opencv-3.2.0/opencv2/imgproc.hpp>
+#include <opencv2/imgproc.hpp>
 #include "Fla3Camera.h"
 
 // Signal-safe flag for whether shutdown is requested
