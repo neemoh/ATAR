@@ -85,6 +85,7 @@ void DrawingsCV::DrawACPath(cv::InputOutputArray image,
     }
 }
 
+
 void DrawingsCV::DrawCurrentToDesiredLine(cv::InputOutputArray image,
                                           const CameraIntrinsics &cam_intrinsics,
                                           const cv::Vec3d &rvec,
@@ -103,5 +104,6 @@ void DrawingsCV::DrawCurrentToDesiredLine(cv::InputOutputArray image,
     line(image, points_2d[0], points_2d[1], color, 2, CV_AA);
 
     circle(image, points_2d[0], 5, color, -1);
+    circle(image, points_2d[1], 5, color, -1);
 
 }

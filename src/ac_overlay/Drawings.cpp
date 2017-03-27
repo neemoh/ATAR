@@ -2,16 +2,17 @@
 // Created by charm on 3/19/17.
 //
 
+#include <iostream>
 #include "Drawings.h"
 
 
-void DrawingsCV::DrawCubeCV(cv::InputOutputArray image,
-                            const CameraIntrinsics &cam_intrinsics,
-                            const cv::Vec3d &rvec,
-                            const cv::Vec3d &tvec,
-                            const cv::Point3d &origin,
-                            const cv::Point3d &whd,
-                            const cv::Scalar &color){
+void DrawingsCV::DrawCube(cv::InputOutputArray image,
+                          const CameraIntrinsics &cam_intrinsics,
+                          const cv::Vec3d &rvec,
+                          const cv::Vec3d &tvec,
+                          const cv::Point3d &origin,
+                          const cv::Point3d &whd,
+                          const cv::Scalar &color){
 
     CV_Assert(image.getMat().total() != 0 &&
               (image.getMat().channels() == 1 || image.getMat().channels() == 3));
@@ -37,7 +38,7 @@ void DrawingsCV::DrawCubeCV(cv::InputOutputArray image,
     int points[7] = {0, 1, 2, 4, 5, 6};
     for (int i = 0; i < 6; i++) {
         cv::line(image, imagePoints[points[i]], imagePoints[points[i] + 1],
-             color, 2, CV_AA);
+                 color, 2, CV_AA);
     }
     for (int i = 0; i < 4; i++) {
         line(image, imagePoints[i], imagePoints[i + 4], color, 2, CV_AA);
@@ -48,12 +49,12 @@ void DrawingsCV::DrawCubeCV(cv::InputOutputArray image,
 }
 
 
-void DrawingsCV::DrawToolTipCV(cv::InputOutputArray image,
-                               const CameraIntrinsics &cam_intrinsics,
-                               const cv::Vec3d &rvec,
-                               const cv::Vec3d &tvec,
-                               KDL::Vector position,
-                               const cv::Scalar color) {
+void DrawingsCV::DrawPoint(cv::InputOutputArray image,
+                           const CameraIntrinsics &cam_intrinsics,
+                           const cv::Vec3d &rvec,
+                           const cv::Vec3d &tvec,
+                           KDL::Vector position,
+                           const cv::Scalar color) {
 
     std::vector<cv::Point3d> toolPoint3d_vec_crf;
     std::vector<cv::Point2d> toolPoint2d;
@@ -67,18 +68,40 @@ void DrawingsCV::DrawToolTipCV(cv::InputOutputArray image,
 
 
 
-void DrawingsCV::DrawACPathCV(cv::InputOutputArray image,
-                              const std::vector<cv::Point3d> &ac_path,
-                              const CameraIntrinsics &cam_intrinsics,
-                              const cv::Vec3d &rvec, const cv::Vec3d &tvec,
-                              const cv::Scalar color){
+void DrawingsCV::DrawACPath(cv::InputOutputArray image,
+                            const std::vector<cv::Point3d> &ac_path,
+                            const CameraIntrinsics &cam_intrinsics,
+                            const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+                            const cv::Scalar color){
     if(ac_path.size() > 0) {
+
         std::vector<cv::Point2d> ac_points_2d;
         projectPoints(ac_path, rvec, tvec, cam_intrinsics.camMatrix,
                       cam_intrinsics.distCoeffs, ac_points_2d);
+
         for (int i = 0; i < ac_path.size(); ++i) {
             circle(image, ac_points_2d[i], 2, color, -1);
         }
     }
 }
 
+void DrawingsCV::DrawCurrentToDesiredLine(cv::InputOutputArray image,
+                                          const CameraIntrinsics &cam_intrinsics,
+                                          const cv::Vec3d &rvec,
+                                          const cv::Vec3d &tvec,
+                                          KDL::Vector current,
+                                          KDL::Vector desired,
+                                          const cv::Scalar color) {
+
+    std::vector<cv::Point3d> points_3d;
+    std::vector<cv::Point2d> points_2d;
+    points_3d.push_back(cv::Point3d(current[0] , current[1] , current[2]));
+    points_3d.push_back(cv::Point3d(desired[0] , desired[1] , desired[2]));
+
+    projectPoints(points_3d, rvec, tvec, cam_intrinsics.camMatrix,
+                  cam_intrinsics.distCoeffs, points_2d);
+    line(image, points_2d[0], points_2d[1], color, 2, CV_AA);
+
+    circle(image, points_2d[0], 5, color, -1);
+
+}
