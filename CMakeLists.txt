@@ -197,6 +197,16 @@ target_link_libraries(
         arucoUtils)
 
 add_executable(
+        stereo_image_view
+        src/stereo_image_view/main_stereo_image_view.cpp
+)
+target_link_libraries(
+        stereo_image_view
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES}
+        )
+
+add_executable(
         ac_overlay
         src/ac_overlay/main_ac_overlay.cpp
         src/ac_overlay/ACOverlay.cpp
