@@ -76,7 +76,10 @@ public:
     //overlay image publishers
     image_transport::Publisher publisher_overlayed[2];
 
-
+    void drawAxisAntiAliased(
+            const cv::InputOutputArray &_image, const CameraIntrinsics &cam_intrinsics,
+            const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+            float length);
 public:
     // IN ALL CODE 0 is Left, 1 is Right
     // ----------------------------------

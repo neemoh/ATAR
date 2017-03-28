@@ -77,7 +77,11 @@ int main(int argc, char **argv)
         if (key == 27) // Esc
             ros::shutdown();
         else if (key == 'f')  //full screen
+        {
             SwitchFullScreen(window_name[0]);
+            SwitchFullScreen(window_name[1]);
+        }
+
 
 
         if(new_left_image && new_right_image) {

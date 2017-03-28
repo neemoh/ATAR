@@ -39,16 +39,24 @@ int main(int argc, char **argv)
     Tasks selected_task = Tasks::None;
 
     std::vector<cv::Point3d> targets;
-    targets.push_back(cv::Point3d(0.020,  0.05, 0.0));
-    targets.push_back(cv::Point3d(0.025,  0.06, 0.01));
-    targets.push_back(cv::Point3d(0.030,  0.025, 0.0));
-    targets.push_back(cv::Point3d(0.035,  0.035, 0.0));
-    targets.push_back(cv::Point3d(0.050,  0.06, 0.02));
-    targets.push_back(cv::Point3d(0.030,  0.07, 0.02));
+    double h = 0.0265;
+    double w = 0.025;
+    targets.push_back(cv::Point3d(0.013      ,  0.028, 0.026));
+    targets.push_back(cv::Point3d(0.013 + 1*h,  0.028, 0.026));
+    targets.push_back(cv::Point3d(0.013 + 2*h,  0.028, 0.026));
+    targets.push_back(cv::Point3d(0.013      ,  0.028 + 1*w, 0.026));
+    targets.push_back(cv::Point3d(0.013+ 1*h ,  0.028 + 1*w, 0.026));
+    targets.push_back(cv::Point3d(0.011+ 2*h ,  0.028 + 1*w, 0.026));
+
+//    targets.push_back(cv::Point3d(0.030,  0.025, 0.026));
+//    targets.push_back(cv::Point3d(0.035,  0.035, 0.026));
+//    targets.push_back(cv::Point3d(0.050,  0.06, 0.026));
+//    targets.push_back(cv::Point3d(0.030,  0.07, 0.026));
 
     MultiplePathsTask::Status task_state = MultiplePathsTask::Status::Ready;
 
     std::vector<cv::Point3d> ac_path_in_use;
+    size_t selected_ac = 0;
 
 
     while (ros::ok())
@@ -79,12 +87,16 @@ int main(int argc, char **argv)
         else if (key == '1'){
             ROS_INFO("Task 1 Selected");
             selected_task = Tasks::CricleAC;
-            SimpleACs::GenerateXYCircle(KDL::Vector(0.045, 0.03, 0.0), 0.025, 200, ac_path_in_use);
+            SimpleACs::GenerateXYCircle(KDL::Vector(0.045, 0.04, 0.04), 0.025, 200, ac_path_in_use);
         }
         else if (key == '2'){
             ROS_INFO("Task 2 Selected");
             selected_task = Tasks::MultiplePaths;
             task_state = MultiplePathsTask::Status::Ready;
+        }
+        else if (key == '0'){
+            ROS_INFO("No task Selected");
+            selected_task = Tasks::None;
         }
 
         if(ao.new_left_image && ao.new_right_image) {
@@ -96,7 +108,6 @@ int main(int argc, char **argv)
             // task -------------------------------
 
             if (selected_task == Tasks::MultiplePaths) {
-                size_t selected_ac = 0;
                 if (task_state == MultiplePathsTask::Status::Ready) {
 
                     // find the closest destination
@@ -108,14 +119,20 @@ int main(int argc, char **argv)
                                                         ao.cam_rvec[i], ao.cam_tvec[i], ao.pose_tool2.p,
                                                         targets, selected_ac,
                                                         color_ac_path_selected, color_ac_path);
+                        std::stringstream msg;
+                        msg <<"Select target. "  << targets.size()<<" to go.";
+                        cv::putText(cam_images[i], msg.str(), cv::Point(50, 50), 0, 1, cv::Scalar(20, 150, 20),2);
+
                     }
 
                     //if foot switch pressed select the current ac
                     if (ao.foot_switch_pressed == 1) {
-                        task_state = MultiplePathsTask::Status::ACSelected;
                         // generate points of the selected ac path
                         MultiplePathsTask::GeneratePathPoints(ao.pose_tool2.p, targets[selected_ac],
                                                               ac_path_in_use);
+                        std::cout <<"Selected target "<< selected_ac << std::endl;
+                        task_state = MultiplePathsTask::Status::ACSelected;
+
                     }
                 }
 
@@ -127,6 +144,14 @@ int main(int argc, char **argv)
                         DrawingsCV::DrawACPath(cam_images[i], ac_path_in_use,
                                                ao.cam_intrinsics[i], ao.cam_rvec[i],
                                                ao.cam_tvec[i], color_ac_path_selected);
+                        // draw target point
+                        DrawingsCV::DrawPoint(cam_images[i],
+                                              ao.cam_intrinsics[i], ao.cam_rvec[i],
+                                              ao.cam_tvec[i],
+                                              KDL::Vector(targets[selected_ac].x,
+                                                          targets[selected_ac].y,
+                                                          targets[selected_ac].z),
+                                              color_ac_path_selected);
 
                         DrawingsCV::DrawCurrentToDesiredLine(cam_images[i], ao.cam_intrinsics[i],
                                                              ao.cam_rvec[i], ao.cam_tvec[i],
@@ -140,12 +165,13 @@ int main(int argc, char **argv)
                                             targets[selected_ac].y - ao.pose_tool2.p[1],
                                             targets[selected_ac].z - ao.pose_tool2.p[2]);
 
-                    if (dist_target.Norm() < 0.01) {
+                    if (dist_target.Norm() < 0.003) {
                         // flag the end of the subtask
                         task_state = MultiplePathsTask::Status::Finished;
                         //remove the reached target
                         targets.erase(targets.begin() + selected_ac);
-                        std::cout <<"Target Reached" <<  std::endl;
+                        std::cout <<"Target "<<selected_ac <<" Reached. "
+                                  << targets.size()<<" more to go." << std::endl;
 
                     }
                 }
@@ -156,13 +182,11 @@ int main(int argc, char **argv)
                     KDL::Vector dist_target(targets[0].x - ao.pose_tool2.p[0],
                                             targets[0].y - ao.pose_tool2.p[1],
                                             targets[0].z - ao.pose_tool2.p[2]);
-                    std::cout <<"dist_target.Norm()" << dist_target.Norm() <<  std::endl;
+                    //std::cout <<"dist_target.Norm()" << dist_target.Norm() <<  std::endl;
 
-                    if (dist_target.Norm() > 0.05) {
+                    if (dist_target.Norm() > 0.035) {
                         // flag the end of the subtask
                         task_state = MultiplePathsTask::Status::Ready;
-                        //remove the reached target
-                        targets.erase(targets.begin() + selected_ac);
                     }
                 }
             } else if (selected_task == Tasks::CricleAC) {
@@ -194,6 +218,12 @@ int main(int argc, char **argv)
 //                                     cv::Scalar(200, 100, 10));
 //            }
 
+
+            for (int j = 0; j <2 ; ++j) {
+                ao.drawAxisAntiAliased(cam_images[j], ao.cam_intrinsics[j],
+                                       ao.cam_rvec[j], ao.cam_tvec[j], 0.02);
+            }
+
             for (int j = 0; j <2 ; ++j) {
                 cv::imshow(window_name[j], cam_images[j]);
                 ao.publisher_overlayed[j].publish(
@@ -208,6 +238,8 @@ int main(int argc, char **argv)
                 out.header.frame_id = "/task_space";
                 ao.publisher_ac_path.publish(out);
             }
+
+
         }
 
         ros::spinOnce();
