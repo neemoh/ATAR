@@ -219,7 +219,6 @@ void ACOverlay::SetupROS() {
             subscriber_camera_pose_right = n.subscribe(
                     right_cam_pose_topic_name, 1, &ACOverlay::RightCamPoseCallback, this);
 
-
             //----------
             // to find the transformation between the cameras we defined a simple service.
             stereo_tr_calc_client =

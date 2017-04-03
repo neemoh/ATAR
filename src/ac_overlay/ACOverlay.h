@@ -144,7 +144,7 @@ namespace SimpleACs {
 
 namespace MultiplePathsTask {
     enum class Status {
-        Ready, ACSelected, Finished
+        Ready, ACSelected, SubTaskFinished, TaskFinished
     };
 
 
