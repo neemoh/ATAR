@@ -135,17 +135,18 @@ int main(int argc, char **argv)
             DrawingsCV::DrawACPath(right_image, og.ac_path,
                                      og.cam_intrinsics[1], og.cam_rvec_r,
                                      og.cam_tvec_r, color_ac_path);
-        // Publish the overlays
-        if (og.IsROSOVerlayEnabled()) {
-            og.PublishOverlayLeft(left_image);
-            og.PublishOverlayRight(right_image);
-        }
 
             // draw desired point right tool
             DrawingsCV::DrawPoint(right_image, og.cam_intrinsics[1],
                                   og.cam_rvec_r, og.cam_tvec_r,
                                   og.pose_desired_r.p,
                                   color_desired_point);
+
+            // Publish the overlays to ROS
+            if (og.IsROSOverlayEnabled()) {
+                og.PublishOverlayLeft(left_image);
+                og.PublishOverlayRight(right_image);
+            }
 
             cv::imshow(right_window_name, right_image);
         }

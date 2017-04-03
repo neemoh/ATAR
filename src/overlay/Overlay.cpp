@@ -198,7 +198,7 @@ void OverlayGraphics::SetupROS() {
                       n.resolveName("left_cam_pose_topic_name").c_str());
             all_required_params_found = false;
         }
-        subscriber_camera_pose_left = n.subscribe(
+        camera_pose_subscriber_left = n.subscribe(
                 left_cam_pose_topic_name, 1, &OverlayGraphics::LeftCamPoseCallback,
                 this);
 
@@ -224,7 +224,7 @@ void OverlayGraphics::SetupROS() {
                                   "parameter '%s' is required.", n.resolveName("right_cam_pose_topic_name").c_str());
                 all_required_params_found = false;
             }
-            subscriber_camera_pose_right = n.subscribe(
+            camera_pose_subscriber_right = n.subscribe(
                     right_cam_pose_topic_name, 1, &OverlayGraphics::RightCamPoseCallback, this);
 
 

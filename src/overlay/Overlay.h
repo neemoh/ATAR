@@ -67,7 +67,7 @@ public:
     void PublishOverlayRight(const cv::Mat & img);
     void PublishOverlayLeft(const cv::Mat & img);
 
-    const bool IsROSOVerlayEnabled() const { return use_ros_overlay; }
+    const bool IsROSOverlayEnabled() const { return use_ros_overlay; }
 
 public:
 
@@ -106,6 +106,9 @@ private:
     bool use_ros_overlay = false;
     image_transport::Publisher overlay_image_left;
     image_transport::Publisher overlay_image_right;
+
+    ros::Subscriber camera_pose_subscriber_left;
+    ros::Subscriber camera_pose_subscriber_right;
 
     ros::Subscriber subscriber_pose_psm1;
     ros::Subscriber subscriber_pose__sub;
