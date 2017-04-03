@@ -1,11 +1,13 @@
 <launch>
-    <arg name="Slave1Name" value="PSM2"/>
-    <arg name="Slave2Name" value="PSM1"/>
-    <arg name="Master1Name" value="MTMR"/>
-    <arg name="Master2Name" value="MTML"/>
-    <arg name="camera_name" value="camera"/>
+    <arg name="slave_1_name" value="PSM2"/>
+    <arg name="slave_2_name" value="PSM1"/>
+    <arg name="master_1_name" value="MTMR"/>
+    <arg name="master_2_name" value="MTML"/>
+    <arg name="camera_namespace" value="camera"/>
     <arg name= "left_cam_name" value= "flea14150439" />
     <arg name= "right_cam_name" value= "flea14150441" />
+
+    <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space-->
     <group ns="calibrations">
         <rosparam command="load" file="$(find teleop_vision)/launch/params_overlay.yaml" />
     </group>
@@ -14,33 +16,57 @@
 
     <node pkg="teleop_vision" type="camera_capture_flea3" name="camera" output="screen"> </node>
 
+    <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="teleop_vision" type="ac_overlay" name="ac_overlay" output="screen">
+        <!-- About num_cam_pose_publishers:
+            // We need to know the pose of the cameras with respect to the task-space coordinates.
+            // If the camera or the markers move, the pose should be estimated by a node and here we
+            // subscribe to that topic. If on the other hand no cam/marker motion is involved the
+            // fixed pose is read as a static parameter.
+            //
+            // when num_cam_pose_publishers ==0 : everything fixed. no pose is being published we
+            // read the pose of the left cam and derive the pose of the right one using the
+            // left_to_right transform.
+            //
+            // when num_cam_pose_publishers ==1 : left cam pose is published and right one is derived
+            // using the left_to_right transform.
+            //
+            // when num_cam_pose_publishers ==2 : both poses are published.
+        -->
         <param name= "num_cam_pose_publishers" value= "0"/>
+        <!-- About left?right_cam_name: expecting to find Place the intrinsic calibration
+             file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml -->
         <param name= "left_cam_name" value= "$(arg left_cam_name)" />
         <param name= "right_cam_name" value= "$(arg left_cam_name)" /> <!-- ATTENTION!!!! Using the same file for right due to a problem with my right camera-->
-        <param name= "left_image_topic_name" value= "/$(arg camera_name)/left/image_color" />
-        <param name= "right_image_topic_name" value= "/$(arg camera_name)/right/image_color"/>
-        <param name= "left_cam_pose_topic_name" value= "/$(arg camera_name)/left/board_to_camera "/>
-        <param name= "right_cam_pose_topic_name" value= "/$(arg camera_name)/right/board_to_camera "/>
+        <param name= "left_image_topic_name" value= "/$(arg camera_namespace)/left/image_color" />
+        <param name= "right_image_topic_name" value= "/$(arg camera_namespace)/right/image_color"/>
+        <param name= "left_cam_pose_topic_name" value= "/$(arg camera_namespace)/left/board_to_camera "/>
+        <param name= "right_cam_pose_topic_name" value= "/$(arg camera_namespace)/right/board_to_camera "/>
         <param name= "frequency" value= "30" />
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
+    <!-- After some re-structuring of the architecture the dvrk_active_constraint_geomerty_generation
+        node is not doing much right now and it will be soon removed.
+    -->
     <node pkg="active_constraints" type="dvrk_active_constraint_geomerty_generation" name="dvrk_ac_geom" output="screen">
         <param name="number_of_arms" value="1"/>
-        <param name="slave_1_name" value="$(arg Slave1Name)"/>
-        <param name="slave_2_name" value="$(arg Slave2Name)"/>
-        <param name="master_1_name" value="$(arg Master1Name)"/>
-        <param name="master_2_name" value="$(arg Master2Name)"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
         <param name="node_frequency" value="100"/>
 
     </node>
 
+    <!-- The dvrk_active_constraint_enforcement node generates force based on the received desired pose and
+        current pose of each master/slave couple.
+    -->
     <node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">
-        <param name="slave_1_name" value="$(arg Slave1Name)"/>
-        <param name="slave_2_name" value="$(arg Slave2Name)"/>
-        <param name="master_1_name" value="$(arg Master1Name)"/>
-        <param name="master_2_name" value="$(arg Master2Name)"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
         <param name="node_frequency" value="100"/>
 
     </node>

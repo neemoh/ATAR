@@ -54,6 +54,10 @@ void ACOverlay::ReadCameraParameters(const std::string file_path,
 
 void ACOverlay::SetupROS() {
 
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+        ros::console::notifyLoggerLevelsChanged();
+    }
+
     bool all_required_params_found = true;
 
     // ------- load the intrinsic calibration files
@@ -70,9 +74,8 @@ void ACOverlay::SetupROS() {
         ReadCameraParameters(path.str(), cam_intrinsics[0]);
     } else
         ROS_ERROR(
-                "%s Parameter '%s' is required. Place the intrinsic calibration "
+                "Parameter '%s' is required. Place the intrinsic calibration "
                         "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
-                ros::this_node::getName().c_str(),
                 n.resolveName("left_cam_name").c_str());
 
     std::string right_cam_name;
@@ -83,9 +86,8 @@ void ACOverlay::SetupROS() {
         ReadCameraParameters(path.str(), cam_intrinsics[1]);
     } else
         ROS_ERROR(
-                "%s Parameter '%s' is required. Place the intrinsic calibration "
+                "Parameter '%s' is required. Place the intrinsic calibration "
                         "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
-                ros::this_node::getName().c_str(),
                 n.resolveName("right_cam_name").c_str());
 
 
@@ -94,8 +96,7 @@ void ACOverlay::SetupROS() {
     std::string left_image_topic_name = "/camera/left/image_color";;
     if (n.getParam("left_image_topic_name", left_image_topic_name))
         ROS_INFO(
-                "%s [SUBSCRIBERS] Left camera images will be read from topic '%s'",
-                ros::this_node::getName().c_str(),
+                "[SUBSCRIBERS] Left camera images will be read from topic '%s'",
                 left_image_topic_name.c_str());
     image_subscribers[0] = it->subscribe(
             left_image_topic_name, 1, &ACOverlay::ImageLeftCallback,
@@ -106,8 +107,7 @@ void ACOverlay::SetupROS() {
     std::string right_image_topic_name = "/camera/right/image_color";
     if (n.getParam("right_image_topic_name", right_image_topic_name))
         ROS_INFO(
-                "%s [SUBSCRIBERS] Right camera images will be read from topic '%s'",
-                ros::this_node::getName().c_str(),
+                "[SUBSCRIBERS] Right camera images will be read from topic '%s'",
                 right_image_topic_name.c_str());
     image_subscribers[1] = it->subscribe(
             right_image_topic_name, 1, &ACOverlay::ImageRightCallback,
@@ -140,10 +140,10 @@ void ACOverlay::SetupROS() {
         if(n.getParam("/calibrations/left_cam_frame_to_right_cam_frame", left_to_right_cam_transform))
             conversions::VectorToKDLFrame(left_to_right_cam_transform, left_cam_to_right_cam_tr);
         else
-            ROS_ERROR("%s Expecting %d camera pose publishers. "
+            ROS_ERROR("Expecting %d camera pose publishers. "
                               " Parameter /calibrations/left_cam_frame_to_right_cam_frame is not set. If both of the camera poses are not "
                               "published this parameter is needed.",
-                      ros::this_node::getName().c_str(), num_cam_pose_publishers);
+                       num_cam_pose_publishers);
     }
 
     if (num_cam_pose_publishers == 0) {
@@ -156,9 +156,8 @@ void ACOverlay::SetupROS() {
                                           pose_cam_l);
             conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec[0], cam_tvec[0]);
         } else
-            ROS_ERROR("%s Expecting 0 camera pose publishers. Parameter "
-                              "/calibrations/task_frame_to_left_cam_frame is not set.",
-                      ros::this_node::getName().c_str());
+            ROS_ERROR("Expecting 0 camera pose publishers. Parameter "
+                              "/calibrations/task_frame_to_left_cam_frame is not set.");
 
         std::vector<double> task_frame_to_right_cam_frame = std::vector<double>(
                 7, 0.0);
@@ -168,9 +167,8 @@ void ACOverlay::SetupROS() {
                                           pose_cam_r);
             conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec[1], cam_tvec[1]);
         } else
-            ROS_ERROR("%s [SUBSCRIBERS] Expecting 0 camera pose publishers. "
-                              "Parameter /calibrations/task_frame_to_right_cam_frame is not set.",
-                      ros::this_node::getName().c_str());
+            ROS_ERROR("[SUBSCRIBERS] Expecting 0 camera pose publishers. "
+                              "Parameter /calibrations/task_frame_to_right_cam_frame is not set.");
 
     }
     else if (num_cam_pose_publishers == 1 || num_cam_pose_publishers == 2){
@@ -181,17 +179,14 @@ void ACOverlay::SetupROS() {
             // if the topic name is found, check if something is being published on it
             if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
                     left_cam_pose_topic_name, ros::Duration(4))) {
-                ROS_WARN("%s: Topic '%s' is not publishing.",
-                         ros::this_node::getName().c_str(),
+                ROS_WARN("Topic '%s' is not publishing.",
                          n.resolveName(left_cam_pose_topic_name).c_str());
             } else
                 ROS_INFO(
-                        "%s [SUBSCRIBERS] Left camera pose will be read from topic '%s'",
-                        ros::this_node::getName().c_str(),
+                        "[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
                         n.resolveName(left_cam_pose_topic_name).c_str());
         } else {
-            ROS_ERROR("%s:Parameter '%s' is required.",
-                      ros::this_node::getName().c_str(),
+            ROS_ERROR("Parameter '%s' is required.",
                       n.resolveName("left_cam_pose_topic_name").c_str());
             all_required_params_found = false;
         }
@@ -213,8 +208,8 @@ void ACOverlay::SetupROS() {
                              n.resolveName("right_cam_pose_topic_name").c_str(),
                              right_cam_pose_topic_name.c_str());
                 else
-                    ROS_INFO("%s [SUBSCRIBERS] Right camera pose will be read from topic '%s'",
-                             ros::this_node::getName().c_str(),
+                    ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
+
                              n.resolveName(right_cam_pose_topic_name).c_str());
             } else {
                 ROS_ERROR("Since right_cam_pose_topic_name parameter was not provided"
@@ -243,16 +238,16 @@ void ACOverlay::SetupROS() {
     // task_frame_to_PSM1_frame
     std::vector<double> taskspace_to_psm1_vec = std::vector<double>(7, 0.0);
     if(!n.getParam("/calibrations/task_frame_to_PSM1_frame", taskspace_to_psm1_vec))
-        ROS_WARN("%s Parameter /task_frame_to_PSM1_frame is not set. This parameter is required"
-                         "if PSM1 is used.", ros::this_node::getName().c_str());
+        ROS_WARN("Parameter /task_frame_to_PSM1_frame is not set. This parameter is required"
+                         "if PSM1 is used.");
     conversions::VectorToKDLFrame(taskspace_to_psm1_vec, task_frame_to_PSM1_frame);
 
     //--------
     // task_frame_to_PSM2_frame
     std::vector<double> taskspace_to_psm2_vec = std::vector<double>(7, 0.0);
     if(!n.getParam("/calibrations/task_frame_to_PSM2_frame", taskspace_to_psm2_vec))
-        ROS_WARN("%s Parameter /task_frame_to_PSM2_frame is not set. This parameter is required"
-                         "if PSM2 is used.",ros::this_node::getName().c_str());
+        ROS_WARN("Parameter /task_frame_to_PSM2_frame is not set. This parameter is required"
+                         "if PSM2 is used.");
     conversions::VectorToKDLFrame(taskspace_to_psm2_vec, task_frame_to_PSM2_frame);
 
 
@@ -262,8 +257,7 @@ void ACOverlay::SetupROS() {
     subscriber_pose_psm1 =
             n.subscribe(psm1_pose_topic_name, 2,
                         &ACOverlay::Tool1PoseCallback, this);
-    ROS_INFO("%s [SUBSCRIBERS] Tool 1 pose will be read from topic '%s'",
-             ros::this_node::getName().c_str(),
+    ROS_INFO("[SUBSCRIBERS] Tool 1 pose will be read from topic '%s'",
              psm1_pose_topic_name.c_str());
 
     //--------
@@ -272,8 +266,8 @@ void ACOverlay::SetupROS() {
     subscriber_pose__sub =
             n.subscribe(psm2_pose_topic_name, 2,
                         &ACOverlay::Tool2PoseCallback, this);
-    ROS_INFO("%s [SUBSCRIBERS] Tool 2 pose will be read from topic '%s'",
-             ros::this_node::getName().c_str(),
+    ROS_INFO("[SUBSCRIBERS] Tool 2 pose will be read from topic '%s'",
+
              psm2_pose_topic_name.c_str());
 
 
@@ -283,20 +277,20 @@ void ACOverlay::SetupROS() {
 
     std::string topic_name = "/ac_path";
     publisher_ac_path = n.advertise<geometry_msgs::PoseArray>(topic_name, 1 );
-    ROS_INFO("%s: Will publish on %s", ros::this_node::getName().c_str(),
+    ROS_INFO("Will publish on %s",
              topic_name.c_str());
 
     subscriber_foot_pedal_clutch = n.subscribe("/dvrk/footpedals/camera", 1,
                                                &ACOverlay::FootSwitchCallback, this);
-    ROS_INFO("%s: [SUBSCRIBERS] Will subscribe to /dvrk/footpedals/camera",  ros::this_node::getName().c_str());
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/camera");
 
     subscriber_ac_pose_desired_right = n.subscribe("/PSM1/tool_pose_desired", 1,
                                                    &ACOverlay::ACPoseDesiredRightCallback, this);
-    ROS_INFO("%s: [SUBSCRIBERS] Will subscribe to /PSM1/tool_pose_desired",  ros::this_node::getName().c_str());
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to /PSM1/tool_pose_desired");
 
     subscriber_ac_pose_desired_left = n.subscribe("/PSM2/tool_pose_desired", 1,
                                                   &ACOverlay::ACPoseDesiredRightCallback, this);
-    ROS_INFO("%s: [SUBSCRIBERS] Will subscribe to /PSM2/tool_pose_desired",  ros::this_node::getName().c_str());
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to /PSM2/tool_pose_desired");
 
     // publishers for the overlayed images
     publisher_overlayed[0] = it->advertise("left/image_color", 1);
