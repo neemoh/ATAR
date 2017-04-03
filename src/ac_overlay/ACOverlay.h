@@ -89,8 +89,8 @@ public:
     KDL::Frame pose_cam_r;
     KDL::Frame pose_tool1;
     KDL::Frame pose_tool2;
-    KDL::Frame taskspace_to_psm1_tr;
-    KDL::Frame taskspace_to_psm2_tr;
+    KDL::Frame task_frame_to_PSM1_frame;
+    KDL::Frame task_frame_to_PSM2_frame;
     KDL::Frame left_cam_to_right_cam_tr;
 
     KDL::Frame pose_desired[2];

@@ -80,10 +80,11 @@ public:
 public:
     CameraIntrinsics camera_intrinsics;
     double ros_freq = 0.0;
-    KDL::Frame task_frame_in_cam_frame;
+    KDL::Frame task_frame_to_cam_frame;
     KDL::Frame tool_pose_in_robot_frame;
     KDL::Frame tool_pose_in_task_frame;
     KDL::Frame task_frame_to_robot_frame;
+    bool task_frame_to_robot_frame_param_present;
 
     cv::Vec3d task_frame_to_cam_rvec, task_frame_to_cam_tvec;
 

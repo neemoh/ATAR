@@ -137,39 +137,39 @@ void ACOverlay::SetupROS() {
     if(num_cam_pose_publishers < 2){
 
         std::vector<double> left_to_right_cam_transform = std::vector<double>(7, 0.0);
-        if(n.getParam("/left_cam_to_right_cam_transform", left_to_right_cam_transform))
+        if(n.getParam("/calibrations/left_cam_frame_to_right_cam_frame", left_to_right_cam_transform))
             conversions::VectorToKDLFrame(left_to_right_cam_transform, left_cam_to_right_cam_tr);
         else
             ROS_ERROR("%s Expecting %d camera pose publishers. "
-                              " Parameter /left_cam_to_right_cam_transform is not set. If both of the camera poses are not "
+                              " Parameter /calibrations/left_cam_frame_to_right_cam_frame is not set. If both of the camera poses are not "
                               "published this parameter is needed.",
                       ros::this_node::getName().c_str(), num_cam_pose_publishers);
     }
 
     if (num_cam_pose_publishers == 0) {
         // fixed case
-        std::vector<double> taskspace_to_left_cam_transform = std::vector<double>(
+        std::vector<double> task_frame_to_left_cam_frame = std::vector<double>(
                 7, 0.0);
-        if (n.getParam("/taskspace_to_left_cam_transform",
-                       taskspace_to_left_cam_transform)) {
-            conversions::VectorToKDLFrame(taskspace_to_left_cam_transform,
+        if (n.getParam("/calibrations/task_frame_to_left_cam_frame",
+                       task_frame_to_left_cam_frame)) {
+            conversions::VectorToKDLFrame(task_frame_to_left_cam_frame,
                                           pose_cam_l);
             conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec[0], cam_tvec[0]);
         } else
             ROS_ERROR("%s Expecting 0 camera pose publishers. Parameter "
-                              "/taskspace_to_left_cam_transform is not set.",
+                              "/calibrations/task_frame_to_left_cam_frame is not set.",
                       ros::this_node::getName().c_str());
 
-        std::vector<double> taskspace_to_right_cam_transform = std::vector<double>(
+        std::vector<double> task_frame_to_right_cam_frame = std::vector<double>(
                 7, 0.0);
-        if (n.getParam("/taskspace_to_right_cam_transform",
-                       taskspace_to_right_cam_transform)) {
-            conversions::VectorToKDLFrame(taskspace_to_right_cam_transform,
+        if (n.getParam("/calibrations/task_frame_to_right_cam_frame",
+                       task_frame_to_right_cam_frame)) {
+            conversions::VectorToKDLFrame(task_frame_to_right_cam_frame,
                                           pose_cam_r);
             conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec[1], cam_tvec[1]);
         } else
             ROS_ERROR("%s [SUBSCRIBERS] Expecting 0 camera pose publishers. "
-                              " Parameter /taskspace_to_right_cam_transform is not set.",
+                              "Parameter /calibrations/task_frame_to_right_cam_frame is not set.",
                       ros::this_node::getName().c_str());
 
     }
@@ -240,20 +240,20 @@ void ACOverlay::SetupROS() {
 
 
     //--------
-    // taskspace_to_PSM1_tr
+    // task_frame_to_PSM1_frame
     std::vector<double> taskspace_to_psm1_vec = std::vector<double>(7, 0.0);
-    if(!n.getParam("/taskspace_to_PSM1_tr", taskspace_to_psm1_vec))
-        ROS_WARN("%s Parameter /taskspace_to_PSM1_tr is not set. This parameter is required"
+    if(!n.getParam("/calibrations/task_frame_to_PSM1_frame", taskspace_to_psm1_vec))
+        ROS_WARN("%s Parameter /task_frame_to_PSM1_frame is not set. This parameter is required"
                          "if PSM1 is used.", ros::this_node::getName().c_str());
-    conversions::VectorToKDLFrame(taskspace_to_psm1_vec, taskspace_to_psm1_tr);
+    conversions::VectorToKDLFrame(taskspace_to_psm1_vec, task_frame_to_PSM1_frame);
 
     //--------
-    // taskspace_to_PSM2_tr
+    // task_frame_to_PSM2_frame
     std::vector<double> taskspace_to_psm2_vec = std::vector<double>(7, 0.0);
-    if(!n.getParam("/taskspace_to_PSM2_tr", taskspace_to_psm2_vec))
-        ROS_WARN("%s Parameter /taskspace_to_PSM2_tr is not set. This parameter is required"
+    if(!n.getParam("/calibrations/task_frame_to_PSM2_frame", taskspace_to_psm2_vec))
+        ROS_WARN("%s Parameter /task_frame_to_PSM2_frame is not set. This parameter is required"
                          "if PSM2 is used.",ros::this_node::getName().c_str());
-    conversions::VectorToKDLFrame(taskspace_to_psm2_vec, taskspace_to_psm2_tr);
+    conversions::VectorToKDLFrame(taskspace_to_psm2_vec, task_frame_to_PSM2_frame);
 
 
     //--------
@@ -372,7 +372,7 @@ void ACOverlay::Tool1PoseCallback(
     tf::poseMsgToKDL(msg->pose, frame_temp);
 
     // take the robot end-effector pose to the task space coordinate frame
-    pose_tool1 = taskspace_to_psm1_tr.Inverse() * frame_temp;
+    pose_tool1 = task_frame_to_PSM1_frame.Inverse() * frame_temp;
 
 }
 
@@ -384,8 +384,8 @@ void ACOverlay::Tool2PoseCallback(
     tf::poseMsgToKDL(msg->pose, frame_temp);
 
     // take the robot end-effector pose to the task space coordinate frame
-    pose_tool2.p = taskspace_to_psm2_tr.M.Inverse() * (frame_temp.p - taskspace_to_psm2_tr.p);
-//    pose_tool2 = taskspace_to_psm2_tr.Inverse() * frame_temp;GeneratePathPoints
+    pose_tool2.p = task_frame_to_PSM2_frame.M.Inverse() * (frame_temp.p - task_frame_to_PSM2_frame.p);
+//    pose_tool2 = task_frame_to_PSM2_frame.Inverse() * frame_temp;GeneratePathPoints
 }
 
 //void ACOverlay::ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg){

@@ -6,23 +6,24 @@
     <arg name="camera_name" value="camera"/>
     <arg name= "left_cam_name" value= "flea14150439" />
     <arg name= "right_cam_name" value= "flea14150441" />
-    <rosparam command="load" file="$(find teleop_vision)/launch/params_overlay.yaml" />
+    <group ns="calibrations">
+        <rosparam command="load" file="$(find teleop_vision)/launch/params_overlay.yaml" />
+    </group>
+
     <rosparam command="load" file="$(find active_constraints)/launch/params.yaml" />
 
-    <node pkg="teleop_vision" type="camera_capture_flea3" name="camera" output="screen">
-    </node>
+    <node pkg="teleop_vision" type="camera_capture_flea3" name="camera" output="screen"> </node>
 
     <node pkg="teleop_vision" type="ac_overlay" name="ac_overlay" output="screen">
-
-	<param name= "num_cam_pose_publishers" value= "0"/>
+        <param name= "num_cam_pose_publishers" value= "0"/>
         <param name= "left_cam_name" value= "$(arg left_cam_name)" />
-        <param name= "right_cam_name" value= "$(arg left_cam_name)" /> <!-- ATTENTION USING the same file for right-->
+        <param name= "right_cam_name" value= "$(arg left_cam_name)" /> <!-- ATTENTION!!!! Using the same file for right due to a problem with my right camera-->
         <param name= "left_image_topic_name" value= "/$(arg camera_name)/left/image_color" />
         <param name= "right_image_topic_name" value= "/$(arg camera_name)/right/image_color"/>
         <param name= "left_cam_pose_topic_name" value= "/$(arg camera_name)/left/board_to_camera "/>
         <param name= "right_cam_pose_topic_name" value= "/$(arg camera_name)/right/board_to_camera "/>
         <param name= "frequency" value= "30" />
-<!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
+        <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
     <node pkg="active_constraints" type="dvrk_active_constraint_geomerty_generation" name="dvrk_ac_geom" output="screen">

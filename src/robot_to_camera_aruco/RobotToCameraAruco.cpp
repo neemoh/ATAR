@@ -57,6 +57,25 @@ void RobotToCameraAruco::SetupROS() {
                                 << n.resolveName("number_of_calibration_points").c_str()
                                 << "with value " << num_calib_points
                                 << " points per axis. ");
+
+    // if the task_frame_to_robot_frame parameter is present from a previous calibration we can
+    // show it
+    std::string arm_name;
+    (n.getParam("robot_arm_name", arm_name));
+    std::stringstream param_name;
+    param_name << std::string("/calibrations/task_frame_to_") << arm_name << "_frame";
+    std::vector<double> task_frame_to_robot_frame_vec7(7, 0.0);
+    if(n.getParam(param_name.str(), task_frame_to_robot_frame_vec7)){
+
+        task_frame_to_robot_frame_param_present = true;
+        //Convert and save
+        conversions::VectorToKDLFrame(task_frame_to_robot_frame_vec7, task_frame_to_robot_frame);
+        std::cout << param_name.str() << " parameter was received as: "
+                  << task_frame_to_robot_frame_vec7 << std::endl;
+    }
+
+
+
     // ------- load the intrinsic calibration files
     // get home directory
     struct passwd *pw = getpwuid(getuid());
@@ -195,6 +214,16 @@ void RobotToCameraAruco::Calib1DrawCalibrationAxis(cv::String &instructions,
 
 
 void RobotToCameraAruco::Calib1SaveCalibrationPoint() {
+
+//    /////// FOR DEBUG
+//    measured_points.push_back(Eigen::Vector3d(0.10784, -0.0464285, -0.0861506));
+//    measured_points.push_back(Eigen::Vector3d(0.137249, -0.0465126, -0.0856462));
+//    measured_points.push_back(Eigen::Vector3d(0.155377, -0.0470039, -0.0853909));
+//    measured_points.push_back(Eigen::Vector3d(0.0987962, -0.0195716, -0.0857134));
+//    measured_points.push_back(Eigen::Vector3d(0.0984003, -0.00750025, -0.0864288));
+//    measured_points.push_back(Eigen::Vector3d(0.098532, -0.00016544, -0.0860863));
+//    //
+
 
     size_t n_points = measured_points.size();
 
@@ -371,24 +400,26 @@ void RobotToCameraAruco::Calib2CalculateTransformation() {
 }
 
 
-
-
 void RobotToCameraAruco::SetTaskFrameToRobotFrameParam() {
+
+    std::string arm_name;
+    (n.getParam("robot_arm_name", arm_name));
+
+    std::stringstream param_name;
+    param_name << std::string("/calibrations/task_frame_to_") << arm_name << "_frame";
 
     std::vector<double> task_frame_to_robot_frame_vec7(7, 0.0);
 
     conversions::KDLFrameToVector(task_frame_to_robot_frame, task_frame_to_robot_frame_vec7);
-    n.setParam("task_frame_to_robot_frame", task_frame_to_robot_frame_vec7);
-    std::cout << "The task_frame_to_robot_frame parameter was set to: "
+    n.setParam(param_name.str(), task_frame_to_robot_frame_vec7);
+    std::cout << param_name.str() << " parameter was set to: "
               << task_frame_to_robot_frame_vec7 << std::endl;
 
     // print the pose of board_to_cam
     geometry_msgs::Pose temp_pose;
-    tf::poseKDLToMsg(task_frame_in_cam_frame, temp_pose);
-    std::cout << "  -> task_frame_in_cam_frame: \n" << temp_pose << std::endl;
+    tf::poseKDLToMsg(task_frame_to_cam_frame, temp_pose);
+    std::cout << "  -> task_frame_to_cam_frame: \n" << temp_pose << std::endl;
 
-    tf::poseKDLToMsg(task_frame_to_robot_frame, temp_pose);
-    std::cout << "  -> task_frame_to_robot_frame: \n" << temp_pose << std::endl;
 }
 
 void RobotToCameraAruco::Reset() {
@@ -433,8 +464,8 @@ void RobotToCameraAruco::CameraPoseCallback(
         const geometry_msgs::PoseStamped::ConstPtr &msg) {
 
     // converting to frame and rvec/tvec
-    tf::poseMsgToKDL(msg->pose, task_frame_in_cam_frame);
-    conversions::KDLFrameToRvectvec(task_frame_in_cam_frame, task_frame_to_cam_rvec,
+    tf::poseMsgToKDL(msg->pose, task_frame_to_cam_frame);
+    conversions::KDLFrameToRvectvec(task_frame_to_cam_frame, task_frame_to_cam_rvec,
                                     task_frame_to_cam_tvec);
 }
 

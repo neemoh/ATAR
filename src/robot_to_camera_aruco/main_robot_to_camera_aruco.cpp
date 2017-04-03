@@ -112,8 +112,10 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (progress == CalibProgress::Finished) {
+        if (progress == CalibProgress::Finished)
             instructions = "Calibration finished. Press 'Esc' to exit";
+
+        if (progress == CalibProgress::Finished || r.task_frame_to_robot_frame_param_present) {
 
             // take the tool tip to task space
             r.tool_pose_in_task_frame = r.task_frame_to_robot_frame.Inverse() *

@@ -7,14 +7,15 @@
           type="robot_to_camera_aruco"
           name="robot_to_camera_aruco"
           output="screen">
-	 <param name="cam_name" value= "$(arg left_cam_name)" />
-        <param name="image_transport_namespace" value="/$(arg camera_name)/left/image_color/"/>
+        <param name="cam_name" value= "$(arg left_cam_name)" />
+        <param name= "image_transport_namespace" value="/$(arg camera_name)/left/image_color/"/>
         <param name= "cam_pose_topic_name"      value= "/$(arg camera_name)/left/board_to_camera "/>
         <param name= "robot_pose_topic_name"    value= "/dvrk/PSM2/position_cartesian_current"/>
+        <param name= "robot_arm_name"    value= "PSM2"/>
         <param name= "frequency" value= "30" />
         <param name= "number_of_calibration_points" value= "6" />
         <param name= "visual_axis_length" value= "0.0436" />
-       <!-- <param name="image_transport" value="compressed"/> -->
+        <!-- <param name="image_transport" value="compressed"/> -->
 
     </node>
 
@@ -22,32 +23,30 @@
 
     <group ns="$(arg camera_name)">
 
-      <group ns="left">
-
+        <group ns="left">
             <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco_left" output="screen" >
                 <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
                 <param name="cam_name" value= "$(arg left_cam_name)" />
                 <param name="image_transport_namespace" value="/$(arg camera_name)/left/image_color"/>
                 <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/left/board_to_camera"/>
                 <param name="show_image" value="true"/>
-<!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
-           </node>
-
+                <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
+            </node>
         </group>
 
         <group ns="right" >
             <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco_right" output="screen" >
                 <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
-                <param name= "cam_name" value= "$(arg left_cam_name)" /> 
+                <param name= "cam_name" value= "$(arg left_cam_name)" />
                 <param name="image_transport_namespace" value="/$(arg camera_name)/right/image_color"/>
                 <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/right/board_to_camera"/>
                 <param name="show_image" value="true"/>
-<!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
+                <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
             </node>
         </group>
 
 
- </group>
+    </group>
 
 
 </launch>
