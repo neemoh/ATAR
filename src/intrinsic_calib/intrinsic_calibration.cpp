@@ -29,6 +29,7 @@
 using namespace cv;
 using namespace std;
 cv::Mat image;
+bool new_image = false;
 
 static void help() {
     cout << "This is a camera  calibration sample." << endl
@@ -196,10 +197,13 @@ public:
     Mat nextImage() {
 #ifdef WITH_ROS
         if (inputType == InputType::ROS_TOPIC) {
-            // Wait until we actually have a non empty image before returning
-            ros::Rate loop_rate(24);
+            // Wait until we actually have a non empty and new image before returning
+            ros::Rate loop_rate(200);
             while (true) {
-                if (!image.empty()) return image;
+                if (!image.empty() & new_image) {
+                    new_image = false;
+                    return image;
+                }
 
                 ros::spinOnce();
                 loop_rate.sleep();
@@ -259,7 +263,6 @@ public:
     InputType inputType;
     bool goodInput;
     int flag;
-
 private:
     string patternToUse;
 
@@ -282,6 +285,8 @@ static inline void write(FileStorage &fs, const String &, const Settings &s) {
 void CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
         image = cv_bridge::toCvCopy(msg, "bgr8")->image;
+        new_image = true;
+
     } catch (cv_bridge::Exception& e) {
         ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
     }
@@ -327,7 +332,7 @@ int main(int argc, char *argv[]) {
     image_transport::Subscriber sub = it.subscribe(s.ros_topic, 1, CameraImageCallback);
     //ros::Subscriber img_source = node.subscribe(s.ros_topic, 1,
     //                                          CameraImageCallback);
-    ros::Rate rate(24);
+    ros::Rate rate(400);
 #endif
 
     vector<vector<Point2f> > imagePoints;

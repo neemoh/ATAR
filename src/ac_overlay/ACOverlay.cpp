@@ -2,21 +2,18 @@
 // Created by charm on 2/21/17.
 //
 
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
-
-#include "Overlay.h"
+#include "ACOverlay.h"
 #include <utils/Conversions.hpp>
 #include <pwd.h>
 #include "opencv2/calib3d/calib3d.hpp"
 
-OverlayGraphics::OverlayGraphics(std::string node_name, int width, int height)
+ACOverlay::ACOverlay(std::string node_name, int width, int height)
         : n(node_name), image_width_(width), image_height_(height)
-
 {
 
 //    bufferL_ = new unsigned char[image_width_*image_height_*4];
 //    bufferR_ = new unsigned char[image_width_*image_height_*4];
+
     it = new image_transport::ImageTransport(n);
     SetupROS();
 
@@ -25,7 +22,7 @@ OverlayGraphics::OverlayGraphics(std::string node_name, int width, int height)
 
 
 
-void OverlayGraphics::ReadCameraParameters(const std::string file_path,
+void ACOverlay::ReadCameraParameters(const std::string file_path,
                                            CameraIntrinsics & camera) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
     ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
@@ -55,7 +52,7 @@ void OverlayGraphics::ReadCameraParameters(const std::string file_path,
 // SetupROS
 //-----------------------------------------------------------------------------------
 
-void OverlayGraphics::SetupROS() {
+void ACOverlay::SetupROS() {
 
     bool all_required_params_found = true;
 
@@ -101,7 +98,7 @@ void OverlayGraphics::SetupROS() {
                 ros::this_node::getName().c_str(),
                 left_image_topic_name.c_str());
     image_subscribers[0] = it->subscribe(
-            left_image_topic_name, 1, &OverlayGraphics::ImageLeftCallback,
+            left_image_topic_name, 1, &ACOverlay::ImageLeftCallback,
             this);
 
     //--------
@@ -113,7 +110,7 @@ void OverlayGraphics::SetupROS() {
                 ros::this_node::getName().c_str(),
                 right_image_topic_name.c_str());
     image_subscribers[1] = it->subscribe(
-            right_image_topic_name, 1, &OverlayGraphics::ImageRightCallback,
+            right_image_topic_name, 1, &ACOverlay::ImageRightCallback,
             this);
 
     //--------
@@ -157,7 +154,7 @@ void OverlayGraphics::SetupROS() {
                        taskspace_to_left_cam_transform)) {
             conversions::VectorToKDLFrame(taskspace_to_left_cam_transform,
                                           pose_cam_l);
-            conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec_l, cam_tvec_l);
+            conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec[0], cam_tvec[0]);
         } else
             ROS_ERROR("%s Expecting 0 camera pose publishers. Parameter "
                               "/taskspace_to_left_cam_transform is not set.",
@@ -169,7 +166,7 @@ void OverlayGraphics::SetupROS() {
                        taskspace_to_right_cam_transform)) {
             conversions::VectorToKDLFrame(taskspace_to_right_cam_transform,
                                           pose_cam_r);
-            conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec_r, cam_tvec_r);
+            conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec[1], cam_tvec[1]);
         } else
             ROS_ERROR("%s [SUBSCRIBERS] Expecting 0 camera pose publishers. "
                               " Parameter /taskspace_to_right_cam_transform is not set.",
@@ -199,7 +196,7 @@ void OverlayGraphics::SetupROS() {
             all_required_params_found = false;
         }
         subscriber_camera_pose_left = n.subscribe(
-                left_cam_pose_topic_name, 1, &OverlayGraphics::LeftCamPoseCallback,
+                left_cam_pose_topic_name, 1, &ACOverlay::LeftCamPoseCallback,
                 this);
 
 
@@ -225,7 +222,7 @@ void OverlayGraphics::SetupROS() {
                 all_required_params_found = false;
             }
             subscriber_camera_pose_right = n.subscribe(
-                    right_cam_pose_topic_name, 1, &OverlayGraphics::RightCamPoseCallback, this);
+                    right_cam_pose_topic_name, 1, &ACOverlay::RightCamPoseCallback, this);
 
 
             //----------
@@ -238,16 +235,12 @@ void OverlayGraphics::SetupROS() {
 
         }
     }
-
-
-
-
     if (!all_required_params_found)
         throw std::runtime_error("ERROR: some required topics are not set");
 
 
     //--------
-    // PSM1 pose subscriber
+    // taskspace_to_PSM1_tr
     std::vector<double> taskspace_to_psm1_vec = std::vector<double>(7, 0.0);
     if(!n.getParam("/taskspace_to_PSM1_tr", taskspace_to_psm1_vec))
         ROS_WARN("%s Parameter /taskspace_to_PSM1_tr is not set. This parameter is required"
@@ -255,19 +248,20 @@ void OverlayGraphics::SetupROS() {
     conversions::VectorToKDLFrame(taskspace_to_psm1_vec, taskspace_to_psm1_tr);
 
     //--------
-    // PSM! pose subscriber
+    // taskspace_to_PSM2_tr
     std::vector<double> taskspace_to_psm2_vec = std::vector<double>(7, 0.0);
     if(!n.getParam("/taskspace_to_PSM2_tr", taskspace_to_psm2_vec))
         ROS_WARN("%s Parameter /taskspace_to_PSM2_tr is not set. This parameter is required"
                          "if PSM2 is used.",ros::this_node::getName().c_str());
     conversions::VectorToKDLFrame(taskspace_to_psm2_vec, taskspace_to_psm2_tr);
 
+
     //--------
     // PSM1 pose subscriber.
     std::string psm1_pose_topic_name = "/dvrk/PSM1/position_cartesian_current";
     subscriber_pose_psm1 =
             n.subscribe(psm1_pose_topic_name, 2,
-                        &OverlayGraphics::Tool1PoseCallback, this);
+                        &ACOverlay::Tool1PoseCallback, this);
     ROS_INFO("%s [SUBSCRIBERS] Tool 1 pose will be read from topic '%s'",
              ros::this_node::getName().c_str(),
              psm1_pose_topic_name.c_str());
@@ -277,42 +271,36 @@ void OverlayGraphics::SetupROS() {
     std::string psm2_pose_topic_name = "/dvrk/PSM2/position_cartesian_current";
     subscriber_pose__sub =
             n.subscribe(psm2_pose_topic_name, 2,
-                        &OverlayGraphics::Tool2PoseCallback, this);
+                        &ACOverlay::Tool2PoseCallback, this);
     ROS_INFO("%s [SUBSCRIBERS] Tool 2 pose will be read from topic '%s'",
              ros::this_node::getName().c_str(),
              psm2_pose_topic_name.c_str());
 
 
-    //--------
-    // PSM2 pose subscriber.
-    subscriber_ac_path = n.subscribe("/ac_path", 1, &OverlayGraphics::ACPathCallback, this);
-
-    ac_pose_desired_right_subscriber = n.subscribe("/PSM2/tool_pose_desired", 1,
-                                             &OverlayGraphics::ACPoseDesiredRightCallback, this);
-    ac_pose_desired_left_subscriber = n.subscribe("/PSM1/tool_pose_desired", 1,
-                                             &OverlayGraphics::ACPoseDesiredRightCallback, this);
-
 
     //--------
-    // Overlay publishers
+    //subscriber_ac_path = n.subscribe("/ac_path", 1, &ACOverlay::ACPathCallback, this);
 
-    std::string overlay_left_topic_name = "";
-    if (n.getParam("left_overlay_topic_name", overlay_left_topic_name)) {
-        ROS_INFO_STREAM("Publishing overlay images for the left eye to '" << overlay_left_topic_name.c_str() << "'");
-        overlay_image_left = it->advertise(overlay_left_topic_name, 1);
-        use_ros_overlay = true;
-    }
+    std::string topic_name = "/ac_path";
+    publisher_ac_path = n.advertise<geometry_msgs::PoseArray>(topic_name, 1 );
+    ROS_INFO("%s: Will publish on %s", ros::this_node::getName().c_str(),
+             topic_name.c_str());
 
-    std::string overlay_right_topic_name = "";
-    if (n.getParam("right_overlay_topic_name", overlay_right_topic_name)) {
-        ROS_INFO_STREAM("Publishing overlay images for the right eye to '" << overlay_right_topic_name.c_str() << "'");
-        overlay_image_right = it->advertise(overlay_right_topic_name, 1);
-        use_ros_overlay = true;
-    }
+    subscriber_foot_pedal_clutch = n.subscribe("/dvrk/footpedals/camera", 1,
+                                               &ACOverlay::FootSwitchCallback, this);
+    ROS_INFO("%s: [SUBSCRIBERS] Will subscribe to /dvrk/footpedals/camera",  ros::this_node::getName().c_str());
 
-    ROS_INFO_STREAM(
-        "" << "Left : " << overlay_image_left.getTopic() << ", Right : " << overlay_image_right.getTopic()
-    );
+    subscriber_ac_pose_desired_right = n.subscribe("/PSM1/tool_pose_desired", 1,
+                                                   &ACOverlay::ACPoseDesiredRightCallback, this);
+    ROS_INFO("%s: [SUBSCRIBERS] Will subscribe to /PSM1/tool_pose_desired",  ros::this_node::getName().c_str());
+
+    subscriber_ac_pose_desired_left = n.subscribe("/PSM2/tool_pose_desired", 1,
+                                                  &ACOverlay::ACPoseDesiredRightCallback, this);
+    ROS_INFO("%s: [SUBSCRIBERS] Will subscribe to /PSM2/tool_pose_desired",  ros::this_node::getName().c_str());
+
+    // publishers for the overlayed images
+    publisher_overlayed[0] = it->advertise("left/image_color", 1);
+    publisher_overlayed[1] = it->advertise("right/image_color", 1);
 
     // advertise publishers
 //    std::string board_to_cam_pose_topic_name;
@@ -326,7 +314,7 @@ void OverlayGraphics::SetupROS() {
 
 
 
-void OverlayGraphics::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
+void ACOverlay::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
@@ -339,7 +327,7 @@ void OverlayGraphics::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
     }
 }
 
-void OverlayGraphics::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
+void ACOverlay::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
@@ -354,28 +342,29 @@ void OverlayGraphics::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 }
 
 
-void OverlayGraphics::LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
+
+void ACOverlay::LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
 {
 
+
     tf::poseMsgToKDL(msg->pose, pose_cam_l);
-    conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec_l, cam_tvec_l);
+    conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec[0], cam_tvec[0]);
 
     // If we don't have the transforms between the cameras
     if(num_cam_pose_publishers==1) {
         pose_cam_r = left_cam_to_right_cam_tr * pose_cam_l ;
-        conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec_r, cam_tvec_r);
+        conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec[1], cam_tvec[1]);
     }
 }
 
-void OverlayGraphics::RightCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
+void ACOverlay::RightCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
 {
 
     tf::poseMsgToKDL(msg->pose, pose_cam_r);
-    conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec_r, cam_tvec_r);
-
+    conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec[1], cam_tvec[1]);
 }
 
-void OverlayGraphics::Tool1PoseCallback(
+void ACOverlay::Tool1PoseCallback(
         const geometry_msgs::PoseStampedConstPtr &msg)
 {
     // Convert message to KDL
@@ -387,7 +376,7 @@ void OverlayGraphics::Tool1PoseCallback(
 
 }
 
-void OverlayGraphics::Tool2PoseCallback(
+void ACOverlay::Tool2PoseCallback(
         const geometry_msgs::PoseStampedConstPtr &msg)
 {
     // Convert message to KDL
@@ -396,35 +385,33 @@ void OverlayGraphics::Tool2PoseCallback(
 
     // take the robot end-effector pose to the task space coordinate frame
     pose_tool2.p = taskspace_to_psm2_tr.M.Inverse() * (frame_temp.p - taskspace_to_psm2_tr.p);
-//    pose_tool2 = taskspace_to_psm2_tr.Inverse() * frame_temp;
-
+//    pose_tool2 = taskspace_to_psm2_tr.Inverse() * frame_temp;GeneratePathPoints
 }
 
-void OverlayGraphics::ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg){
+//void ACOverlay::ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg){
+//
+//    for (int n_point = 0; n_point < msg->poses.size(); ++n_point) {
+//        ac_path.push_back(cv::Point3d(msg->poses[n_point].position.x,
+//                                      msg->poses[n_point].position.y,
+//                                      msg->poses[n_point].position.z));
+//    }
+//}
 
-    for (int n_point = 0; n_point < msg->poses.size(); ++n_point) {
-        ac_path.push_back(cv::Point3d(msg->poses[n_point].position.x,
-                                      msg->poses[n_point].position.y,
-                                      msg->poses[n_point].position.z));
-    }
-    std::cout << "Received AC_path of " << ac_path.size()<<" points. First point is at "<<
-              ac_path[0].x << ", " <<  ac_path[0].y<< ", " << ac_path[0].z<<
-                                                           std::endl;
-}
-
-
-void OverlayGraphics::ACPoseDesiredLeftCallback(const geometry_msgs::PoseStampedConstPtr & msg){
+void ACOverlay::ACPoseDesiredLeftCallback(const geometry_msgs::PoseStampedConstPtr & msg){
     // Convert message to KDL
-    tf::poseMsgToKDL(msg->pose, pose_desired_l);
+    tf::poseMsgToKDL(msg->pose, pose_desired[0]);
 }
 
-void OverlayGraphics::ACPoseDesiredRightCallback(const geometry_msgs::PoseStampedConstPtr & msg){
+void ACOverlay::ACPoseDesiredRightCallback(const geometry_msgs::PoseStampedConstPtr & msg){
     // Convert message to KDL
-    tf::poseMsgToKDL(msg->pose, pose_desired_r);
+    tf::poseMsgToKDL(msg->pose, pose_desired[1]);
 }
 
+void ACOverlay::FootSwitchCallback(const sensor_msgs::Joy & msg){
+    foot_switch_pressed = (bool)msg.buttons[0];
+}
 
-cv::Mat& OverlayGraphics::ImageLeft(ros::Duration timeout) {
+cv::Mat& ACOverlay::ImageLeft(ros::Duration timeout) {
     ros::Rate loop_rate(10);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
@@ -441,7 +428,7 @@ cv::Mat& OverlayGraphics::ImageLeft(ros::Duration timeout) {
 
 
 
-cv::Mat& OverlayGraphics::ImageRight(ros::Duration timeout) {
+cv::Mat& ACOverlay::ImageRight(ros::Duration timeout) {
     ros::Rate loop_rate(10);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
@@ -457,26 +444,109 @@ cv::Mat& OverlayGraphics::ImageRight(ros::Duration timeout) {
     return image_right_;
 }
 
-void OverlayGraphics::PublishOverlayRight(const cv::Mat &img) {
-    return PublishOverlayImpl(overlay_image_right, img);
+void ACOverlay::drawAxisAntiAliased(
+        const cv::InputOutputArray &_image, const CameraIntrinsics &cam_intrinsics,
+        const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+        float length){
+
+    CV_Assert(_image.getMat().total() != 0 &&
+              (_image.getMat().channels() == 1 || _image.getMat().channels() == 3));
+    CV_Assert(length > 0);
+
+    // project axis points
+    std::vector<cv::Point3f> axisPoints {
+            cv::Point3f( 0,  0,  0),
+            cv::Point3f( 1,  0,  0) * length,
+            cv::Point3f( 0,  1,  0) * length,
+            cv::Point3f( 0,  0,  1) * length
+    };
+
+    std::vector<cv::Point2f> imagePoints;
+    cv::projectPoints(axisPoints, rvec, tvec, cam_intrinsics.camMatrix,
+                      cam_intrinsics.distCoeffs, imagePoints);
+
+    // draw axis lines
+    cv::line(_image, imagePoints[0], imagePoints[1], cv::Scalar(200, 0, 0), 2, CV_AA);
+    cv::line(_image, imagePoints[0], imagePoints[2], cv::Scalar(0, 200, 0), 2, CV_AA);
+    cv::line(_image, imagePoints[0], imagePoints[3], cv::Scalar(0, 0, 200), 2, CV_AA);
 }
 
-void OverlayGraphics::PublishOverlayLeft(const cv::Mat &img) {
-    return PublishOverlayImpl(overlay_image_left, img);
+
+size_t MultiplePathsTask::FindClosestTarget(const KDL::Vector tool_current_position,
+                                             const std::vector<cv::Point3d> targets){
+    double min_d = 100000; // something large
+    size_t i_min = 0;
+
+    for(size_t i=0; i<targets.size(); i++){
+        double dx = tool_current_position[0] - targets[i].x;
+        double dy = tool_current_position[1] - targets[i].y;
+        double dz = tool_current_position[2] - targets[i].z;
+        double norm2 = dx*dx + dy*dy + dz*dz;
+        if(norm2 < min_d){
+            min_d = norm2;
+            i_min = i;
+        }
+
+    }
+    return i_min;
+
 }
 
-void OverlayGraphics::PublishOverlayImpl(image_transport::Publisher &pub, const cv::Mat &img) {
-    sensor_msgs::Image out_img;
-    out_img.width = img.cols;
-    out_img.height = img.rows;
-    out_img.step = img.step;
-    out_img.encoding = sensor_msgs::image_encodings::BGR8;
+void MultiplePathsTask::GeneratePathPoints(const KDL::Vector current_position,
+                        const cv::Point3d target, std::vector<cv::Point3d> & ac_path){
+    ac_path.clear();
+    // simple linear interpolation
+    double n_points_per_meter =2000;
+    KDL::Vector to_target = KDL::Vector(target.x - current_position[0],
+                                        target.y - current_position[1],
+                                        target.z - current_position[2]);
+    int n_points = int(to_target.Norm() * n_points_per_meter);
 
-    auto datasize = img.total() * img.elemSize();
-    std::copy(img.data, img.data + datasize, std::back_inserter(out_img.data));
+    for (int i = 0; i < n_points ; ++i) {
+        KDL::Vector temp = current_position + double(i)/double(n_points) * to_target;
+        ac_path.push_back(cv::Point3d(temp[0], temp[1], temp[2]));
+    }
 
-    pub.publish(out_img);
+
 }
+void MultiplePathsTask::DrawAllPaths(cv::InputOutputArray image,
+                                    const CameraIntrinsics &cam_intrinsics,
+                                    const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+                                    const KDL::Vector &tooltip_pos,
+                                    std::vector<cv::Point3d> targets,
+                                    const size_t &selected_index,
+                                    const cv::Scalar &color_selected,
+                                    const cv::Scalar &color_others){
+
+    // add the tooltip to the targets to project all the points together
+    targets.push_back(cv::Point3d(tooltip_pos[0], tooltip_pos[1],tooltip_pos[2]));
+
+    // project the points to 2d
+    std::vector<cv::Point2d> targets_2d;
+    projectPoints(targets, rvec, tvec, cam_intrinsics.camMatrix, cam_intrinsics.distCoeffs,
+                  targets_2d);
+
+    // get back the tooltip (for easy reading of the code)
+    cv::Point2d tooltip_2d = targets_2d.back();
+    targets_2d.pop_back();
+
+    // draw lines and target points
+    for (int i = 0; i <targets_2d.size() ; ++i) {
+
+        if(i==selected_index) {
+            line(image, targets_2d[i], tooltip_2d, color_selected, 2, CV_AA);
+            circle(image, targets_2d[i], 5, color_selected, -1);
+        }
+        else{
+            line(image, targets_2d[i], tooltip_2d, color_others, 2, CV_AA);
+            circle(image, targets_2d[i], 5, color_others, -1);
+        }
+
+    }
+
+
+}
+
 
 void VisualUtils::SwitchFullScreen(const std::string window_name) {
 
@@ -488,3 +558,27 @@ void VisualUtils::SwitchFullScreen(const std::string window_name) {
 
 }
 
+
+void SimpleACs::GenerateXYCircle(const KDL::Vector center, const double radius, const int num_points,
+                                          std::vector<cv::Point3d> & ac_path){
+    cv::Point3d point;
+    for (int n_point = 0; n_point <num_points ; ++n_point) {
+        double angle = 2* M_PI*(double)n_point / (double)(num_points);
+        point.z = center[2];
+        point.x = center[0] + radius * cos(angle);
+        point.y = center[1] + radius * sin(angle);
+        ac_path.push_back(point);
+    }
+}
+
+void  VecPoint3dToPoseArray(std::vector<cv::Point3d> vec, geometry_msgs::PoseArray & out) {
+
+    geometry_msgs::Pose point;
+
+    for (int i = 0; i < vec.size(); ++i) {
+        point.position.x = vec[i].x;
+        point.position.y = vec[i].y;
+        point.position.z = vec[i].z;
+        out.poses.push_back(point);
+    }
+}

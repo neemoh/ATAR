@@ -1,7 +1,6 @@
 <launch>
 
 	<arg name="camera_name" default="/camera/left"/>
-
         <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
  		<rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
         	<param name="cam_intrinsic_calibration_file_path" value="$(find teleop_vision)/resources/flea_left_intrinsic.xml" />

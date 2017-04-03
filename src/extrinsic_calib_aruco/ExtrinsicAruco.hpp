@@ -54,9 +54,9 @@ private:
 public:
 
     //in-class initialization
+    bool new_image = false;
     ros::NodeHandle n;
     ArucoBoard board;
-    double ros_freq = 0.0;
     bool show_image = false;
     cv::Mat image;
     CameraIntrinsics cam_intrinsics;

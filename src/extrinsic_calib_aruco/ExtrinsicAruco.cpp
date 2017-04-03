@@ -30,7 +30,6 @@ ArucoExtrinsic::ArucoExtrinsic(string node_name)
 void ArucoExtrinsic::GetROSParameterValues() {
     bool all_required_params_found = true;
 
-    n.param<double>("frequency", ros_freq, 25);
     n.param<bool>("show_image", show_image, false);
     board.draw_axes = show_image;
 
@@ -42,12 +41,12 @@ void ArucoExtrinsic::GetROSParameterValues() {
     std::string cam_name;
     if (n.getParam("cam_name", cam_name)) {
         std::stringstream path;
-        path << std::string(home_dir) << std::string("/.ros/") << cam_name << "_intrinsics.xml";
+        path << std::string(home_dir) << std::string("/.ros/camera_info/") << cam_name << "_intrinsics.xml";
         ReadCameraParameters(path.str(), cam_intrinsics);
     } else {
         ROS_ERROR(
                 "%s Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/ named as <cam_name>_intrinsics.xml",
+                        "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
                 ros::this_node::getName().c_str(),
                 n.resolveName("cam_name").c_str());
         all_required_params_found = false;
@@ -148,6 +147,7 @@ void ArucoExtrinsic::CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) 
   try
   {
     image = cv_bridge::toCvCopy(msg, "bgr8")->image;
+      new_image = true;
   }
   catch (cv_bridge::Exception& e)
   {

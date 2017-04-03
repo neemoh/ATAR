@@ -163,7 +163,32 @@ target_link_libraries(overlay
         arucoUtils
         )
 
-set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco)
+add_executable(
+        stereo_image_view
+        src/stereo_image_view/main_stereo_image_view.cpp
+)
+target_link_libraries(
+        stereo_image_view
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES}
+        )
+
+add_executable(
+        ac_overlay
+        src/ac_overlay/main_ac_overlay.cpp
+        src/ac_overlay/ACOverlay.cpp
+        src/ac_overlay/ACOverlay.h
+        src/ac_overlay/Drawings.cpp
+        src/ac_overlay/Drawings.h
+)
+target_link_libraries(
+        ac_overlay
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES}
+        arucoUtils)
+
+
+set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco )
 foreach (_executable ${_executables})
     target_link_libraries(
             ${_executable}
