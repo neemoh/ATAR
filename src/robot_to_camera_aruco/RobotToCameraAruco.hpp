@@ -8,57 +8,49 @@
 #ifndef SRC_UTILS_CALIBBOARDROBOT_HPP_
 #define SRC_UTILS_CALIBBOARDROBOT_HPP_
 
+#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <sensor_msgs/Image.h>
+#include <image_transport/image_transport.h>
+#include <tf_conversions/tf_kdl.h>
+
+#include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
-#include <geometry_msgs/PoseStamped.h>
-#include <iostream>
+
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core.hpp>
-#include <ros/ros.h>
-#include <sensor_msgs/Image.h>
-#include <tf_conversions/tf_kdl.h>
-#include <image_transport/image_transport.h>
 
-struct CameraIntrinsics {
-    cv::Mat camMatrix;
-    cv::Mat distCoeffs;
-};
+
+#include "utils/Drawings.h"
+#include "utils/Conversions.hpp"
 
 class RobotToCameraAruco {
 public:
     RobotToCameraAruco(std::string node_name);
 
-    /**
-     * Draw a circle representing the next tool target
-     *
-     * @param instructions [out] A message to write on the screen
-     * @param img [out] The current back-buffer on which to draw the target
-     */
     void DrawToolTarget(cv::String &instructions, cv::Mat img);
 
-    void SaveCalibrationPoint(geometry_msgs::Pose::_position_type position);
+    // Eddy Andre Addition
+    //
+    //
+    //
+    void Calib2DrawTarget(cv::String &instructions, cv::Mat img);
+    void Calib2SaveCalibrationPoint();
+    void Calib2CalculateTransformation();
+    //
+    //
+    //
+    void Calib1DrawCalibrationAxis(cv::String &instructions, cv::Mat img);
+    void Calib1SaveCalibrationPoint();
+    void Calib1CalculateTransformation(const std::vector<Eigen::Vector3d> axis_points,
+                                       KDL::Frame &transformation);
 
-    void MakeTr(std::vector<cv::Point3d> axisPoints, cv::Matx33d &_rotm,
-                cv::Vec3d &br_tvec);
-
-    void GetTr();
-
-    void CalculateTransformationN(std::vector<Eigen::Vector3d> axis_points,
-                                  cv::Matx33d &rotm, cv::Vec3d &br_tvec);
+    void SetTaskFrameToRobotFrameParam();
 
     std::pair<Eigen::Vector3d, Eigen::Vector3d>
-    FindAxis(const Eigen::MatrixXd &axis_points);
+    FindAxis(Eigen::MatrixXd axis_points);
 
-    //    template<typename Vector3>
-    //    std::pair<Vector3, Vector3> FitLineToPoints(const
-    //    std::vector<Vector3> & c);
-    //
-    ////    template<class Vector3>
-    ////    std::pair<Vector3, Vector3> FitPlaneToPoints(const
-    /// std::vector<Vector3> & c);
-    //
-
-    void DrawCalibrationAxis(cv::String &instructions, cv::Mat img);
     void Reset();
 
     bool IsCalibrated() { return calib_finished; }
@@ -72,28 +64,45 @@ public:
 
     cv::Mat &Image(ros::Duration timeout);
 
+    // Eddy Andre addition
+    //
+    //
+    const double length_x = 0.0782, length_y = 0.0514;
+    std::vector< Eigen::Vector3d> meas_points;
+    std::vector< Eigen::Vector3d> points_on_camera;
+    Eigen::Matrix<double, 3, 6> points_on_camera_mat;
+    Eigen::Matrix<double, 3, 6> meas_points_mat;
+    Eigen::Matrix4d camera_to_robot;
+    //
+    //
+    //
+
 public:
     CameraIntrinsics camera_intrinsics;
     double ros_freq = 0.0;
-    geometry_msgs::PoseStamped camera_pose;
-    geometry_msgs::PoseStamped robot_pose;
-    KDL::Frame board_to_cam_frame;
-    KDL::Frame board_to_robot_frame;
+    KDL::Frame task_frame_in_cam_frame;
+    KDL::Frame tool_pose_in_robot_frame;
+    KDL::Frame tool_pose_in_task_frame;
+    KDL::Frame task_frame_to_robot_frame;
 
-    cv::Vec3d board_to_cam_rvec, board_to_cam_tvec;
+    cv::Vec3d task_frame_to_cam_rvec, task_frame_to_cam_tvec;
 
 private:
-    void GetROSParameterValues();
+    void SetupROS();
 
     void ReadCameraParameters(const std::string file_path,
                               CameraIntrinsics & camera);
 
-    // the number of points recorded per axis. default value of 5 is used
+    // MUST BE EVEN NUMBER. The number of points recorded for calibration. default value of 5 is used
     // if no parameter is found on the ros server.
-    int num_points_per_axis = 5;
+    int num_calib_points = 6;
 
     // the length of the axis line in [m] shown on the image
     double visual_axis_length = 0.1;
+
+    std::vector<Eigen::Vector3d> measured_points;
+
+    bool calib_finished;
 
     ros::NodeHandle n;
     ros::Subscriber camera_pose_subscriber;
@@ -102,15 +111,18 @@ private:
     image_transport::Subscriber camera_image_subscriber;
     image_transport::ImageTransport *it;
 
-    std::vector<cv::Point3d> axis_points_Old;
-    std::vector<Eigen::Vector3d> measured_points;
 
-    bool calib_finished;
+    // Eddy Andre addition
+    //
+    //
+    //
+    std::vector<cv::Point3d> target;
+    //
+    //
+    //
     std::vector<cv::Point3d> calib_points_in_board_frame;
 
     cv::Mat image_msg;
-    cv::Vec3d calib_tvec;
-    cv::Matx33d calib_rotm;
     std::vector<cv::Point2d> calib_points_screen;
 };
 

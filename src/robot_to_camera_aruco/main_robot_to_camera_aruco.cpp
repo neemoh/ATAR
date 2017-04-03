@@ -7,14 +7,13 @@
 
 #include "RobotToCameraAruco.hpp"
 #include "utils/Colors.hpp"
-#include "utils/Drawings.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 /**
  * Enum used to track the progress of the calibration procedure.
  */
-enum class CalibProgress { Idle, Ready, Calibrating, Finished };
+enum class CalibProgress { Ready, Method1Calibrating, Method2Calibrating, Finished };       // Added MidStep
 
 int main(int argc, char *argv[]) {
 
@@ -25,37 +24,8 @@ int main(int argc, char *argv[]) {
 
     RobotToCameraAruco r(ros::this_node::getName());
 
-//     //	Eigen::MatrixXf A = Eigen::MatrixXf::Random(3, 1);
-//     std::vector<Eigen::Vector3d> A = {Eigen::Vector3d(0.0100, -0.0010, 0.100),
-//                                       Eigen::Vector3d(0.0200, 0.0010, 0.101),
-//                                       Eigen::Vector3d(0.0400, 0.0000, 0.100),
-//                                       Eigen::Vector3d(0.000, 0.0200, 0.1010),
-//                                       Eigen::Vector3d(-0.001, 0.040, 0.1010),
-//                                       Eigen::Vector3d(0.001, 0.0500, 0.1000)};
-//
-//     cv::Matx33d rotm_;
-//     cv::Vec3d br_tvec_;
-//
-//     r.CalculateTransformationN(A, rotm_, br_tvec_);
-//
-//     std::cout << "\n rotm_ \n" << rotm_ << std::endl;
-//     std::cout << "\n br_tvec_ \n" << br_tvec_ << std::endl;
-
-    //-----------------------------------------------------------------------------------
-    // Construct the drawing object
-    //-----------------------------------------------------------------------------------
-    Drawings drawings(
-            r.camera_intrinsics.camMatrix, r.camera_intrinsics.distCoeffs,
-            r.board_to_robot_frame,
-            //        r.board.MarkerLength_px / r.board.MarkerLength);
-            1);
-
-    //	drawings.setSquare(Point3d(500,350,0),  Point2d(500,100));
-    //	drawings.createEllipse(525,350,220,150,400);
-
     // Create the window in which to render the video feed
-    cvNamedWindow("PSM to board Calib",CV_WINDOW_NORMAL);
-
+    cvNamedWindow(ros::this_node::getName().c_str(), CV_WINDOW_NORMAL);
 
     // This is the image that will be rendered at every loop. We'll be drawing
     // the hints on it.
@@ -78,37 +48,66 @@ int main(int argc, char *argv[]) {
         //            continue;
         //        }
 
-        instructions = "Press k to begin calibration.";
+        instructions = "Press 1 or 2 to begin calibration.";
         char key = (char)cv::waitKey(1);
         if (key == 27) // Esc
             ros::shutdown();
 
-        if (key == 'k') { // Start calibration
+        if (key == '1') { // Start calibration
             r.Reset();
-            progress = CalibProgress::Calibrating;
+            progress = CalibProgress::Method1Calibrating;
+        }
+        if (key == '2') { // Start calibration
+            r.Reset();
+            progress = CalibProgress::Method2Calibrating;
         }
         if (key == 'f') { //full screen
             cvSetWindowProperty("PSM to board Calib", CV_WND_PROP_FULLSCREEN,
                                 CV_WINDOW_FULLSCREEN);
         }
-        if (progress == CalibProgress::Calibrating) {
+        if (progress == CalibProgress::Method1Calibrating) {
 
             //			r.DrawToolTarget(instructions,
             // back_buffer);
-            r.DrawCalibrationAxis(instructions, back_buffer);
+            r.Calib1DrawCalibrationAxis(instructions, back_buffer);
 
             if (key == ' ') {
                 // save the position of the end effector
-                r.SaveCalibrationPoint(r.robot_pose.pose.position);
+                r.Calib1SaveCalibrationPoint();
 
                 // was adding the point enough to complete the calibration?
                 if (r.IsCalibrated()) {
                     progress = CalibProgress::Finished;
 
-                    // get the calibration data
-                    r.GetTr();
-                    drawings.update_board_to_robot_frame(
-                            r.board_to_robot_frame);
+                    // set the calibration data
+                    r.SetTaskFrameToRobotFrameParam();
+
+                }
+            }
+        }
+
+
+        if (progress == CalibProgress::Method2Calibrating){
+            // computing camera_to_robot_tranform using chain rule (rTk=rTb*bTk with r=robot, b=board, k=camera)
+            // auto camera_to_robot = r.task_frame_to_robot_frame * r.board_to_cam_frame.Inverse();
+            // cv::Vec3d rvec, tvec;
+            // conversions::kdlFrameToRvectvec(camera_to_robot, rvec, tvec);
+
+            r.Calib2DrawTarget(instructions, back_buffer);
+
+            if (key == 's') {
+
+                r.Calib2SaveCalibrationPoint();
+
+                // was adding the point enough to complete the calibration?
+                if (r.IsCalibrated()) {
+
+                    progress = CalibProgress::Finished;
+
+                    // ROS_INFO_STREAM("  -> chain rule: \n" << rvec << std::endl << tvec << std::endl);
+                    // drawings.update_camera_to_robot(camera_to_robot);
+                    // ROS_INFO_STREAM("  -> quaternion matching: \n" << camera_to_robot << std::endl);
+
                 }
             }
         }
@@ -116,38 +115,29 @@ int main(int argc, char *argv[]) {
         if (progress == CalibProgress::Finished) {
             instructions = "Calibration finished. Press 'Esc' to exit";
 
-            //            if (boardDetector.Detected()) {
-            drawings.update_cam_2_board_ref(r.board_to_cam_rvec,
-                                            r.board_to_cam_tvec);
+            // take the tool tip to task space
+            r.tool_pose_in_task_frame = r.task_frame_to_robot_frame.Inverse() *
+                    r.tool_pose_in_robot_frame;
 
-            // draw the tool tip point
-            drawings.drawToolTip(back_buffer, r.robot_pose.pose.position,
-                                 Colors::Redish);
+            DrawingsCV::DrawCoordinateFrameInTaskSpace(back_buffer, r.camera_intrinsics,
+                                                       r.tool_pose_in_task_frame,
+                                                       r.task_frame_to_cam_rvec,
+                                                       r.task_frame_to_cam_tvec, 0.01);
 
-            //-----------------------------------------------------------------------------------
-            // publish camera to robot pose
-            //-----------------------------------------------------------------------------------
-            //                KDL::Frame cam_to_robot = board_to_psm_frame *
-            //                board_to_cam_frame.Inverse();
-            //
-            //                geometry_msgs::Pose cr_pose_msg;
-            //                // convert pixel to meters
-            //                //cam_to_robot.p = cam_to_robot.p /
-            //                drawings.m_to_px;
-            //                tf::poseKDLToMsg(cam_to_robot, cr_pose_msg);
-            //
-            //                r.pub_board_to_robot_pose.publish(cr_pose_msg);
-            //                r.pub_board_to_robot_pose.publish(board_to_psm_pose_msg);
-            //            }
+
         }
 
-        drawings.showTransientNotification(back_buffer);
-
+//        drawings.showTransientNotification(back_buffer);
+        // draw the coordinate frame of the board
+        DrawingsCV::DrawCoordinateFrameInTaskSpace(back_buffer, r.camera_intrinsics,
+                                                   KDL::Frame(),
+                                                   r.task_frame_to_cam_rvec,
+                                                   r.task_frame_to_cam_tvec, 0.01);
         cv::Point textOrigin(10, 20);
         auto text_color = (!r.IsCalibrated()) ? Colors::Red : Colors::Green;
         cv::putText(back_buffer, instructions, textOrigin, 1, 1, text_color);
 
-        cv::imshow("PSM to board Calib", back_buffer);
+        cv::imshow(ros::this_node::getName().c_str(), back_buffer);
 
         ros::spinOnce();
         loop_rate.sleep();

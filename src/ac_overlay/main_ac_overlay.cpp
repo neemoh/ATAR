@@ -141,9 +141,12 @@ int main(int argc, char **argv)
                     // draw only the selected ac path
                     // draw
                     for (int i = 0; i < 2; ++i) {
-                        DrawingsCV::DrawACPath(cam_images[i], ac_path_in_use,
-                                               ao.cam_intrinsics[i], ao.cam_rvec[i],
-                                               ao.cam_tvec[i], color_ac_path_selected);
+                        DrawingsCV::DrawPoint3dVector(cam_images[i],
+                                                      ac_path_in_use,
+                                                      ao.cam_intrinsics[i],
+                                                      ao.cam_rvec[i],
+                                                      ao.cam_tvec[i],
+                                                      color_ac_path_selected);
                         // draw target point
                         DrawingsCV::DrawPoint(cam_images[i],
                                               ao.cam_intrinsics[i], ao.cam_rvec[i],
@@ -153,11 +156,13 @@ int main(int argc, char **argv)
                                                           targets[selected_ac].z),
                                               color_ac_path_selected);
 
-                        DrawingsCV::DrawCurrentToDesiredLine(cam_images[i], ao.cam_intrinsics[i],
-                                                             ao.cam_rvec[i], ao.cam_tvec[i],
-                                                             ao.pose_tool2.p,
-                                                             ao.pose_desired[1].p,
-                                                             color_ac_desired_point);
+                        DrawingsCV::DrawLineFrom2KDLPoints(cam_images[i],
+                                                           ao.cam_intrinsics[i],
+                                                           ao.cam_rvec[i],
+                                                           ao.cam_tvec[i],
+                                                           ao.pose_tool2.p,
+                                                           ao.pose_desired[1].p,
+                                                           color_ac_desired_point);
                     }
 
                     // criterion to call the singel tasj finished is if we are close enough to the target
@@ -193,15 +198,18 @@ int main(int argc, char **argv)
 
                 for (int i = 0; i < 2; ++i) {
 
-                    DrawingsCV::DrawACPath(cam_images[i], ac_path_in_use,
-                                           ao.cam_intrinsics[i],
-                                           ao.cam_rvec[i], ao.cam_tvec[i], color_ac_path);
+                    DrawingsCV::DrawPoint3dVector(cam_images[i], ac_path_in_use,
+                                                  ao.cam_intrinsics[i],
+                                                  ao.cam_rvec[i],
+                                                  ao.cam_tvec[i], color_ac_path);
 
-                    DrawingsCV::DrawCurrentToDesiredLine(cam_images[i], ao.cam_intrinsics[i],
-                                                         ao.cam_rvec[i], ao.cam_tvec[i],
-                                                         ao.pose_tool2.p,
-                                                         ao.pose_desired[1].p,
-                                                         color_ac_desired_point);
+                    DrawingsCV::DrawLineFrom2KDLPoints(cam_images[i],
+                                                       ao.cam_intrinsics[i],
+                                                       ao.cam_rvec[i],
+                                                       ao.cam_tvec[i],
+                                                       ao.pose_tool2.p,
+                                                       ao.pose_desired[1].p,
+                                                       color_ac_desired_point);
                 }
 
             }
@@ -220,7 +228,7 @@ int main(int argc, char **argv)
 
 
             for (int j = 0; j <2 ; ++j) {
-                ao.drawAxisAntiAliased(cam_images[j], ao.cam_intrinsics[j],
+                DrawingsCV::DrawCoordinateFrameAntiAliased(cam_images[j], ao.cam_intrinsics[j],
                                        ao.cam_rvec[j], ao.cam_tvec[j], 0.02);
             }
 

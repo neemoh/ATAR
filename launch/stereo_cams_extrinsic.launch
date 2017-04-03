@@ -1,7 +1,7 @@
 <launch>
 	<!-- Common parameters -->
 	<arg name="camera_name" default="camera" />
-	<arg name="frame_rate" default="15" />
+	<arg name="frame_rate" default="30" />
 
 	<arg name="left_camera_serial" default="14150439" />
 	<arg name="left_camera_calibrated" default="0" />

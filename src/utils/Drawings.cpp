@@ -1,128 +1,168 @@
 //
-// Created by nearlab on 14/12/16.
+// Created by charm on 3/19/17.
 //
 
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/calib3d.hpp>
+#include <iostream>
+#include "utils/Drawings.h"
 
-#include "kdl/frames.hpp"
 
-#include "utils/Colors.hpp"
-#include "utils/Drawings.hpp"
-#include "utils/Conversions.hpp"
+void DrawingsCV::DrawCube(cv::InputOutputArray image,
+                          const CameraIntrinsics &cam_intrinsics,
+                          const cv::Vec3d &rvec,
+                          const cv::Vec3d &tvec,
+                          const cv::Point3d &origin,
+                          const cv::Point3d &whd,
+                          const cv::Scalar &color){
 
-using namespace std;
-using namespace cv;
+    CV_Assert(image.getMat().total() != 0 &&
+              (image.getMat().channels() == 1 || image.getMat().channels() == 3));
 
-Drawings::Drawings(
-    const Mat _camMatrix,
-    const Mat _distCoeffs,
-    const KDL::Frame _br_frame,
-    const double _m_to_px)
-{
-    camMatrix = _camMatrix;
-    distCoeffs = _distCoeffs;
+    // project axis points
+    std::vector<cv::Point3f> axisPoints;
 
-    board_to_robot_transl = Point3d(_br_frame.p[0], _br_frame.p[1], _br_frame.p[2]);
-    conversions::KDLRotToMatx33d(_br_frame.M, board_to_robot_rotm);
+    axisPoints.push_back(cv::Point3d(origin.x, origin.y + whd.y, origin.z));
+    axisPoints.push_back(cv::Point3d(origin.x + whd.x, origin.y + whd.y, origin.z));
+    axisPoints.push_back(cv::Point3d(origin.x + whd.x, origin.y, origin.z));
+    axisPoints.push_back(cv::Point3d(origin.x, origin.y, origin.z));
 
-    m_to_px = _m_to_px;
-    new_task = true;
-    notification_counter = 0;
+    axisPoints.push_back(cv::Point3d(origin.x, origin.y + whd.y, origin.z + whd.z));
+    axisPoints.push_back(cv::Point3d(origin.x + whd.x, origin.y + whd.y, origin.z + whd.z));
+    axisPoints.push_back(cv::Point3d(origin.x + whd.x, origin.y, origin.z + whd.z));
+    axisPoints.push_back(cv::Point3d(origin.x, origin.y, origin.z + whd.z));
+
+    std::vector<cv::Point2f> imagePoints;
+    cv::projectPoints(axisPoints, rvec, tvec,
+                      cam_intrinsics.camMatrix, cam_intrinsics.distCoeffs, imagePoints);
+
+    // draw axis lines
+    int points[7] = {0, 1, 2, 4, 5, 6};
+    for (int i = 0; i < 6; i++) {
+        cv::line(image, imagePoints[points[i]], imagePoints[points[i] + 1],
+                 color, 2, CV_AA);
+    }
+    for (int i = 0; i < 4; i++) {
+        line(image, imagePoints[i], imagePoints[i + 4], color, 2, CV_AA);
+    }
+    line(image, imagePoints[3], imagePoints[0], color, 2, CV_AA);
+    line(image, imagePoints[7], imagePoints[4], color, 2, CV_AA);
+
 }
 
 
-void Drawings::drawSquare(InputOutputArray _image) {
+void DrawingsCV::DrawPoint(cv::InputOutputArray image,
+                           const CameraIntrinsics &cam_intrinsics,
+                           const cv::Vec3d &rvec,
+                           const cv::Vec3d &tvec,
+                           KDL::Vector position,
+                           const cv::Scalar color) {
+
+    std::vector<cv::Point3d> toolPoint3d_vec_crf;
+    std::vector<cv::Point2d> toolPoint2d;
+    toolPoint3d_vec_crf.push_back(cv::Point3d(position[0] , position[1] , position[2]));
+
+    projectPoints(toolPoint3d_vec_crf, rvec, tvec, cam_intrinsics.camMatrix,
+                  cam_intrinsics.distCoeffs, toolPoint2d);
+    circle(image, toolPoint2d[0], 5, color, -1);
+
+}
+
+
+
+void DrawingsCV::DrawPoint3dVector(cv::InputOutputArray image,
+                                   const std::vector<cv::Point3d> &ac_path,
+                                   const CameraIntrinsics &cam_intrinsics,
+                                   const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+                                   const cv::Scalar color){
+    if(ac_path.size() > 0) {
+
+        std::vector<cv::Point2d> ac_points_2d;
+        projectPoints(ac_path, rvec, tvec, cam_intrinsics.camMatrix,
+                      cam_intrinsics.distCoeffs, ac_points_2d);
+
+        for (int i = 0; i < ac_path.size(); ++i) {
+            circle(image, ac_points_2d[i], 2, color, -1);
+        }
+    }
+}
+
+void DrawingsCV::DrawLineFrom2KDLPoints(cv::InputOutputArray image,
+                                        const CameraIntrinsics &cam_intrinsics,
+                                        const cv::Vec3d &rvec,
+                                        const cv::Vec3d &tvec,
+                                        KDL::Vector current,
+                                        KDL::Vector desired,
+                                        const cv::Scalar color) {
+
+    std::vector<cv::Point3d> points_3d;
+    std::vector<cv::Point2d> points_2d;
+    points_3d.push_back(cv::Point3d(current[0] , current[1] , current[2]));
+    points_3d.push_back(cv::Point3d(desired[0] , desired[1] , desired[2]));
+
+    projectPoints(points_3d, rvec, tvec, cam_intrinsics.camMatrix,
+                  cam_intrinsics.distCoeffs, points_2d);
+    line(image, points_2d[0], points_2d[1], color, 2, CV_AA);
+
+    circle(image, points_2d[0], 5, color, -1);
+
+}
+
+
+void DrawingsCV::DrawCoordinateFrameAntiAliased(
+        const cv::InputOutputArray &_image, const CameraIntrinsics &cam_intrinsics,
+        const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+        float length){
 
     CV_Assert(_image.getMat().total() != 0 &&
               (_image.getMat().channels() == 1 || _image.getMat().channels() == 3));
+    CV_Assert(length > 0);
 
     // project axis points
-    sq_points_in_board.push_back(
-        Point3f(sq_center.x - sq_dims.x / 2, sq_center.y - sq_dims.y / 2, sq_center.z));
-    sq_points_in_board.push_back(
-        Point3f(sq_center.x + sq_dims.x / 2, sq_center.y - sq_dims.y / 2, sq_center.z));
-    sq_points_in_board.push_back(
-        Point3f(sq_center.x + sq_dims.x / 2, sq_center.y + sq_dims.y / 2, sq_center.z));
-    sq_points_in_board.push_back(
-        Point3f(sq_center.x - sq_dims.x / 2, sq_center.y + sq_dims.y / 2, sq_center.z));
+    std::vector<cv::Point3f> axisPoints {
+            cv::Point3f( 0,  0,  0),
+            cv::Point3f( 1,  0,  0) * length,
+            cv::Point3f( 0,  1,  0) * length,
+            cv::Point3f( 0,  0,  1) * length
+    };
 
-    vector<Point2d> imagePoints;
-    projectPoints(sq_points_in_board, board_to_cam_rvec, board_to_cam_tvec, camMatrix, distCoeffs, imagePoints);
+    std::vector<cv::Point2f> imagePoints;
+    cv::projectPoints(axisPoints, rvec, tvec, cam_intrinsics.camMatrix,
+                      cam_intrinsics.distCoeffs, imagePoints);
 
     // draw axis lines
-    for (int i = 0; i < 3; i++) {
-        line(_image, imagePoints[i], imagePoints[i + 1], Scalar(200, 100, 10), 1);
-    }
-    line(_image, imagePoints[3], imagePoints[0], Scalar(200, 100, 10), 1);
-
+    cv::line(_image, imagePoints[0], imagePoints[1], cv::Scalar(200, 0, 0), 2, CV_AA);
+    cv::line(_image, imagePoints[0], imagePoints[2], cv::Scalar(0, 200, 0), 2, CV_AA);
+    cv::line(_image, imagePoints[0], imagePoints[3], cv::Scalar(0, 0, 200), 2, CV_AA);
 }
 
+void DrawingsCV::DrawCoordinateFrameInTaskSpace(
+        const cv::InputOutputArray &image, const CameraIntrinsics &cam_intrinsics,
+        const KDL::Frame frame,
+        const cv::Vec3d &rvec, const cv::Vec3d &tvec,
+        float length){
 
-void Drawings::drawToolTip(InputOutputArray _image, position_t position, const Scalar _color) {
+    CV_Assert(image.getMat().total() != 0 &&
+              (image.getMat().channels() == 1 || image.getMat().channels() == 3));
+    CV_Assert(length > 0);
 
-    //	Point3d board_to_robot_transl = Point3d( br_frame.p[0],  br_frame.p[1],  br_frame.p[2]);
-    Point3d toolPoint3d_rrf = Point3d(position.x, position.y, position.z);
+    // project axis points
+    KDL::Vector x_axis = frame.p +  length * frame.M.UnitX();
+    KDL::Vector y_axis = frame.p +  length * frame.M.UnitY();
+    KDL::Vector z_axis = frame.p +  length * frame.M.UnitZ();
 
-    // taking the robot tool tip from the robot ref frame to board ref frame and convert to pixles from meters
-    Point3d temp = board_to_robot_rotm.t() * (toolPoint3d_rrf - board_to_robot_transl);
-    Point3d toolPoint3d_crf = Point3d(temp.x * m_to_px, temp.y * m_to_px, temp.z * m_to_px);
-
-    vector<Point3d> toolPoint3d_vec_crf;
-    vector<Point2d> toolPoint2d;
-    toolPoint3d_vec_crf.push_back(toolPoint3d_crf);
-
-    projectPoints(toolPoint3d_vec_crf, board_to_cam_rvec, board_to_cam_tvec, camMatrix, distCoeffs, toolPoint2d);
-    circle(_image, toolPoint2d[0], 2, _color, -1);
-
-}
-
-
-//--------------------------------------------------------------------------------------------
-// Get cloud points of the ac
-//--------------------------------------------------------------------------------------------
-void Drawings::transfromToBoard(const geometry_msgs::Pose &_tool_curr_in_slvrf,
-    const geometry_msgs::Pose &_tool_dest_in_slvrf) {
-
-    //	Point3d board_to_robot_transl = Point3d( br_frame.p[0],  br_frame.p[1],  br_frame.p[2]);
-    Point3d toolPoint3d_slvrf = Point3d(_tool_curr_in_slvrf.position.x,
-        _tool_curr_in_slvrf.position.y, _tool_curr_in_slvrf.position.z);
-    Point3d desPoint3d_slvrf = Point3d(_tool_dest_in_slvrf.position.x,
-        _tool_dest_in_slvrf.position.y, _tool_dest_in_slvrf.position.z);
-
-    // taking the robot tool tip from the robot ref frame to board ref frame and convert to pixels from meters
-    Point3d temp = board_to_robot_rotm.t() * (toolPoint3d_slvrf - board_to_robot_transl);
-    curr_tool_boardrf = Point3d(temp.x * m_to_px, temp.y * m_to_px, temp.z * m_to_px);
-
-    temp = board_to_robot_rotm.t() * (desPoint3d_slvrf - board_to_robot_transl);
-    dest_tool_boardrf = Point3d(temp.x * m_to_px, temp.y * m_to_px, temp.z * m_to_px);
-
-}
+    std::vector<cv::Point3f> axisPoints {
+            cv::Point3f( (float)frame.p[0],  (float)frame.p[1],  (float)frame.p[2]),
+            cv::Point3f( (float)x_axis[0],  (float)x_axis[1],   (float)x_axis[2]),
+            cv::Point3f( (float)y_axis[0],  (float)y_axis[1],   (float)y_axis[2]),
+            cv::Point3f( (float)z_axis[0],  (float)z_axis[1],   (float)z_axis[2]),
+             };
 
 
-//--------------------------------------------------------------------------------------------
-// setTransientNotification
-//--------------------------------------------------------------------------------------------
-void Drawings::setTransientNotification(cv::String _msg, double _origin_x, double _origin_y,
-    unsigned int _duration_counts) {
+    std::vector<cv::Point2f> imagePoints;
+    cv::projectPoints(axisPoints, rvec, tvec, cam_intrinsics.camMatrix,
+                      cam_intrinsics.distCoeffs, imagePoints);
 
-    textOrigin = Point(_origin_x, _origin_y);
-    transient_notification_msg = _msg;
-    notification_counter = _duration_counts;
-
-
-}
-
-
-//--------------------------------------------------------------------------------------------
-// showTransientNotification
-//--------------------------------------------------------------------------------------------
-void Drawings::showTransientNotification(InputOutputArray _image) {
-
-
-    if (notification_counter > 0) {
-        putText(_image, transient_notification_msg, textOrigin, 1, 1, Colors::Blue);
-        notification_counter--;
-    }
+    // draw axis lines
+    cv::line(image, imagePoints[0], imagePoints[1], cv::Scalar(200, 0, 0), 2, CV_AA);
+    cv::line(image, imagePoints[0], imagePoints[2], cv::Scalar(0, 200, 0), 2, CV_AA);
+    cv::line(image, imagePoints[0], imagePoints[3], cv::Scalar(0, 0, 200), 2, CV_AA);
 }

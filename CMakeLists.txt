@@ -109,9 +109,8 @@ add_executable(
         src/robot_to_camera_aruco/main_robot_to_camera_aruco.cpp
         src/robot_to_camera_aruco/RobotToCameraAruco.cpp
         src/utils/Drawings.cpp
-        include/utils/Drawings.hpp
+        include/utils/Drawings.h
         src/robot_to_camera_aruco/RobotToCameraAruco.hpp)
-
 
 add_executable(
         extrinsic_calib_aruco
@@ -187,8 +186,8 @@ add_executable(
         src/overlay/main_overlay.cpp
         src/overlay/Overlay.cpp
         src/overlay/Overlay.h
-        src/overlay/Drawings.cpp
-        src/overlay/Drawings.h
+        src/utils/Drawings.cpp
+        include/utils/Drawings.h
 )
 target_link_libraries(
         overlay
@@ -204,15 +203,16 @@ target_link_libraries(
         stereo_image_view
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES}
-        )
+)
+
 
 add_executable(
         ac_overlay
         src/ac_overlay/main_ac_overlay.cpp
         src/ac_overlay/ACOverlay.cpp
         src/ac_overlay/ACOverlay.h
-        src/ac_overlay/Drawings.cpp
-        src/ac_overlay/Drawings.h
+        src/utils/Drawings.cpp
+        include/utils/Drawings.h
 )
 target_link_libraries(
         ac_overlay
