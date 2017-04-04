@@ -175,15 +175,16 @@ target_link_libraries(
         stereo_image_view
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES}
-        )
+)
+
 
 add_executable(
         ac_overlay
         src/ac_overlay/main_ac_overlay.cpp
         src/ac_overlay/ACOverlay.cpp
         src/ac_overlay/ACOverlay.h
-        src/ac_overlay/Drawings.cpp
-        src/ac_overlay/Drawings.h
+        src/utils/Drawings.cpp
+        include/utils/Drawings.h
 )
 target_link_libraries(
         ac_overlay

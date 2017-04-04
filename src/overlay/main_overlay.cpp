@@ -87,15 +87,15 @@ int main(int argc, char **argv)
                                   cv::Scalar(100, 50, 200));
 
 
-            DrawingsCV::DrawACPath(left_image, og.ac_path,
-                                   og.cam_intrinsics[0], og.cam_rvec_l,
-                                   og.cam_tvec_l, color_ac_path);
+            DrawingsCV::DrawPoint3dVector(left_image, og.ac_path,
+                                          og.cam_intrinsics[0], og.cam_rvec_l,
+                                          og.cam_tvec_l, color_ac_path);
 
-            DrawingsCV::DrawCurrentToDesiredLine(left_image, og.cam_intrinsics[0],
-                                                 og.cam_rvec_l, og.cam_tvec_l,
-                                                 og.pose_tool2.p,
-                                                 og.pose_desired_r.p,
-                                                 color_desired_point);
+            DrawingsCV::DrawLineFrom2KDLPoints(left_image, og.cam_intrinsics[0],
+                                               og.cam_rvec_l, og.cam_tvec_l,
+                                               og.pose_tool2.p,
+                                               og.pose_desired_r.p,
+                                               color_desired_point);
             // draw desired point right tool
             DrawingsCV::DrawPoint(left_image, og.cam_intrinsics[0],
                                   og.cam_rvec_l, og.cam_tvec_l,
@@ -126,15 +126,16 @@ int main(int argc, char **argv)
                                   cv::Scalar(10, 50, 100));
 
 
-            DrawingsCV::DrawCurrentToDesiredLine(right_image, og.cam_intrinsics[1],
-                                                 og.cam_rvec_r, og.cam_tvec_r,
-                                                 og.pose_tool2.p,
-                                                 og.pose_desired_r.p,
-                                                 color_desired_point);
+            DrawingsCV::DrawLineFrom2KDLPoints(right_image,
+                                               og.cam_intrinsics[1],
+                                               og.cam_rvec_r, og.cam_tvec_r,
+                                               og.pose_tool2.p,
+                                               og.pose_desired_r.p,
+                                               color_desired_point);
 
-            DrawingsCV::DrawACPath(right_image, og.ac_path,
-                                     og.cam_intrinsics[1], og.cam_rvec_r,
-                                     og.cam_tvec_r, color_ac_path);
+            DrawingsCV::DrawPoint3dVector(right_image, og.ac_path,
+                                          og.cam_intrinsics[1], og.cam_rvec_r,
+                                          og.cam_tvec_r, color_ac_path);
 
             // draw desired point right tool
             DrawingsCV::DrawPoint(right_image, og.cam_intrinsics[1],

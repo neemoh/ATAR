@@ -25,9 +25,11 @@ int main(int argc, char **argv)
 
     window_name[0] = "Overlay Left";
     window_name[1] = "Overlay Right";
+
     // Create the window in which to render the video feed
     cvNamedWindow(window_name[0].c_str(),CV_WINDOW_NORMAL);
     cvNamedWindow(window_name[1].c_str(),CV_WINDOW_NORMAL);
+
     //cv::Mat left_image, right_image;
     cv::Mat cam_images[2];
 
@@ -35,29 +37,28 @@ int main(int argc, char **argv)
     cv::Scalar color_ac_path(100, 100, 200);
     cv::Scalar color_ac_desired_point(200, 50, 90);
 
-// tasks
+    // task2 targets
     Tasks selected_task = Tasks::None;
 
-    std::vector<cv::Point3d> targets;
+    std::vector<cv::Point3d> targets_original;
     double h = 0.0265;
     double w = 0.025;
-    targets.push_back(cv::Point3d(0.013      ,  0.028, 0.026));
-    targets.push_back(cv::Point3d(0.013 + 1*h,  0.028, 0.026));
-    targets.push_back(cv::Point3d(0.013 + 2*h,  0.028, 0.026));
-    targets.push_back(cv::Point3d(0.013      ,  0.028 + 1*w, 0.026));
-    targets.push_back(cv::Point3d(0.013+ 1*h ,  0.028 + 1*w, 0.026));
-    targets.push_back(cv::Point3d(0.011+ 2*h ,  0.028 + 1*w, 0.026));
+    targets_original.push_back(cv::Point3d(0.013      ,  0.028, 0.026));
+    targets_original.push_back(cv::Point3d(0.013 + 1*h,  0.028, 0.026));
+    targets_original.push_back(cv::Point3d(0.013 + 2*h,  0.028, 0.026));
+    targets_original.push_back(cv::Point3d(0.013      ,  0.028 + 1*w, 0.026));
+    targets_original.push_back(cv::Point3d(0.013+ 1*h ,  0.028 + 1*w, 0.026));
+    targets_original.push_back(cv::Point3d(0.011+ 2*h ,  0.028 + 1*w, 0.026));
 
-//    targets.push_back(cv::Point3d(0.030,  0.025, 0.026));
-//    targets.push_back(cv::Point3d(0.035,  0.035, 0.026));
-//    targets.push_back(cv::Point3d(0.050,  0.06, 0.026));
-//    targets.push_back(cv::Point3d(0.030,  0.07, 0.026));
+    std::vector<cv::Point3d> targets = targets_original;
 
     MultiplePathsTask::Status task_state = MultiplePathsTask::Status::Ready;
 
     std::vector<cv::Point3d> ac_path_in_use;
     size_t selected_ac = 0;
 
+    std::stringstream ui_instructions;
+    ui_instructions <<"Press 1 for task1 and 2 for task2. " ;
 
     while (ros::ok())
     {
@@ -87,6 +88,7 @@ int main(int argc, char **argv)
         else if (key == '1'){
             ROS_INFO("Task 1 Selected");
             selected_task = Tasks::CricleAC;
+            ac_path_in_use.clear();
             SimpleACs::GenerateXYCircle(KDL::Vector(0.045, 0.04, 0.04), 0.025, 200, ac_path_in_use);
         }
         else if (key == '2'){
@@ -104,12 +106,14 @@ int main(int argc, char **argv)
             ao.ImageLeft(ros::Duration(1)).copyTo(cam_images[0]);
             ao.ImageRight(ros::Duration(1)).copyTo(cam_images[1]);
 
-
             // task -------------------------------
 
             if (selected_task == Tasks::MultiplePaths) {
                 if (task_state == MultiplePathsTask::Status::Ready) {
-
+                    //change the instructions
+                    ui_instructions.str(std::string());
+                    ui_instructions <<"Press the camera pedal to select the closest target (blue). "
+                                    << targets.size()<<" to go.";
                     // find the closest destination
                     selected_ac = MultiplePathsTask::FindClosestTarget(ao.pose_tool2.p, targets);
 
@@ -119,10 +123,6 @@ int main(int argc, char **argv)
                                                         ao.cam_rvec[i], ao.cam_tvec[i], ao.pose_tool2.p,
                                                         targets, selected_ac,
                                                         color_ac_path_selected, color_ac_path);
-                        std::stringstream msg;
-                        msg <<"Select target. "  << targets.size()<<" to go.";
-                        cv::putText(cam_images[i], msg.str(), cv::Point(50, 50), 0, 1, cv::Scalar(20, 150, 20),2);
-
                     }
 
                     //if foot switch pressed select the current ac
@@ -132,7 +132,9 @@ int main(int argc, char **argv)
                                                               ac_path_in_use);
                         std::cout <<"Selected target "<< selected_ac << std::endl;
                         task_state = MultiplePathsTask::Status::ACSelected;
-
+                        //change the instructions
+                        ui_instructions.str(std::string());
+                        ui_instructions <<"Active constraint activated. Approach the target. ";
                     }
                 }
 
@@ -141,9 +143,12 @@ int main(int argc, char **argv)
                     // draw only the selected ac path
                     // draw
                     for (int i = 0; i < 2; ++i) {
-                        DrawingsCV::DrawACPath(cam_images[i], ac_path_in_use,
-                                               ao.cam_intrinsics[i], ao.cam_rvec[i],
-                                               ao.cam_tvec[i], color_ac_path_selected);
+                        DrawingsCV::DrawPoint3dVector(cam_images[i],
+                                                      ac_path_in_use,
+                                                      ao.cam_intrinsics[i],
+                                                      ao.cam_rvec[i],
+                                                      ao.cam_tvec[i],
+                                                      color_ac_path_selected);
                         // draw target point
                         DrawingsCV::DrawPoint(cam_images[i],
                                               ao.cam_intrinsics[i], ao.cam_rvec[i],
@@ -153,76 +158,86 @@ int main(int argc, char **argv)
                                                           targets[selected_ac].z),
                                               color_ac_path_selected);
 
-                        DrawingsCV::DrawCurrentToDesiredLine(cam_images[i], ao.cam_intrinsics[i],
-                                                             ao.cam_rvec[i], ao.cam_tvec[i],
-                                                             ao.pose_tool2.p,
-                                                             ao.pose_desired[1].p,
-                                                             color_ac_desired_point);
+                        DrawingsCV::DrawLineFrom2KDLPoints(cam_images[i],
+                                                           ao.cam_intrinsics[i],
+                                                           ao.cam_rvec[i],
+                                                           ao.cam_tvec[i],
+                                                           ao.pose_tool2.p,
+                                                           ao.pose_desired[1].p,
+                                                           color_ac_desired_point);
                     }
 
-                    // criterion to call the singel tasj finished is if we are close enough to the target
+                    // criterion to call the single task finished is if we are close enough to the target
                     KDL::Vector dist_target(targets[selected_ac].x - ao.pose_tool2.p[0],
                                             targets[selected_ac].y - ao.pose_tool2.p[1],
                                             targets[selected_ac].z - ao.pose_tool2.p[2]);
 
                     if (dist_target.Norm() < 0.003) {
                         // flag the end of the subtask
-                        task_state = MultiplePathsTask::Status::Finished;
+                        task_state = MultiplePathsTask::Status::SubTaskFinished;
                         //remove the reached target
                         targets.erase(targets.begin() + selected_ac);
                         std::cout <<"Target "<<selected_ac <<" Reached. "
                                   << targets.size()<<" more to go." << std::endl;
-
+                        //change the instructions
+                        ui_instructions.str(std::string());
+                        ui_instructions <<"Target reached. Elevate the tool (away from the board). ";
                     }
                 }
 
-                if (task_state == MultiplePathsTask::Status::Finished) {
+                if (task_state == MultiplePathsTask::Status::SubTaskFinished) {
 
-                    // criterion to call the singel task finished is if we are close enough to the target
-                    KDL::Vector dist_target(targets[0].x - ao.pose_tool2.p[0],
-                                            targets[0].y - ao.pose_tool2.p[1],
-                                            targets[0].z - ao.pose_tool2.p[2]);
-                    //std::cout <<"dist_target.Norm()" << dist_target.Norm() <<  std::endl;
 
-                    if (dist_target.Norm() > 0.035) {
+                    // when task finishes the user should go back to a homeing distance, just to get away from teh board.
+                    if (std::fabs(targets[0].z - ao.pose_tool2.p[2]) > 0.035) {
                         // flag the end of the subtask
                         task_state = MultiplePathsTask::Status::Ready;
+                        //change the instructions
+                        ui_instructions.str(std::string());
+                        ui_instructions <<"Press the camera pedal to select the closest target (blue line). "
+                                        << targets.size()<<" targets to go.";
                     }
+                    if(targets.size()==0){
+                        ui_instructions.str(std::string());
+                        ui_instructions <<"Press 1 for task1 and 2 for task2. ";
+                        // refill the targets
+                        targets = targets_original;
+                    }
+
                 }
+
             } else if (selected_task == Tasks::CricleAC) {
 
                 for (int i = 0; i < 2; ++i) {
+                    DrawingsCV::DrawPoint3dVector(cam_images[i], ac_path_in_use,
+                                                  ao.cam_intrinsics[i],
+                                                  ao.cam_rvec[i],
+                                                  ao.cam_tvec[i], color_ac_path);
 
-                    DrawingsCV::DrawACPath(cam_images[i], ac_path_in_use,
-                                           ao.cam_intrinsics[i],
-                                           ao.cam_rvec[i], ao.cam_tvec[i], color_ac_path);
-
-                    DrawingsCV::DrawCurrentToDesiredLine(cam_images[i], ao.cam_intrinsics[i],
-                                                         ao.cam_rvec[i], ao.cam_tvec[i],
-                                                         ao.pose_tool2.p,
-                                                         ao.pose_desired[1].p,
-                                                         color_ac_desired_point);
+                    DrawingsCV::DrawLineFrom2KDLPoints(cam_images[i],
+                                                       ao.cam_intrinsics[i],
+                                                       ao.cam_rvec[i],
+                                                       ao.cam_tvec[i],
+                                                       ao.pose_tool2.p,
+                                                       ao.pose_desired[1].p,
+                                                       color_ac_desired_point);
                 }
+                // change instructions
+                ui_instructions.str(std::string());
+                ui_instructions <<"A simple circular active constraints.";
 
             }
-
-
-
-            // --------------------------------------------------------------------------------------
-            // Draw things LEFT
-//            for (int i = 0; i < 2; ++i) {
-//                DrawingsCV::DrawCube(cam_images[i], ao.cam_intrinsics[i], ao.cam_rvec[i],
-//                                     ao.cam_tvec[i],
-//                                     cv::Point3d(0, 0, 0),
-//                                     cv::Point3d(0.0128, 0.0128, 0.04),
-//                                     cv::Scalar(200, 100, 10));
-//            }
 
 
             for (int j = 0; j <2 ; ++j) {
-                ao.drawAxisAntiAliased(cam_images[j], ao.cam_intrinsics[j],
-                                       ao.cam_rvec[j], ao.cam_tvec[j], 0.02);
+                DrawingsCV::DrawCoordinateFrameAntiAliased(cam_images[j], ao.cam_intrinsics[j],
+                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.02);
             }
+
+            // print instructions
+            for (int i = 0; i < 2; ++i)
+                cv::putText(cam_images[i], ui_instructions.str(), cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
+
 
             for (int j = 0; j <2 ; ++j) {
                 cv::imshow(window_name[j], cam_images[j]);
@@ -238,7 +253,6 @@ int main(int argc, char **argv)
                 out.header.frame_id = "/task_space";
                 ao.publisher_ac_path.publish(out);
             }
-
 
         }
 

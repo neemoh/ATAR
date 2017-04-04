@@ -20,8 +20,7 @@
 // service
 #include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
 
-// including Drawings.h just for the CameraIntrinsics type. fix.
-#include "Drawings.h"
+#include "utils/Drawings.h"
 
 
 class OverlayGraphics {

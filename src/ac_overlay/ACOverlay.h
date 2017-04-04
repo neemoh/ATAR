@@ -20,9 +20,7 @@
 
 // service
 #include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
-
-// including Drawings.h just for the CameraIntrinsics type. fix.
-#include "Drawings.h"
+#include "utils/Drawings.h"
 
 
 class ACOverlay {
@@ -76,10 +74,7 @@ public:
     //overlay image publishers
     image_transport::Publisher publisher_overlayed[2];
 
-    void drawAxisAntiAliased(
-            const cv::InputOutputArray &_image, const CameraIntrinsics &cam_intrinsics,
-            const cv::Vec3d &rvec, const cv::Vec3d &tvec,
-            float length);
+
 public:
     // IN ALL CODE 0 is Left, 1 is Right
     // ----------------------------------
@@ -94,8 +89,8 @@ public:
     KDL::Frame pose_cam_r;
     KDL::Frame pose_tool1;
     KDL::Frame pose_tool2;
-    KDL::Frame taskspace_to_psm1_tr;
-    KDL::Frame taskspace_to_psm2_tr;
+    KDL::Frame task_frame_to_PSM1_frame;
+    KDL::Frame task_frame_to_PSM2_frame;
     KDL::Frame left_cam_to_right_cam_tr;
 
     KDL::Frame pose_desired[2];
@@ -149,7 +144,7 @@ namespace SimpleACs {
 
 namespace MultiplePathsTask {
     enum class Status {
-        Ready, ACSelected, Finished
+        Ready, ACSelected, SubTaskFinished, TaskFinished
     };
 
 
