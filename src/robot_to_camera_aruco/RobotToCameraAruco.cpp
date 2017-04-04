@@ -124,23 +124,21 @@ void RobotToCameraAruco::SetupROS() {
         // if the topic name is found, check if something is being published
         // on it
         if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-                cam_pose_topic_name, ros::Duration(1))) {
-            ROS_WARN("Topic '%s' is not publishing.",
-                     cam_pose_topic_name.c_str());
-            //                      all_required_params_found = false;
+                cam_pose_topic_name, ros::Duration(1)))
+        {
+            ROS_WARN("Topic '%s' is not publishing.", cam_pose_topic_name.c_str());
+            // all_required_params_found = false;
         } else
             ROS_INFO("Reading camera pose from topic '%s'",
                      cam_pose_topic_name.c_str());
     } else {
-        ROS_ERROR("Parameter '%s' is required.",
-                  n.resolveName("cam_pose_topic_name").c_str());
+        ROS_ERROR("Parameter '%s' is required.", n.resolveName("cam_pose_topic_name").c_str());
         all_required_params_found = false;
     }
 
     // register camera pose subscriber
-    camera_pose_subscriber =
-            n.subscribe(cam_pose_topic_name, 10,
-                        &RobotToCameraAruco::CameraPoseCallback, this);
+    camera_pose_subscriber = n.subscribe(
+        cam_pose_topic_name, 10,&RobotToCameraAruco::CameraPoseCallback, this);
 
     // a topic name is required for the robot pose
     std::string robot_pose_topic_name;
@@ -149,23 +147,20 @@ void RobotToCameraAruco::SetupROS() {
         // if the topic name is found, check if something is being published
         // on it
         if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-                robot_pose_topic_name, ros::Duration(1))) {
-            ROS_ERROR("Topic '%s' is not publishing.",
-                      robot_pose_topic_name.c_str());
-            //              all_required_params_found = false;
+                robot_pose_topic_name, ros::Duration(1)))
+        {
+            ROS_ERROR("Topic '%s' is not publishing.", robot_pose_topic_name.c_str());
+            all_required_params_found = false;
         } else
-            ROS_INFO("Reading robot pose from topic '%s'",
-                     robot_pose_topic_name.c_str());
+            ROS_INFO("Reading robot pose from topic '%s'", robot_pose_topic_name.c_str());
     } else {
-        ROS_ERROR("Parameter '%s' is required.",
-                  n.resolveName("robot_pose_topic_name").c_str());
+        ROS_ERROR("Parameter '%s' is required.", n.resolveName("robot_pose_topic_name").c_str());
         all_required_params_found = false;
     }
 
     // register camera pose subscriber
-    robot_pose_subscriber =
-            n.subscribe(robot_pose_topic_name, 10,
-                        &RobotToCameraAruco::RobotPoseCallback, this);
+    robot_pose_subscriber = n.subscribe(
+        robot_pose_topic_name, 10, &RobotToCameraAruco::RobotPoseCallback, this);
 
     if (!all_required_params_found)
         throw std::runtime_error("ERROR: some required topics are not set");
