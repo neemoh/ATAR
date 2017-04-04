@@ -88,7 +88,7 @@ add_executable(robot_to_camera_aruco
         src/robot_to_camera_aruco/main_robot_to_camera_aruco.cpp
         src/robot_to_camera_aruco/RobotToCameraAruco.cpp
         src/utils/Drawings.cpp
-        include/utils/Drawings.hpp
+        include/utils/Drawings.h
         src/robot_to_camera_aruco/RobotToCameraAruco.hpp
         )
 
@@ -158,8 +158,8 @@ add_executable(overlay
         src/overlay/main_overlay.cpp
         src/overlay/Overlay.cpp
         src/overlay/Overlay.h
-        src/overlay/Drawings.cpp
-        src/overlay/Drawings.h
+        src/utils/Drawings.cpp
+        include/utils/Drawings.h
         )
 target_link_libraries(overlay
         ${OpenCV_LIBRARIES}
