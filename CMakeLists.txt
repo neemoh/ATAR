@@ -70,13 +70,13 @@ target_link_libraries(arucoUtils
 ##########################################################################
 
 # %Tag(SRVCLIENT)%
-add_executable(calculate_stereo_cams_transofrm_from_topics
+add_executable(calculate_stereo_cams_transform_from_topics
         src/utils/CalculateStereoCamsTransfromFromTopicsServer.cpp
         )
-target_link_libraries(calculate_stereo_cams_transofrm_from_topics
+target_link_libraries(calculate_stereo_cams_transform_from_topics
         ${catkin_LIBRARIES}
         )
-add_dependencies(calculate_stereo_cams_transofrm_from_topics
+add_dependencies(calculate_stereo_cams_transform_from_topics
         teleop_vision_gencpp
         )
 
@@ -99,6 +99,10 @@ add_executable(extrinsic_calib_aruco
         src/extrinsic_calib_aruco/ExtrinsicAruco.hpp
         include/utils/BoardDetector.hpp
         )
+target_link_libraries(extrinsic_calib_aruco
+        ${OpenCV_LIBRARIES}
+)
+
 add_library(ExtrinsicCalibArucoNodelet
         src/extrinsic_calib_aruco/ExtrinsicArucoNodelet.cpp
         )
