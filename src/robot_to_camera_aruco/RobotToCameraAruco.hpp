@@ -70,10 +70,10 @@ public:
     const double length_x = 0.0782, length_y = 0.0514;
     const double  aruco_marker_length_in_meters = 0.0129, aruco_marker_separation_in_meters = 0.0027;
     std::vector< Eigen::Vector3d> meas_points;
-    std::vector< Eigen::Vector3d> points_on_camera;
-    Eigen::Matrix<double, 3, 6> points_on_camera_mat;
+    //std::vector< Eigen::Vector3d> points_on_camera;
+    Eigen::Matrix<double, 3, 6> target_mat;
     Eigen::Matrix<double, 3, 6> meas_points_mat;
-    Eigen::Matrix4d camera_to_robot;
+    //Eigen::Matrix4d camera_to_robot;
     //
     //
     //

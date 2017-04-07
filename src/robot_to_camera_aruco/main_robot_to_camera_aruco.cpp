@@ -88,10 +88,7 @@ int main(int argc, char *argv[]) {
 
 
         if (progress == CalibProgress::Method2Calibrating){
-            // computing camera_to_robot_tranform using chain rule (rTk=rTb*bTk with r=robot, b=board, k=camera)
-            // auto camera_to_robot = r.task_frame_to_robot_frame * r.board_to_cam_frame.Inverse();
-            // cv::Vec3d rvec, tvec;
-            // conversions::kdlFrameToRvectvec(camera_to_robot, rvec, tvec);
+
 
             r.Calib2DrawTarget(instructions, back_buffer);
 
@@ -101,19 +98,24 @@ int main(int argc, char *argv[]) {
 
                 // was adding the point enough to complete the calibration?
                 if (r.IsCalibrated()) {
-
                     progress = CalibProgress::Finished;
 
-                    // ROS_INFO_STREAM("  -> chain rule: \n" << rvec << std::endl << tvec << std::endl);
-                    // drawings.update_camera_to_robot(camera_to_robot);
-                    // ROS_INFO_STREAM("  -> quaternion matching: \n" << camera_to_robot << std::endl);
+                    // set the calibration data
+                    r.SetTaskFrameToRobotFrameParam();
 
-                }
             }
         }
 
-        if (progress == CalibProgress::Finished)
+        if (progress == CalibProgress::Finished) {
+            // computing camera_to_robot_transform using chain rule (rTk=rTb*bTk with r=robot, b=board, k=camera)
+
+            auto camera_frame_to_robot_frame = r.task_frame_to_robot_frame * r.task_frame_to_cam_frame.Inverse();
+            cv::Vec3d rvec, tvec;
+            conversions::kdlFrameToRvectvec(camera_frame_to_robot_frame, rvec, tvec);
+            ROS_INFO_STREAM("  -> chain rule: \n" << rvec << std::endl << tvec << std::endl);
+
             instructions = "Calibration finished. Press 'Esc' to exit";
+        }
 
         if (progress == CalibProgress::Finished || r.task_frame_to_robot_frame_param_present) {
 

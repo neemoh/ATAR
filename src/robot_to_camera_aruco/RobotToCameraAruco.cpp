@@ -384,21 +384,15 @@ void RobotToCameraAruco::Calib2SaveCalibrationPoint() {
 void RobotToCameraAruco::Calib2CalculateTransformation() {
 
     size_t num_p = target.size();
-    cv::Matx33d rot_temp;
-    cv::Rodrigues(task_frame_to_cam_rvec, rot_temp);
-    cv::Point3d temp(task_frame_to_cam_tvec);
 
     for (uint i = 0; i < num_p; i++) {
-        auto camera_points = rot_temp * (target[i] - temp);     // before was "(rot_temp * targe[i])+temp", but this should be correct.
-        points_on_camera.push_back(Eigen::Vector3d(camera_points.x, camera_points.y, camera_points.z));
         meas_points_mat.col(i) = meas_points[i];
-        points_on_camera_mat.col(i) = points_on_camera[i];
+        target_mat.col(i) = target[i];
     }
 
-    camera_to_robot = Eigen::umeyama(points_on_camera_mat, meas_points_mat, 0);
-    ROS_INFO_STREAM("  -> Camera To PSM Transformation: \n" << camera_to_robot << std::endl);
+    task_frame_to_robot_frame = Eigen::umeyama(target_mat, meas_points_mat, 0);
+    ROS_INFO_STREAM("  -> Camera To PSM Transformation: \n" << task_frame_to_robot_frame << std::endl);
     calib_finished = true;
-
 }
 
 
