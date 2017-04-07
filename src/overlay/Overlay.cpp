@@ -2,6 +2,9 @@
 // Created by charm on 2/21/17.
 //
 
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
+
 #include "Overlay.h"
 #include <utils/Conversions.hpp>
 #include <pwd.h>
@@ -195,7 +198,7 @@ void OverlayGraphics::SetupROS() {
                       n.resolveName("left_cam_pose_topic_name").c_str());
             all_required_params_found = false;
         }
-        subscriber_camera_pose_left = n.subscribe(
+        camera_pose_subscriber_left = n.subscribe(
                 left_cam_pose_topic_name, 1, &OverlayGraphics::LeftCamPoseCallback,
                 this);
 
@@ -221,7 +224,7 @@ void OverlayGraphics::SetupROS() {
                                   "parameter '%s' is required.", n.resolveName("right_cam_pose_topic_name").c_str());
                 all_required_params_found = false;
             }
-            subscriber_camera_pose_right = n.subscribe(
+            camera_pose_subscriber_right = n.subscribe(
                     right_cam_pose_topic_name, 1, &OverlayGraphics::RightCamPoseCallback, this);
 
 
@@ -288,6 +291,28 @@ void OverlayGraphics::SetupROS() {
                                              &OverlayGraphics::ACPoseDesiredRightCallback, this);
     ac_pose_desired_left_subscriber = n.subscribe("/PSM1/tool_pose_desired", 1,
                                              &OverlayGraphics::ACPoseDesiredRightCallback, this);
+
+
+    //--------
+    // Overlay publishers
+
+    std::string overlay_left_topic_name = "";
+    if (n.getParam("left_overlay_topic_name", overlay_left_topic_name)) {
+        ROS_INFO_STREAM("Publishing overlay images for the left eye to '" << overlay_left_topic_name.c_str() << "'");
+        overlay_image_left = it->advertise(overlay_left_topic_name, 1);
+        use_ros_overlay = true;
+    }
+
+    std::string overlay_right_topic_name = "";
+    if (n.getParam("right_overlay_topic_name", overlay_right_topic_name)) {
+        ROS_INFO_STREAM("Publishing overlay images for the right eye to '" << overlay_right_topic_name.c_str() << "'");
+        overlay_image_right = it->advertise(overlay_right_topic_name, 1);
+        use_ros_overlay = true;
+    }
+
+    ROS_INFO_STREAM(
+        "" << "Left : " << overlay_image_left.getTopic() << ", Right : " << overlay_image_right.getTopic()
+    );
 
     // advertise publishers
 //    std::string board_to_cam_pose_topic_name;
@@ -432,7 +457,26 @@ cv::Mat& OverlayGraphics::ImageRight(ros::Duration timeout) {
     return image_right_;
 }
 
+void OverlayGraphics::PublishOverlayRight(const cv::Mat &img) {
+    return PublishOverlayImpl(overlay_image_right, img);
+}
 
+void OverlayGraphics::PublishOverlayLeft(const cv::Mat &img) {
+    return PublishOverlayImpl(overlay_image_left, img);
+}
+
+void OverlayGraphics::PublishOverlayImpl(image_transport::Publisher &pub, const cv::Mat &img) {
+    sensor_msgs::Image out_img;
+    out_img.width = img.cols;
+    out_img.height = img.rows;
+    out_img.step = img.step;
+    out_img.encoding = sensor_msgs::image_encodings::BGR8;
+
+    auto datasize = img.total() * img.elemSize();
+    std::copy(img.data, img.data + datasize, std::back_inserter(out_img.data));
+
+    pub.publish(out_img);
+}
 
 void VisualUtils::SwitchFullScreen(const std::string window_name) {
 
@@ -443,3 +487,4 @@ void VisualUtils::SwitchFullScreen(const std::string window_name) {
         cvSetWindowProperty(window_name.c_str(), CV_WND_PROP_FULLSCREEN, CV_WINDOW_NORMAL);
 
 }
+

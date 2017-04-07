@@ -1,0 +1,17 @@
+  # Always needed and always constant
+  task_frame_to_PSM1_frame : [0.100305, -0.0545737, -0.0834832, -0.0135711,-0.0052687, 0.00346268, 0.999888]
+
+  # Always needed and always constant
+  task_frame_to_PSM2_frame : [0.09816002517357221, -0.04625218059603547, -0.08613333718309178, 0.0001949906100244763,
+  -0.006286864625732646, -0.005605109472589381, 0.9999645094000288]
+
+  # Used only if the pose is not provided online
+  task_frame_to_right_cam_frame: [0.0592978604091,  -0.0387011361539, 0.465573434198, -0.00777619193952, 0.94044811023, -0.339807323252, -0.00527881317873]
+
+  # Used only if the pose is not provided online
+  task_frame_to_left_cam_frame: [0.0497008909419, -0.0371500314064, 0.469453271586,  0.00642836563332, 0.93939819568, -0.340699685111,0.0375956198635]
+
+  # Used when one of the cam poses are is available online
+  left_cam_frame_to_right_cam_frame: [-0.0303521, -0.00234023, -0.00311738, -0.00308049, 0.0455042, -0.000920183,   0.998959]
+
+
