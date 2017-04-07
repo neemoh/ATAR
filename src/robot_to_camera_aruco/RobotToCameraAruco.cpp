@@ -28,8 +28,17 @@ RobotToCameraAruco::RobotToCameraAruco(std::string node_name)
     calib_points_in_board_frame.push_back(cv::Point3f(0.07, 0.0, 0.0));
     calib_points_in_board_frame.push_back(cv::Point3f(0.0, 0.04, 0.0));
 
-    target.push_back(cv::Point3d(cvflann::rand_double(RobotToCameraAruco::length_x, 0), cvflann::rand_double(RobotToCameraAruco::length_y, 0), 0.0));
+    // declaration of target markers for calib2
+    for (uint i=0; i<num_calib_points; i++){
+        if(i<num_calib_points/2)
+            target.push_back(cv::Point3d((1+i)*(aruco_marker_length_in_meters+aruco_marker_separation_in_meters), aruco_marker_length_in_meters, 0.0));
+        else
+            target.push_back(cv::Point3d((1+i)*(aruco_marker_length_in_meters+aruco_marker_separation_in_meters), 2*aruco_marker_length_in_meters+aruco_marker_separation_in_meters, 0.0));
+    }
 
+    cv::projectPoints(target, task_frame_to_cam_rvec,
+                      task_frame_to_cam_tvec, camera_intrinsics.camMatrix,
+                      camera_intrinsics.distCoeffs, calib_points_screen);
 };
 
 
@@ -349,30 +358,23 @@ void RobotToCameraAruco::Calib2DrawTarget(cv::String &instructions, cv::Mat img)
     std::ostringstream oss;
     oss << "Take the tool tip to the target point then press s";
 
-    std::vector<double> target_point(3);
-
-    target_point[0]=target[target.size()-1].x;
-    target_point[1]=target[target.size()-1].y;
-    target_point[2]=target[target.size()-1].z;
-    cv::projectPoints(target_point, task_frame_to_cam_rvec,
-                      task_frame_to_cam_tvec, camera_intrinsics.camMatrix,
-                      camera_intrinsics.distCoeffs, calib_points_screen);
-
-    cv::circle(img, calib_points_screen[0], 6, cv::Scalar(255, 255, 0),
+    cv::circle(img, calib_points_screen, 6, cv::Scalar(255, 255, 0),
+               1, CV_AA);
+    // draw actual target with a different colour
+    cv::circle(img, calib_points_screen[meas_points.size()], 6, cv::Scalar(255, 255, 0),
                1, CV_AA);
     instructions = oss.str();
 }
 
 void RobotToCameraAruco::Calib2SaveCalibrationPoint() {
 
-    size_t num_p = target.size();
+    size_t num_p = meas_points.size();
     if (num_p < num_calib_points) {
         // save the position of the end effector
         meas_points.push_back(
                 Eigen::Vector3d(
                         tool_pose_in_robot_frame.p[0], tool_pose_in_robot_frame.p[1],
                         tool_pose_in_robot_frame.p[2]));
-        target.push_back(cv::Point3d(cvflann::rand_double(length_x, 0), cvflann::rand_double(length_y, 0), 0.0));
     }
     if (num_p == num_calib_points) {
         Calib2CalculateTransformation();

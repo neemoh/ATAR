@@ -68,6 +68,7 @@ public:
     //
     //
     const double length_x = 0.0782, length_y = 0.0514;
+    const double  aruco_marker_length_in_meters = 0.0129, aruco_marker_separation_in_meters = 0.0027;
     std::vector< Eigen::Vector3d> meas_points;
     std::vector< Eigen::Vector3d> points_on_camera;
     Eigen::Matrix<double, 3, 6> points_on_camera_mat;
@@ -118,13 +119,14 @@ private:
     //
     //
     std::vector<cv::Point3d> target;
+    std::vector<cv::Point2d> calib_points_screen;
     //
     //
     //
     std::vector<cv::Point3d> calib_points_in_board_frame;
 
     cv::Mat image_msg;
-    std::vector<cv::Point2d> calib_points_screen;
+
 };
 
 ///////// Defining the templates

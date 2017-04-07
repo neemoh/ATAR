@@ -13,13 +13,13 @@
 /**
  * Enum used to track the progress of the calibration procedure.
  */
-enum class CalibProgress { Ready, Method1Calibrating, Method2Calibrating, Finished };       // Added MidStep
+enum class CalibProgress { Ready, Method1Calibrating, Method2Calibrating, Finished };
 
 int main(int argc, char *argv[]) {
 
     ros::init(argc, argv, "robot_to_camera_aruco");
 
-    // get name in case asigned externally
+    // get name in case assigned externally
 
 
     RobotToCameraAruco r(ros::this_node::getName());
