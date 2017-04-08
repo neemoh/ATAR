@@ -15,8 +15,8 @@ OverlayGraphics::OverlayGraphics(std::string node_name, int width, int height)
 
 {
 
-//    bufferL_ = new unsigned char[image_width_*image_height_*4];
-//    bufferR_ = new unsigned char[image_width_*image_height_*4];
+//    bufferL_ = new unsigned char[image_width*image_height*4];
+//    bufferR_ = new unsigned char[image_width*image_height*4];
     it = new image_transport::ImageTransport(n);
     SetupROS();
 

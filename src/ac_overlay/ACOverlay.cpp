@@ -8,11 +8,11 @@
 #include "opencv2/calib3d/calib3d.hpp"
 
 ACOverlay::ACOverlay(std::string node_name, int width, int height)
-        : n(node_name), image_width_(width), image_height_(height)
+        : n(node_name), image_width(width), image_height(height)
 {
 
-//    bufferL_ = new unsigned char[image_width_*image_height_*4];
-//    bufferR_ = new unsigned char[image_width_*image_height_*4];
+//    bufferL_ = new unsigned char[image_width*image_height*4];
+//    bufferR_ = new unsigned char[image_width*image_height*4];
 
     it = new image_transport::ImageTransport(n);
     SetupROS();
@@ -153,8 +153,8 @@ void ACOverlay::SetupROS() {
         if (n.getParam("/calibrations/task_frame_to_left_cam_frame",
                        task_frame_to_left_cam_frame)) {
             conversions::VectorToKDLFrame(task_frame_to_left_cam_frame,
-                                          pose_cam_l);
-            conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec[0], cam_tvec[0]);
+                                          pose_cam[0]);
+            conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec[0], cam_tvec[0]);
         } else
             ROS_ERROR("Expecting 0 camera pose publishers. Parameter "
                               "/calibrations/task_frame_to_left_cam_frame is not set.");
@@ -164,8 +164,8 @@ void ACOverlay::SetupROS() {
         if (n.getParam("/calibrations/task_frame_to_right_cam_frame",
                        task_frame_to_right_cam_frame)) {
             conversions::VectorToKDLFrame(task_frame_to_right_cam_frame,
-                                          pose_cam_r);
-            conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec[1], cam_tvec[1]);
+                                          pose_cam[1]);
+            conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec[1], cam_tvec[1]);
         } else
             ROS_ERROR("[SUBSCRIBERS] Expecting 0 camera pose publishers. "
                               "Parameter /calibrations/task_frame_to_right_cam_frame is not set.");
@@ -311,7 +311,7 @@ void ACOverlay::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
-        image_right_ = cv_bridge::toCvCopy(msg, "bgr8")->image;
+        image_right = cv_bridge::toCvCopy(msg, "bgr8")->image;
         new_right_image = true;
     }
     catch (cv_bridge::Exception& e)
@@ -324,7 +324,7 @@ void ACOverlay::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
-        image_left_ = cv_bridge::toCvCopy(msg, "bgr8")->image;
+        image_left = cv_bridge::toCvCopy(msg, "bgr8")->image;
         new_left_image = true;
 
     }
@@ -340,21 +340,21 @@ void ACOverlay::LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & m
 {
 
 
-    tf::poseMsgToKDL(msg->pose, pose_cam_l);
-    conversions::KDLFrameToRvectvec(pose_cam_l, cam_rvec[0], cam_tvec[0]);
+    tf::poseMsgToKDL(msg->pose, pose_cam[0]);
+    conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec[0], cam_tvec[0]);
 
     // If we don't have the transforms between the cameras
     if(num_cam_pose_publishers==1) {
-        pose_cam_r = left_cam_to_right_cam_tr * pose_cam_l ;
-        conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec[1], cam_tvec[1]);
+        pose_cam[1] = left_cam_to_right_cam_tr * pose_cam[0] ;
+        conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec[1], cam_tvec[1]);
     }
 }
 
 void ACOverlay::RightCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
 {
 
-    tf::poseMsgToKDL(msg->pose, pose_cam_r);
-    conversions::KDLFrameToRvectvec(pose_cam_r, cam_rvec[1], cam_tvec[1]);
+    tf::poseMsgToKDL(msg->pose, pose_cam[1]);
+    conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec[1], cam_tvec[1]);
 }
 
 void ACOverlay::Tool1PoseCallback(
@@ -377,8 +377,7 @@ void ACOverlay::Tool2PoseCallback(
     tf::poseMsgToKDL(msg->pose, frame_temp);
 
     // take the robot end-effector pose to the task space coordinate frame
-    pose_tool2.p = task_frame_to_PSM2_frame.M.Inverse() * (frame_temp.p - task_frame_to_PSM2_frame.p);
-//    pose_tool2 = task_frame_to_PSM2_frame.Inverse() * frame_temp;GeneratePathPoints
+    pose_tool2 = task_frame_to_PSM2_frame.Inverse() * frame_temp;
 }
 
 //void ACOverlay::ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg){
@@ -408,7 +407,7 @@ cv::Mat& ACOverlay::ImageLeft(ros::Duration timeout) {
     ros::Rate loop_rate(10);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
-    while(image_left_.empty()) {
+    while(image_left.empty()) {
         ros::spinOnce();
         loop_rate.sleep();
 
@@ -416,7 +415,7 @@ cv::Mat& ACOverlay::ImageLeft(ros::Duration timeout) {
             ROS_WARN("Timeout: No new left Image.");
     }
     new_left_image = false;
-    return image_left_;
+    return image_left;
 }
 
 
@@ -425,7 +424,7 @@ cv::Mat& ACOverlay::ImageRight(ros::Duration timeout) {
     ros::Rate loop_rate(10);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
-    while(image_right_.empty()) {
+    while(image_right.empty()) {
         ros::spinOnce();
         loop_rate.sleep();
 
@@ -434,7 +433,7 @@ cv::Mat& ACOverlay::ImageRight(ros::Duration timeout) {
         }
     }
     new_right_image = false;
-    return image_right_;
+    return image_right;
 }
 
 

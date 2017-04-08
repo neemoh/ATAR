@@ -230,13 +230,20 @@ int main(int argc, char **argv)
 
 
             for (int j = 0; j <2 ; ++j) {
-                DrawingsCV::DrawCoordinateFrameAntiAliased(cam_images[j], ao.cam_intrinsics[j],
-                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.02);
+                // draw the coordinate frame of the board
+                DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
+                                                           KDL::Frame(),
+                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
+                // draw the end-effector ref frame
+                DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
+                                                           ao.pose_tool2,
+                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
             }
 
             // print instructions
             for (int i = 0; i < 2; ++i)
-                cv::putText(cam_images[i], ui_instructions.str(), cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
+                cv::putText(cam_images[i], ui_instructions.str(),
+                            cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
 
 
             for (int j = 0; j <2 ; ++j) {

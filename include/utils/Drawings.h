@@ -66,18 +66,13 @@ namespace DrawingsCV{
     /*!
      * \brief Uses opencv line to draw a coordinate frame seen from task coordinate frame
      *
+     * \param frame  the frame expressed in task coordinate frame
      * \param rvec is the orientation of the task coordinate frame in camera frame
      * \param tvec is the the position of the task coordinate frame in camera frame
      */
-    void DrawCoordinateFrameAntiAliased(const cv::InputOutputArray &_image,
-                                        const CameraIntrinsics &cam_intrinsics,
-                                        const cv::Vec3d &rvec, const cv::Vec3d &tvec,
-                                        float length);
-
-
     void DrawCoordinateFrameInTaskSpace(
             const cv::InputOutputArray &image, const CameraIntrinsics &cam_intrinsics,
-            const KDL::Frame,
+            const KDL::Frame frame,
             const cv::Vec3d &rvec, const cv::Vec3d &tvec,
             float length);
 }

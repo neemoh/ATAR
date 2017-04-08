@@ -76,7 +76,7 @@ public:
 
 
 public:
-    // IN ALL CODE 0 is Left, 1 is Right
+    // IN ALL CODE 0 is Left Cam, 1 is Right cam
     // ----------------------------------
 
     ros::NodeHandle n;
@@ -85,8 +85,7 @@ public:
 
     cv::Mat image_msg;
     CameraIntrinsics cam_intrinsics[2];
-    KDL::Frame pose_cam_l;
-    KDL::Frame pose_cam_r;
+    KDL::Frame pose_cam[2];
     KDL::Frame pose_tool1;
     KDL::Frame pose_tool2;
     KDL::Frame task_frame_to_PSM1_frame;
@@ -97,16 +96,17 @@ public:
 
     cv::Vec3d cam_rvec[2];
     cv::Vec3d cam_tvec[2];
-    cv::Mat image_left_;
-    cv::Mat image_right_;
+    cv::Mat image_left;
+    cv::Mat image_right;
     bool new_right_image = false;
     bool new_left_image = false;
     ros::ServiceClient stereo_tr_calc_client;
     teleop_vision::CalculateStereoCamsTransfromFromTopics stereo_tr_srv;
 
 private:
-    int image_width_;
-    int image_height_;
+
+    int image_width;
+    int image_height;
     int num_cam_pose_publishers;
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscribers[2];
