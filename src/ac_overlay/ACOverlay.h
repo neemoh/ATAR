@@ -16,6 +16,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Joy.h>
 
 // service
@@ -49,16 +50,16 @@ public:
 
     void RightCamPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
-    // Tool poses in task coordinate frame (task-space).
-    void Tool1PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
-
-    void Tool2PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    // Tool poses in task coordinate frame (taskspace).
+    void Tool1PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
+    void Tool2PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
+//    void Tool1TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
+//    void Tool2TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
 
     // Receives ac path from the ac geometry node as an array of poses.
     // Currently only the positions are used.
     //    void ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg);
-    void ACPoseDesiredLeftCallback(const geometry_msgs::PoseStampedConstPtr &msg);
-    void ACPoseDesiredRightCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+
 
     // foot switch used to select the ac path
     void FootSwitchCallback(const sensor_msgs::Joy &msg);
@@ -74,25 +75,30 @@ public:
     //overlay image publishers
     image_transport::Publisher publisher_overlayed[2];
 
+    // converts the desired poses to geometry pose messages and published them
+    void PublishDesiredPose();
+
 
 public:
     // IN ALL CODE 0 is Left Cam, 1 is Right cam
     // ----------------------------------
 
     ros::NodeHandle n;
+    double desired_pose_update_freq;
     std::vector<cv::Point3d> ac_path;
     bool foot_switch_pressed = false;
 
     cv::Mat image_msg;
     CameraIntrinsics cam_intrinsics[2];
     KDL::Frame pose_cam[2];
-    KDL::Frame pose_tool1;
-    KDL::Frame pose_tool2;
-    KDL::Frame task_frame_to_PSM1_frame;
-    KDL::Frame task_frame_to_PSM2_frame;
+    KDL::Frame pose_current_tool[2];
+//    KDL::Twist twist_tool_current[2];
+
+    KDL::Frame slave_frame_to_task_frame[2];
+
     KDL::Frame left_cam_to_right_cam_tr;
 
-    KDL::Frame pose_desired[2];
+    KDL::Frame pose_desired_tool[2];
 
     cv::Vec3d cam_rvec[2];
     cv::Vec3d cam_tvec[2];
@@ -105,21 +111,34 @@ public:
 
 private:
 
+    int n_arms;
+
     int image_width;
     int image_height;
     int num_cam_pose_publishers;
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscribers[2];
 
+
     image_transport::Subscriber subscriber_image_left;
     image_transport::Subscriber subscriber_image_right;
     ros::Subscriber subscriber_camera_pose_left;
     ros::Subscriber subscriber_camera_pose_right;
 
-    ros::Subscriber subscriber_pose_psm1;
-    ros::Subscriber subscriber_pose__sub;
-    ros::Subscriber subscriber_ac_pose_desired_right;
-    ros::Subscriber subscriber_ac_pose_desired_left;
+
+    ros::Subscriber *subscriber_tool_current_pose;
+    ros::Publisher *publisher_tool_pose_desired;
+    //    // Current twists Not used for now
+    //    ros::Subscriber *subscriber_twist_current_tool;
+    //    ros::Publisher *publisher_twist_current_tool;
+
+    // two function pointers for slave pose callbacks
+    void (ACOverlay::*pose_current_tool_callbacks[2])
+            (const geometry_msgs::PoseStamped::ConstPtr &msg);
+
+    // two function pointers for slave twist callbacks
+    void (ACOverlay::*twist_current_tool_callbacks[2])
+            (const geometry_msgs::TwistStamped::ConstPtr &msg);
 
     //ros::Subscriber subscriber_ac_path;
     ros::Subscriber subscriber_foot_pedal_clutch;
@@ -164,4 +183,14 @@ namespace MultiplePathsTask {
                       const cv::Scalar &color_others);
 }
 
+namespace RingTask{
+
+
+}
+
+// other functions to be sorted later
 void  VecPoint3dToPoseArray(std::vector<cv::Point3d> vec, geometry_msgs::PoseArray & out) ;
+
+void ClosestPointToACPoints(const KDL::Vector tool_current_position,
+                            const std::vector<cv::Point3d> & ac_path,
+                            KDL::Vector & tool_desired_position);

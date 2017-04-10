@@ -11,8 +11,11 @@ ACOverlay::ACOverlay(std::string node_name, int width, int height)
         : n(node_name), image_width(width), image_height(height)
 {
 
-//    bufferL_ = new unsigned char[image_width*image_height*4];
-//    bufferR_ = new unsigned char[image_width*image_height*4];
+    // assign the callback functions
+    pose_current_tool_callbacks[0] = &ACOverlay::Tool1PoseCurrentCallback;
+    pose_current_tool_callbacks[1] = &ACOverlay::Tool2PoseCurrentCallback;
+//    twist_current_tool_callbacks[0] = &ACOverlay::Tool1TwistCallback;
+//    twist_current_tool_callbacks[1] = &ACOverlay::Tool2TwistCallback;
 
     it = new image_transport::ImageTransport(n);
     SetupROS();
@@ -59,6 +62,11 @@ void ACOverlay::SetupROS() {
     }
 
     bool all_required_params_found = true;
+    // Loop frequency
+    n.param<double>("desired_pose_update_frequency", desired_pose_update_freq, 100);
+    ROS_INFO("The desired pose will be updated at '%f'", desired_pose_update_freq);
+
+    // ------------------------------------- IMAGES -----------------------------------------
 
     // ------- load the intrinsic calibration files
     // get home directory
@@ -114,6 +122,11 @@ void ACOverlay::SetupROS() {
             this);
 
     //--------
+    // publishers for the overlayed images
+    publisher_overlayed[0] = it->advertise("left/image_color", 1);
+    publisher_overlayed[1] = it->advertise("right/image_color", 1);
+
+    // ------------------------------------- CAM POSES -----------------------------------------
 
     //--------
     // We need to know the pose of the cameras with respect to the task-space coordinates.
@@ -129,8 +142,6 @@ void ACOverlay::SetupROS() {
     // using the left_to_right transform.
     //
     // when num_cam_pose_publishers ==2 : both poses are published.
-
-
     n.param("num_cam_pose_publishers", num_cam_pose_publishers, 0);
     // the transformation from left cam coordinate frame to right cam. If this is not
     // available, then both cam poses must be publishing.
@@ -229,49 +240,9 @@ void ACOverlay::SetupROS() {
 
         }
     }
-    if (!all_required_params_found)
-        throw std::runtime_error("ERROR: some required topics are not set");
 
 
-    //--------
-    // task_frame_to_PSM1_frame
-    std::vector<double> taskspace_to_psm1_vec = std::vector<double>(7, 0.0);
-    if(!n.getParam("/calibrations/task_frame_to_PSM1_frame", taskspace_to_psm1_vec))
-        ROS_WARN("Parameter /task_frame_to_PSM1_frame is not set. This parameter is required"
-                         "if PSM1 is used.");
-    conversions::VectorToKDLFrame(taskspace_to_psm1_vec, task_frame_to_PSM1_frame);
-
-    //--------
-    // task_frame_to_PSM2_frame
-    std::vector<double> taskspace_to_psm2_vec = std::vector<double>(7, 0.0);
-    if(!n.getParam("/calibrations/task_frame_to_PSM2_frame", taskspace_to_psm2_vec))
-        ROS_WARN("Parameter /task_frame_to_PSM2_frame is not set. This parameter is required"
-                         "if PSM2 is used.");
-    conversions::VectorToKDLFrame(taskspace_to_psm2_vec, task_frame_to_PSM2_frame);
-
-
-    //--------
-    // PSM1 pose subscriber.
-    std::string psm1_pose_topic_name = "/dvrk/PSM1/position_cartesian_current";
-    subscriber_pose_psm1 =
-            n.subscribe(psm1_pose_topic_name, 2,
-                        &ACOverlay::Tool1PoseCallback, this);
-    ROS_INFO("[SUBSCRIBERS] Tool 1 pose will be read from topic '%s'",
-             psm1_pose_topic_name.c_str());
-
-    //--------
-    // PSM2 pose subscriber.
-    std::string psm2_pose_topic_name = "/dvrk/PSM2/position_cartesian_current";
-    subscriber_pose__sub =
-            n.subscribe(psm2_pose_topic_name, 2,
-                        &ACOverlay::Tool2PoseCallback, this);
-    ROS_INFO("[SUBSCRIBERS] Tool 2 pose will be read from topic '%s'",
-
-             psm2_pose_topic_name.c_str());
-
-
-
-    //--------
+    // ------------------------------------- AC PATH -----------------------------------------
     //subscriber_ac_path = n.subscribe("/ac_path", 1, &ACOverlay::ACPathCallback, this);
 
     std::string topic_name = "/ac_path";
@@ -283,17 +254,75 @@ void ACOverlay::SetupROS() {
                                                &ACOverlay::FootSwitchCallback, this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/camera");
 
-    subscriber_ac_pose_desired_right = n.subscribe("/PSM1/tool_pose_desired", 1,
-                                                   &ACOverlay::ACPoseDesiredRightCallback, this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to /PSM1/tool_pose_desired");
 
-    subscriber_ac_pose_desired_left = n.subscribe("/PSM2/tool_pose_desired", 1,
-                                                  &ACOverlay::ACPoseDesiredRightCallback, this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to /PSM2/tool_pose_desired");
 
-    // publishers for the overlayed images
-    publisher_overlayed[0] = it->advertise("left/image_color", 1);
-    publisher_overlayed[1] = it->advertise("right/image_color", 1);
+
+    // ------------------------------------- TOOLS -----------------------------------------
+    n.param<int>("number_of_arms", n_arms, 1);
+    ROS_INFO("Expecting '%d' arm(s)", n_arms);
+
+    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
+    subscriber_tool_current_pose = new ros::Subscriber[(uint)n_arms];
+
+    //    // Twists not needed for now
+    //    publisher_twist_current_tool = new ros::Publisher[(uint)n_arms];
+    //    subscriber_twist_current_tool = new ros::Subscriber[(uint)n_arms];
+
+    std::string slave_names[n_arms];
+    //std::string master_names[n_arms];
+    std::string check_topic_name;
+
+    for(int n_arm = 0; n_arm<n_arms; n_arm++){
+
+        //getting the name of the arms
+        std::stringstream param_name;
+        param_name << std::string("slave_") << n_arm + 1 << "_name";
+        n.getParam(param_name.str(), slave_names[n_arm]);
+
+        // the current pose of the tools (slaves)
+        param_name.str("");
+        param_name << std::string("/dvrk/") <<slave_names[n_arm] << "/position_cartesian_current";
+        subscriber_tool_current_pose[n_arm] = n.subscribe(param_name.str(), 1,
+                                                          pose_current_tool_callbacks[n_arm], this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
+        // we will later check to see if something is publishing on the current slave pose
+        check_topic_name = param_name.str();
+
+        // The desired point according to the active constraint geometry definition
+        param_name.str("");
+        param_name << std::string("/")<< slave_names[n_arm] << "/tool_pose_desired";
+        publisher_tool_pose_desired[n_arm] = n.advertise<geometry_msgs::PoseStamped>(
+                param_name.str().c_str(), 1 );
+        ROS_INFO("Will publish on %s", param_name.str().c_str());
+
+        // current twists Not used for now
+        //        param_name.str("");
+        //        param_name << std::string("/") << slave_names[n_arm] << "/twist_tool_current";
+        //        publisher_twist_current_tool[n_arm] = n.advertise<geometry_msgs::TwistStamped>(
+        //                param_name.str().c_str(), 1 );
+        //        ROS_INFO("Will publish on %s", param_name.str().c_str());
+        //
+        //
+        //        param_name.str("");
+        //        param_name << std::string("/dvrk/") <<slave_names[n_arm] << "/twist_body_current";
+        //        subscriber_twist_current_tool[n_arm] = n.subscribe(param_name.str(), 1,
+        //                                                           twist_current_tool_callbacks[n_arm], this);
+        //        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
+
+
+        // the transformation from the coordinate frame of the slave (RCM) to the task coordinate
+        // frame.
+        param_name.str("");
+        param_name << (std::string)"/calibrations/task_frame_to_" << slave_names[n_arm] << "_frame";
+        std::vector<double> vect_temp = std::vector<double>(7, 0.0);
+        if(n.getParam(param_name.str(), vect_temp)){
+            conversions::VectorToKDLFrame(vect_temp, slave_frame_to_task_frame[n_arm]);
+            // param is from task to RCM, we want the inverse
+            slave_frame_to_task_frame[n_arm] = slave_frame_to_task_frame[n_arm].Inverse();
+        }
+        else
+            ROS_ERROR("Parameter %s is needed.", param_name.str().c_str());
+    }
 
     // advertise publishers
 //    std::string board_to_cam_pose_topic_name;
@@ -302,7 +331,8 @@ void ACOverlay::SetupROS() {
 //
 //    pub_board_to_cam_pose = n.advertise<geometry_msgs::PoseStamped>(board_to_cam_pose_topic_name, 1, 0);
 //    ROS_INFO("Publishing board to camera pose on '%s'", n.resolveName(board_to_cam_pose_topic_name).c_str());
-
+    if (!all_required_params_found)
+        throw std::runtime_error("ERROR: some required topics are not set");
 }
 
 
@@ -320,6 +350,7 @@ void ACOverlay::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
     }
 }
 
+
 void ACOverlay::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
@@ -335,10 +366,8 @@ void ACOverlay::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 }
 
 
-
 void ACOverlay::LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
 {
-
 
     tf::poseMsgToKDL(msg->pose, pose_cam[0]);
     conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec[0], cam_tvec[0]);
@@ -350,6 +379,7 @@ void ACOverlay::LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & m
     }
 }
 
+
 void ACOverlay::RightCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
 {
 
@@ -357,28 +387,46 @@ void ACOverlay::RightCamPoseCallback(const geometry_msgs::PoseStampedConstPtr & 
     conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec[1], cam_tvec[1]);
 }
 
-void ACOverlay::Tool1PoseCallback(
-        const geometry_msgs::PoseStampedConstPtr &msg)
-{
-    // Convert message to KDL
-    KDL::Frame frame_temp;
-    tf::poseMsgToKDL(msg->pose, frame_temp);
 
-    // take the robot end-effector pose to the task space coordinate frame
-    pose_tool1 = task_frame_to_PSM1_frame.Inverse() * frame_temp;
+
+
+// Reading the pose of the slaves and take them to task space
+
+void ACOverlay::Tool1PoseCurrentCallback(
+        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    // take the pose from the arm frame to the task frame
+    KDL::Frame frame;
+    tf::poseMsgToKDL(msg->pose, frame);
+    pose_current_tool[0] =  slave_frame_to_task_frame[0] * frame;
 
 }
 
-void ACOverlay::Tool2PoseCallback(
-        const geometry_msgs::PoseStampedConstPtr &msg)
-{
-    // Convert message to KDL
-    KDL::Frame frame_temp;
-    tf::poseMsgToKDL(msg->pose, frame_temp);
-
-    // take the robot end-effector pose to the task space coordinate frame
-    pose_tool2 = task_frame_to_PSM2_frame.Inverse() * frame_temp;
+void ACOverlay::Tool2PoseCurrentCallback(
+        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    // take the pose from the arm frame to the task frame
+    KDL::Frame frame;
+    tf::poseMsgToKDL(msg->pose, frame);
+    pose_current_tool[1] =  slave_frame_to_task_frame[1] * frame;
 }
+
+// Twists are not needed for the moment
+//void ACOverlay::Tool1TwistCallback(
+//        const geometry_msgs::TwistStamped::ConstPtr &msg) {
+//    // take the twist from the arm frame to the task frame
+//    tf::twistMsgToKDL(msg->twist, twist_tool_current[0]);
+//    twist_tool_current[0] = slave_frame_to_task_frame[0] * twist_tool_current[0];
+//}
+//
+//void ACOverlay::Tool2TwistCallback(
+//        const geometry_msgs::TwistStamped::ConstPtr &msg) {
+//    // take the twist from the arm frame to the task frame
+//    tf::twistMsgToKDL(msg->twist, twist_tool_current[1]);
+//    twist_tool_current[1] = slave_frame_to_task_frame[1] * twist_tool_current[1];
+//
+//}
+
+
+
 
 //void ACOverlay::ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg){
 //
@@ -389,15 +437,15 @@ void ACOverlay::Tool2PoseCallback(
 //    }
 //}
 
-void ACOverlay::ACPoseDesiredLeftCallback(const geometry_msgs::PoseStampedConstPtr & msg){
-    // Convert message to KDL
-    tf::poseMsgToKDL(msg->pose, pose_desired[0]);
-}
-
-void ACOverlay::ACPoseDesiredRightCallback(const geometry_msgs::PoseStampedConstPtr & msg){
-    // Convert message to KDL
-    tf::poseMsgToKDL(msg->pose, pose_desired[1]);
-}
+//void ACOverlay::ACPoseDesiredLeftCallback(const geometry_msgs::PoseStampedConstPtr & msg){
+//    // Convert message to KDL
+//    tf::poseMsgToKDL(msg->pose, pose_desired_tool[0]);
+//}
+//
+//void ACOverlay::ACPoseDesiredRightCallback(const geometry_msgs::PoseStampedConstPtr & msg){
+//    // Convert message to KDL
+//    tf::poseMsgToKDL(msg->pose, pose_desired_tool[1]);
+//}
 
 void ACOverlay::FootSwitchCallback(const sensor_msgs::Joy & msg){
     foot_switch_pressed = (bool)msg.buttons[0];
@@ -437,6 +485,20 @@ cv::Mat& ACOverlay::ImageRight(ros::Duration timeout) {
 }
 
 
+void ACOverlay::PublishDesiredPose() {
+
+    for (int n_arm = 0; n_arm < n_arms; ++n_arm) {
+
+        // convert to pose message
+        geometry_msgs::PoseStamped pose_msg;
+        tf::poseKDLToMsg(pose_desired_tool[n_arm], pose_msg.pose);
+        // fill the header
+        pose_msg.header.frame_id = "/task_space";
+        pose_msg.header.stamp = ros::Time::now();
+        // publish
+        publisher_tool_pose_desired[n_arm].publish(pose_msg);
+    }
+}
 
 size_t MultiplePathsTask::FindClosestTarget(const KDL::Vector tool_current_position,
                                              const std::vector<cv::Point3d> targets){
@@ -537,6 +599,7 @@ void SimpleACs::GenerateXYCircle(const KDL::Vector center, const double radius, 
     }
 }
 
+// other functions
 void  VecPoint3dToPoseArray(std::vector<cv::Point3d> vec, geometry_msgs::PoseArray & out) {
 
     geometry_msgs::Pose point;
@@ -547,4 +610,30 @@ void  VecPoint3dToPoseArray(std::vector<cv::Point3d> vec, geometry_msgs::PoseArr
         point.position.z = vec[i].z;
         out.poses.push_back(point);
     }
+}
+
+void ClosestPointToACPoints(const KDL::Vector tool_current_position,
+                                                  const std::vector<cv::Point3d> & ac_path,
+                                                  KDL::Vector & tool_desired_position){
+
+    double min_d = 100000; // something large
+    size_t i_min = 0;
+    //	cout << ac_points.size() << endl;
+    ;
+    for(size_t i=0; i<ac_path.size(); i++){
+        double dx = tool_current_position[0] - ac_path[i].x;
+        double dy = tool_current_position[1] - ac_path[i].y;
+        double dz = tool_current_position[2] - ac_path[i].z;
+        double norm2 = dx*dx + dy*dy + dz*dz;
+        if(norm2 < min_d){
+            min_d = norm2;
+            i_min = i;
+        }
+
+    }
+    tool_desired_position[0] = ac_path[i_min].x;
+    tool_desired_position[1] = ac_path[i_min].y;
+    tool_desired_position[2] = ac_path[i_min].z;
+
+
 }

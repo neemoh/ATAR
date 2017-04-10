@@ -15,12 +15,14 @@ enum class Tasks {None, CricleAC, MultiplePaths};
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "overlay");
+    ros::init(argc, argv, "ac_overlay");
     ACOverlay ao (ros::this_node::getName(),720, 576);
 
     // frequency of the generated images is based on the received images
     // loop_rate is the frequency of spinning and checking for new messages
-    ros::Rate loop_rate(200);
+    // and evaluating and publishing the desired pose according to the active
+    // constraint
+    ros::Rate loop_rate(ao.desired_pose_update_freq);
     std::string window_name[2];
 
     window_name[0] = "Overlay Left";
@@ -115,12 +117,12 @@ int main(int argc, char **argv)
                     ui_instructions <<"Press the camera pedal to select the closest target (blue). "
                                     << targets.size()<<" to go.";
                     // find the closest destination
-                    selected_ac = MultiplePathsTask::FindClosestTarget(ao.pose_tool2.p, targets);
+                    selected_ac = MultiplePathsTask::FindClosestTarget(ao.pose_current_tool[0].p, targets);
 
                     // draw the AC paths
                     for (int i = 0; i < 2; ++i) {
                         MultiplePathsTask::DrawAllPaths(cam_images[i], ao.cam_intrinsics[i],
-                                                        ao.cam_rvec[i], ao.cam_tvec[i], ao.pose_tool2.p,
+                                                        ao.cam_rvec[i], ao.cam_tvec[i], ao.pose_current_tool[0].p,
                                                         targets, selected_ac,
                                                         color_ac_path_selected, color_ac_path);
                     }
@@ -128,7 +130,7 @@ int main(int argc, char **argv)
                     //if foot switch pressed select the current ac
                     if (ao.foot_switch_pressed == 1) {
                         // generate points of the selected ac path
-                        MultiplePathsTask::GeneratePathPoints(ao.pose_tool2.p, targets[selected_ac],
+                        MultiplePathsTask::GeneratePathPoints(ao.pose_current_tool[0].p, targets[selected_ac],
                                                               ac_path_in_use);
                         std::cout <<"Selected target "<< selected_ac << std::endl;
                         task_state = MultiplePathsTask::Status::ACSelected;
@@ -162,15 +164,15 @@ int main(int argc, char **argv)
                                                            ao.cam_intrinsics[i],
                                                            ao.cam_rvec[i],
                                                            ao.cam_tvec[i],
-                                                           ao.pose_tool2.p,
-                                                           ao.pose_desired[1].p,
+                                                           ao.pose_current_tool[0].p,
+                                                           ao.pose_desired_tool[0].p,
                                                            color_ac_desired_point);
                     }
 
                     // criterion to call the single task finished is if we are close enough to the target
-                    KDL::Vector dist_target(targets[selected_ac].x - ao.pose_tool2.p[0],
-                                            targets[selected_ac].y - ao.pose_tool2.p[1],
-                                            targets[selected_ac].z - ao.pose_tool2.p[2]);
+                    KDL::Vector dist_target(targets[selected_ac].x - ao.pose_current_tool[0].p[0],
+                                            targets[selected_ac].y - ao.pose_current_tool[0].p[1],
+                                            targets[selected_ac].z - ao.pose_current_tool[0].p[2]);
 
                     if (dist_target.Norm() < 0.003) {
                         // flag the end of the subtask
@@ -189,7 +191,7 @@ int main(int argc, char **argv)
 
 
                     // when task finishes the user should go back to a homeing distance, just to get away from teh board.
-                    if (std::fabs(targets[0].z - ao.pose_tool2.p[2]) > 0.035) {
+                    if (std::fabs(targets[0].z - ao.pose_current_tool[0].p[2]) > 0.035) {
                         // flag the end of the subtask
                         task_state = MultiplePathsTask::Status::Ready;
                         //change the instructions
@@ -209,23 +211,24 @@ int main(int argc, char **argv)
             } else if (selected_task == Tasks::CricleAC) {
 
                 for (int i = 0; i < 2; ++i) {
+
+                    // Draw the ac path points
                     DrawingsCV::DrawPoint3dVector(cam_images[i], ac_path_in_use,
                                                   ao.cam_intrinsics[i],
                                                   ao.cam_rvec[i],
                                                   ao.cam_tvec[i], color_ac_path);
-
+                    // Draw a line to the closest point
                     DrawingsCV::DrawLineFrom2KDLPoints(cam_images[i],
                                                        ao.cam_intrinsics[i],
                                                        ao.cam_rvec[i],
                                                        ao.cam_tvec[i],
-                                                       ao.pose_tool2.p,
-                                                       ao.pose_desired[1].p,
+                                                       ao.pose_current_tool[0].p,
+                                                       ao.pose_desired_tool[0].p,
                                                        color_ac_desired_point);
                 }
                 // change instructions
                 ui_instructions.str(std::string());
                 ui_instructions <<"A simple circular active constraints.";
-
             }
 
 
@@ -236,7 +239,7 @@ int main(int argc, char **argv)
                                                            ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
                 // draw the end-effector ref frame
                 DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
-                                                           ao.pose_tool2,
+                                                           ao.pose_current_tool[0],
                                                            ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
             }
 
@@ -253,15 +256,24 @@ int main(int argc, char **argv)
 
             }
 
-            if (selected_task == Tasks::CricleAC || task_state == MultiplePathsTask::Status::ACSelected) {
-                geometry_msgs::PoseArray out;
-                VecPoint3dToPoseArray(ac_path_in_use, out);
-                out.header.stamp = ros::Time::now();
-                out.header.frame_id = "/task_space";
-                ao.publisher_ac_path.publish(out);
-            }
+            // publishing the ac path not needed anymore
+            //            if (selected_task == Tasks::CricleAC || task_state == MultiplePathsTask::Status::ACSelected) {
+            //                geometry_msgs::PoseArray out;
+            //                VecPoint3dToPoseArray(ac_path_in_use, out);
+            //                out.header.stamp = ros::Time::now();
+            //                out.header.frame_id = "/task_space";
+            //                ao.publisher_ac_path.publish(out);
+            //            }
 
         }
+
+        // updating the desired pose happens at the higher frequency
+        if(ac_path_in_use.size()>0){
+            ClosestPointToACPoints(ao.pose_current_tool[0].p, ac_path_in_use, ao.pose_desired_tool[0].p);
+
+            ao.PublishDesiredPose();
+        }
+
 
         ros::spinOnce();
         loop_rate.sleep();
