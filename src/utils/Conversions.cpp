@@ -88,3 +88,40 @@ void conversions::KDLFrameToVector(const KDL::Frame &in_pose,  vector<double> &o
     tf::poseKDLToMsg(in_pose, pose_msg );
     conversions::PoseMsgToVector(pose_msg, out_vector);
 }
+
+
+
+void conversions::AxisAngleToKDLRotation(KDL::Vector axis, double angle, KDL::Rotation & out) {
+
+    double c = cos(angle);
+    double s = sin(angle);
+    double t = 1.0 - c;
+
+    //  if axis is not already normalised
+    axis.Normalize();
+
+    double m[3][3];
+
+    m[0][0] = c + axis[0]*axis[0]*t;
+    m[1][1] = c + axis[1]*axis[1]*t;
+    m[2][2] = c + axis[2]*axis[2]*t;
+
+
+    double tmp1 = axis[0]*axis[1]*t;
+    double tmp2 = axis[2]*s;
+    m[1][0] = tmp1 + tmp2;
+    m[0][1] = tmp1 - tmp2;
+    tmp1 = axis[0]*axis[2]*t;
+    tmp2 = axis[1]*s;
+    m[2][0] = tmp1 - tmp2;
+    m[0][2] = tmp1 + tmp2;
+    tmp1 = axis[1]*axis[2]*t;
+    tmp2 = axis[0]*s;
+    m[2][1] = tmp1 + tmp2;
+    m[1][2] = tmp1 - tmp2;
+
+    out = KDL::Rotation(m[0][0], m[0][1], m[0][2],
+                        m[1][0], m[1][1], m[1][2],
+                        m[2][0], m[2][1], m[2][2]);
+
+}
