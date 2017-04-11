@@ -91,7 +91,7 @@ int main(int argc, char **argv)
             ROS_INFO("Task 1 Selected");
             selected_task = Tasks::CricleAC;
             ac_path_in_use.clear();
-            SimpleACs::GenerateXYCircle(KDL::Vector(0.045, 0.04, 0.04), 0.025, 200, ac_path_in_use);
+            CricleACTask::GenerateXYCircle(KDL::Vector(0.045, 0.04, 0.04), 0.025, 200, ac_path_in_use);
         }
         else if (key == '2'){
             ROS_INFO("Task 2 Selected");
@@ -241,6 +241,19 @@ int main(int argc, char **argv)
                 DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
                                                            ao.pose_current_tool[0],
                                                            ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
+                //draw the desired pose frame
+                DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
+                                                           ao.pose_desired_tool[0],
+                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);;
+//                //draw the  tangent
+//                DrawingsCV::DrawLineFrom2KDLPoints(cam_images[j],
+//                                                   ao.cam_intrinsics[j],
+//                                                   ao.cam_rvec[j],
+//                                                   ao.cam_tvec[j],
+//                                                   ao.pose_desired_tool[0].p,
+//                                                   ao.pose_desired_tool[0].p + 0.01*ao.ac_path_tangent_current[0],
+//                                                   color_ac_path_selected);
+
             }
 
             // print instructions
@@ -269,7 +282,17 @@ int main(int argc, char **argv)
 
         // updating the desired pose happens at the higher frequency
         if(ac_path_in_use.size()>0){
-            ClosestPointToACPoints(ao.pose_current_tool[0].p, ac_path_in_use, ao.pose_desired_tool[0].p);
+
+            ClosestPointOnACPathAndItsTangent(ao.pose_current_tool[0].p,
+                                              ac_path_in_use,
+                                              ao.pose_desired_tool[0].p,
+                                              ao.ac_path_tangent_current[0]);
+            if (selected_task == Tasks::CricleAC){
+                ao.pose_desired_tool[0].M = RingTask::CalculateDesiredOrientation(ao.ac_path_tangent_current[0],
+                                                                                  ao.pose_current_tool[0].M);
+
+            }
+
 
             ao.PublishDesiredPose();
         }

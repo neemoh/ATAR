@@ -587,7 +587,7 @@ void VisualUtils::SwitchFullScreen(const std::string window_name) {
 }
 
 
-void SimpleACs::GenerateXYCircle(const KDL::Vector center, const double radius, const int num_points,
+void CricleACTask::GenerateXYCircle(const KDL::Vector center, const double radius, const int num_points,
                                           std::vector<cv::Point3d> & ac_path){
     cv::Point3d point;
     for (int n_point = 0; n_point <num_points ; ++n_point) {
@@ -612,9 +612,10 @@ void  VecPoint3dToPoseArray(std::vector<cv::Point3d> vec, geometry_msgs::PoseArr
     }
 }
 
-void ClosestPointToACPoints(const KDL::Vector tool_current_position,
-                                                  const std::vector<cv::Point3d> & ac_path,
-                                                  KDL::Vector & tool_desired_position){
+void ClosestPointOnACPathAndItsTangent(const KDL::Vector tool_current_position,
+                                       const std::vector<cv::Point3d> &ac_path,
+                                       KDL::Vector &tool_desired_position,
+                                       KDL::Vector &tangent_vector) {
 
     double min_d = 100000; // something large
     size_t i_min = 0;
@@ -635,5 +636,50 @@ void ClosestPointToACPoints(const KDL::Vector tool_current_position,
     tool_desired_position[1] = ac_path[i_min].y;
     tool_desired_position[2] = ac_path[i_min].z;
 
+    //find the tangent by calculating the vector from a neighbor point (previous point).
+    // if i_min is zero take the next point instead
+    int i_neighbor = 1;
+    if(i_min==0)
+        i_neighbor = -1;
 
+    tangent_vector[0] = ac_path[i_min].x - ac_path[i_min-i_neighbor].x;
+    tangent_vector[1] = ac_path[i_min].y - ac_path[i_min-i_neighbor].y;
+    tangent_vector[2] = ac_path[i_min].z - ac_path[i_min-i_neighbor].z;
+    tangent_vector.Normalize();
+
+}
+
+KDL::Rotation RingTask::CalculateDesiredOrientation(
+        const KDL::Vector ac_path_tangent_current,
+        const KDL::Rotation current_orientation) {
+
+    // Assuming that the normal to the ring is the x vector of current_orientation
+    KDL::Vector ring_normal = current_orientation.UnitX();
+
+    // find the normal vector for the rotation to desired pose
+    KDL::Vector rotation_axis = ring_normal * ac_path_tangent_current;
+
+    // find the magnitude of rotation
+    // we are interested in the smallest rotation (in the same quarter)
+    double rotation_angle = acos( (KDL::dot(ring_normal, ac_path_tangent_current)) /
+            (ring_normal.Norm() * ac_path_tangent_current.Norm()) );
+//    KDL::Vector a = KDL::Vector(1,0,0);
+//    KDL::Vector b = KDL::Vector(1,0,0);
+//    double rotation_angle = acos( (KDL::dot(ring_normal, ac_path_tangent_current)) /
+//                                  (ring_normal.Norm() * ac_path_tangent_current.Norm()) );
+
+    std::cout << "rotation_angle " << rotation_angle * 180/M_PI << std::endl;
+//    std::cout << "ac_path_tangent_current " << ac_path_tangent_current[0] << " "
+//    << ac_path_tangent_current[1] << " " << ac_path_tangent_current[2] << std::endl;
+//
+//    std::cout << "ring_normal " << ring_normal[0] << " "
+//    << ring_normal[1] << " " << ring_normal[2] << std::endl
+//
+   std::cout << "rotation_axis " << rotation_axis[0] << " "
+    << rotation_axis[1] << " " << rotation_axis[2] << std::endl;
+
+    KDL::Rotation rotation_to_desired;
+    conversions::AxisAngleToKDLRotation(rotation_axis, rotation_angle, rotation_to_desired);
+
+    return (rotation_to_desired * current_orientation );
 }

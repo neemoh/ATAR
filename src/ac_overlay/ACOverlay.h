@@ -100,6 +100,9 @@ public:
 
     KDL::Frame pose_desired_tool[2];
 
+    // used for the ring task
+    KDL::Vector ac_path_tangent_current[2];
+
     cv::Vec3d cam_rvec[2];
     cv::Vec3d cam_tvec[2];
     cv::Mat image_left;
@@ -155,10 +158,11 @@ namespace VisualUtils {
 
 }
 
-namespace SimpleACs {
+namespace CricleACTask {
 
     void GenerateXYCircle(const KDL::Vector center, const double radius, const int num_points,
                           std::vector<cv::Point3d> &ac_path);
+
 }
 
 namespace MultiplePathsTask {
@@ -185,12 +189,19 @@ namespace MultiplePathsTask {
 
 namespace RingTask{
 
-
+    // in the ring task we want the ring's normal vector to be in along the direction of the path normal
+    // this leaves the rotation around the normal unconstrained. Also the direction of the tangent is
+    // not important, so we find the smallest rotation that takes the ring's normal vector from its
+    // current one to that of the path's tangent vector
+    // Assuming that the normal to the ring is the x vector of current_orientation.
+    KDL::Rotation CalculateDesiredOrientation(const KDL::Vector ac_path_tangent_current,
+                                              const KDL::Rotation current_orientation);
 }
 
 // other functions to be sorted later
 void  VecPoint3dToPoseArray(std::vector<cv::Point3d> vec, geometry_msgs::PoseArray & out) ;
 
-void ClosestPointToACPoints(const KDL::Vector tool_current_position,
-                            const std::vector<cv::Point3d> & ac_path,
-                            KDL::Vector & tool_desired_position);
+void ClosestPointOnACPathAndItsTangent(const KDL::Vector tool_current_position,
+                                       const std::vector<cv::Point3d> &ac_path,
+                                       KDL::Vector &tool_desired_position,
+                                       KDL::Vector &tangent_vector);
