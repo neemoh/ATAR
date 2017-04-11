@@ -135,7 +135,7 @@ void DrawingsCV::DrawCoordinateFrameInTaskSpace(
                       cam_intrinsics.distCoeffs, imagePoints);
 
     // draw axis lines
-    cv::line(image, imagePoints[0], imagePoints[1], cv::Scalar(200, 0, 0), 2, CV_AA);
+    cv::line(image, imagePoints[0], imagePoints[1], cv::Scalar(0, 0, 200), 2, CV_AA);
     cv::line(image, imagePoints[0], imagePoints[2], cv::Scalar(0, 200, 0), 2, CV_AA);
-    cv::line(image, imagePoints[0], imagePoints[3], cv::Scalar(0, 0, 200), 2, CV_AA);
+    cv::line(image, imagePoints[0], imagePoints[3], cv::Scalar(200, 0, 0), 2, CV_AA);
 }
