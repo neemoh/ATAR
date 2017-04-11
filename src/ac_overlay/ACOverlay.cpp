@@ -663,20 +663,11 @@ KDL::Rotation RingTask::CalculateDesiredOrientation(
     // we are interested in the smallest rotation (in the same quarter)
     double rotation_angle = acos( (KDL::dot(ring_normal, ac_path_tangent_current)) /
             (ring_normal.Norm() * ac_path_tangent_current.Norm()) );
-//    KDL::Vector a = KDL::Vector(1,0,0);
-//    KDL::Vector b = KDL::Vector(1,0,0);
-//    double rotation_angle = acos( (KDL::dot(ring_normal, ac_path_tangent_current)) /
-//                                  (ring_normal.Norm() * ac_path_tangent_current.Norm()) );
 
-    std::cout << "rotation_angle " << rotation_angle * 180/M_PI << std::endl;
-//    std::cout << "ac_path_tangent_current " << ac_path_tangent_current[0] << " "
-//    << ac_path_tangent_current[1] << " " << ac_path_tangent_current[2] << std::endl;
-//
-//    std::cout << "ring_normal " << ring_normal[0] << " "
-//    << ring_normal[1] << " " << ring_normal[2] << std::endl
-//
-   std::cout << "rotation_axis " << rotation_axis[0] << " "
-    << rotation_axis[1] << " " << rotation_axis[2] << std::endl;
+    // If the ring is perpendicular to the tangent switch the direction of the tangent
+    // to get the smaller rotation
+    if(rotation_angle > M_PI/2)
+        rotation_angle = rotation_angle - M_PI;
 
     KDL::Rotation rotation_to_desired;
     conversions::AxisAngleToKDLRotation(rotation_axis, rotation_angle, rotation_to_desired);
