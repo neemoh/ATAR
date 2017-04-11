@@ -357,11 +357,12 @@ void RobotToCameraAruco::Calib2DrawTarget(cv::String &instructions, cv::Mat img)
 
     std::ostringstream oss;
     oss << "Take the tool tip to the target point then press s";
-
-    cv::circle(img, calib_points_screen, 6, cv::Scalar(255, 255, 0),
-               1, CV_AA);
+    for (unit i=0; i<num_calib_points; i++){
+        cv::circle(img, calib_points_screen[i], 6, cv::Scalar(255, 255, 0),
+                   1, CV_AA);
+    }
     // draw actual target with a different colour
-    cv::circle(img, calib_points_screen[meas_points.size()], 6, cv::Scalar(255, 255, 0),
+    cv::circle(img, calib_points_screen[meas_points.size()], 6, cv::Scalar(0, 0, 255),
                1, CV_AA);
     instructions = oss.str();
 }
@@ -390,8 +391,18 @@ void RobotToCameraAruco::Calib2CalculateTransformation() {
         target_mat.col(i) = target[i];
     }
 
-    task_frame_to_robot_frame = Eigen::umeyama(target_mat, meas_points_mat, 0);
-    ROS_INFO_STREAM("  -> Camera To PSM Transformation: \n" << task_frame_to_robot_frame << std::endl);
+    auto temp = Eigen::umeyama(target_mat, meas_points_mat, 0);
+
+    // converting Eigen::Matrix into KDL::Frame
+    cv::Matx33d rot_mat;
+    for (uint i = 0; i < 3; i++) {
+        rot_mat(i, 0) = temp(i, 0);
+        rot_mat(i, 1) = temp(i, 1);
+        rot_mat(i, 2) = temp(i, 2);
+        task_frame_to_robot_frame.p[i] = temp(i, 3);
+    }
+    conversions::Matx33dToKdlRot(rot_mat, task_frame_to_robot_frame.M);
+    ROS_INFO_STREAM("  -> Board To PSM Transformation: \n" << temp << std::endl);
     calib_finished = true;
 }
 

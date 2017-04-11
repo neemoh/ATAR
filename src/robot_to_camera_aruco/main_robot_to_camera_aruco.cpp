@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
             auto camera_frame_to_robot_frame = r.task_frame_to_robot_frame * r.task_frame_to_cam_frame.Inverse();
             cv::Vec3d rvec, tvec;
             conversions::kdlFrameToRvectvec(camera_frame_to_robot_frame, rvec, tvec);
-            ROS_INFO_STREAM("  -> chain rule: \n" << rvec << std::endl << tvec << std::endl);
+            ROS_INFO_STREAM("  -> chain rule for camera to PSM base transformation: \n" << rvec << std::endl << tvec << std::endl);
 
             instructions = "Calibration finished. Press 'Esc' to exit";
         }
