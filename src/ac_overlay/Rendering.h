@@ -1,11 +1,11 @@
 //
-// Created by charm on 4/12/17.
+// Created by nima on 4/12/17.
 //
 
 #ifndef TELEOP_VISION_RENDERING_H
 #define TELEOP_VISION_RENDERING_H
 #include "opencv2/core/core.hpp"
-#include "bardCalibratedCamera.h"
+#include "CalibratedCamera.h"
 #include <vtkImageImport.h>
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
@@ -13,6 +13,10 @@
 #include <vtkRenderWindow.h>
 #include <vtkWindowToImageFilter.h>
 
+/**
+ * \class Rendering
+ * \brief Rendering using opengl and vtk
+ */
 
 class Rendering {
 public:
@@ -31,7 +35,7 @@ public:
 
     void UpdateBackgroundImage(cv::Mat &);
 
-    void UpdateWindowSizeRelatedViews();
+    void UpdateViewAngleForActualWindowSize();
 
     void SetCameraIntrinsics(const cv::Matx33d& intrinsics);
 

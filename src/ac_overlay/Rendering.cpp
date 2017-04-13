@@ -1,5 +1,5 @@
 //
-// Created by charm on 4/12/17.
+// Created by nima on 4/12/17.
 //
 #include "Rendering.h"
 
@@ -12,16 +12,13 @@
 
 
 
+//----------------------------------------------------------------------------
 Rendering::Rendering()
         : backgroundRenderer(NULL)
         , sceneRenderer(NULL)
         , WorldToCameraTransform(NULL)
         , CameraToWorldTransform(NULL)
 {
-
-    //  m_Timer = new QTimer();
-    //  m_Timer->setInterval(40);
-    //  connect(m_Timer, SIGNAL(timeout()), this, SLOT(OnTimerTriggered()));
 
     ImageImporter = vtkSmartPointer<vtkImageImport>::New();
     ImageActor = vtkSmartPointer<vtkImageActor>::New();
@@ -34,15 +31,13 @@ Rendering::Rendering()
     backgroundRenderer->SetLayer(0);
 
     sceneRenderer = vtkSmartPointer<vtkRenderer>::New();
-//    sceneRenderer->InteractiveOff();
+    sceneRenderer->InteractiveOff();
     sceneRenderer->SetLayer(1);
 
     SceneCamera = vtkSmartPointer<CalibratedCamera>::New();
-//    SceneCamera->SetUseCalibratedCamera(false);
     sceneRenderer->SetActiveCamera(SceneCamera);
 
     BackgroundCamera = vtkSmartPointer<CalibratedCamera>::New();
-//    BackgroundCamera->SetUseCalibratedCamera(false);
     backgroundRenderer->SetActiveCamera(BackgroundCamera);
 
     WorldToCameraTransform = vtkSmartPointer<vtkMatrix4x4>::New();
@@ -68,6 +63,7 @@ Rendering::~Rendering()
     renderWindow->RemoveRenderer(sceneRenderer);
 }
 
+//----------------------------------------------------------------------------
 void Rendering::SetWorldToCameraTransform(const cv::Vec3d &cam_rvec, const cv::Vec3d &cam_tvec) {
 
     cv::Mat rotationMatrix(3, 3, cv::DataType<double>::type);
@@ -75,7 +71,7 @@ void Rendering::SetWorldToCameraTransform(const cv::Vec3d &cam_rvec, const cv::V
 
     WorldToCameraTransform->Identity();
 
-// Convert to VTK matrix.
+    // Convert to VTK matrix.
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             WorldToCameraTransform->SetElement(i, j, rotationMatrix.at<double>(i, j));
@@ -108,43 +104,21 @@ void Rendering::SetEnableImage(bool isEnabled)
             backgroundRenderer->RemoveActor(ImageActor);
         }
     }
-//    this->UpdateLayers();
 }
 
-//bool Rendering::fromIpl2Vtk( cv::Mat _src, vtkImageData* _dest )
-//{
-//    assert( _src.data != NULL );
-//
-//
-//    if ( _dest )
-//    {
-//        ImageImporter->SetOutput( camera_image );
-//    }
-//    ImageImporter->SetDataSpacing( 1, 1, 1 );
-//    ImageImporter->SetDataOrigin( 0, 0, 0 );
-//    ImageImporter->SetWholeExtent(   0, _src.size().width-1, 0,
-//                                     _src.size().height-1, 0, 0 );
-//    ImageImporter->SetDataExtentToWholeExtent();
-//    ImageImporter->SetDataScalarTypeToUnsignedChar();
-//    ImageImporter->SetNumberOfScalarComponents( _src.channels() );
-//    ImageImporter->SetImportVoidPointer( _src.data );
-//    ImageImporter->Update();
-//    return true;
-//}
 
-
+//----------------------------------------------------------------------------
 void Rendering::SetCameraIntrinsics(const cv::Matx33d& intrinsics)
 {
 //    m_Intrinsics = intrinsics;
     BackgroundCamera->SetIntrinsicParameters(intrinsics(0,0), intrinsics(1,1), intrinsics(0,2), intrinsics(1,2));
-    BackgroundCamera->SetUseCalibratedCamera(true);
+//    BackgroundCamera->SetUseCalibratedCamera(true);
     SceneCamera->SetIntrinsicParameters(intrinsics(0,0), intrinsics(1,1), intrinsics(0,2), intrinsics(1,2));
-    SceneCamera->SetUseCalibratedCamera(true);
+//    SceneCamera->SetUseCalibratedCamera(true);
 }
 
 
 //----------------------------------------------------------------------------------
-
 void Rendering::SetImageCameraToFaceImage()
 {
 
@@ -222,6 +196,7 @@ void Rendering::SetImageCameraToFaceImage()
     BackgroundCamera->SetClippingRange(clippingRange);
 }
 
+//----------------------------------------------------------------------------
 void Rendering::UpdateBackgroundImage(cv::Mat & img) {
 
     cv::Mat _src;
@@ -229,22 +204,24 @@ void Rendering::UpdateBackgroundImage(cv::Mat & img) {
     cv::cvtColor(img, _src, cv::COLOR_BGR2RGB);
     ImageImporter->SetImportVoidPointer( _src.data );
     ImageImporter->Update();
-//    ImageActor->SetInputData(camera_image);
 
-    renderWindow->Render();
 }
 
-void Rendering::UpdateWindowSizeRelatedViews() {
+//----------------------------------------------------------------------------
+void Rendering::UpdateViewAngleForActualWindowSize() {
 
     SetImageCameraToFaceImage();
-    SceneCamera->UpdateViewAngle();
+    int * window_size = renderWindow->GetActualSize();
+
+    SceneCamera->UpdateViewAngle(window_size[0], window_size[1]);
 }
 
+//----------------------------------------------------------------------------
 void Rendering::SetupBackgroundImage(cv::Mat &img) {
     assert( img.data != NULL );
 
-    SceneCamera->SetCalibratedImageSize(img.size().width, img.size().height);
-    BackgroundCamera->SetCalibratedImageSize(img.size().width, img.size().height);
+    SceneCamera->SetCameraImageSize(img.size().width, img.size().height);
+    BackgroundCamera->SetCameraImageSize(img.size().width, img.size().height);
 
     if ( camera_image )
     {
@@ -266,18 +243,21 @@ void Rendering::SetupBackgroundImage(cv::Mat &img) {
 
 }
 
+//----------------------------------------------------------------------------
 void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 
     sceneRenderer->AddActor(actor);
 
 }
 
+//----------------------------------------------------------------------------
 void Rendering::Render() {
 
     renderWindow->Render();
 
 }
 
+//----------------------------------------------------------------------------
 void Rendering::GetRenderedImage(cv::Mat &img) {
 
     windowToImageFilter->Modified();

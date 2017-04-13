@@ -1,11 +1,36 @@
+//
+// Created by nima on 4/13/17.
+//
 #include "ros/ros.h"
 #include "geometry_msgs/Pose.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "utils/Conversions.hpp"
 #include "ACOverlay.h"
 #include <std_msgs/Float32.h>
+#include "CalibratedCamera.h"
 
 
+
+#include <vtkPolyDataMapper.h>
+#include <vtkActor.h>
+#include <vtkSmartPointer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkPolyData.h>
+#include <vtkSphereSource.h>
+#include <vtkWindowToImageFilter.h>
+#include <vtkPNGWriter.h>
+#include <vtkImageActor.h>
+#include <vtkImageImport.h>
+#include <vtkOrientationMarkerWidget.h>
+#include <vtkAxesActor.h>
+#include <vtkTransform.h>
+#include "Rendering.h"
+//#include "Drawings.h"
+//#include <iostream>
+//#include <GLFW/glfw3.h>
+//#include <GL/glu.h>
 
 
 enum class Tasks {None, CricleAC, MultiplePaths};
@@ -57,6 +82,57 @@ int main(int argc, char **argv)
     std::stringstream ui_instructions;
     ui_instructions <<"Press 1 for task1 and 2 for task2. " ;
 
+
+
+    // ----------------------------------------------------------------------------------------------
+    //                              VTK test
+    // ----------------------------------------------------------------------------------------------
+
+    ao.ImageLeft(ros::Duration(1)).copyTo(cam_images[0]);
+
+    Rendering *rend= new Rendering;
+
+    rend->SetWorldToCameraTransform(ao.cam_rvec[0], ao.cam_tvec[0]);
+    rend->SetCameraIntrinsics(ao.cam_intrinsics->camMatrix);
+    rend->SetupBackgroundImage(cam_images[0]);
+    rend->SetEnableImage(true);
+
+    rend->Render();
+
+    // Create a superquadric
+    vtkSmartPointer<vtkSphereSource> sphereSource=
+            vtkSmartPointer<vtkSphereSource>::New();
+    sphereSource->SetRadius(0.003);
+    sphereSource->SetThetaResolution(20);
+    sphereSource->SetPhiResolution(20);
+    // Create a mapper and actor
+    vtkSmartPointer<vtkPolyDataMapper> sphereMapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    sphereMapper->SetInputConnection(sphereSource->GetOutputPort());
+
+    vtkSmartPointer<vtkActor> sphereActor = vtkSmartPointer<vtkActor>::New();
+    double counter = 0.0;
+    sphereActor->SetPosition(0.012, 0.00, 0.0);
+    sphereActor->SetMapper(sphereMapper);
+//        sphereActor->GetProperty()->SetColor(1.0, 0.0, 0.0); //(R,G,B)
+
+    // Add actors to the renderers
+    rend->AddActorToScene(sphereActor);
+
+    vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+    transform->Translate(0.0, 0, 0.0);
+    transform->RotateX(0);
+    vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
+
+    // The axes are positioned with a user transform
+    axes->SetUserTransform(transform);
+    axes->SetXAxisLabelText("");
+    axes->SetYAxisLabelText("");
+    axes->SetZAxisLabelText("");
+    axes->SetTotalLength(0.01, 0.01, 0.01);
+
+//    sceneRenderer->AddActor(axes);
+    rend->AddActorToScene(axes);
 
 
 
@@ -243,7 +319,7 @@ int main(int argc, char **argv)
                 //draw the desired pose frame
                 DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
                                                            ao.pose_desired_tool[0],
-                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.005);;
+                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);;
 //                //draw the  tangent
 //                DrawingsCV::DrawLineFrom2KDLPoints(cam_images[j],
 //                                                   ao.cam_intrinsics[j],
@@ -270,6 +346,21 @@ int main(int argc, char **argv)
             //                out.header.frame_id = "/task_space";
             //                ao.publisher_ac_path.publish(out);
             //            }
+
+            // ----------------------------------------------------------------------------------------------
+            //                              VTK test
+            // ----------------------------------------------------------------------------------------------
+
+
+            rend->UpdateBackgroundImage(cam_images[0]);
+            rend->UpdateViewAngleForActualWindowSize();
+            counter++;
+            sphereActor->SetPosition(0.012 + 0.05 * sin(counter*M_PI), 0.00, 0.0);
+            sphereActor->Modified();
+
+            rend->Render();
+
+            rend->GetRenderedImage(cam_images[0]);
 
             for (int j = 0; j <2 ; ++j) {
                 cv::imshow(window_name[j], cam_images[j]);
@@ -298,11 +389,18 @@ int main(int argc, char **argv)
         }
 
 
+
+
+
+
+
         ros::spinOnce();
         loop_rate.sleep();
     }
 
-
+    delete(rend);
+//	glfwDestroyWindow(window);
+//	glfwTerminate();
     return 0;
 }
 

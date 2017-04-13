@@ -192,6 +192,26 @@ endforeach ()
 #                           AC OVERLAY
 ##########################################################################
 
+
+
+add_executable(
+        ac_overlay
+        src/ac_overlay/main_ac_overlay.cpp
+        src/ac_overlay/ACOverlay.cpp
+        src/ac_overlay/ACOverlay.h
+        src/utils/Drawings.cpp
+        include/utils/Drawings.h
+)
+
+target_link_libraries(
+        ac_overlay
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES}
+        arucoUtils)
+
+##########################################################################
+#                           AC OVERLAY VTK
+
 if(POLICY CMP0025)
     cmake_policy(SET CMP0025 NEW) # CMake 3.0
 endif()
@@ -213,17 +233,13 @@ vtk_module_config(VTK
         )
 
 include(${VTK_USE_FILE})
-
-
 add_executable(
-        ac_overlay
-        src/ac_overlay/main_ac_overlay.cpp
+        ac_overlay_vtk
+        src/ac_overlay/main_ac_overlay_vtk.cpp
         src/ac_overlay/ACOverlay.cpp
         src/ac_overlay/ACOverlay.h
-        src/ac_overlay/bardCalibratedCamera.cxx
-        src/ac_overlay/bardCalibratedCamera.h
-#        src/ac_overlay/bardMainRenderingWidget.cxx
- #       src/ac_overlay/bardMainRenderingWidget.h
+        src/ac_overlay/CalibratedCamera.cpp
+        src/ac_overlay/CalibratedCamera.h
         src/ac_overlay/Rendering.cpp
         src/ac_overlay/Rendering.h
         src/utils/Drawings.cpp
@@ -231,7 +247,7 @@ add_executable(
 )
 
 target_link_libraries(
-        ac_overlay
+        ac_overlay_vtk
         ${OpenCV_LIBRARIES}
         ${VTK_LIBRARIES}
         ${catkin_LIBRARIES}
