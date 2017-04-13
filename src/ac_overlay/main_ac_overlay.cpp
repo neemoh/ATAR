@@ -113,7 +113,7 @@ int main(int argc, char **argv)
                 if (task_state == MultiplePathsTask::Status::Ready) {
                     //change the instructions
                     ui_instructions.str(std::string());
-                    ui_instructions <<"Press the scene_camera pedal to select the closest target (blue). "
+                    ui_instructions <<"Press the camera pedal to select the closest target (blue). "
                                     << targets.size()<<" to go.";
                     // find the closest destination
                     selected_ac = MultiplePathsTask::FindClosestTarget(ao.pose_current_tool[0].p, targets);
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
                         task_state = MultiplePathsTask::Status::Ready;
                         //change the instructions
                         ui_instructions.str(std::string());
-                        ui_instructions <<"Press the scene_camera pedal to select the closest target (blue line). "
+                        ui_instructions <<"Press the camera pedal to select the closest target (blue line). "
                                         << targets.size()<<" targets to go.";
                     }
                     if(targets.size()==0){
