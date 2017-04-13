@@ -178,19 +178,6 @@ target_link_libraries(
 )
 
 
-add_executable(
-        ac_overlay
-        src/ac_overlay/main_ac_overlay.cpp
-        src/ac_overlay/ACOverlay.cpp
-        src/ac_overlay/ACOverlay.h
-        src/utils/Drawings.cpp
-        include/utils/Drawings.h
-)
-target_link_libraries(
-        ac_overlay
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES}
-        arucoUtils)
 
 
 set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco )
@@ -201,6 +188,56 @@ foreach (_executable ${_executables})
             ${catkin_LIBRARIES}
             arucoUtils)
 endforeach ()
+##########################################################################
+#                           AC OVERLAY
+##########################################################################
+
+if(POLICY CMP0025)
+    cmake_policy(SET CMP0025 NEW) # CMake 3.0
+endif()
+if(POLICY CMP0053)
+    cmake_policy(SET CMP0053 NEW) # CMake 3.1
+endif()
+
+find_package(VTK REQUIRED)
+vtk_module_config(VTK
+        vtkCommonCore
+        vtkCommonDataModel
+        vtkFiltersCore
+        vtkFiltersModeling
+        vtkIOXML
+        vtkInteractionStyle
+        vtkRendering${VTK_RENDERING_BACKEND}
+        vtkImagingGeneral
+        vtkInteractionWidgets
+        )
+
+include(${VTK_USE_FILE})
+
+
+add_executable(
+        ac_overlay
+        src/ac_overlay/main_ac_overlay.cpp
+        src/ac_overlay/ACOverlay.cpp
+        src/ac_overlay/ACOverlay.h
+        src/ac_overlay/bardCalibratedCamera.cxx
+        src/ac_overlay/bardCalibratedCamera.h
+        src/ac_overlay/bardMainRenderingWidget.cxx
+        src/ac_overlay/bardMainRenderingWidget.h
+        src/ac_overlay/Rendering.cpp
+        src/ac_overlay/Rendering.h
+        src/utils/Drawings.cpp
+        include/utils/Drawings.h
+)
+
+target_link_libraries(
+        ac_overlay
+        ${OpenCV_LIBRARIES}
+        ${VTK_LIBRARIES}
+        ${catkin_LIBRARIES}
+        arucoUtils)
+
+
 
 ##########################################################################
 #                           Install Targets
