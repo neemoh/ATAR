@@ -35,18 +35,16 @@ public:
 
     void AddActorToScene(vtkSmartPointer<vtkProp>);
 
-    vtkSmartPointer<vtkRenderWindow>    renderWindow;
+    void Render();
+
+
 
 private:
 
 
-//    void SetCamExtrinsics(vtkSmartPointer<vtkCamera> camera);
-
+    // Set up the background scene_camera to fill the renderer with the image
     void SetImageCameraToFaceImage();
 
-//    void SetCameraToWorldTransform(const cv::Vec3d &cam_rvec, const cv::Vec3d &cam_tvec);
-
-//    bool fromIpl2Vtk( cv::Mat _src, vtkImageData* _dest );
 
     vtkSmartPointer<CalibratedCamera>    BackgroundCamera;
     vtkSmartPointer<CalibratedCamera>    SceneCamera;
@@ -57,6 +55,8 @@ private:
     vtkSmartPointer<vtkMatrix4x4>        WorldToCameraTransform;
     vtkSmartPointer<vtkMatrix4x4>        CameraToWorldTransform;
     vtkSmartPointer<vtkImageData>        camera_image;
+    vtkSmartPointer<vtkRenderWindow>     renderWindow;
+
 };
 
 

@@ -222,8 +222,8 @@ add_executable(
         src/ac_overlay/ACOverlay.h
         src/ac_overlay/bardCalibratedCamera.cxx
         src/ac_overlay/bardCalibratedCamera.h
-        src/ac_overlay/bardMainRenderingWidget.cxx
-        src/ac_overlay/bardMainRenderingWidget.h
+#        src/ac_overlay/bardMainRenderingWidget.cxx
+ #       src/ac_overlay/bardMainRenderingWidget.h
         src/ac_overlay/Rendering.cpp
         src/ac_overlay/Rendering.h
         src/utils/Drawings.cpp

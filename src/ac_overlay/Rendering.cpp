@@ -26,7 +26,7 @@ Rendering::Rendering()
     ImageImporter = vtkSmartPointer<vtkImageImport>::New();
     ImageActor = vtkSmartPointer<vtkImageActor>::New();
     renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-
+    camera_image   = vtkSmartPointer<vtkImageData>::New();
 
     backgroundRenderer = vtkSmartPointer<vtkRenderer>::New();
     backgroundRenderer->InteractiveOff();
@@ -34,15 +34,15 @@ Rendering::Rendering()
     backgroundRenderer->SetLayer(0);
 
     sceneRenderer = vtkSmartPointer<vtkRenderer>::New();
-    sceneRenderer->InteractiveOff();
+//    sceneRenderer->InteractiveOff();
     sceneRenderer->SetLayer(1);
 
     SceneCamera = vtkSmartPointer<CalibratedCamera>::New();
-    SceneCamera->SetUseCalibratedCamera(false);
+//    SceneCamera->SetUseCalibratedCamera(false);
     sceneRenderer->SetActiveCamera(SceneCamera);
 
     BackgroundCamera = vtkSmartPointer<CalibratedCamera>::New();
-    BackgroundCamera->SetUseCalibratedCamera(false);
+//    BackgroundCamera->SetUseCalibratedCamera(false);
     backgroundRenderer->SetActiveCamera(BackgroundCamera);
 
     WorldToCameraTransform = vtkSmartPointer<vtkMatrix4x4>::New();
@@ -52,7 +52,7 @@ Rendering::Rendering()
     CameraToWorldTransform->Identity();
 
     renderWindow->SetNumberOfLayers(2);
-//    renderWindow->AddRenderer(backgroundRenderer);
+    renderWindow->AddRenderer(backgroundRenderer);
     renderWindow->AddRenderer(sceneRenderer);
 
 }
@@ -267,10 +267,18 @@ void Rendering::SetupBackgroundImage(cv::Mat &img) {
 
     ImageActor->SetInputData(camera_image);
 
+    renderWindow->SetSize(img.size().width, img.size().height);
+
 }
 
 void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 
     sceneRenderer->AddActor(actor);
+
+}
+
+void Rendering::Render() {
+
+    renderWindow->Render();
 
 }
