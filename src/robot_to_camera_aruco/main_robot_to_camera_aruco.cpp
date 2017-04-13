@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
         //        }
 
         instructions = "Press 1 or 2 to begin calibration.";
-        char key = (char)cv::waitKey(1);
+        char key = (char) cv::waitKey(1);
         if (key == 27) // Esc
             ros::shutdown();
 
@@ -62,8 +62,9 @@ int main(int argc, char *argv[]) {
             progress = CalibProgress::Method2Calibrating;
         }
         if (key == 'f') { //full screen
-            cvSetWindowProperty("PSM to board Calib", CV_WND_PROP_FULLSCREEN,
-                                CV_WINDOW_FULLSCREEN);
+            cvSetWindowProperty(
+                "PSM to board Calib", CV_WND_PROP_FULLSCREEN,
+                CV_WINDOW_FULLSCREEN);
         }
         if (progress == CalibProgress::Method1Calibrating) {
 
@@ -81,13 +82,12 @@ int main(int argc, char *argv[]) {
 
                     // set the calibration data
                     r.SetTaskFrameToRobotFrameParam();
-
                 }
             }
         }
 
 
-        if (progress == CalibProgress::Method2Calibrating){
+        if (progress == CalibProgress::Method2Calibrating) {
 
 
             r.Calib2DrawTarget(instructions, back_buffer);
@@ -102,51 +102,53 @@ int main(int argc, char *argv[]) {
 
                     // set the calibration data
                     r.SetTaskFrameToRobotFrameParam();
-
+                }
             }
-        }
 
-        if (progress == CalibProgress::Finished) {
-            // computing camera_to_robot_transform using chain rule (rTk=rTb*bTk with r=robot, b=board, k=camera)
+            if (progress == CalibProgress::Finished) {
+                // computing camera_to_robot_transform using chain rule (rTk=rTb*bTk with r=robot, b=board, k=camera)
 
-            auto camera_frame_to_robot_frame = r.task_frame_to_robot_frame * r.task_frame_to_cam_frame.Inverse();
-            cv::Vec3d rvec, tvec;
-            conversions::kdlFrameToRvectvec(camera_frame_to_robot_frame, rvec, tvec);
-            ROS_INFO_STREAM("  -> chain rule for camera to PSM base transformation: \n" << rvec << std::endl << tvec << std::endl);
+                auto camera_frame_to_robot_frame = r.task_frame_to_robot_frame * r.task_frame_to_cam_frame.Inverse();
+                cv::Vec3d rvec, tvec;
+                conversions::KDLFrameToRvectvec(camera_frame_to_robot_frame, rvec, tvec);
+                ROS_INFO_STREAM("  -> chain rule for camera to PSM base transformation: \n" << rvec << std::endl << tvec
+                                                                                            << std::endl);
 
-            instructions = "Calibration finished. Press 'Esc' to exit";
-        }
+                instructions = "Calibration finished. Press 'Esc' to exit";
+            }
 
-        if (progress == CalibProgress::Finished || r.task_frame_to_robot_frame_param_present) {
+            if (progress == CalibProgress::Finished || r.task_frame_to_robot_frame_param_present) {
 
-            // take the tool tip to task space
-            r.tool_pose_in_task_frame = r.task_frame_to_robot_frame.Inverse() *
-                    r.tool_pose_in_robot_frame;
+                // take the tool tip to task space
+                r.tool_pose_in_task_frame = r.task_frame_to_robot_frame.Inverse() *
+                                            r.tool_pose_in_robot_frame;
 
-            DrawingsCV::DrawCoordinateFrameInTaskSpace(back_buffer, r.camera_intrinsics,
-                                                       r.tool_pose_in_task_frame,
-                                                       r.task_frame_to_cam_rvec,
-                                                       r.task_frame_to_cam_tvec, 0.01);
-
-
-        }
+                DrawingsCV::DrawCoordinateFrameInTaskSpace(
+                    back_buffer, r.camera_intrinsics,
+                    r.tool_pose_in_task_frame,
+                    r.task_frame_to_cam_rvec,
+                    r.task_frame_to_cam_tvec, 0.01);
+            }
 
 //        drawings.showTransientNotification(back_buffer);
-        // draw the coordinate frame of the board
-        DrawingsCV::DrawCoordinateFrameInTaskSpace(back_buffer, r.camera_intrinsics,
-                                                   KDL::Frame(),
-                                                   r.task_frame_to_cam_rvec,
-                                                   r.task_frame_to_cam_tvec, 0.01);
-        cv::Point textOrigin(10, 20);
-        auto text_color = (!r.IsCalibrated()) ? Colors::Red : Colors::Green;
-        cv::putText(back_buffer, instructions, textOrigin, 1, 1, text_color);
+            // draw the coordinate frame of the board
+            DrawingsCV::DrawCoordinateFrameInTaskSpace(
+                back_buffer, r.camera_intrinsics,
+                KDL::Frame(),
+                r.task_frame_to_cam_rvec,
+                r.task_frame_to_cam_tvec, 0.01);
+            cv::Point textOrigin(10, 20);
+            auto text_color = (!r.IsCalibrated()) ? Colors::Red : Colors::Green;
+            cv::putText(back_buffer, instructions, textOrigin, 1, 1, text_color);
 
-        cv::imshow(ros::this_node::getName().c_str(), back_buffer);
+            cv::imshow(ros::this_node::getName().c_str(), back_buffer);
 
-        ros::spinOnce();
-        loop_rate.sleep();
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+
+
     }
-
     ROS_INFO("Ending Session...\n");
     ros::shutdown();
 

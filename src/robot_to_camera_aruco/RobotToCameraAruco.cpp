@@ -16,7 +16,7 @@
 #include <pwd.h>
 
 RobotToCameraAruco::RobotToCameraAruco(std::string node_name)
-        : calib_finished(true), n(node_name) {
+    : calib_finished(true), n(node_name) {
 
     //    message = "Point at point 1 and press 'space' to start calibration";
     it = new image_transport::ImageTransport(n);
@@ -53,19 +53,19 @@ void RobotToCameraAruco::SetupROS() {
 
     if (n.getParam("visual_axis_length", visual_axis_length))
         ROS_INFO_STREAM("Using parameter "
-                                << n.resolveName("visual_axis_length").c_str()
-                                << " with value " << visual_axis_length);
+                            << n.resolveName("visual_axis_length").c_str()
+                            << " with value " << visual_axis_length);
 
     if (!n.getParam("number_of_calibration_points", num_calib_points))
         ROS_INFO_STREAM("Parameter"
-                                << n.resolveName("number_of_calibration_points").c_str()
-                                << ". Default value is used: "
-                                << num_calib_points);
+                            << n.resolveName("number_of_calibration_points").c_str()
+                            << ". Default value is used: "
+                            << num_calib_points);
     else
         ROS_INFO_STREAM("Using parameter "
-                                << n.resolveName("number_of_calibration_points").c_str()
-                                << "with value " << num_calib_points
-                                << " points per axis. ");
+                            << n.resolveName("number_of_calibration_points").c_str()
+                            << "with value " << num_calib_points
+                            << " points per axis. ");
 
     // if the task_frame_to_robot_frame parameter is present from a previous calibration we can
     // show it
@@ -98,7 +98,7 @@ void RobotToCameraAruco::SetupROS() {
         ReadCameraParameters(path.str(), camera_intrinsics);
     } else
         ROS_ERROR("%s Parameter '%s' is required. Place the intrinsic calibration "
-                          "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
+                      "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
                   ros::this_node::getName().c_str(), n.resolveName("cam_name").c_str());
 
 
@@ -122,7 +122,7 @@ void RobotToCameraAruco::SetupROS() {
 
     // register image transport subscriber
     camera_image_subscriber = it->subscribe(
-            image_transport_namespace, 1, &RobotToCameraAruco::CameraImageCallback, this);
+        image_transport_namespace, 1, &RobotToCameraAruco::CameraImageCallback, this);
 
 
 
@@ -133,7 +133,7 @@ void RobotToCameraAruco::SetupROS() {
         // if the topic name is found, check if something is being published
         // on it
         if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-                cam_pose_topic_name, ros::Duration(1))) {
+            cam_pose_topic_name, ros::Duration(1))) {
             ROS_WARN("Topic '%s' is not publishing.",
                      cam_pose_topic_name.c_str());
             //                      all_required_params_found = false;
@@ -148,8 +148,8 @@ void RobotToCameraAruco::SetupROS() {
 
     // register camera pose subscriber
     camera_pose_subscriber =
-            n.subscribe(cam_pose_topic_name, 10,
-                        &RobotToCameraAruco::CameraPoseCallback, this);
+        n.subscribe(cam_pose_topic_name, 10,
+                    &RobotToCameraAruco::CameraPoseCallback, this);
 
     // a topic name is required for the robot pose
     std::string robot_pose_topic_name;
@@ -158,7 +158,7 @@ void RobotToCameraAruco::SetupROS() {
         // if the topic name is found, check if something is being published
         // on it
         if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-                robot_pose_topic_name, ros::Duration(1))) {
+            robot_pose_topic_name, ros::Duration(1))) {
             ROS_ERROR("Topic '%s' is not publishing.",
                       robot_pose_topic_name.c_str());
             //              all_required_params_found = false;
@@ -173,8 +173,8 @@ void RobotToCameraAruco::SetupROS() {
 
     // register camera pose subscriber
     robot_pose_subscriber =
-            n.subscribe(robot_pose_topic_name, 10,
-                        &RobotToCameraAruco::RobotPoseCallback, this);
+        n.subscribe(robot_pose_topic_name, 10,
+                    &RobotToCameraAruco::RobotPoseCallback, this);
 
     if (!all_required_params_found)
         throw std::runtime_error("ERROR: some required topics are not set");
@@ -189,8 +189,8 @@ void RobotToCameraAruco::Calib1DrawCalibrationAxis(cv::String &instructions,
 
     // project the points for both axes
     std::vector<cv::Point3f> axisPoints{
-            cv::Point3f(0, 0, 0), cv::Point3f(1, 0, 0) * visual_axis_length,
-            cv::Point3f(0, 1, 0) * visual_axis_length,
+        cv::Point3f(0, 0, 0), cv::Point3f(1, 0, 0) * visual_axis_length,
+        cv::Point3f(0, 1, 0) * visual_axis_length,
     };
 
     std::vector<cv::Point2f> imagePoints;
@@ -238,10 +238,10 @@ void RobotToCameraAruco::Calib1SaveCalibrationPoint() {
 
     if (n_points < num_calib_points) {
         measured_points.push_back(
-                Eigen::Vector3d(tool_pose_in_robot_frame.p[0], tool_pose_in_robot_frame.p[1]
-                        , tool_pose_in_robot_frame.p[2]));
+            Eigen::Vector3d(tool_pose_in_robot_frame.p[0], tool_pose_in_robot_frame.p[1]
+                , tool_pose_in_robot_frame.p[2]));
         std::cout << "Added point <" << n_points + 1 << "> : " << tool_pose_in_robot_frame.p[0]
-           << " " << tool_pose_in_robot_frame.p[1] << " " << tool_pose_in_robot_frame.p[2] << std::endl;
+                  << " " << tool_pose_in_robot_frame.p[1] << " " << tool_pose_in_robot_frame.p[2] << std::endl;
     }
 
     // if we got all the points find the transformation
@@ -280,7 +280,7 @@ RobotToCameraAruco::FindAxis(Eigen::MatrixXd axis_points) {
 }
 
 void RobotToCameraAruco::Calib1CalculateTransformation(
-        const std::vector<Eigen::Vector3d> axis_points, KDL::Frame & transformation) {
+    const std::vector<Eigen::Vector3d> axis_points, KDL::Frame & transformation) {
 
     auto n_points = axis_points.size();
     auto n_points_per_axis = (n_points) / 2;
@@ -315,7 +315,7 @@ void RobotToCameraAruco::Calib1CalculateTransformation(
 
     //  --------------- fit the y axis
     auto y_axis_pair =
-            FindAxis(points_projected.bottomRows(n_points_per_axis));
+        FindAxis(points_projected.bottomRows(n_points_per_axis));
     Eigen::Vector3d y_axis_point = y_axis_pair.first;
     Eigen::Vector3d y_axis = y_axis_pair.second;
 
@@ -331,13 +331,13 @@ void RobotToCameraAruco::Calib1CalculateTransformation(
     // https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
     Eigen::MatrixXd I = Eigen::MatrixXd::Identity(3, 3);
     Eigen::MatrixXd R =
-            (I - x_axis * x_axis.transpose()) + (I - y_axis * y_axis.transpose());
+        (I - x_axis * x_axis.transpose()) + (I - y_axis * y_axis.transpose());
 
     Eigen::VectorXd q = (I - x_axis * x_axis.transpose()) * x_axis_point +
                         (I - y_axis * y_axis.transpose()) * y_axis_point;
 
     Eigen::VectorXd origin =
-            R.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(q);
+        R.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(q);
 
     // convert to opencv matrix and vector
     // Todo use frameM directly
@@ -357,7 +357,7 @@ void RobotToCameraAruco::Calib2DrawTarget(cv::String &instructions, cv::Mat img)
 
     std::ostringstream oss;
     oss << "Take the tool tip to the target point then press s";
-    for (unit i=0; i<num_calib_points; i++){
+    for (uint i=0; i<num_calib_points; i++){
         cv::circle(img, calib_points_screen[i], 6, cv::Scalar(255, 255, 0),
                    1, CV_AA);
     }
@@ -373,9 +373,9 @@ void RobotToCameraAruco::Calib2SaveCalibrationPoint() {
     if (num_p < num_calib_points) {
         // save the position of the end effector
         meas_points.push_back(
-                Eigen::Vector3d(
-                        tool_pose_in_robot_frame.p[0], tool_pose_in_robot_frame.p[1],
-                        tool_pose_in_robot_frame.p[2]));
+            Eigen::Vector3d(
+                tool_pose_in_robot_frame.p[0], tool_pose_in_robot_frame.p[1],
+                tool_pose_in_robot_frame.p[2]));
     }
     if (num_p == num_calib_points) {
         Calib2CalculateTransformation();
@@ -388,7 +388,9 @@ void RobotToCameraAruco::Calib2CalculateTransformation() {
 
     for (uint i = 0; i < num_p; i++) {
         meas_points_mat.col(i) = meas_points[i];
-        target_mat.col(i) = target[i];
+        target_mat(0,i) = target[i].x;
+        target_mat(1,i) = target[i].y;
+        target_mat(2,i) = target[i].z;
     }
 
     auto temp = Eigen::umeyama(target_mat, meas_points_mat, 0);
@@ -434,7 +436,7 @@ void RobotToCameraAruco::Reset() {
 }
 
 void RobotToCameraAruco::ReadCameraParameters(const std::string file_path,
-                                           CameraIntrinsics & camera) {
+                                              CameraIntrinsics & camera) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
     ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
 
@@ -458,7 +460,7 @@ void RobotToCameraAruco::ReadCameraParameters(const std::string file_path,
 }
 
 void RobotToCameraAruco::CameraImageCallback(
-        const sensor_msgs::ImageConstPtr &msg) {
+    const sensor_msgs::ImageConstPtr &msg) {
     try {
         image_msg = cv_bridge::toCvCopy(msg, "bgr8")->image;
     } catch (cv_bridge::Exception &e) {
@@ -468,7 +470,7 @@ void RobotToCameraAruco::CameraImageCallback(
 }
 
 void RobotToCameraAruco::CameraPoseCallback(
-        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    const geometry_msgs::PoseStamped::ConstPtr &msg) {
 
     // converting to frame and rvec/tvec
     tf::poseMsgToKDL(msg->pose, task_frame_to_cam_frame);
@@ -486,8 +488,8 @@ cv::Mat &RobotToCameraAruco::Image(ros::Duration timeout) {
 
         if (ros::Time::now() > timeout_time) {
             ROS_WARN("Timeout whilst waiting for a new image from the "
-                             "image topic. "
-                             "Is the camera publishing?");
+                         "image topic. "
+                         "Is the camera publishing?");
         }
     }
 
@@ -495,7 +497,7 @@ cv::Mat &RobotToCameraAruco::Image(ros::Duration timeout) {
 }
 
 void RobotToCameraAruco::RobotPoseCallback(
-        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    const geometry_msgs::PoseStamped::ConstPtr &msg) {
     // save the pose in a kdl frame
     tf::poseMsgToKDL(msg->pose, tool_pose_in_robot_frame);
 }

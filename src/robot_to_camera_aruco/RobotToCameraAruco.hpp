@@ -73,7 +73,7 @@ public:
     //std::vector< Eigen::Vector3d> points_on_camera;
     Eigen::Matrix<double, 3, 6> target_mat;
     Eigen::Matrix<double, 3, 6> meas_points_mat;
-    //Eigen::Matrix4d camera_to_robot;
+    Eigen::Matrix4d camera_to_robot;
     //
     //
     //
