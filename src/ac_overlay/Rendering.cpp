@@ -55,20 +55,17 @@ Rendering::Rendering()
     renderWindow->AddRenderer(backgroundRenderer);
     renderWindow->AddRenderer(sceneRenderer);
 
+    windowToImageFilter = vtkSmartPointer<vtkWindowToImageFilter>::New();
+    windowToImageFilter->SetInput(renderWindow);
+    windowToImageFilter->SetInputBufferTypeToRGB(); //record the alpha (transparency) channel for future use
+    windowToImageFilter->ReadFrontBufferOff(); // read from the back buffer
 }
 
 //-----------------------------------------------------------------------------
 Rendering::~Rendering()
 {
-//  if (m_Timer != NULL)
-//  {
-//    m_Timer->stop();
-//    delete m_Timer;
-//  }
-//  this->GetRenderWindow()->RemoveRenderer(m_BackgroundRenderer);
-//  this->GetRenderWindow()->RemoveRenderer(m_ImageRenderer);
-//  this->GetRenderWindow()->RemoveRenderer(m_VTKRenderer);
-//  this->GetRenderWindow()->RemoveRenderer(m_TrackingRenderer);
+    renderWindow->RemoveRenderer(backgroundRenderer);
+    renderWindow->RemoveRenderer(sceneRenderer);
 }
 
 void Rendering::SetWorldToCameraTransform(const cv::Vec3d &cam_rvec, const cv::Vec3d &cam_tvec) {
@@ -101,7 +98,6 @@ void Rendering::SetEnableImage(bool isEnabled)
     {
         if (backgroundRenderer->GetActors()->GetNumberOfItems() == 0)
         {
-            std::cout << "added image actor" << std::endl;
             backgroundRenderer->AddActor(ImageActor);
         }
     }
@@ -263,7 +259,6 @@ void Rendering::SetupBackgroundImage(cv::Mat &img) {
     ImageImporter->SetNumberOfScalarComponents( img.channels() );
     ImageImporter->SetImportVoidPointer( img.data );
     ImageImporter->Update();
-    renderWindow->Render();
 
     ImageActor->SetInputData(camera_image);
 
@@ -281,4 +276,25 @@ void Rendering::Render() {
 
     renderWindow->Render();
 
+}
+
+void Rendering::GetRenderedImage(cv::Mat &img) {
+
+    windowToImageFilter->Modified();
+    vtkImageData* image = windowToImageFilter->GetOutput();
+    windowToImageFilter->Update();
+
+    // copy to cv Mat
+    int dims[3];
+    image->GetDimensions(dims);
+
+    if(dims[0]>0) {
+        cv::Mat openCVImage(dims[1], dims[0], CV_8UC3,
+                            image->GetScalarPointer()); // Unsigned int, 4 channels
+        // convert to bgr
+        cv::cvtColor(openCVImage, img, cv::COLOR_RGB2BGR);
+
+        // Flip because of different origins between vtk and OpenCV
+        cv::flip(img, img, 0);
+    }
 }

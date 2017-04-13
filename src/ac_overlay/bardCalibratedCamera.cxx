@@ -67,8 +67,7 @@ void CalibratedCamera::SetActualWindowSize(const int& width, const int& height)
 
 //----------------------------------------------------------------------------
 void CalibratedCamera::SetIntrinsicParameters(const double& fx, const double& fy,
-                                              const double& cx, const double& cy
-                                             )
+                                              const double& cx, const double& cy)
 {
   m_Fx = fx;
   m_Fy = fy;

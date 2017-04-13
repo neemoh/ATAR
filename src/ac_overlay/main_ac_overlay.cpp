@@ -375,12 +375,6 @@ int main(int argc, char **argv)
                             cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
 
 
-            for (int j = 0; j <2 ; ++j) {
-                cv::imshow(window_name[j], cam_images[j]);
-                ao.publisher_overlayed[j].publish(
-                        cv_bridge::CvImage(std_msgs::Header(), "bgr8", cam_images[j]).toImageMsg());
-
-            }
 
             // publishing the ac path not needed anymore
             //            if (selected_task == Tasks::CricleAC || task_state == MultiplePathsTask::Status::ACSelected) {
@@ -400,6 +394,15 @@ int main(int argc, char **argv)
             rend->UpdateWindowSizeRelatedViews();
 
             rend->Render();
+
+            rend->GetRenderedImage(cam_images[0]);
+
+            for (int j = 0; j <2 ; ++j) {
+                cv::imshow(window_name[j], cam_images[j]);
+                ao.publisher_overlayed[j].publish(
+                        cv_bridge::CvImage(std_msgs::Header(), "bgr8", cam_images[j]).toImageMsg());
+
+            }
 
 
         } // if new image

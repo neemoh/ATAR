@@ -11,6 +11,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkImageActor.h>
 #include <vtkRenderWindow.h>
+#include <vtkWindowToImageFilter.h>
 
 
 class Rendering {
@@ -21,6 +22,7 @@ public:
 
     Rendering();
     ~Rendering();
+
     void SetWorldToCameraTransform(const cv::Vec3d &cam_rvec, const cv::Vec3d &cam_tvec);
 
     void SetEnableImage(bool isEnabled);
@@ -33,10 +35,11 @@ public:
 
     void SetCameraIntrinsics(const cv::Matx33d& intrinsics);
 
-    void AddActorToScene(vtkSmartPointer<vtkProp>);
+    void AddActorToScene(vtkSmartPointer<vtkProp> actor);
 
     void Render();
 
+    void GetRenderedImage(cv::Mat & img);
 
 
 private:
@@ -56,7 +59,7 @@ private:
     vtkSmartPointer<vtkMatrix4x4>        CameraToWorldTransform;
     vtkSmartPointer<vtkImageData>        camera_image;
     vtkSmartPointer<vtkRenderWindow>     renderWindow;
-
+    vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter ;
 };
 
 
