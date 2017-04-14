@@ -12,25 +12,15 @@
 
 
 #include <vtkPolyDataMapper.h>
-#include <vtkActor.h>
-#include <vtkSmartPointer.h>
 #include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindowInteractor.h>
 #include <vtkPolyData.h>
 #include <vtkSphereSource.h>
-#include <vtkWindowToImageFilter.h>
-#include <vtkPNGWriter.h>
 #include <vtkImageActor.h>
-#include <vtkImageImport.h>
 #include <vtkOrientationMarkerWidget.h>
 #include <vtkAxesActor.h>
 #include <vtkTransform.h>
 #include "Rendering.h"
-//#include "Drawings.h"
-//#include <iostream>
-//#include <GLFW/glfw3.h>
-//#include <GL/glu.h>
+
 
 
 enum class Tasks {None, CricleAC, MultiplePaths};
@@ -56,6 +46,7 @@ int main(int argc, char **argv)
 
     //cv::Mat left_image, right_image;
     cv::Mat cam_images[2];
+    cv::Mat augmented_images[2];
 
     cv::Scalar color_ac_path_selected(200, 100, 10);
     cv::Scalar color_ac_path(100, 100, 200);
@@ -89,15 +80,19 @@ int main(int argc, char **argv)
     // ----------------------------------------------------------------------------------------------
 
     ao.ImageLeft(ros::Duration(1)).copyTo(cam_images[0]);
+    ao.ImageRight(ros::Duration(1)).copyTo(cam_images[1]);
 
-    Rendering *rend= new Rendering;
+    Rendering graphics[2];
 
-    rend->SetWorldToCameraTransform(ao.cam_rvec[0], ao.cam_tvec[0]);
-    rend->SetCameraIntrinsics(ao.cam_intrinsics->camMatrix);
-    rend->SetupBackgroundImage(cam_images[0]);
-    rend->SetEnableImage(true);
+    for (int i = 0; i < 2; ++i) {
+        graphics[i].SetWorldToCameraTransform(ao.cam_rvec[i], ao.cam_tvec[i]);
+        graphics[i].SetCameraIntrinsics(ao.cam_intrinsics[i].camMatrix);
+        graphics[i].SetupBackgroundImage(cam_images[i]);
+        graphics[i].SetEnableImage(true);
 
-    rend->Render();
+        graphics[i].Render();
+    }
+
 
     // Create a superquadric
     vtkSmartPointer<vtkSphereSource> sphereSource=
@@ -111,13 +106,10 @@ int main(int argc, char **argv)
     sphereMapper->SetInputConnection(sphereSource->GetOutputPort());
 
     vtkSmartPointer<vtkActor> sphereActor = vtkSmartPointer<vtkActor>::New();
-    double counter = 0.0;
+    int counter = 0;
     sphereActor->SetPosition(0.012, 0.00, 0.0);
     sphereActor->SetMapper(sphereMapper);
 //        sphereActor->GetProperty()->SetColor(1.0, 0.0, 0.0); //(R,G,B)
-
-    // Add actors to the renderers
-    rend->AddActorToScene(sphereActor);
 
     vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
     transform->Translate(0.0, 0, 0.0);
@@ -131,10 +123,11 @@ int main(int argc, char **argv)
     axes->SetZAxisLabelText("");
     axes->SetTotalLength(0.01, 0.01, 0.01);
 
-//    sceneRenderer->AddActor(axes);
-    rend->AddActorToScene(axes);
-
-
+//    scenegraphics[i]erer->AddActor(axes);
+    for (int i = 0; i < 2; ++i) {
+        graphics[i].AddActorToScene(axes);
+        graphics[i].AddActorToScene(sphereActor);
+    }
 
     while (ros::ok())
     {
@@ -350,22 +343,24 @@ int main(int argc, char **argv)
             // ----------------------------------------------------------------------------------------------
             //                              VTK test
             // ----------------------------------------------------------------------------------------------
-
-
-            rend->UpdateBackgroundImage(cam_images[0]);
-            rend->UpdateViewAngleForActualWindowSize();
             counter++;
-            sphereActor->SetPosition(0.012 + 0.05 * sin(counter*M_PI), 0.00, 0.0);
+            sphereActor->SetPosition(0.012 + 0.05 * sin(double(counter)/100*M_PI), 0.00, 0.0);
             sphereActor->Modified();
 
-            rend->Render();
+            for (int i = 0; i < 2; ++i) {
 
-            rend->GetRenderedImage(cam_images[0]);
+                graphics[i].UpdateBackgroundImage(cam_images[i]);
+                graphics[i].UpdateViewAngleForActualWindowSize();
 
-            for (int j = 0; j <2 ; ++j) {
-                cv::imshow(window_name[j], cam_images[j]);
-                ao.publisher_overlayed[j].publish(
-                        cv_bridge::CvImage(std_msgs::Header(), "bgr8", cam_images[j]).toImageMsg());
+                graphics[i].Render();
+
+
+                graphics[i].GetRenderedImage(augmented_images[i]);
+
+//                cv::imshow(window_name[i], cam_images[i]);
+                ao.publisher_overlayed[i].publish(
+                        cv_bridge::CvImage(std_msgs::Header(),
+                                           "bgr8", cam_images[i]).toImageMsg());
 
             }
 
@@ -398,9 +393,6 @@ int main(int argc, char **argv)
         loop_rate.sleep();
     }
 
-    delete(rend);
-//	glfwDestroyWindow(window);
-//	glfwTerminate();
     return 0;
 }
 

@@ -95,7 +95,7 @@ void CalibratedCamera::UpdateViewAngle(const int& window_width, const int& windo
 
     double view_angle = 2 * atan( ( window_height / 2 ) / focalLengthY ) * 180 / M_PI;
     this->SetViewAngle(view_angle);
-
+    this->Modified();
     //Todo take into account window width
 
 }

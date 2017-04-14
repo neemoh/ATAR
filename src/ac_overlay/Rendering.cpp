@@ -252,7 +252,9 @@ void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 
 //----------------------------------------------------------------------------
 void Rendering::Render() {
-
+    sceneRenderer->Modified();
+    backgroundRenderer->Modified();
+    renderWindow->Modified();
     renderWindow->Render();
 
 }
