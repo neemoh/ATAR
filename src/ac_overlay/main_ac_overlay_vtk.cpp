@@ -360,7 +360,7 @@ int main(int argc, char **argv)
 //                cv::imshow(window_name[i], cam_images[i]);
                 ao.publisher_overlayed[i].publish(
                         cv_bridge::CvImage(std_msgs::Header(),
-                                           "bgr8", cam_images[i]).toImageMsg());
+                                           "bgr8", augmented_images[i]).toImageMsg());
 
             }
 
