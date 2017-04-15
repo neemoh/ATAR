@@ -13,6 +13,7 @@
 #include <vtkRenderWindow.h>
 #include <vtkWindowToImageFilter.h>
 #include <vtkRenderWindowInteractor.h>
+#include <kdl/frames.hpp>
 
 /**
  * \class Rendering
@@ -30,9 +31,9 @@ public:
 
     void SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::Vec3d cam_tvec[]);
 
-    void SetEnableImage(bool isEnabled);
+    void SetEnableBackgroundImage(bool isEnabled);
 
-    void SetupBackgroundImage(cv::Mat []);
+    void ConfigureBackgroundImage(cv::Mat *);
 
     void UpdateBackgroundImage(cv::Mat []);
 
@@ -73,5 +74,14 @@ private:
 
 };
 
+namespace VTKConversions{
 
+
+    void AxisAngleToVTKMatrix (const cv::Vec3d cam_rvec, const cv::Vec3d cam_tvec,
+                               vtkSmartPointer<vtkMatrix4x4> out);
+
+    void KDLFrameToVTKMatrix (const KDL::Frame in,
+                               vtkSmartPointer<vtkMatrix4x4> out);
+
+}
 #endif //TELEOP_VISION_RENDERING_H

@@ -58,11 +58,9 @@ Rendering::Rendering()
         render_window_->AddRenderer(scene_renderer_[i]);
 
     }
-    // important for getting high update rate
-//    render_window_->SetOffScreenRendering(1);
+    // important for getting high update rate (If needed, images can be shown with opencv)
+    render_window_->SetOffScreenRendering(1);
 
-//    renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-//    renderWindowInteractor->SetRenderWindow(render_window_);
 
     window_to_image_filter_ = vtkSmartPointer<vtkWindowToImageFilter>::New();
     window_to_image_filter_->SetInput(render_window_);
@@ -114,7 +112,7 @@ void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::
 
 
 //-----------------------------------------------------------------------------
-void Rendering::SetEnableImage(bool isEnabled)
+void Rendering::SetEnableBackgroundImage(bool isEnabled)
 {
     for (int i = 0; i < 2; ++i) {
         if (isEnabled)
@@ -245,7 +243,7 @@ void Rendering::UpdateViewAngleForActualWindowSize() {
 }
 
 //----------------------------------------------------------------------------
-void Rendering::SetupBackgroundImage(cv::Mat img[]) {
+void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
     int image_width = img[0].size().width;
     int image_height = img[0].size().height;
@@ -316,4 +314,37 @@ void Rendering::GetRenderedImage(cv::Mat &img) {
         // Flip because of different origins between vtk and OpenCV
         cv::flip(img, img, 0);
     }
+}
+
+void VTKConversions::AxisAngleToVTKMatrix(const cv::Vec3d cam_rvec,
+                                     const cv::Vec3d cam_tvec,
+                                     vtkSmartPointer<vtkMatrix4x4>  out) {
+
+
+    cv::Mat rotationMatrix(3, 3, cv::DataType<double>::type);
+    cv::Rodrigues(cam_rvec, rotationMatrix);
+
+    out->Identity();
+
+    // Convert to VTK matrix.
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            out->SetElement(i, j, rotationMatrix.at<double>(i, j));
+        }
+        out->SetElement(i, 3, cam_tvec[i]);
+    }
+
+
+}
+
+void ::VTKConversions::KDLFrameToVTKMatrix(const KDL::Frame in,
+                                           vtkSmartPointer<vtkMatrix4x4> out) {
+    // Convert to VTK matrix.
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            out->SetElement(i, j, in.M(i,j));
+        }
+        out->SetElement(i, 3, in.p[i]);
+    }
+
 }

@@ -36,18 +36,13 @@ int main(int argc, char **argv)
     // and evaluating and publishing the desired pose according to the active
     // constraint
     ros::Rate loop_rate(ao.desired_pose_update_freq);
-    std::string window_name[2];
 
-    window_name[0] = "Overlay Left";
-    window_name[1] = "Overlay Right";
+    // Create the window for the video feed
+    std::string cv_window_name = "Augmented Stereo images";
+    cvNamedWindow(cv_window_name.c_str() ,CV_WINDOW_NORMAL);
 
-    // Create the window in which to render the video feed
-    cvNamedWindow(window_name[0].c_str(),CV_WINDOW_NORMAL);
-//    cvNamedWindow(window_name[1].c_str(),CV_WINDOW_NORMAL);
-
-    //cv::Mat left_image, right_image;
     cv::Mat cam_images[2];
-    cv::Mat augmented_images[2];
+    cv::Mat augmented_stereo_image;
 
     cv::Scalar color_ac_path_selected(200, 100, 10);
     cv::Scalar color_ac_path(100, 100, 200);
@@ -90,14 +85,13 @@ int main(int argc, char **argv)
     cam_matrices[0]= ao.cam_intrinsics[0].camMatrix;
     cam_matrices[1]= ao.cam_intrinsics[1].camMatrix;
     graphics.SetCameraIntrinsics(cam_matrices);
-    graphics.SetupBackgroundImage(cam_images);
-    graphics.SetEnableImage(true);
+    graphics.ConfigureBackgroundImage(cam_images);
+    graphics.SetEnableBackgroundImage(true);
 
     graphics.Render();
 
 
-
-    // Create a superquadric
+    // Create a sphere
     vtkSmartPointer<vtkSphereSource> sphereSource=
             vtkSmartPointer<vtkSphereSource>::New();
     sphereSource->SetRadius(0.003);
@@ -117,14 +111,22 @@ int main(int argc, char **argv)
     vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
     transform->Translate(0.0, 0, 0.0);
     transform->RotateX(0);
-    vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
+    vtkSmartPointer<vtkAxesActor> task_coordinate_axes = vtkSmartPointer<vtkAxesActor>::New();
+    vtkSmartPointer<vtkAxesActor> tool_frame_axes = vtkSmartPointer<vtkAxesActor>::New();
 
-    // The axes are positioned with a user transform
-    axes->SetUserTransform(transform);
-    axes->SetXAxisLabelText("");
-    axes->SetYAxisLabelText("");
-    axes->SetZAxisLabelText("");
-    axes->SetTotalLength(0.01, 0.01, 0.01);
+    // The task_coordinate_axes are positioned with a user transform
+    task_coordinate_axes->SetUserTransform(transform);
+    task_coordinate_axes->SetXAxisLabelText("");
+    task_coordinate_axes->SetYAxisLabelText("");
+    task_coordinate_axes->SetZAxisLabelText("");
+    task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
+    tool_frame_axes = task_coordinate_axes;
+    tool_frame_axes->SetUserTransform(transform);
+    tool_frame_axes->SetXAxisLabelText("");
+    tool_frame_axes->SetYAxisLabelText("");
+    tool_frame_axes->SetZAxisLabelText("");
+    tool_frame_axes->SetTotalLength(0.01, 0.01, 0.01);
+
 
     std::string inputFilename = "/home/charm/Desktop/cads/task1_first_mq.STL";
 
@@ -143,9 +145,8 @@ int main(int argc, char **argv)
     mesh_actor->SetMapper(mesh_mapper);
     mesh_actor->SetPosition(0.0, 0.0, 0.0);
 
-    //    scenegraphics[i]erer->AddActor(axes);
-
-    graphics.AddActorToScene(axes);
+    graphics.AddActorToScene(task_coordinate_axes);
+    graphics.AddActorToScene(tool_frame_axes);
     graphics.AddActorToScene(sphereActor);
     graphics.AddActorToScene(mesh_actor);
 
@@ -160,7 +161,7 @@ int main(int argc, char **argv)
         if (key == 27) // Esc
             ros::shutdown();
         else if (key == 'f')  //full screen
-            VisualUtils::SwitchFullScreen(window_name[0]);
+            VisualUtils::SwitchFullScreen(cv_window_name);
         else if(key == 't'){
             if (ao.stereo_tr_calc_client.call(ao.stereo_tr_srv)) {
                 //
@@ -323,15 +324,15 @@ int main(int argc, char **argv)
 
 
             for (int j = 0; j <2 ; ++j) {
-                // draw the coordinate frame of the board
-                DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
-                                                           KDL::Frame(),
-                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
-                // draw the end-effector ref frame
-                DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
-                                                           ao.pose_current_tool[0],
-                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
-                //draw the desired pose frame
+//                // draw the coordinate frame of the board
+//                DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
+//                                                           KDL::Frame(),
+//                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
+//                // draw the end-effector ref frame
+//                DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
+//                                                           ao.pose_current_tool[0],
+//                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);
+//                //draw the desired pose frame
                 DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
                                                            ao.pose_desired_tool[0],
                                                            ao.cam_rvec[j], ao.cam_tvec[j], 0.01);;
@@ -368,7 +369,12 @@ int main(int argc, char **argv)
             counter++;
             sphereActor->SetPosition(0.012 + 0.05 * sin(double(counter)/100*M_PI), 0.00, 0.0);
             sphereActor->Modified();
+            tool_frame_axes->SetPosition(ao.pose_current_tool[0].p[0], ao.pose_current_tool[0].p[1],
+                                         ao.pose_current_tool[0].p[2]);
 
+            vtkSmartPointer<vtkMatrix4x4> vtk_matrix =vtkSmartPointer<vtkMatrix4x4>::New();
+            VTKConversions::KDLFrameToVTKMatrix(ao.pose_current_tool[0], vtk_matrix);
+            tool_frame_axes->SetUserMatrix(vtk_matrix);
 
 
             graphics.UpdateBackgroundImage(cam_images);
@@ -376,15 +382,11 @@ int main(int argc, char **argv)
 
             graphics.Render();
 
-            graphics.GetRenderedImage(augmented_images[0]);
-            cv::imshow(window_name[0], augmented_images[0]);
+            graphics.GetRenderedImage(augmented_stereo_image);
+            cv::imshow(cv_window_name, augmented_stereo_image);
 
-            for (int i = 0; i < 2; ++i) {
-                ao.publisher_overlayed[i].publish(
-                        cv_bridge::CvImage(std_msgs::Header(),
-                                           "bgr8", augmented_images[i]).toImageMsg());
-
-            }
+            ao.publisher_stereo_overlayed.publish(cv_bridge::CvImage(std_msgs::Header(),
+                                       "bgr8", augmented_stereo_image).toImageMsg());
 
 
         } // if new image
@@ -404,11 +406,6 @@ int main(int argc, char **argv)
 
             ao.PublishDesiredPose();
         }
-
-
-
-
-
 
 
         ros::spinOnce();
