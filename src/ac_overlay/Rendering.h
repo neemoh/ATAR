@@ -28,17 +28,17 @@ public:
     Rendering();
     ~Rendering();
 
-    void SetWorldToCameraTransform(const cv::Vec3d &cam_rvec, const cv::Vec3d &cam_tvec);
+    void SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::Vec3d cam_tvec[]);
 
     void SetEnableImage(bool isEnabled);
 
-    void SetupBackgroundImage(cv::Mat &);
+    void SetupBackgroundImage(cv::Mat []);
 
-    void UpdateBackgroundImage(cv::Mat &);
+    void UpdateBackgroundImage(cv::Mat []);
 
     void UpdateViewAngleForActualWindowSize();
 
-    void SetCameraIntrinsics(const cv::Matx33d& intrinsics);
+    void SetCameraIntrinsics(const cv::Matx33d intrinsics[]);
 
     void AddActorToScene(vtkSmartPointer<vtkProp> actor);
 
@@ -51,20 +51,20 @@ private:
 
 
     // Set up the background scene_camera to fill the renderer with the image
-    void SetImageCameraToFaceImage();
+    void SetImageCameraToFaceImage(const int id);
 
     //cameras
-    vtkSmartPointer<CalibratedCamera>    background_camera_;
-    vtkSmartPointer<CalibratedCamera>    scene_camera_;
+    vtkSmartPointer<CalibratedCamera>    background_camera_[2];
+    vtkSmartPointer<CalibratedCamera>    scene_camera_[2];
     // renderer
-    vtkSmartPointer<vtkRenderer>         background_renderer_;
-    vtkSmartPointer<vtkRenderer>         scene_renderer;
+    vtkSmartPointer<vtkRenderer>         background_renderer_[2];
+    vtkSmartPointer<vtkRenderer>         scene_renderer[2];
     // image importing
-    vtkSmartPointer<vtkImageImport>      image_importer_;
-    vtkSmartPointer<vtkImageActor>       image_actor_;
-    vtkSmartPointer<vtkImageData>        camera_image;
+    vtkSmartPointer<vtkImageImport>      image_importer_[2];
+    vtkSmartPointer<vtkImageActor>       image_actor_[2];
+    vtkSmartPointer<vtkImageData>        camera_image[2];
     // transforms
-    vtkSmartPointer<vtkMatrix4x4>        camera_to_world_transform;
+    vtkSmartPointer<vtkMatrix4x4>        camera_to_world_transform_[2];
     // windows
     vtkSmartPointer<vtkRenderWindow>     render_window;
     //    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;

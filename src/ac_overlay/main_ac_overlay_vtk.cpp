@@ -19,6 +19,7 @@
 #include <vtkOrientationMarkerWidget.h>
 #include <vtkAxesActor.h>
 #include <vtkTransform.h>
+#include <vtkSTLReader.h>
 #include "Rendering.h"
 
 
@@ -42,7 +43,7 @@ int main(int argc, char **argv)
 
     // Create the window in which to render the video feed
     cvNamedWindow(window_name[0].c_str(),CV_WINDOW_NORMAL);
-    cvNamedWindow(window_name[1].c_str(),CV_WINDOW_NORMAL);
+//    cvNamedWindow(window_name[1].c_str(),CV_WINDOW_NORMAL);
 
     //cv::Mat left_image, right_image;
     cv::Mat cam_images[2];
@@ -82,16 +83,19 @@ int main(int argc, char **argv)
     ao.ImageLeft(ros::Duration(1)).copyTo(cam_images[0]);
     ao.ImageRight(ros::Duration(1)).copyTo(cam_images[1]);
 
-    Rendering graphics[2];
+    Rendering graphics;
 
-    for (int i = 0; i < 2; ++i) {
-        graphics[i].SetWorldToCameraTransform(ao.cam_rvec[i], ao.cam_tvec[i]);
-        graphics[i].SetCameraIntrinsics(ao.cam_intrinsics[i].camMatrix);
-        graphics[i].SetupBackgroundImage(cam_images[i]);
-        graphics[i].SetEnableImage(true);
 
-        graphics[i].Render();
-    }
+    graphics.SetWorldToCameraTransform(ao.cam_rvec, ao.cam_tvec);
+    cv::Matx33d cam_matrices[2];
+    cam_matrices[0]= ao.cam_intrinsics[0].camMatrix;
+    cam_matrices[1]= ao.cam_intrinsics[1].camMatrix;
+    graphics.SetCameraIntrinsics(cam_matrices);
+    graphics.SetupBackgroundImage(cam_images);
+    graphics.SetEnableImage(true);
+
+    graphics.Render();
+
 
 
     // Create a superquadric
@@ -100,7 +104,7 @@ int main(int argc, char **argv)
     sphereSource->SetRadius(0.003);
     sphereSource->SetThetaResolution(20);
     sphereSource->SetPhiResolution(20);
-    // Create a mapper and actor
+    // Create a mesh_mapper and actor
     vtkSmartPointer<vtkPolyDataMapper> sphereMapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
     sphereMapper->SetInputConnection(sphereSource->GetOutputPort());
@@ -109,7 +113,7 @@ int main(int argc, char **argv)
     int counter = 0;
     sphereActor->SetPosition(0.012, 0.00, 0.0);
     sphereActor->SetMapper(sphereMapper);
-//        sphereActor->GetProperty()->SetColor(1.0, 0.0, 0.0); //(R,G,B)
+    //        sphereActor->GetProperty()->SetColor(1.0, 0.0, 0.0); //(R,G,B)
 
     vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
     transform->Translate(0.0, 0, 0.0);
@@ -123,11 +127,29 @@ int main(int argc, char **argv)
     axes->SetZAxisLabelText("");
     axes->SetTotalLength(0.01, 0.01, 0.01);
 
-//    scenegraphics[i]erer->AddActor(axes);
-    for (int i = 0; i < 2; ++i) {
-        graphics[i].AddActorToScene(axes);
-        graphics[i].AddActorToScene(sphereActor);
-    }
+    std::string inputFilename = "/home/charm/Desktop/cads/task1_first_mq.STL";
+
+    vtkSmartPointer<vtkSTLReader> reader =
+            vtkSmartPointer<vtkSTLReader>::New();
+    reader->SetFileName(inputFilename.c_str());
+    reader->Update();
+
+    // Visualize
+    vtkSmartPointer<vtkPolyDataMapper> mesh_mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    mesh_mapper->SetInputConnection(reader->GetOutputPort());
+
+    vtkSmartPointer<vtkActor> mesh_actor =
+            vtkSmartPointer<vtkActor>::New();
+    mesh_actor->SetMapper(mesh_mapper);
+    mesh_actor->SetPosition(0.0, 0.0, 0.0);
+
+    //    scenegraphics[i]erer->AddActor(axes);
+
+    graphics.AddActorToScene(axes);
+    graphics.AddActorToScene(sphereActor);
+    graphics.AddActorToScene(mesh_actor);
+
 
     while (ros::ok())
     {
@@ -347,16 +369,16 @@ int main(int argc, char **argv)
             sphereActor->SetPosition(0.012 + 0.05 * sin(double(counter)/100*M_PI), 0.00, 0.0);
             sphereActor->Modified();
 
+
+
+            graphics.UpdateBackgroundImage(cam_images);
+            graphics.UpdateViewAngleForActualWindowSize();
+
+            graphics.Render();
+
+            graphics.GetRenderedImage(augmented_images[0]);
+
             for (int i = 0; i < 2; ++i) {
-
-                graphics[i].UpdateBackgroundImage(cam_images[i]);
-                graphics[i].UpdateViewAngleForActualWindowSize();
-
-                graphics[i].Render();
-
-
-                graphics[i].GetRenderedImage(augmented_images[i]);
-
 //                cv::imshow(window_name[i], cam_images[i]);
                 ao.publisher_overlayed[i].publish(
                         cv_bridge::CvImage(std_msgs::Header(),
