@@ -230,6 +230,7 @@ vtk_module_config(VTK
         vtkRendering${VTK_RENDERING_BACKEND}
         vtkImagingGeneral
         vtkInteractionWidgets
+        vtkIOGeometry
         )
 
 include(${VTK_USE_FILE})
