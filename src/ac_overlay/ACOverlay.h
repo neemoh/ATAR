@@ -74,6 +74,7 @@ public:
 
     //overlay image publishers
     image_transport::Publisher publisher_overlayed[2];
+    image_transport::Publisher publisher_stereo_overlayed;
 
     // converts the desired poses to geometry pose messages and published them
     void PublishDesiredPose();

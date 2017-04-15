@@ -121,10 +121,12 @@ void ACOverlay::SetupROS() {
             right_image_topic_name, 1, &ACOverlay::ImageRightCallback,
             this);
 
-    //--------
+    //-------- KEPT FOR THE OLD OVERLAY NODE TO WORK THE NEW NODE HAS JUST ONE PUBLISHER
     // publishers for the overlayed images
     publisher_overlayed[0] = it->advertise("left/image_color", 1);
     publisher_overlayed[1] = it->advertise("right/image_color", 1);
+
+    publisher_stereo_overlayed = it->advertise("stereo/image_color", 1);
 
     // ------------------------------------- CAM POSES -----------------------------------------
 
