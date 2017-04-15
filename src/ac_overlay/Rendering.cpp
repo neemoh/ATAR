@@ -9,20 +9,20 @@
 #include <vtkImageActor.h>
 #include <vtkObjectFactory.h>
 #include <opencv-3.2.0-dev/opencv2/imgproc.hpp>
-
+#include <opencv-3.2.0-dev/opencv2/highgui.hpp>
 
 
 //----------------------------------------------------------------------------
 Rendering::Rendering()
 //        : background_renderer_(NULL)
-//        , scene_renderer(NULL)
+//        , scene_renderer_(NULL)
 //        , background_renderer_(NULL)
-//        , scene_renderer(NULL)
+//        , scene_renderer_(NULL)
 //        , camera_to_world_transform_(NULL)
 {
 
-    render_window = vtkSmartPointer<vtkRenderWindow>::New();
-    render_window->SetNumberOfLayers(2);
+    render_window_ = vtkSmartPointer<vtkRenderWindow>::New();
+    render_window_->SetNumberOfLayers(2);
 
     double view_port[2][4] = {{0.0, 0.0, 0.5, 1.0}, {0.5, 0.0, 1.0, 1.0}};
 
@@ -31,20 +31,20 @@ Rendering::Rendering()
 
         image_importer_[i] = vtkSmartPointer<vtkImageImport>::New();
         image_actor_[i] = vtkSmartPointer<vtkImageActor>::New();
-        camera_image[i]   = vtkSmartPointer<vtkImageData>::New();
+        camera_image_[i]   = vtkSmartPointer<vtkImageData>::New();
 
         background_renderer_[i] = vtkSmartPointer<vtkRenderer>::New();
         background_renderer_[i]->InteractiveOff();
         background_renderer_[i]->SetBackground(0, 0, 0);
         background_renderer_[i]->SetLayer(0);
 
-        scene_renderer[i] = vtkSmartPointer<vtkRenderer>::New();
-        scene_renderer[i]->InteractiveOff();
-        scene_renderer[i]->SetLayer(1);
-        scene_renderer[i]->SetViewport(view_port[i]);
+        scene_renderer_[i] = vtkSmartPointer<vtkRenderer>::New();
+        scene_renderer_[i]->InteractiveOff();
+        scene_renderer_[i]->SetLayer(1);
+        scene_renderer_[i]->SetViewport(view_port[i]);
 
         scene_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
-        scene_renderer[i]->SetActiveCamera(scene_camera_[i]);
+        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
 
         background_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
         background_renderer_[i]->SetActiveCamera(background_camera_[i]);
@@ -54,19 +54,20 @@ Rendering::Rendering()
         camera_to_world_transform_[i]->Identity();
 
 
-        render_window->AddRenderer(background_renderer_[i]);
-        render_window->AddRenderer(scene_renderer[i]);
+        render_window_->AddRenderer(background_renderer_[i]);
+        render_window_->AddRenderer(scene_renderer_[i]);
 
     }
-    render_window->SetOffScreenRendering(1);
+    // important for getting high update rate
+//    render_window_->SetOffScreenRendering(1);
 
 //    renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-//    renderWindowInteractor->SetRenderWindow(render_window);
+//    renderWindowInteractor->SetRenderWindow(render_window_);
 
-    window_to_image_filter = vtkSmartPointer<vtkWindowToImageFilter>::New();
-    window_to_image_filter->SetInput(render_window);
-    window_to_image_filter->SetInputBufferTypeToRGB(); //record the alpha (transparency) channel for future use
-    window_to_image_filter->ReadFrontBufferOff(); // read from the back buffer
+    window_to_image_filter_ = vtkSmartPointer<vtkWindowToImageFilter>::New();
+    window_to_image_filter_->SetInput(render_window_);
+    window_to_image_filter_->SetInputBufferTypeToRGB(); //record the alpha (transparency) channel for future use
+    window_to_image_filter_->ReadFrontBufferOff(); // read from the back buffer
 
 
 }
@@ -76,8 +77,8 @@ Rendering::~Rendering()
 {
 
         for (int j = 0; j < 2; ++j) {
-            render_window->RemoveRenderer(background_renderer_[j]);
-            render_window->RemoveRenderer(scene_renderer[j]);
+            render_window_->RemoveRenderer(background_renderer_[j]);
+            render_window_->RemoveRenderer(scene_renderer_[j]);
         }
 
 
@@ -152,7 +153,7 @@ void Rendering::SetCameraIntrinsics(const cv::Matx33d intrinsics[])
 //----------------------------------------------------------------------------------
 void Rendering::SetImageCameraToFaceImage(const int id) {
 
-        int *windowSize = render_window->GetSize();
+        int *windowSize = render_window_->GetSize();
 
         int imageSize[3];
         image_importer_[id]->GetOutput()->GetDimensions(imageSize);
@@ -225,11 +226,10 @@ void Rendering::SetImageCameraToFaceImage(const int id) {
 //----------------------------------------------------------------------------
 void Rendering::UpdateBackgroundImage(cv::Mat  img[]) {
 
-    cv::Mat _src;
     for (int i = 0; i < 2; ++i) {
 //    cv::flip(src, _src, 0);
-        cv::cvtColor(img[i], _src, cv::COLOR_BGR2RGB);
-        image_importer_[i]->SetImportVoidPointer( _src.data );
+        cv::cvtColor(img[i], img[i], cv::COLOR_BGR2RGB);
+        image_importer_[i]->SetImportVoidPointer( img[i].data );
         image_importer_[i]->Modified();
         image_importer_[i]->Update();
     }
@@ -239,7 +239,7 @@ void Rendering::UpdateBackgroundImage(cv::Mat  img[]) {
 void Rendering::UpdateViewAngleForActualWindowSize() {
     for (int i = 0; i < 2; ++i) {
         SetImageCameraToFaceImage(i);
-        int *window_size = render_window->GetActualSize();
+        int *window_size = render_window_->GetActualSize();
         scene_camera_[i]->UpdateViewAngle(window_size[0]/2, window_size[1]);
     }
 }
@@ -247,59 +247,61 @@ void Rendering::UpdateViewAngleForActualWindowSize() {
 //----------------------------------------------------------------------------
 void Rendering::SetupBackgroundImage(cv::Mat img[]) {
 
+    int image_width = img[0].size().width;
+    int image_height = img[0].size().height;
+    render_window_->SetSize(2 * image_width, image_height);
+
     for (int i = 0; i < 2; ++i) {
         assert( img[i].data != NULL );
 
-        scene_camera_[i]->SetCameraImageSize(img[i].size().width, img[i].size().height);
-        background_camera_[i]->SetCameraImageSize(img[i].size().width,
-                                               img[i].size().height);
+        scene_camera_[i]->SetCameraImageSize(image_width, image_height);
+        background_camera_[i]->SetCameraImageSize(image_width, image_height);
 
-        if (camera_image[i]) {
-            image_importer_[i]->SetOutput(camera_image[i]);
+        if (camera_image_[i]) {
+            image_importer_[i]->SetOutput(camera_image_[i]);
         }
         image_importer_[i]->SetDataSpacing(1, 1, 1);
         image_importer_[i]->SetDataOrigin(0, 0, 0);
-        image_importer_[i]->SetWholeExtent(0, img[i].size().width - 1, 0,
-                                        img[i].size().height - 1, 0, 0);
+        image_importer_[i]->SetWholeExtent(0, image_width - 1, 0,
+                                           image_height - 1, 0, 0);
         image_importer_[i]->SetDataExtentToWholeExtent();
         image_importer_[i]->SetDataScalarTypeToUnsignedChar();
         image_importer_[i]->SetNumberOfScalarComponents(img[i].channels());
         image_importer_[i]->SetImportVoidPointer(img[i].data);
         image_importer_[i]->Update();
 
-        image_actor_[i]->SetInputData(camera_image[i]);
-
-        render_window->SetSize(2 * img[i].size().width, img[i].size().height);
+        image_actor_[i]->SetInputData(camera_image_[i]);
     }
+
 
 }
 
 //----------------------------------------------------------------------------
 void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 
-    scene_renderer[0]->AddActor(actor);
-    scene_renderer[1]->AddActor(actor);
+    scene_renderer_[0]->AddActor(actor);
+    scene_renderer_[1]->AddActor(actor);
 
 }
 
 //----------------------------------------------------------------------------
 void Rendering::Render() {
 
-//    scene_renderer->Modified();
+//    scene_renderer_->Modified();
 //    background_renderer_->Modified();
-//    render_window->Modified();
+//    render_window_->Modified();
 
-//    render_window[0]->Render();
-    render_window->Render();
+//    render_window_[0]->Render();
+    render_window_->Render();
 
 }
 
 //----------------------------------------------------------------------------
 void Rendering::GetRenderedImage(cv::Mat &img) {
 
-    window_to_image_filter->Modified();
-    vtkImageData* image = window_to_image_filter->GetOutput();
-    window_to_image_filter->Update();
+    window_to_image_filter_->Modified();
+    vtkImageData* image = window_to_image_filter_->GetOutput();
+    window_to_image_filter_->Update();
 
     // copy to cv Mat
     int dims[3];

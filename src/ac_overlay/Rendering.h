@@ -58,18 +58,18 @@ private:
     vtkSmartPointer<CalibratedCamera>    scene_camera_[2];
     // renderer
     vtkSmartPointer<vtkRenderer>         background_renderer_[2];
-    vtkSmartPointer<vtkRenderer>         scene_renderer[2];
+    vtkSmartPointer<vtkRenderer>         scene_renderer_[2];
     // image importing
     vtkSmartPointer<vtkImageImport>      image_importer_[2];
     vtkSmartPointer<vtkImageActor>       image_actor_[2];
-    vtkSmartPointer<vtkImageData>        camera_image[2];
+    vtkSmartPointer<vtkImageData>        camera_image_[2];
     // transforms
     vtkSmartPointer<vtkMatrix4x4>        camera_to_world_transform_[2];
     // windows
-    vtkSmartPointer<vtkRenderWindow>     render_window;
+    vtkSmartPointer<vtkRenderWindow>     render_window_;
     //    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
     // reading images back
-    vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter ;
+    vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter_ ;
 
 };
 

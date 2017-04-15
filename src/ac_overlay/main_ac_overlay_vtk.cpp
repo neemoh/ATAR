@@ -75,7 +75,6 @@ int main(int argc, char **argv)
     ui_instructions <<"Press 1 for task1 and 2 for task2. " ;
 
 
-
     // ----------------------------------------------------------------------------------------------
     //                              VTK test
     // ----------------------------------------------------------------------------------------------
@@ -153,6 +152,7 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
+
         // --------------------------------------------------------------------------------------
         // keyboard commands
 
@@ -377,9 +377,9 @@ int main(int argc, char **argv)
             graphics.Render();
 
             graphics.GetRenderedImage(augmented_images[0]);
+            cv::imshow(window_name[0], augmented_images[0]);
 
             for (int i = 0; i < 2; ++i) {
-//                cv::imshow(window_name[i], cam_images[i]);
                 ao.publisher_overlayed[i].publish(
                         cv_bridge::CvImage(std_msgs::Header(),
                                            "bgr8", augmented_images[i]).toImageMsg());
