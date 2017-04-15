@@ -12,6 +12,7 @@
 #include <vtkImageActor.h>
 #include <vtkRenderWindow.h>
 #include <vtkWindowToImageFilter.h>
+#include <vtkRenderWindowInteractor.h>
 
 /**
  * \class Rendering
@@ -21,8 +22,8 @@
 class Rendering {
 public:
 
-//    vtkTypeMacro(Rendering, vtkRenderWindow);
-//    static Rendering *New();
+    //    vtkTypeMacro(Rendering, vtkRenderWindow);
+    //    static Rendering *New();
 
     Rendering();
     ~Rendering();
@@ -52,18 +53,24 @@ private:
     // Set up the background scene_camera to fill the renderer with the image
     void SetImageCameraToFaceImage();
 
-
-    vtkSmartPointer<CalibratedCamera>    BackgroundCamera;
-    vtkSmartPointer<CalibratedCamera>    SceneCamera;
-    vtkSmartPointer<vtkImageImport>      ImageImporter;
-    vtkSmartPointer<vtkImageActor>       ImageActor;
-    vtkSmartPointer<vtkRenderer>         backgroundRenderer;
-    vtkSmartPointer<vtkRenderer>         sceneRenderer;
-    vtkSmartPointer<vtkMatrix4x4>        WorldToCameraTransform;
-    vtkSmartPointer<vtkMatrix4x4>        CameraToWorldTransform;
+    //cameras
+    vtkSmartPointer<CalibratedCamera>    background_camera_;
+    vtkSmartPointer<CalibratedCamera>    scene_camera_;
+    // renderer
+    vtkSmartPointer<vtkRenderer>         background_renderer_;
+    vtkSmartPointer<vtkRenderer>         scene_renderer;
+    // image importing
+    vtkSmartPointer<vtkImageImport>      image_importer_;
+    vtkSmartPointer<vtkImageActor>       image_actor_;
     vtkSmartPointer<vtkImageData>        camera_image;
-    vtkSmartPointer<vtkRenderWindow>     renderWindow;
-    vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter ;
+    // transforms
+    vtkSmartPointer<vtkMatrix4x4>        camera_to_world_transform;
+    // windows
+    vtkSmartPointer<vtkRenderWindow>     render_window;
+    //    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+    // reading images back
+    vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter ;
+
 };
 
 
