@@ -20,6 +20,9 @@
 #include <vtkAxesActor.h>
 #include <vtkTransform.h>
 #include <vtkSTLReader.h>
+#include <vtkProperty.h>
+#include <vtkParametricTorus.h>
+#include <vtkParametricFunctionSource.h>
 #include "Rendering.h"
 
 
@@ -106,7 +109,7 @@ int main(int argc, char **argv)
     int counter = 0;
     sphereActor->SetPosition(0.012, 0.00, 0.0);
     sphereActor->SetMapper(sphereMapper);
-    //        sphereActor->GetProperty()->SetColor(1.0, 0.0, 0.0); //(R,G,B)
+    sphereActor->GetProperty()->SetColor(0.8, 0.2, 0.4);
 
     vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
     transform->Translate(0.0, 0, 0.0);
@@ -114,41 +117,66 @@ int main(int argc, char **argv)
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes = vtkSmartPointer<vtkAxesActor>::New();
     vtkSmartPointer<vtkAxesActor> tool_frame_axes = vtkSmartPointer<vtkAxesActor>::New();
 
+
+    vtkSmartPointer<vtkParametricTorus> parametricObject = vtkSmartPointer<vtkParametricTorus>::New();
+    parametricObject->SetCrossSectionRadius(0.2);
+    double rad =     parametricObject->GetCrossSectionRadius();
+    std::cout << "rad " << rad << std::endl;
+
+    vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource =
+            vtkSmartPointer<vtkParametricFunctionSource>::New();
+    parametricFunctionSource->SetParametricFunction(parametricObject);
+    parametricFunctionSource->Update();
+
+    vtkSmartPointer<vtkPolyDataMapper> ring_mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    ring_mapper->SetInputConnection(parametricFunctionSource->GetOutputPort());
+    // Create an actor for the contours
+    vtkSmartPointer<vtkActor> ring_actor =
+            vtkSmartPointer<vtkActor>::New();
+    ring_actor->SetMapper(ring_mapper);
+    ring_actor->SetScale(0.005);
+    ring_actor->GetProperty()->SetColor(0.2, 0.4, 0.4);
+
     // The task_coordinate_axes are positioned with a user transform
     task_coordinate_axes->SetUserTransform(transform);
     task_coordinate_axes->SetXAxisLabelText("");
     task_coordinate_axes->SetYAxisLabelText("");
     task_coordinate_axes->SetZAxisLabelText("");
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
-    tool_frame_axes = task_coordinate_axes;
+    task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
+
     tool_frame_axes->SetUserTransform(transform);
     tool_frame_axes->SetXAxisLabelText("");
     tool_frame_axes->SetYAxisLabelText("");
     tool_frame_axes->SetZAxisLabelText("");
-    tool_frame_axes->SetTotalLength(0.01, 0.01, 0.01);
+    tool_frame_axes->SetTotalLength(0.007, 0.007, 0.007);
+    tool_frame_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
+    std::string inputFilename = "/home/charm/Desktop/cads/task1_first_mq.stl";
 
-    std::string inputFilename = "/home/charm/Desktop/cads/task1_first_mq.STL";
-
-    vtkSmartPointer<vtkSTLReader> reader =
-            vtkSmartPointer<vtkSTLReader>::New();
+    vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
     reader->SetFileName(inputFilename.c_str());
     reader->Update();
 
-    // Visualize
     vtkSmartPointer<vtkPolyDataMapper> mesh_mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
     mesh_mapper->SetInputConnection(reader->GetOutputPort());
+    std::cout << "reader: " << mesh_mapper->GetLength() << std::endl;
 
-    vtkSmartPointer<vtkActor> mesh_actor =
-            vtkSmartPointer<vtkActor>::New();
+    vtkSmartPointer<vtkActor> mesh_actor = vtkSmartPointer<vtkActor>::New();
     mesh_actor->SetMapper(mesh_mapper);
-    mesh_actor->SetPosition(0.0, 0.0, 0.0);
+    mesh_actor->SetPosition(0.02, 0.03, 0.0);
+    mesh_actor->SetScale(0.0005);
+    mesh_actor->SetOrientation(90, 0.0 , 90.0);
+    mesh_actor->GetProperty()->SetColor(0.7, 0.5, 0.2);
+    mesh_actor->GetProperty()->SetSpecular(0.8);
 
     graphics.AddActorToScene(task_coordinate_axes);
     graphics.AddActorToScene(tool_frame_axes);
     graphics.AddActorToScene(sphereActor);
     graphics.AddActorToScene(mesh_actor);
+    graphics.AddActorToScene(ring_actor);
 
 
     while (ros::ok())
@@ -369,14 +397,14 @@ int main(int argc, char **argv)
             counter++;
             sphereActor->SetPosition(0.012 + 0.05 * sin(double(counter)/100*M_PI), 0.00, 0.0);
             sphereActor->Modified();
-            tool_frame_axes->SetPosition(ao.pose_current_tool[0].p[0], ao.pose_current_tool[0].p[1],
-                                         ao.pose_current_tool[0].p[2]);
 
             vtkSmartPointer<vtkMatrix4x4> vtk_matrix =vtkSmartPointer<vtkMatrix4x4>::New();
             VTKConversions::KDLFrameToVTKMatrix(ao.pose_current_tool[0], vtk_matrix);
             tool_frame_axes->SetUserMatrix(vtk_matrix);
 
-
+            ring_actor->SetUserMatrix(vtk_matrix);
+            ring_actor->SetOrientation(90, 0, 0);
+            
             graphics.UpdateBackgroundImage(cam_images);
             graphics.UpdateViewAngleForActualWindowSize();
 

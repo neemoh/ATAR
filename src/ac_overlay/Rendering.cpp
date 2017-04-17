@@ -56,6 +56,9 @@ Rendering::Rendering()
 
         render_window_->AddRenderer(background_renderer_[i]);
         render_window_->AddRenderer(scene_renderer_[i]);
+//        render_window_->LineSmoothingOn();
+//        render_window_->PolygonSmoothingOn();
+
 
     }
     // important for getting high update rate (If needed, images can be shown with opencv)
@@ -64,7 +67,7 @@ Rendering::Rendering()
 
     window_to_image_filter_ = vtkSmartPointer<vtkWindowToImageFilter>::New();
     window_to_image_filter_->SetInput(render_window_);
-    window_to_image_filter_->SetInputBufferTypeToRGB(); //record the alpha (transparency) channel for future use
+//    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record the alpha (transparency) channel for future use
     window_to_image_filter_->ReadFrontBufferOff(); // read from the back buffer
 
 
