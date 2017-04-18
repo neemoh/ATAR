@@ -488,13 +488,13 @@ cv::Mat& OverlayROSConfig::ImageRight(ros::Duration timeout) {
 }
 
 
-void OverlayROSConfig::PublishDesiredPose() {
+void OverlayROSConfig::PublishDesiredPose(const KDL::Frame * pose_desired) {
 
     for (int n_arm = 0; n_arm < n_arms; ++n_arm) {
 
         // convert to pose message
         geometry_msgs::PoseStamped pose_msg;
-        tf::poseKDLToMsg(pose_desired_tool[n_arm], pose_msg.pose);
+        tf::poseKDLToMsg(pose_desired[n_arm], pose_msg.pose);
         // fill the header
         pose_msg.header.frame_id = "/task_space";
         pose_msg.header.stamp = ros::Time::now();

@@ -75,7 +75,7 @@ public:
     image_transport::Publisher publisher_stereo_overlayed;
 
     // converts the desired poses to geometry pose messages and published them
-    void PublishDesiredPose();
+    void PublishDesiredPose(const KDL::Frame *);
 
 
 public:
@@ -97,7 +97,7 @@ public:
 
     KDL::Frame left_cam_to_right_cam_tr;
 
-    KDL::Frame pose_desired_tool[2];
+
 
 
 
