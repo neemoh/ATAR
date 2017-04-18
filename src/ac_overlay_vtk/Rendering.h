@@ -43,6 +43,8 @@ public:
 
     void AddActorToScene(vtkSmartPointer<vtkProp> actor);
 
+    void AddActorsToScene(std::vector< vtkSmartPointer<vtkProp> > actors);
+
     void Render();
 
     void GetRenderedImage(cv::Mat & img);
@@ -82,6 +84,9 @@ namespace VTKConversions{
 
     void KDLFrameToVTKMatrix (const KDL::Frame in,
                                vtkSmartPointer<vtkMatrix4x4> out);
+
+    void VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4> in,
+                                               KDL::Frame  & out);
 
 }
 #endif //TELEOP_VISION_RENDERING_H

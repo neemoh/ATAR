@@ -244,7 +244,7 @@ add_executable(
         src/utils/Drawings.cpp
         include/utils/Drawings.h
         src/ac_overlay_vtk/OverlayROSConfig.cpp
-        src/ac_overlay_vtk/OverlayROSConfig.h)
+        src/ac_overlay_vtk/OverlayROSConfig.h src/ac_overlay_vtk/BuzzWireTask.cpp src/ac_overlay_vtk/BuzzWireTask.h)
 
 target_link_libraries(
         ac_overlay_vtk

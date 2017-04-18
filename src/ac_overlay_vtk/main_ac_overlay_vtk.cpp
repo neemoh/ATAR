@@ -8,7 +8,7 @@
 #include "OverlayROSConfig.h"
 #include <std_msgs/Float32.h>
 #include "CalibratedCamera.h"
-
+#include "BuzzWireTask.h"
 
 
 #include <vtkPolyDataMapper.h>
@@ -85,197 +85,10 @@ int main(int argc, char **argv)
 
     graphics.Render();
 
-
-    // --------------------------------------------------
-    // Sphere
-    vtkSmartPointer<vtkSphereSource> sphereSource=
-            vtkSmartPointer<vtkSphereSource>::New();
-    sphereSource->SetRadius(0.003);
-    sphereSource->SetThetaResolution(20);
-    sphereSource->SetPhiResolution(20);
-    sphereSource->Update();
-
-    // to transform the data
-    vtkSmartPointer<vtkTransform> sphere_translation =
-            vtkSmartPointer<vtkTransform>::New();
-    vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    transformFilter->SetInputConnection(sphereSource->GetOutputPort());
-    transformFilter->SetTransform(sphere_translation);
-    transformFilter->Update();
-
-    vtkSmartPointer<vtkPolyDataMapper> sphereMapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    sphereMapper->SetInputConnection(transformFilter->GetOutputPort());
-
-    vtkSmartPointer<vtkActor> sphereActor = vtkSmartPointer<vtkActor>::New();
-    int counter = 0;
-    sphereActor->SetPosition(0.012, 0.00, 0.0);
-    sphereActor->SetMapper(sphereMapper);
-    sphereActor->GetProperty()->SetColor(0.8, 0.2, 0.4);
+    BuzzWireTask btask(0.005, 0.002);
 
 
-    // --------------------------------------------------
-    // RING
-    vtkSmartPointer<vtkParametricTorus> parametricObject = vtkSmartPointer<vtkParametricTorus>::New();
-    double ring_cross_section_radius = 0.001;
-    double ring_radius = 0.007;
-    double ring_scale = 0.006;
-    parametricObject->SetCrossSectionRadius(ring_cross_section_radius/ ring_scale);
-    parametricObject->SetRingRadius(ring_radius/ ring_scale);
-    vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource =
-            vtkSmartPointer<vtkParametricFunctionSource>::New();
-    parametricFunctionSource->SetParametricFunction(parametricObject);
-    parametricFunctionSource->Update();
-
-
-    // to transform the data
-    vtkSmartPointer<vtkTransform> ring_local_transform =
-            vtkSmartPointer<vtkTransform>::New();
-    vtkSmartPointer<vtkTransformPolyDataFilter> ring_local_transform_filter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    ring_local_transform_filter->SetInputConnection(parametricFunctionSource->GetOutputPort());
-    ring_local_transform->RotateX(90);
-    ring_local_transform->Translate(0.0, ring_radius/ring_scale, 0.0);
-
-    ring_local_transform_filter->SetTransform(ring_local_transform);
-    ring_local_transform_filter->Update();
-
-    vtkSmartPointer<vtkPolyDataMapper> ring_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    ring_mapper->SetInputConnection(ring_local_transform_filter->GetOutputPort());
-
-    // Create an line_actor for the contours
-    vtkSmartPointer<vtkActor> ring_actor =
-            vtkSmartPointer<vtkActor>::New();
-    ring_actor->SetMapper(ring_mapper);
-    ring_actor->SetScale(ring_scale);
-    ring_actor->GetProperty()->SetColor(0.2, 0.4, 0.4);
-
-    // --------------------------------------------------
-    // FRAMES
-
-    vtkSmartPointer<vtkAxesActor> task_coordinate_axes = vtkSmartPointer<vtkAxesActor>::New();
-    vtkSmartPointer<vtkAxesActor> tool_current_frame_axes = vtkSmartPointer<vtkAxesActor>::New();
-    vtkSmartPointer<vtkAxesActor> tool_desired_frame_axes = vtkSmartPointer<vtkAxesActor>::New();
-    // The task_coordinate_axes are positioned with a user transform
-//    vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
-//    transform->Translate(0.0, 0, 0.0);
-//    transform->RotateX(0);
-//    task_coordinate_axes->SetUserTransform(transform);
-    task_coordinate_axes->SetXAxisLabelText("");
-    task_coordinate_axes->SetYAxisLabelText("");
-    task_coordinate_axes->SetZAxisLabelText("");
-    task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
-    task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-
-    tool_current_frame_axes->SetXAxisLabelText("");
-    tool_current_frame_axes->SetYAxisLabelText("");
-    tool_current_frame_axes->SetZAxisLabelText("");
-    tool_current_frame_axes->SetTotalLength(0.007, 0.007, 0.007);
-    tool_current_frame_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-
-    tool_desired_frame_axes->SetXAxisLabelText("");
-    tool_desired_frame_axes->SetYAxisLabelText("");
-    tool_desired_frame_axes->SetZAxisLabelText("");
-    tool_desired_frame_axes->SetTotalLength(0.007, 0.007, 0.007);
-    tool_desired_frame_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-
-    // --------------------------------------------------
-    // MESH
-    std::string inputFilename = "/home/charm/Desktop/cads/task1_3_lq.STL";
-    vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
-    reader->SetFileName(inputFilename.c_str());
-    reader->Update();
-    vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
-    polydata->DeepCopy(reader->GetOutput());
-
-    // Genreate Normals
-    vtkSmartPointer<vtkPolyDataNormals> normalGenerator = vtkSmartPointer<vtkPolyDataNormals>::New();
-
-    normalGenerator->SetInputData(polydata);
-    normalGenerator->ComputePointNormalsOff();
-    normalGenerator->ComputeCellNormalsOn();
-    normalGenerator->Update();
-    /*
-    // Optional settings
-    normalGenerator->SetFeatureAngle(0.1);
-    normalGenerator->SetSplitting(1);
-    normalGenerator->SetConsistency(0);
-    normalGenerator->SetAutoOrientNormals(0);
-    normalGenerator->SetComputePointNormals(1);
-    normalGenerator->SetComputeCellNormals(0);
-    normalGenerator->SetFlipNormals(0);
-    normalGenerator->SetNonManifoldTraversal(1);
-    */
-    polydata = normalGenerator->GetOutput();
-//    vtkSmartPointer<vtkDataArray>  cellNormals = vtkSmartPointer<vtkDataArray>::New();
-//    cellNormals = polydata->GetCellData()->GetNormals();
-
-    // transform
-    vtkSmartPointer<vtkTransform> mesh_transform = vtkSmartPointer<vtkTransform>::New();
-    mesh_transform->Translate(0.04, 0.05, 0.0);
-    mesh_transform->RotateX(90);
-    mesh_transform->RotateY(90);
-
-    vtkSmartPointer<vtkTransformPolyDataFilter> mesh_transformFilter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    mesh_transformFilter->SetInputConnection(reader->GetOutputPort());
-    mesh_transformFilter->SetTransform(mesh_transform);
-    mesh_transformFilter->Update();
-
-    vtkSmartPointer<vtkPolyDataMapper> mesh_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    mesh_mapper->SetInputConnection(mesh_transformFilter->GetOutputPort());
-//    std::cout << "reader: " << mesh_mapper->GetLength() << std::endl;
-    vtkSmartPointer<vtkActor> mesh_actor = vtkSmartPointer<vtkActor>::New();
-    mesh_actor->SetMapper(mesh_mapper);
-//    mesh_actor->SetPosition(0.00, 0.00, 0.0);
-//    mesh_actor->SetScale(0.0005);
-//    mesh_actor->SetOrientation(90, 0.0 , 90.0);
-    mesh_actor->GetProperty()->SetColor(0.7, 0.5, 0.2);
-    mesh_actor->GetProperty()->SetSpecular(0.8);
-    // --------------------------------------------------
-    // CLOSEST POINT
-    // Create the tree
-    vtkSmartPointer<vtkCellLocator> cellLocator =
-            vtkSmartPointer<vtkCellLocator>::New();
-//    cellLocator->SetDataSet(sphereActor->GetMapper()->GetInput());
-    cellLocator->SetDataSet(mesh_transformFilter->GetOutput());
-    cellLocator->BuildLocator();
-
-    double tool_point[3] = {0.0, 0.0, 0.0};
-    //Find the closest points to TestPoint
-    double closest_point[3];//the coordinates of the closest point will be returned here
-    double closestPointDist2; //the squared distance to the closest point will be returned here
-    vtkIdType cell_id; //the cell id of the cell containing the closest point will be returned here
-    int subId; //this is rarely used (in triangle strips only, I believe)
-
-    // ------------------------------------
-    // closest point line
-    vtkSmartPointer<vtkLineSource> lineSource =
-            vtkSmartPointer<vtkLineSource>::New();
-    lineSource->SetPoint1(tool_point);
-    lineSource->SetPoint2(closest_point);
-    lineSource->Update();
-
-    // Visualize
-    vtkSmartPointer<vtkPolyDataMapper> line_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    line_mapper->SetInputConnection(lineSource->GetOutputPort());
-    vtkSmartPointer<vtkActor> line_actor =
-            vtkSmartPointer<vtkActor>::New();
-    line_actor->SetMapper(line_mapper);
-    line_actor->GetProperty()->SetLineWidth(4);
-
-
-    graphics.AddActorToScene(task_coordinate_axes);
-    graphics.AddActorToScene(tool_current_frame_axes);
-    graphics.AddActorToScene(tool_desired_frame_axes);
-    graphics.AddActorToScene(sphereActor);
-    graphics.AddActorToScene(mesh_actor);
-    graphics.AddActorToScene(ring_actor);
-    graphics.AddActorToScene(line_actor);
+    graphics.AddActorsToScene(btask.GetActors());
 
     KDL::Vector desired_normal;
 
@@ -315,6 +128,7 @@ int main(int argc, char **argv)
             ROS_INFO("No task Selected");
         }
 
+        btask.SetCurrentToolPose(rc.pose_current_tool[0]);
 
         if(rc.new_left_image && rc.new_right_image) {
 
@@ -358,39 +172,11 @@ int main(int argc, char **argv)
             // ----------------------------------------------------------------------------------------------
 
 
-            vtkSmartPointer<vtkMatrix4x4> tool_current_vtkmatrix =vtkSmartPointer<vtkMatrix4x4>::New();
-            VTKConversions::KDLFrameToVTKMatrix(rc.pose_current_tool[0], tool_current_vtkmatrix);
-            tool_current_frame_axes->SetUserMatrix(tool_current_vtkmatrix);
+            btask.UpdateActors();
 
-            ring_actor->SetUserMatrix(tool_current_vtkmatrix);
 
-//            ring_actor->SetOrientation(90, 0, 0);
-
-            vtkSmartPointer<vtkMatrix4x4> tool_desired_vtkmatrix =vtkSmartPointer<vtkMatrix4x4>::New();
-            VTKConversions::KDLFrameToVTKMatrix(rc.pose_desired_tool[0], tool_desired_vtkmatrix);
-            tool_desired_frame_axes->SetUserMatrix(tool_desired_vtkmatrix);
-
-            
             graphics.UpdateBackgroundImage(cam_images);
             graphics.UpdateViewAngleForActualWindowSize();
-
-            counter++;
-//            sphereActor->SetPosition(0.012 + 0.05 * sin(double(counter)/100*M_PI), 0.00, 0.0);
-//            sphereActor->Modified();
-            double dx = 0.05 * sin(double(counter)/100*M_PI);
-            sphere_translation->Translate(dx/100, 0.00, 0.0);
-            tool_point[0] = rc.pose_current_tool[0].p[0];
-            tool_point[1] = rc.pose_current_tool[0].p[1];
-            tool_point[2] = rc.pose_current_tool[0].p[2];
-
-//            transformFilter->SetTransform(sphere_translation);
-//            transformFilter->Update();
-//            sphereActor->Modified();
-            cellLocator->Update();
-            cellLocator->FindClosestPoint(tool_point, closest_point, cell_id, subId, closestPointDist2);
-            vtkSmartPointer<vtkIdList> point_ids  = vtkSmartPointer<vtkIdList>::New();
-
-
 
 //            point_ids = polydata->GetCell(cell_id)->GetPointIds();
 
@@ -415,8 +201,6 @@ int main(int argc, char **argv)
 //            printf(" 2y -> %f",point2[1]);
 //            printf(" 2z -> %f\n",point2[2]);
 
-            lineSource->SetPoint1(tool_point);
-            lineSource->SetPoint2(closest_point);
 
 //            std::cout << "Coordinates of closest point: " << closest_point[0] << " " << closest_point[1] << " " << closest_point[2] << std::endl;
 //            std::cout << "Squared distance to closest point: " << closestPointDist2 << std::endl;
@@ -433,14 +217,9 @@ int main(int argc, char **argv)
         } // if new image
 
         // updating the desired pose happens at the higher frequency
-
-        rc.pose_desired_tool[0].p = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
-        // find desired orientation
-        desired_normal = rc.pose_desired_tool[0].p - rc.pose_current_tool[0].p;
-
-        rc.pose_desired_tool[0].M = CalculateDesiredOrientation(desired_normal,
-                                                                rc.pose_current_tool[0].M);
-        rc.PublishDesiredPose();
+        KDL::Frame pose_desired_tool[2];
+        pose_desired_tool[0] = btask.GetDesiredToolPose();
+        rc.PublishDesiredPose(pose_desired_tool);
 
 
 

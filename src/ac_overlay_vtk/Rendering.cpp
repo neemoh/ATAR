@@ -294,6 +294,18 @@ void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 
 }
 
+
+
+void
+Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
+
+    for (int i = 0; i <actors.size() ; ++i) {
+        scene_renderer_[0]->AddActor(actors[i]);
+        scene_renderer_[1]->AddActor(actors[i]);
+    }
+
+}
+
 //----------------------------------------------------------------------------
 void Rendering::Render() {
 
@@ -328,6 +340,7 @@ void Rendering::GetRenderedImage(cv::Mat &img) {
     }
 }
 
+
 void VTKConversions::AxisAngleToVTKMatrix(const cv::Vec3d cam_rvec,
                                           const cv::Vec3d cam_tvec,
                                           vtkSmartPointer<vtkMatrix4x4>  out) {
@@ -357,6 +370,19 @@ void ::VTKConversions::KDLFrameToVTKMatrix(const KDL::Frame in,
             out->SetElement(i, j, in.M(i,j));
         }
         out->SetElement(i, 3, in.p[i]);
+    }
+
+}
+
+
+void VTKConversions::VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4> in,
+                                           KDL::Frame & out) {
+    // Convert to VTK matrix.
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            out.M(i,j) = in->GetElement(i, j);
+        }
+        out.p[i] = in->GetElement(i, 3);
     }
 
 }
