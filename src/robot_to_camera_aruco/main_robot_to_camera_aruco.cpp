@@ -19,9 +19,8 @@ int main(int argc, char *argv[]) {
 
     ros::init(argc, argv, "robot_to_camera_aruco");
 
-    // get name in case assigned externally
 
-
+    // get name in case asigned externally
     RobotToCameraAruco r(ros::this_node::getName());
 
     // Create the window in which to render the video feed

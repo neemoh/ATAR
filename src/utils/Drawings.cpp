@@ -107,33 +107,6 @@ void DrawingsCV::DrawLineFrom2KDLPoints(cv::InputOutputArray image,
 }
 
 
-void DrawingsCV::DrawCoordinateFrameAntiAliased(
-        const cv::InputOutputArray &_image, const CameraIntrinsics &cam_intrinsics,
-        const cv::Vec3d &rvec, const cv::Vec3d &tvec,
-        float length){
-
-    CV_Assert(_image.getMat().total() != 0 &&
-              (_image.getMat().channels() == 1 || _image.getMat().channels() == 3));
-    CV_Assert(length > 0);
-
-    // project axis points
-    std::vector<cv::Point3f> axisPoints {
-            cv::Point3f( 0,  0,  0),
-            cv::Point3f( 1,  0,  0) * length,
-            cv::Point3f( 0,  1,  0) * length,
-            cv::Point3f( 0,  0,  1) * length
-    };
-
-    std::vector<cv::Point2f> imagePoints;
-    cv::projectPoints(axisPoints, rvec, tvec, cam_intrinsics.camMatrix,
-                      cam_intrinsics.distCoeffs, imagePoints);
-
-    // draw axis lines
-    cv::line(_image, imagePoints[0], imagePoints[1], cv::Scalar(200, 0, 0), 2, CV_AA);
-    cv::line(_image, imagePoints[0], imagePoints[2], cv::Scalar(0, 200, 0), 2, CV_AA);
-    cv::line(_image, imagePoints[0], imagePoints[3], cv::Scalar(0, 0, 200), 2, CV_AA);
-}
-
 void DrawingsCV::DrawCoordinateFrameInTaskSpace(
         const cv::InputOutputArray &image, const CameraIntrinsics &cam_intrinsics,
         const KDL::Frame frame,
@@ -162,7 +135,7 @@ void DrawingsCV::DrawCoordinateFrameInTaskSpace(
                       cam_intrinsics.distCoeffs, imagePoints);
 
     // draw axis lines
-    cv::line(image, imagePoints[0], imagePoints[1], cv::Scalar(200, 0, 0), 2, CV_AA);
+    cv::line(image, imagePoints[0], imagePoints[1], cv::Scalar(0, 0, 200), 2, CV_AA);
     cv::line(image, imagePoints[0], imagePoints[2], cv::Scalar(0, 200, 0), 2, CV_AA);
-    cv::line(image, imagePoints[0], imagePoints[3], cv::Scalar(0, 0, 200), 2, CV_AA);
+    cv::line(image, imagePoints[0], imagePoints[3], cv::Scalar(200, 0, 0), 2, CV_AA);
 }

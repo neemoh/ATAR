@@ -18,7 +18,6 @@ int main(int argc, char **argv)
 
     ros::init(argc, argv, "overlay");
 
-
     OverlayGraphics og (ros::this_node::getName(),720, 576);
 
     // frequency of the generated images is based on the received images
@@ -143,6 +142,12 @@ int main(int argc, char **argv)
                                   og.cam_rvec_r, og.cam_tvec_r,
                                   og.pose_desired_r.p,
                                   color_desired_point);
+
+            // Publish the overlays to ROS
+            if (og.IsROSOverlayEnabled()) {
+                og.PublishOverlayLeft(left_image);
+                og.PublishOverlayRight(right_image);
+            }
 
             cv::imshow(right_window_name, right_image);
         }

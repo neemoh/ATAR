@@ -33,6 +33,9 @@ private:
     // reads the intrinsic camera parameters
     void ReadCameraParameters(const std::string file_path,
                               CameraIntrinsics & camera_intrins);
+
+    void PublishOverlayImpl(image_transport::Publisher & pub, const cv::Mat & img);
+
 public:
 
     OverlayGraphics(std::string node_name, int width, int height);
@@ -60,9 +63,10 @@ public:
     cv::Mat& ImageLeft(ros::Duration timeout = ros::Duration(1));
     cv::Mat& ImageRight(ros::Duration timeout = ros::Duration(1));
 
+    void PublishOverlayRight(const cv::Mat & img);
+    void PublishOverlayLeft(const cv::Mat & img);
 
-
-
+    const bool IsROSOverlayEnabled() const { return use_ros_overlay; }
 
 public:
 
@@ -98,10 +102,12 @@ private:
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscribers[2];
 
-    image_transport::Subscriber subscriber_image_left;
-    image_transport::Subscriber subscriber_image_right;
-    ros::Subscriber subscriber_camera_pose_left;
-    ros::Subscriber subscriber_camera_pose_right;
+    bool use_ros_overlay = false;
+    image_transport::Publisher overlay_image_left;
+    image_transport::Publisher overlay_image_right;
+
+    ros::Subscriber camera_pose_subscriber_left;
+    ros::Subscriber camera_pose_subscriber_right;
 
     ros::Subscriber subscriber_pose_psm1;
     ros::Subscriber subscriber_pose__sub;

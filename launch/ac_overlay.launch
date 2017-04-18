@@ -41,13 +41,28 @@
         <param name= "right_image_topic_name" value= "/$(arg camera_namespace)/right/image_color"/>
         <param name= "left_cam_pose_topic_name" value= "/$(arg camera_namespace)/left/board_to_camera "/>
         <param name= "right_cam_pose_topic_name" value= "/$(arg camera_namespace)/right/board_to_camera "/>
-        <param name= "frequency" value= "30" />
+        <!-- About number_of_arms:
+            // number of arms we wish to use in the node. If set as 1, only slave_1_name will be used.
+            // (for the moment the code generates active constraints for 1 arm only. this will be changed
+            // to support the second arm soon.)
+        -->
+        <param name="number_of_arms" value="1"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+
+        <!-- About desired_pose_update_frequency:
+            //The overlayed images will be published only when new images are received.
+            // The desired pose according to the active constraint geometry on the other
+            // hand needs to be update faster (even if the ac geometry may be updated at the
+            // rate of the received images if it is generated based on the image).
+        -->
+        <param name= "desired_pose_update_frequency" value= "100" />
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
     <!-- After some re-structuring of the architecture the dvrk_active_constraint_geomerty_generation
         node is not doing much right now and it will be soon removed.
-    -->
+
     <node pkg="active_constraints" type="dvrk_active_constraint_geomerty_generation" name="dvrk_ac_geom" output="screen">
         <param name="number_of_arms" value="1"/>
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
@@ -56,6 +71,7 @@
         <param name="master_2_name" value="$(arg master_2_name)"/>
         <param name="node_frequency" value="100"/>
     </node>
+    -->
 
     <!-- The dvrk_active_constraint_enforcement node generates force based on the received desired pose and
         current pose of each master/slave couple.

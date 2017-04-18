@@ -1,0 +1,5 @@
+
+# Ignore CLion project files and build directories
+.idea/*
+cmake-build-debug/*
+cmake-build-release/*

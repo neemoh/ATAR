@@ -37,6 +37,7 @@ namespace conversions {
 
     void KDLFrameToVector(const KDL::Frame &in_pose,  std::vector<double> &out_vector);
 
+    void AxisAngleToKDLRotation(KDL::Vector axis, double angle, KDL::Rotation & out);
 };
 
 #endif //TELEOP_VISION_CONVERSIONS_HPP_HPP
