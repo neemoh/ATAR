@@ -10,7 +10,9 @@
 #include <vtkObjectFactory.h>
 #include <opencv-3.2.0-dev/opencv2/imgproc.hpp>
 #include <opencv-3.2.0-dev/opencv2/highgui.hpp>
-
+#include <vtkFrameBufferObject.h>
+#include <vtkOpenGLRenderer.h>
+#include <vtkFrameBufferObject2.h>
 
 //----------------------------------------------------------------------------
 Rendering::Rendering()
@@ -33,12 +35,12 @@ Rendering::Rendering()
         image_actor_[i] = vtkSmartPointer<vtkImageActor>::New();
         camera_image_[i]   = vtkSmartPointer<vtkImageData>::New();
 
-        background_renderer_[i] = vtkSmartPointer<vtkRenderer>::New();
+        background_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
         background_renderer_[i]->InteractiveOff();
         background_renderer_[i]->SetBackground(0, 0, 0);
         background_renderer_[i]->SetLayer(0);
 
-        scene_renderer_[i] = vtkSmartPointer<vtkRenderer>::New();
+        scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
         scene_renderer_[i]->InteractiveOff();
         scene_renderer_[i]->SetLayer(1);
         scene_renderer_[i]->SetViewport(view_port[i]);
@@ -56,20 +58,27 @@ Rendering::Rendering()
 
         render_window_->AddRenderer(background_renderer_[i]);
         render_window_->AddRenderer(scene_renderer_[i]);
-//        render_window_->LineSmoothingOn();
-//        render_window_->PolygonSmoothingOn();
+
 
 
     }
     // important for getting high update rate (If needed, images can be shown with opencv)
     render_window_->SetOffScreenRendering(1);
+//        render_window_->LineSmoothingOn();
+//        render_window_->PolygonSmoothingOn();
 
+    // could be usefull for shadows?
+    render_window_->SetMultiSamples(0);
+    render_window_->SetAlphaBitPlanes(1);
 
     window_to_image_filter_ = vtkSmartPointer<vtkWindowToImageFilter>::New();
     window_to_image_filter_->SetInput(render_window_);
 //    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record the alpha (transparency) channel for future use
     window_to_image_filter_->ReadFrontBufferOff(); // read from the back buffer
 
+//    if(!vtkFrameBufferObject2::IsSupported(render_window_))
+//        std::cerr << "Shadow rendering is not supported by the current video"
+//                  << " driver!" << std::endl;
 
 }
 
@@ -77,10 +86,10 @@ Rendering::Rendering()
 Rendering::~Rendering()
 {
 
-        for (int j = 0; j < 2; ++j) {
-            render_window_->RemoveRenderer(background_renderer_[j]);
-            render_window_->RemoveRenderer(scene_renderer_[j]);
-        }
+    for (int j = 0; j < 2; ++j) {
+        render_window_->RemoveRenderer(background_renderer_[j]);
+        render_window_->RemoveRenderer(scene_renderer_[j]);
+    }
 
 
 }
@@ -154,73 +163,73 @@ void Rendering::SetCameraIntrinsics(const cv::Matx33d intrinsics[])
 //----------------------------------------------------------------------------------
 void Rendering::SetImageCameraToFaceImage(const int id) {
 
-        int *windowSize = render_window_->GetSize();
+    int *windowSize = render_window_->GetSize();
 
-        int imageSize[3];
-        image_importer_[id]->GetOutput()->GetDimensions(imageSize);
+    int imageSize[3];
+    image_importer_[id]->GetOutput()->GetDimensions(imageSize);
 
-        double spacing[3];
-        image_importer_[id]->GetOutput()->GetSpacing(spacing);
+    double spacing[3];
+    image_importer_[id]->GetOutput()->GetSpacing(spacing);
 
-        double origin[3];
-        image_importer_[id]->GetOutput()->GetOrigin(origin);
+    double origin[3];
+    image_importer_[id]->GetOutput()->GetOrigin(origin);
 
-        double clippingRange[2];
-        clippingRange[0] = 1;
-        clippingRange[1] = 100000;
+    double clippingRange[2];
+    clippingRange[0] = 1;
+    clippingRange[1] = 100000;
 
-        double distanceAlongX = (spacing[0] * (imageSize[0] - 1)) / 2.0;
-        double vectorAlongX[3] = {1, 0, 0};
-        vectorAlongX[0] = distanceAlongX;
+    double distanceAlongX = (spacing[0] * (imageSize[0] - 1)) / 2.0;
+    double vectorAlongX[3] = {1, 0, 0};
+    vectorAlongX[0] = distanceAlongX;
 
-        double distanceAlongY = (spacing[1] * (imageSize[1] - 1)) / 2.0;
-        double vectorAlongY[3] = {0, 1, 0};
-        vectorAlongY[1] = distanceAlongY;
+    double distanceAlongY = (spacing[1] * (imageSize[1] - 1)) / 2.0;
+    double vectorAlongY[3] = {0, 1, 0};
+    vectorAlongY[1] = distanceAlongY;
 
-        double distanceToFocalPoint = -1000;
-        double vectorAlongZ[3] = {0, 0, 1};
-        vectorAlongZ[2] = distanceToFocalPoint;
+    double distanceToFocalPoint = -1000;
+    double vectorAlongZ[3] = {0, 0, 1};
+    vectorAlongZ[2] = distanceToFocalPoint;
 
-        double viewUpScaleFactor = 1.0e9;
-        if (true) {
-            viewUpScaleFactor *= -1;
-        }
+    double viewUpScaleFactor = 1.0e9;
+    if (true) {
+        viewUpScaleFactor *= -1;
+    }
 
-        double focalPoint[3] = {0, 0, 1};
-        for (unsigned int i = 0; i < 3; ++i) {
-            focalPoint[i] = origin[i] + vectorAlongX[i] + vectorAlongY[i];
-        }
+    double focalPoint[3] = {0, 0, 1};
+    for (unsigned int i = 0; i < 3; ++i) {
+        focalPoint[i] = origin[i] + vectorAlongX[i] + vectorAlongY[i];
+    }
 
-        double position[3] = {0, 0, 0};
-        position[0] = focalPoint[0] + vectorAlongZ[0];
-        position[1] = focalPoint[1] + vectorAlongZ[1];
-        position[2] = focalPoint[2] + vectorAlongZ[2];
+    double position[3] = {0, 0, 0};
+    position[0] = focalPoint[0] + vectorAlongZ[0];
+    position[1] = focalPoint[1] + vectorAlongZ[1];
+    position[2] = focalPoint[2] + vectorAlongZ[2];
 
-        double viewUp[3] = {0, 1, 0};
-        viewUp[0] = vectorAlongY[0] * viewUpScaleFactor;
-        viewUp[1] = vectorAlongY[1] * viewUpScaleFactor;
-        viewUp[2] = vectorAlongY[2] * viewUpScaleFactor;
+    double viewUp[3] = {0, 1, 0};
+    viewUp[0] = vectorAlongY[0] * viewUpScaleFactor;
+    viewUp[1] = vectorAlongY[1] * viewUpScaleFactor;
+    viewUp[2] = vectorAlongY[2] * viewUpScaleFactor;
 
-        double imageWidth = imageSize[0] * spacing[0];
-        double imageHeight = imageSize[1] * spacing[1];
+    double imageWidth = imageSize[0] * spacing[0];
+    double imageHeight = imageSize[1] * spacing[1];
 
-        double widthRatio = imageWidth / (windowSize[0]/2);
-        double heightRatio = imageHeight / windowSize[1];
+    double widthRatio = imageWidth / (windowSize[0]/2);
+    double heightRatio = imageHeight / windowSize[1];
 
-        double scale = 1;
-        if (widthRatio > heightRatio) {
-            scale = 0.5 * imageWidth *
-                    ((double) windowSize[1] / (double)(windowSize[0]/2));
-        } else {
-            scale = 0.5 * imageHeight;
-        }
+    double scale = 1;
+    if (widthRatio > heightRatio) {
+        scale = 0.5 * imageWidth *
+                ((double) windowSize[1] / (double)(windowSize[0]/2));
+    } else {
+        scale = 0.5 * imageHeight;
+    }
 
-        background_camera_[id]->SetPosition(position);
-        background_camera_[id]->SetFocalPoint(focalPoint);
-        background_camera_[id]->SetViewUp(viewUp);
-        background_camera_[id]->SetParallelProjection(true);
-        background_camera_[id]->SetParallelScale(scale);
-        background_camera_[id]->SetClippingRange(clippingRange);
+    background_camera_[id]->SetPosition(position);
+    background_camera_[id]->SetFocalPoint(focalPoint);
+    background_camera_[id]->SetViewUp(viewUp);
+    background_camera_[id]->SetParallelProjection(true);
+    background_camera_[id]->SetParallelScale(scale);
+    background_camera_[id]->SetClippingRange(clippingRange);
 
 }
 
@@ -320,8 +329,8 @@ void Rendering::GetRenderedImage(cv::Mat &img) {
 }
 
 void VTKConversions::AxisAngleToVTKMatrix(const cv::Vec3d cam_rvec,
-                                     const cv::Vec3d cam_tvec,
-                                     vtkSmartPointer<vtkMatrix4x4>  out) {
+                                          const cv::Vec3d cam_tvec,
+                                          vtkSmartPointer<vtkMatrix4x4>  out) {
 
 
     cv::Mat rotationMatrix(3, 3, cv::DataType<double>::type);
