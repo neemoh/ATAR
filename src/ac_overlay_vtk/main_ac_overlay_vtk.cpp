@@ -183,7 +183,7 @@ int main(int argc, char **argv)
 
     // --------------------------------------------------
     // MESH
-    std::string inputFilename = "/home/charm/Desktop/cads/task1_first_mq.STL";
+    std::string inputFilename = "/home/charm/Desktop/cads/task1_3_lq.STL";
     vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
     reader->SetFileName(inputFilename.c_str());
     reader->Update();

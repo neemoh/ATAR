@@ -236,15 +236,15 @@ vtk_module_config(VTK
 include(${VTK_USE_FILE})
 add_executable(
         ac_overlay_vtk
-        src/ac_overlay/main_ac_overlay_vtk.cpp
-        src/ac_overlay/CalibratedCamera.cpp
-        src/ac_overlay/CalibratedCamera.h
-        src/ac_overlay/Rendering.cpp
-        src/ac_overlay/Rendering.h
+        src/ac_overlay_vtk/main_ac_overlay_vtk.cpp
+        src/ac_overlay_vtk/CalibratedCamera.cpp
+        src/ac_overlay_vtk/CalibratedCamera.h
+        src/ac_overlay_vtk/Rendering.cpp
+        src/ac_overlay_vtk/Rendering.h
         src/utils/Drawings.cpp
         include/utils/Drawings.h
-        src/ac_overlay/OverlayROSConfig.cpp
-        src/ac_overlay/OverlayROSConfig.h)
+        src/ac_overlay_vtk/OverlayROSConfig.cpp
+        src/ac_overlay_vtk/OverlayROSConfig.h)
 
 target_link_libraries(
         ac_overlay_vtk
