@@ -37,149 +37,6 @@
 #include <vtkXMLPolyDataReader.h>
 
 
-void TestCellNormals(vtkPolyData* polydata);
-
-bool GetCellNormals(vtkPolyData* polydata);
-
-void TestCellNormals(vtkPolyData* polydata)
-{
-    // Try to read normals directly
-    bool hasCellNormals = GetCellNormals(polydata);
-
-    if(!hasCellNormals)
-    {
-        std::cout << "No cell normals were found. Computing normals..." << std::endl;
-
-        // Generate normals
-        vtkSmartPointer<vtkPolyDataNormals> normalGenerator = vtkSmartPointer<vtkPolyDataNormals>::New();
-#if VTK_MAJOR_VERSION <= 5
-        normalGenerator->SetInput(polydata);
-#else
-        normalGenerator->SetInputData(polydata);
-#endif
-        normalGenerator->ComputePointNormalsOff();
-        normalGenerator->ComputeCellNormalsOn();
-        normalGenerator->Update();
-        /*
-        // Optional settings
-        normalGenerator->SetFeatureAngle(0.1);
-        normalGenerator->SetSplitting(1);
-        normalGenerator->SetConsistency(0);
-        normalGenerator->SetAutoOrientNormals(0);
-        normalGenerator->SetComputePointNormals(1);
-        normalGenerator->SetComputeCellNormals(0);
-        normalGenerator->SetFlipNormals(0);
-        normalGenerator->SetNonManifoldTraversal(1);
-        */
-
-        polydata = normalGenerator->GetOutput();
-
-        // Try to read normals again
-        hasCellNormals = GetCellNormals(polydata);
-
-        std::cout << "cell: On the second try, has cell normals? " << hasCellNormals << std::endl;
-
-    }
-    else
-    {
-        std::cout << "Cell normals were found!" << std::endl;
-    }
-}
-
-
-bool GetCellNormals(vtkPolyData* polydata)
-{
-    std::cout << "Looking for cell normals..." << std::endl;
-
-    // Count points
-    vtkIdType numCells = polydata->GetNumberOfCells();
-    std::cout << "There are " << numCells << " cells." << std::endl;
-
-    // Count triangles
-    vtkIdType numPolys = polydata->GetNumberOfPolys();
-    std::cout << "There are " << numPolys << " polys." << std::endl;
-
-    ////////////////////////////////////////////////////////////////
-    // Double normals in an array
-    vtkDoubleArray* normalDataDouble =
-            vtkDoubleArray::SafeDownCast(polydata->GetCellData()->GetArray("Normals"));
-
-    if(normalDataDouble)
-    {
-        int nc = normalDataDouble->GetNumberOfTuples();
-        std::cout << "There are " << nc
-                  << " components in normalDataDouble" << std::endl;
-        return true;
-    }
-
-    ////////////////////////////////////////////////////////////////
-    // Double normals in an array
-    vtkFloatArray* normalDataFloat =
-            vtkFloatArray::SafeDownCast(polydata->GetCellData()->GetArray("Normals"));
-
-    if(normalDataFloat)
-    {
-        int nc = normalDataFloat->GetNumberOfTuples();
-        std::cout << "There are " << nc
-                  << " components in normalDataFloat" << std::endl;
-        return true;
-    }
-
-    ////////////////////////////////////////////////////////////////
-    // Point normals
-    vtkDoubleArray* normalsDouble =
-            vtkDoubleArray::SafeDownCast(polydata->GetCellData()->GetNormals());
-
-    if(normalsDouble)
-    {
-        std::cout << "There are " << normalsDouble->GetNumberOfComponents()
-                  << " components in normalsDouble" << std::endl;
-        return true;
-    }
-
-    ////////////////////////////////////////////////////////////////
-    // Point normals
-    vtkFloatArray* normalsFloat =
-            vtkFloatArray::SafeDownCast(polydata->GetCellData()->GetNormals());
-
-    if(normalsFloat)
-    {
-        std::cout << "There are " << normalsFloat->GetNumberOfComponents()
-                  << " components in normalsFloat" << std::endl;
-        return true;
-    }
-
-    /////////////////////////////////////////////////////////////////////
-    // Generic type point normals
-    vtkDataArray* normalsGeneric = polydata->GetCellData()->GetNormals(); //works
-    if(normalsGeneric)
-    {
-        std::cout << "There are " << normalsGeneric->GetNumberOfTuples()
-                  << " normals in normalsGeneric" << std::endl;
-
-        double testDouble[3];
-        normalsGeneric->GetTuple(0, testDouble);
-
-        std::cout << "Double: " << testDouble[0] << " "
-                  << testDouble[1] << " " << testDouble[2] << std::endl;
-
-        // Can't do this:
-        /*
-        float testFloat[3];
-        normalsGeneric->GetTuple(0, testFloat);
-
-        std::cout << "Float: " << testFloat[0] << " "
-                  << testFloat[1] << " " << testFloat[2] << std::endl;
-        */
-        return true;
-    }
-
-
-    // If the function has not yet quit, there were none of these types of normals
-    std::cout << "Normals not found!" << std::endl;
-    return false;
-
-}
 
 enum class Tasks {None, CricleAC, MultiplePaths};
 
@@ -244,12 +101,13 @@ int main(int argc, char **argv)
     vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter =
             vtkSmartPointer<vtkTransformPolyDataFilter>::New();
     transformFilter->SetInputConnection(sphereSource->GetOutputPort());
+    transformFilter->SetTransform(sphere_translation);
+    transformFilter->Update();
 
     vtkSmartPointer<vtkPolyDataMapper> sphereMapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
     sphereMapper->SetInputConnection(transformFilter->GetOutputPort());
-    transformFilter->SetTransform(sphere_translation);
-    transformFilter->Update();
+
     vtkSmartPointer<vtkActor> sphereActor = vtkSmartPointer<vtkActor>::New();
     int counter = 0;
     sphereActor->SetPosition(0.012, 0.00, 0.0);
@@ -260,21 +118,38 @@ int main(int argc, char **argv)
     // --------------------------------------------------
     // RING
     vtkSmartPointer<vtkParametricTorus> parametricObject = vtkSmartPointer<vtkParametricTorus>::New();
-    parametricObject->SetCrossSectionRadius(0.2);
-    parametricObject->SetRingRadius(1.5);
+    double ring_cross_section_radius = 0.001;
+    double ring_radius = 0.007;
+    double ring_scale = 0.006;
+    parametricObject->SetCrossSectionRadius(ring_cross_section_radius/ ring_scale);
+    parametricObject->SetRingRadius(ring_radius/ ring_scale);
     vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource =
             vtkSmartPointer<vtkParametricFunctionSource>::New();
     parametricFunctionSource->SetParametricFunction(parametricObject);
     parametricFunctionSource->Update();
 
+
+    // to transform the data
+    vtkSmartPointer<vtkTransform> ring_local_transform =
+            vtkSmartPointer<vtkTransform>::New();
+    vtkSmartPointer<vtkTransformPolyDataFilter> ring_local_transform_filter =
+            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+    ring_local_transform_filter->SetInputConnection(parametricFunctionSource->GetOutputPort());
+    ring_local_transform->RotateX(90);
+    ring_local_transform->Translate(0.0, ring_radius/ring_scale, 0.0);
+
+    ring_local_transform_filter->SetTransform(ring_local_transform);
+    ring_local_transform_filter->Update();
+
     vtkSmartPointer<vtkPolyDataMapper> ring_mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
-    ring_mapper->SetInputConnection(parametricFunctionSource->GetOutputPort());
+    ring_mapper->SetInputConnection(ring_local_transform_filter->GetOutputPort());
+
     // Create an line_actor for the contours
     vtkSmartPointer<vtkActor> ring_actor =
             vtkSmartPointer<vtkActor>::New();
     ring_actor->SetMapper(ring_mapper);
-    ring_actor->SetScale(0.005);
+    ring_actor->SetScale(ring_scale);
     ring_actor->GetProperty()->SetColor(0.2, 0.4, 0.4);
 
     // --------------------------------------------------
@@ -369,13 +244,11 @@ int main(int argc, char **argv)
     cellLocator->SetDataSet(mesh_transformFilter->GetOutput());
     cellLocator->BuildLocator();
 
-    TestCellNormals(polydata);
-
     double tool_point[3] = {0.0, 0.0, 0.0};
     //Find the closest points to TestPoint
-    double closestPoint[3];//the coordinates of the closest point will be returned here
+    double closest_point[3];//the coordinates of the closest point will be returned here
     double closestPointDist2; //the squared distance to the closest point will be returned here
-    vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
+    vtkIdType cell_id; //the cell id of the cell containing the closest point will be returned here
     int subId; //this is rarely used (in triangle strips only, I believe)
 
     // ------------------------------------
@@ -383,7 +256,7 @@ int main(int argc, char **argv)
     vtkSmartPointer<vtkLineSource> lineSource =
             vtkSmartPointer<vtkLineSource>::New();
     lineSource->SetPoint1(tool_point);
-    lineSource->SetPoint2(closestPoint);
+    lineSource->SetPoint2(closest_point);
     lineSource->Update();
 
     // Visualize
@@ -490,7 +363,8 @@ int main(int argc, char **argv)
             tool_current_frame_axes->SetUserMatrix(tool_current_vtkmatrix);
 
             ring_actor->SetUserMatrix(tool_current_vtkmatrix);
-            ring_actor->SetOrientation(90, 0, 0);
+
+//            ring_actor->SetOrientation(90, 0, 0);
 
             vtkSmartPointer<vtkMatrix4x4> tool_desired_vtkmatrix =vtkSmartPointer<vtkMatrix4x4>::New();
             VTKConversions::KDLFrameToVTKMatrix(rc.pose_desired_tool[0], tool_desired_vtkmatrix);
@@ -504,7 +378,7 @@ int main(int argc, char **argv)
 //            sphereActor->SetPosition(0.012 + 0.05 * sin(double(counter)/100*M_PI), 0.00, 0.0);
 //            sphereActor->Modified();
             double dx = 0.05 * sin(double(counter)/100*M_PI);
-            sphere_translation->Translate(dx/10000, 0.00, 0.0);
+            sphere_translation->Translate(dx/100, 0.00, 0.0);
             tool_point[0] = rc.pose_current_tool[0].p[0];
             tool_point[1] = rc.pose_current_tool[0].p[1];
             tool_point[2] = rc.pose_current_tool[0].p[2];
@@ -513,14 +387,14 @@ int main(int argc, char **argv)
 //            transformFilter->Update();
 //            sphereActor->Modified();
             cellLocator->Update();
-            cellLocator->FindClosestPoint(tool_point, closestPoint, cellId, subId, closestPointDist2);
+            cellLocator->FindClosestPoint(tool_point, closest_point, cell_id, subId, closestPointDist2);
             vtkSmartPointer<vtkIdList> point_ids  = vtkSmartPointer<vtkIdList>::New();
 
 
 
-//            point_ids = polydata->GetCell(cellId)->GetPointIds();
+//            point_ids = polydata->GetCell(cell_id)->GetPointIds();
 
-//            std::cout << polydata->GetCell(cellId)->GetPointIds()<< std::endl;
+//            std::cout << polydata->GetCell(cell_id)->GetPointIds()<< std::endl;
 
 //            double *point0
 //                    = polydata->GetCellData()->GetNormals()->GetTuple(point_ids->GetId(0));
@@ -542,9 +416,9 @@ int main(int argc, char **argv)
 //            printf(" 2z -> %f\n",point2[2]);
 
             lineSource->SetPoint1(tool_point);
-            lineSource->SetPoint2(closestPoint);
+            lineSource->SetPoint2(closest_point);
 
-//            std::cout << "Coordinates of closest point: " << closestPoint[0] << " " << closestPoint[1] << " " << closestPoint[2] << std::endl;
+//            std::cout << "Coordinates of closest point: " << closest_point[0] << " " << closest_point[1] << " " << closest_point[2] << std::endl;
 //            std::cout << "Squared distance to closest point: " << closestPointDist2 << std::endl;
 
             graphics.Render();
@@ -560,7 +434,7 @@ int main(int argc, char **argv)
 
         // updating the desired pose happens at the higher frequency
 
-        rc.pose_desired_tool[0].p = KDL::Vector(closestPoint[0], closestPoint[1], closestPoint[2]);
+        rc.pose_desired_tool[0].p = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
         // find desired orientation
         desired_normal = rc.pose_desired_tool[0].p - rc.pose_current_tool[0].p;
 
