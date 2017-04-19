@@ -16,7 +16,7 @@
     <node pkg="teleop_vision" type="camera_capture_flea3" name="camera" output="screen"> </node>
 
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
-    <node pkg="teleop_vision" type="ac_overlay" name="ac_overlay" output="screen">
+    <node pkg="teleop_vision" type="ac_overlay_vtk" name="ac_overlay" output="screen">
         <!-- About num_cam_pose_publishers:
             // We need to know the pose of the cameras with respect to the task-space coordinates.
             // If the camera or the markers move, the pose should be estimated by a node and here we
