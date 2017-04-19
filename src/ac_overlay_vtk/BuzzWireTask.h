@@ -38,8 +38,10 @@ public:
 
     void UpdateActors();
 
-    void CalculatedDesiredToolPose(const KDL::Frame current_pose, double closest_points[],
-                                       KDL::Frame &desired_pose);
+    void CalculatedDesiredToolPose(const KDL::Frame current_pose,
+                                   const KDL::Vector closest_point_to_tool_point,
+                                   const KDL::Vector closest_point_to_radial_points,
+                                   KDL::Frame &desired_pose);
 
     KDL::Frame GetDesiredToolPose();
 
@@ -50,7 +52,8 @@ private:
 
     double ring_radius_;
     double wire_radius_; // the curvy tube from the stl file
-    double closest_point[3] = {0.0, 0.0, 0.0};
+    KDL::Vector closest_point_to_tool_point;
+    KDL::Vector closest_point_to_radial_point;
 
     int counter =0; // TEMPORARY
 

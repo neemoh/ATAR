@@ -199,7 +199,6 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
     actors.push_back(ring_actor);
     actors.push_back(line_actor);
 
-
 }
 
 //----------------------------------------------------------------------------
@@ -228,16 +227,11 @@ void BuzzWireTask::UpdateActors() {
     VTKConversions::KDLFrameToVTKMatrix(tool_desired_pose_kdl, tool_desired_pose);
     tool_desired_frame_axes->SetUserMatrix(tool_desired_pose);
 
-
-
-
-
     counter++;
 //            sphereActor->SetPosition(0.012 + 0.05 * sin(double(counter)/100*M_PI), 0.00, 0.0);
 //            sphereActor->Modified();
     double dx = 0.05 * sin(double(counter)/100*M_PI);
     sphere_translation->Translate(dx/100, 0.00, 0.0);
-
 
 //            transformFilter->SetTransform(sphere_translation);
 //            transformFilter->Update();
@@ -250,62 +244,112 @@ void BuzzWireTask::UpdateActors() {
 //----------------------------------------------------------------------------
 void BuzzWireTask::FindClosestPoints() {
 
-    double tool_point[3] = {tool_current_pose->Element[0][3],
-                            tool_current_pose->Element[1][3],
-                            tool_current_pose->Element[2][3],};
-    ; //the coordinates of the closest point will be returned here
     double closestPointDist2; //the squared distance to the closest point will be returned here
     vtkIdType cell_id; //the cell id of the cell containing the closest point will be returned here
     int subId; //this is rarely used (in triangle strips only, I believe)
 
+    double tool_point[3] = {tool_current_pose_kdl.p[0],
+                            tool_current_pose_kdl.p[1],
+                            tool_current_pose_kdl.p[2]};
+
+
+    KDL::Vector radial_tool_point_kdl =  tool_current_pose_kdl * KDL::Vector(ring_radius_, 0.0, ring_radius_);
+    double radial_tool_point[3] = {radial_tool_point_kdl[0],
+                                   radial_tool_point_kdl[1],
+                                   radial_tool_point_kdl[2]};
+
+    double closest_point[3] = {0.0, 0.0, 0.0};
+
+    //Find the closest cell to the radial tool point
     cellLocator->Update();
     cellLocator->FindClosestPoint(tool_point, closest_point, cell_id, subId, closestPointDist2);
+    closest_point_to_tool_point = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
+
+    //Find the closest cell to the radial tool point
+    cellLocator->Update();
+    cellLocator->FindClosestPoint(radial_tool_point, closest_point, cell_id, subId, closestPointDist2);
+    closest_point_to_radial_point = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
+
+    // this will be calculated at a higher frequency in the main, here we do it once to update the actors
+    // according to the new desired poses. may be removed later
+    CalculatedDesiredToolPose(tool_current_pose_kdl, closest_point_to_tool_point, closest_point_to_radial_point, tool_desired_pose_kdl);
 
     lineSource->SetPoint1(tool_point);
-    lineSource->SetPoint2(closest_point);
+    lineSource->SetPoint2(tool_desired_pose_kdl.p[0], tool_desired_pose_kdl.p[1], tool_desired_pose_kdl.p[2]);
     lineSource->Update();}
 
 
 //----------------------------------------------------------------------------
 KDL::Frame BuzzWireTask::GetDesiredToolPose() {
 
-    CalculatedDesiredToolPose(tool_current_pose_kdl, closest_point, tool_desired_pose_kdl);
+    CalculatedDesiredToolPose(tool_current_pose_kdl, closest_point_to_tool_point, closest_point_to_radial_point, tool_desired_pose_kdl);
 
     return tool_desired_pose_kdl;
 }
 
+
 //----------------------------------------------------------------------------
-void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose, double closest_points[],
+void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
+                                             const KDL::Vector closest_point_to_tool_point,
+                                             const KDL::Vector closest_point_to_radial_points,
                                              KDL::Frame &desired_pose) {
 
-    desired_pose.p = KDL::Vector(closest_points[0], closest_points[1], closest_points[2]);
-
     // find desired orientation
-    KDL::Vector ac_path_tangent_current = KDL::Vector(closest_points[0] - current_pose.p[0],
-                                                      closest_points[1] - current_pose.p[1],
-                                                      closest_points[2] - current_pose.p[2]);
+    KDL::Vector tool_to_tpcp = closest_point_to_tool_point - current_pose.p;
 
+    // desired pose only when the ring is "around the wire" if it is too far we don't want fixtures
+    if (tool_to_tpcp.Norm() < ring_radius_) {
+        desired_pose.p = closest_point_to_tool_point
+                         - (ring_radius_ - wire_radius_) *
+                           (tool_to_tpcp / tool_to_tpcp.Norm());
 
-    // Assuming that the normal to the ring is the z vector of current_orientation
-    KDL::Vector ring_normal = current_pose.M.UnitZ();
+        KDL::Vector radial_tool_point_kdl = tool_current_pose_kdl *
+                                            KDL::Vector(ring_radius_, 0.0,
+                                                        ring_radius_);
 
-    // find the normal vector for the rotation to desired pose
-    KDL::Vector rotation_axis = ring_normal * ac_path_tangent_current;
+        KDL::Vector radial_to_rpcp =
+                closest_point_to_radial_points - radial_tool_point_kdl;
 
-    // find the magnitude of rotation
-    // we are interested in the smallest rotation (in the same quarter)
-    double rotation_angle = acos( (KDL::dot(ring_normal, ac_path_tangent_current)) /
-                                  (ring_normal.Norm() * ac_path_tangent_current.Norm()) );
+        KDL::Vector desired_z, desired_y, desired_x;
 
-    // If the ring is perpendicular to the tangent switch the direction of the tangent
-    // to get the smaller rotation
-    if(rotation_angle > M_PI/2)
-        rotation_angle = rotation_angle - M_PI;
+        desired_z = tool_to_tpcp / tool_to_tpcp.Norm();
+        desired_x = -radial_to_rpcp / radial_to_rpcp.Norm();
+        desired_y = desired_z * desired_x;
 
-    KDL::Rotation rotation_to_desired;
-    conversions::AxisAngleToKDLRotation(rotation_axis, rotation_angle, rotation_to_desired);
+        // make sure axes are perpendicular and normal
+        desired_y = desired_y / desired_y.Norm();
+        desired_x = desired_y * desired_z;
+        desired_x = desired_x / desired_x.Norm();
+        desired_z = desired_x * desired_y;
+        desired_z = desired_z / desired_z.Norm();
 
+        desired_pose.M = KDL::Rotation(desired_x, desired_y, desired_z);
+    }
+    else
+    {
+        desired_pose = current_pose;
 
-    desired_pose.M = rotation_to_desired * current_pose.M ;
+    }
+//    // Assuming that the normal to the ring is the z vector of current_orientation
+//    KDL::Vector ring_normal = current_pose.M.UnitZ();
+//
+//    // find the normal vector for the rotation to desired pose
+//    KDL::Vector rotation_axis = ring_normal * tool_to_tpcp;
+//
+//    // find the magnitude of rotation
+//    // we are interested in the smallest rotation (in the same quarter)
+//    double rotation_angle = acos( (KDL::dot(ring_normal, tool_to_tpcp)) /
+//                                  (ring_normal.Norm() * tool_to_tpcp.Norm()) );
+//
+//    // If the ring is perpendicular to the tangent switch the direction of the tangent
+//    // to get the smaller rotation
+//    if(rotation_angle > M_PI/2)
+//        rotation_angle = rotation_angle - M_PI;
+//
+//    KDL::Rotation rotation_to_desired;
+//    conversions::AxisAngleToKDLRotation(rotation_axis, rotation_angle, rotation_to_desired);
+//
+//
+//    desired_pose.M = rotation_to_desired * current_pose.M ;
 
 }
