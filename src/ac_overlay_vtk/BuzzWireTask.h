@@ -65,30 +65,27 @@ private:
 
     std::vector<vtkSmartPointer<vtkProp>> actors;
 
-    vtkSmartPointer<vtkSphereSource> sphereSource;
+    vtkSmartPointer<vtkSphereSource>                sphereSource;
+    vtkSmartPointer<vtkTransform>                   sphere_translation;
+    vtkSmartPointer<vtkTransformPolyDataFilter>     transformFilter;
+    vtkSmartPointer<vtkPolyDataMapper>              sphereMapper;
+    vtkSmartPointer<vtkActor>                       sphereActor;
 
-    vtkSmartPointer<vtkTransform> sphere_translation;
-    vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter;
-    vtkSmartPointer<vtkPolyDataMapper> sphereMapper;
-    vtkSmartPointer<vtkActor> sphereActor;
-    vtkSmartPointer<vtkParametricTorus> parametricObject;
-    vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource;
-    vtkSmartPointer<vtkTransform> ring_local_transform;
-    vtkSmartPointer<vtkTransformPolyDataFilter> ring_local_transform_filter;
-    vtkSmartPointer<vtkActor> ring_actor;
-    vtkSmartPointer<vtkAxesActor> task_coordinate_axes;
-    vtkSmartPointer<vtkAxesActor> tool_current_frame_axes;
-    vtkSmartPointer<vtkAxesActor> tool_desired_frame_axes;
-    vtkSmartPointer<vtkPolyDataMapper> ring_mapper;
-    vtkSmartPointer<vtkSTLReader> reader;
+    vtkSmartPointer<vtkParametricTorus>             parametricObject;
+    vtkSmartPointer<vtkParametricFunctionSource>    parametricFunctionSource;
+    vtkSmartPointer<vtkTransform>                   ring_local_transform;
+    vtkSmartPointer<vtkTransformPolyDataFilter>     ring_local_transform_filter;
+    vtkSmartPointer<vtkActor>                       ring_actor;
+    vtkSmartPointer<vtkPolyDataMapper>              ring_mapper;
 
-    vtkSmartPointer<vtkTransform> mesh_transform;
-    vtkSmartPointer<vtkTransformPolyDataFilter> mesh_transformFilter;
-    vtkSmartPointer<vtkPolyDataMapper> mesh_mapper;
-    vtkSmartPointer<vtkActor> mesh_actor;
-    vtkSmartPointer<vtkCellLocator> cellLocator;
-    vtkSmartPointer<vtkLineSource> lineSource;
-    vtkSmartPointer<vtkPolyDataMapper> line_mapper;
+    vtkSmartPointer<vtkAxesActor>                   task_coordinate_axes;
+    vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes;
+    vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes;
+
+    vtkSmartPointer<vtkCellLocator>                 cellLocator;
+
+    vtkSmartPointer<vtkLineSource>                  lineSource;
+    vtkSmartPointer<vtkPolyDataMapper>              line_mapper;
 
 };
 #endif //TELEOP_VISION_BUZZWIRETASK_H

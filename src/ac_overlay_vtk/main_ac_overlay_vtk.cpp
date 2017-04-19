@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
     graphics.Render();
 
-    BuzzWireTask btask(0.005, 0.002); // ring_radius and wire_radius
+    BuzzWireTask btask(0.004, 0.0005); // ring_radius and wire_radius
 
 
     graphics.AddActorsToScene(btask.GetActors());

@@ -29,11 +29,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
     tool_current_frame_axes = vtkSmartPointer<vtkAxesActor>::New();
     tool_desired_frame_axes = vtkSmartPointer<vtkAxesActor>::New();
 
-    reader = vtkSmartPointer<vtkSTLReader>::New();
-    mesh_transform = vtkSmartPointer<vtkTransform>::New();
-    mesh_transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    mesh_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    mesh_actor = vtkSmartPointer<vtkActor>::New();
+
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 
     lineSource = vtkSmartPointer<vtkLineSource>::New();
@@ -68,7 +64,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
 
     // --------------------------------------------------
     // RING
-    double ring_cross_section_radius = 0.001;
+    double ring_cross_section_radius = 0.0005;
     double ring_scale = 0.006;
     parametricObject->SetCrossSectionRadius(ring_cross_section_radius/ ring_scale);
     parametricObject->SetRingRadius(ring_radius_/ ring_scale);
@@ -93,17 +89,14 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
 
     ring_actor->SetMapper(ring_mapper);
     ring_actor->SetScale(ring_scale);
-    ring_actor->GetProperty()->SetColor(0.2, 0.4, 0.4);
+    ring_actor->GetProperty()->SetColor(0.1, 0.3, 0.4);
+    ring_actor->GetProperty()->SetSpecular(0.7);
 
     // --------------------------------------------------
     // FRAMES
 
 
     // The task_coordinate_axes are positioned with a user transform
-//    vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
-//    transform->Translate(0.0, 0, 0.0);
-//    transform->RotateX(0);
-//    task_coordinate_axes->SetUserTransform(transform);
     task_coordinate_axes->SetXAxisLabelText("");
     task_coordinate_axes->SetYAxisLabelText("");
     task_coordinate_axes->SetZAxisLabelText("");
@@ -123,61 +116,60 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
     tool_desired_frame_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
     // --------------------------------------------------
-    // MESH
-    double tube_radius = 0.002;
-    std::string inputFilename = "/home/charm/Desktop/cads/task1_3_mq.STL";
-    reader->SetFileName(inputFilename.c_str());
-    reader->Update();
-    vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
-    polydata->DeepCopy(reader->GetOutput());
-
-//    // Genreate Normals
-//    vtkSmartPointer<vtkPolyDataNormals> normalGenerator = vtkSmartPointer<vtkPolyDataNormals>::New();
-//
-//    normalGenerator->SetInputData(polydata);
-//    normalGenerator->ComputePointNormalsOff();
-//    normalGenerator->ComputeCellNormalsOn();
-//    normalGenerator->Update();
-//    /*
-//    // Optional settings
-//    normalGenerator->SetFeatureAngle(0.1);
-//    normalGenerator->SetSplitting(1);
-//    normalGenerator->SetConsistency(0);
-//    normalGenerator->SetAutoOrientNormals(0);
-//    normalGenerator->SetComputePointNormals(1);
-//    normalGenerator->SetComputeCellNormals(0);
-//    normalGenerator->SetFlipNormals(0);
-//    normalGenerator->SetNonManifoldTraversal(1);
-//    */
-//    polydata = normalGenerator->GetOutput();
-////    vtkSmartPointer<vtkDataArray>  cellNormals = vtkSmartPointer<vtkDataArray>::New();
-////    cellNormals = polydata->GetCellData()->GetNormals();
+    // MESH hq is for rendering and lq is for finding generating active constraints
+    std::string inputFilename = "/home/charm/Desktop/cads/task1_3_render.STL";
+    vtkSmartPointer<vtkSTLReader> hq_mesh_reader = vtkSmartPointer<vtkSTLReader>::New();
+    std::cout << "Loading stl file from: " << inputFilename << std::endl;
+    hq_mesh_reader->SetFileName(inputFilename.c_str());
+    hq_mesh_reader->Update();
 
     // transform
+    vtkSmartPointer<vtkTransform> mesh_transform = vtkSmartPointer<vtkTransform>::New();
     mesh_transform->Translate(0.07, 0.03, 0.0);
     mesh_transform->RotateX(180);
     mesh_transform->RotateZ(150);
 
+    vtkSmartPointer<vtkTransformPolyDataFilter> hq_mesh_transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+    hq_mesh_transformFilter->SetInputConnection(hq_mesh_reader->GetOutputPort());
+    hq_mesh_transformFilter->SetTransform(mesh_transform);
+    hq_mesh_transformFilter->Update();
 
-    mesh_transformFilter->SetInputConnection(reader->GetOutputPort());
-    mesh_transformFilter->SetTransform(mesh_transform);
-    mesh_transformFilter->Update();
+
+    vtkSmartPointer<vtkPolyDataMapper> hq_mesh_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    hq_mesh_mapper->SetInputConnection(hq_mesh_transformFilter->GetOutputPort());
+
+    vtkSmartPointer<vtkActor> hq_mesh_actor = vtkSmartPointer<vtkActor>::New();
+    hq_mesh_actor->SetMapper(hq_mesh_mapper);
+    hq_mesh_actor->GetProperty()->SetColor(0.9, 0.4, 0.1);
+    hq_mesh_actor->GetProperty()->SetSpecular(0.8);
+    hq_mesh_actor->GetProperty()->SetSpecularPower(80);
+//    hq_mesh_actor->GetProperty()->SetOpacity(0.5);
 
 
-    mesh_mapper->SetInputConnection(mesh_transformFilter->GetOutputPort());
-//    std::cout << "reader: " << mesh_mapper->GetLength() << std::endl;
-    mesh_actor->SetMapper(mesh_mapper);
-//    mesh_actor->SetPosition(0.00, 0.00, 0.0);
-//    mesh_actor->SetScale(0.0005);
-//    mesh_actor->SetOrientation(90, 0.0 , 90.0);
-    mesh_actor->GetProperty()->SetColor(0.7, 0.5, 0.2);
-    mesh_actor->GetProperty()->SetSpecular(0.8);
     // --------------------------------------------------
-    // CLOSEST POINT
-    // Create the tree
+    // MESH lq
+    inputFilename = "/home/charm/Desktop/cads/task1_3_lq_wire.STL";
+    vtkSmartPointer<vtkSTLReader> lq_mesh_reader = vtkSmartPointer<vtkSTLReader>::New();
+    std::cout << "Loading stl file from: " << inputFilename << std::endl;
+    lq_mesh_reader->SetFileName(inputFilename.c_str());
+    lq_mesh_reader->Update();
 
-//    cellLocator->SetDataSet(sphereActor->GetMapper()->GetInput());
-    cellLocator->SetDataSet(mesh_transformFilter->GetOutput());
+
+    vtkSmartPointer<vtkTransformPolyDataFilter> lq_mesh_transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+    lq_mesh_transformFilter->SetInputConnection(lq_mesh_reader->GetOutputPort());
+    lq_mesh_transformFilter->SetTransform(mesh_transform);
+    lq_mesh_transformFilter->Update();
+
+
+    vtkSmartPointer<vtkPolyDataMapper> lq_mesh_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    lq_mesh_mapper->SetInputConnection(lq_mesh_transformFilter->GetOutputPort());
+
+    vtkSmartPointer<vtkActor> lq_mesh_actor = vtkSmartPointer<vtkActor>::New();
+    lq_mesh_actor->SetMapper(lq_mesh_mapper);
+
+    // --------------------------------------------------
+    // CLOSEST POINT will be found on the low quality mesh
+    cellLocator->SetDataSet(lq_mesh_transformFilter->GetOutput());
     cellLocator->BuildLocator();
 
 
@@ -195,7 +187,8 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
     actors.push_back(tool_current_frame_axes);
     actors.push_back(tool_desired_frame_axes);
     actors.push_back(sphereActor);
-    actors.push_back(mesh_actor);
+    actors.push_back(hq_mesh_actor);
+//    actors.push_back(lq_mesh_actor);
     actors.push_back(ring_actor);
     actors.push_back(line_actor);
 
@@ -298,10 +291,9 @@ void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
     KDL::Vector tool_to_tpcp = closest_point_to_tool_point - current_pose.p;
 
     // desired pose only when the ring is "around the wire" if it is too far we don't want fixtures
-    if (tool_to_tpcp.Norm() < ring_radius_) {
+    if (tool_to_tpcp.Norm() < 2*ring_radius_) {
         desired_pose.p = closest_point_to_tool_point
-                         - (ring_radius_ - wire_radius_) *
-                           (tool_to_tpcp / tool_to_tpcp.Norm());
+                         - (ring_radius_ - wire_radius_) * (tool_to_tpcp / tool_to_tpcp.Norm());
 
         KDL::Vector radial_tool_point_kdl = tool_current_pose_kdl *
                                             KDL::Vector(ring_radius_, 0.0,
