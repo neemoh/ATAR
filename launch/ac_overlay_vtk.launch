@@ -56,7 +56,7 @@
             // hand needs to be update faster (even if the ac geometry may be updated at the
             // rate of the received images if it is generated based on the image).
         -->
-        <param name= "desired_pose_update_frequency" value= "100" />
+        <param name= "desired_pose_update_frequency" value= "500" />
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
@@ -81,7 +81,12 @@
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
         <param name="master_2_name" value="$(arg master_2_name)"/>
-        <param name="node_frequency" value="100"/>
+          <param name="max_force" value="4"/>
+          <param name="max_torque" value="0.03"/>
+          <param name="linear_elastic_coeff" value="1000"/>
+          <param name="linear_damping_coeff" value="5"/>
+          <param name="angular_elastic_coeff" value="0.04"/>
+          <param name="angular_damping_coeff" value="0.002"/>
     </node>
 
 
