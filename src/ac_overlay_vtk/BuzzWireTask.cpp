@@ -3,6 +3,7 @@
 //
 
 #include <utils/Conversions.hpp>
+#include <vtkCubeSource.h>
 #include "BuzzWireTask.h"
 
 BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
@@ -117,7 +118,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
 
     // --------------------------------------------------
     // MESH hq is for rendering and lq is for finding generating active constraints
-    std::string inputFilename = "/home/charm/Desktop/cads/task1_3_render.STL";
+    std::string inputFilename = "/home/charm/Desktop/cads/task1_4_tube.STL";
     vtkSmartPointer<vtkSTLReader> hq_mesh_reader = vtkSmartPointer<vtkSTLReader>::New();
     std::cout << "Loading stl file from: " << inputFilename << std::endl;
     hq_mesh_reader->SetFileName(inputFilename.c_str());
@@ -125,7 +126,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
 
     // transform
     vtkSmartPointer<vtkTransform> mesh_transform = vtkSmartPointer<vtkTransform>::New();
-    mesh_transform->Translate(0.07, 0.03, 0.0);
+    mesh_transform->Translate(0.07, 0.04, 0.025);
     mesh_transform->RotateX(180);
     mesh_transform->RotateZ(150);
 
@@ -147,8 +148,32 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
 
 
     // --------------------------------------------------
+    // Stand MESH hq
+    inputFilename = "/home/charm/Desktop/cads/task1_4_stand.STL";
+    vtkSmartPointer<vtkSTLReader> stand_mesh_reader = vtkSmartPointer<vtkSTLReader>::New();
+    std::cout << "Loading stl file from: " << inputFilename << std::endl;
+    stand_mesh_reader->SetFileName(inputFilename.c_str());
+    stand_mesh_reader->Update();
+
+
+    vtkSmartPointer<vtkTransformPolyDataFilter> stand_mesh_transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+    stand_mesh_transformFilter->SetInputConnection(stand_mesh_reader->GetOutputPort());
+    stand_mesh_transformFilter->SetTransform(mesh_transform);
+    stand_mesh_transformFilter->Update();
+
+
+    vtkSmartPointer<vtkPolyDataMapper> stand_mesh_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    stand_mesh_mapper->SetInputConnection(stand_mesh_transformFilter->GetOutputPort());
+
+    vtkSmartPointer<vtkActor> stand_mesh_actor = vtkSmartPointer<vtkActor>::New();
+    stand_mesh_actor->SetMapper(stand_mesh_mapper);
+    stand_mesh_actor->GetProperty()->SetColor(0.45, 0.4, 0.4);
+//    stand_mesh_actor->GetProperty()->SetSpecular(0.8);
+
+
+    // --------------------------------------------------
     // MESH lq
-    inputFilename = "/home/charm/Desktop/cads/task1_3_lq_wire.STL";
+    inputFilename = "/home/charm/Desktop/cads/task1_4_wire.STL";
     vtkSmartPointer<vtkSTLReader> lq_mesh_reader = vtkSmartPointer<vtkSTLReader>::New();
     std::cout << "Loading stl file from: " << inputFilename << std::endl;
     lq_mesh_reader->SetFileName(inputFilename.c_str());
@@ -167,13 +192,29 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
     vtkSmartPointer<vtkActor> lq_mesh_actor = vtkSmartPointer<vtkActor>::New();
     lq_mesh_actor->SetMapper(lq_mesh_mapper);
 
-    // --------------------------------------------------
     // CLOSEST POINT will be found on the low quality mesh
     cellLocator->SetDataSet(lq_mesh_transformFilter->GetOutput());
     cellLocator->BuildLocator();
 
+    // --------------------------------------------------
+    // Create a cube for the floor
+    vtkSmartPointer<vtkCubeSource> floor_source =
+            vtkSmartPointer<vtkCubeSource>::New();
+    double floor_dimensions[3] = {0.1, 0.07, 0.001};
+    floor_source->SetXLength(floor_dimensions[0]);
+    floor_source->SetYLength(floor_dimensions[1]);
+    floor_source->SetZLength(floor_dimensions[2]);
+    // Create a mapper and actor.
+    vtkSmartPointer<vtkPolyDataMapper> floor_mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    floor_mapper->SetInputConnection(floor_source->GetOutputPort());
+    vtkSmartPointer<vtkActor> floor_actor = vtkSmartPointer<vtkActor>::New();
+    floor_actor->SetMapper(floor_mapper);
+    floor_actor->SetPosition(floor_dimensions[0]/2, floor_dimensions[1]/2 , -floor_dimensions[2]);
+    floor_actor->GetProperty()->SetOpacity(0.3);
+    floor_actor->GetProperty()->SetColor(0.7, 0.7, 0.7);
 
-
+//    floor_actor->SetScale(ring_scale);
     // Visualize
 
     line_mapper->SetInputConnection(lineSource->GetOutputPort());
@@ -188,9 +229,18 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius) :
     actors.push_back(tool_desired_frame_axes);
     actors.push_back(sphereActor);
     actors.push_back(hq_mesh_actor);
+    actors.push_back(stand_mesh_actor);
+    actors.push_back(floor_actor);
 //    actors.push_back(lq_mesh_actor);
     actors.push_back(ring_actor);
     actors.push_back(line_actor);
+
+
+
+
+    
+
+
 
 }
 

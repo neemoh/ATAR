@@ -83,7 +83,6 @@ void BoardDetector::Detect(cv::InputOutputArray &image) {
             tvec += translation_current / n_avg_steps;
         }
 
-
         // wait for the initialization of the averaging (4 times the avg window should be enough)
         if (frame_counter_ < n_avg_steps * 4){
             frame_counter_++;
