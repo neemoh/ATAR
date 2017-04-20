@@ -26,6 +26,7 @@
 #include <vtkDoubleArray.h>
 #include <vtkFloatArray.h>
 #include <vtkPolyDataNormals.h>
+#include <vtkCornerAnnotation.h>
 
 class BuzzWireTask {
 public:
@@ -39,9 +40,9 @@ public:
     void UpdateActors();
 
     void CalculatedDesiredToolPose(const KDL::Frame current_pose,
-                                   const KDL::Vector closest_point_to_tool_point,
-                                   const KDL::Vector closest_point_to_radial_points,
-                                   KDL::Frame &desired_pose);
+                                       const KDL::Vector closest_point_to_ring_center,
+                                       const KDL::Vector closest_point_to_radial_points,
+                                       KDL::Frame &desired_pose);
 
     KDL::Frame GetDesiredToolPose();
 
@@ -53,9 +54,9 @@ private:
 
     double ring_radius_;
     double wire_radius_; // the curvy tube from the stl file
-    KDL::Vector closest_point_to_tool_point;
+    KDL::Vector closest_point_to_ring_center;
     KDL::Vector closest_point_to_radial_point;
-
+    double error_position;
     bool show_ref_frames_ = false;
 
     KDL::Frame tool_desired_pose_kdl;
@@ -67,6 +68,7 @@ private:
     std::vector<vtkSmartPointer<vtkProp>> actors;
 
     vtkSmartPointer<vtkActor>                       ring_actor;
+    vtkSmartPointer<vtkActor>                       error_sphere_actor;
 
     vtkSmartPointer<vtkAxesActor>                   task_coordinate_axes;
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes;
@@ -74,9 +76,10 @@ private:
 
     vtkSmartPointer<vtkCellLocator>                 cellLocator;
 
-    vtkSmartPointer<vtkLineSource>                  lineSource;
-    vtkSmartPointer<vtkPolyDataMapper>              line_mapper;
+    vtkSmartPointer<vtkLineSource>                  line1_source;
+    vtkSmartPointer<vtkLineSource>                  line2_source;
 
     vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
+    vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
 };
 #endif //TELEOP_VISION_BUZZWIRETASK_H

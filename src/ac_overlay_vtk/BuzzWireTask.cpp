@@ -13,6 +13,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius,
 {
 
     ring_actor = vtkSmartPointer<vtkActor>::New();
+    error_sphere_actor = vtkSmartPointer<vtkActor>::New();
 
     task_coordinate_axes = vtkSmartPointer<vtkAxesActor>::New();
 
@@ -21,8 +22,9 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius,
 
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 
-    lineSource = vtkSmartPointer<vtkLineSource>::New();
-    line_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    line1_source = vtkSmartPointer<vtkLineSource>::New();
+
+    line2_source = vtkSmartPointer<vtkLineSource>::New();
 
     tool_current_pose =vtkSmartPointer<vtkMatrix4x4>::New();
 
@@ -57,8 +59,6 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius,
     vtkSmartPointer<vtkPolyDataMapper> ring_mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
     ring_mapper->SetInputConnection(ring_local_transform_filter->GetOutputPort());
-
-    // Create an line_actor for the contours
 
     ring_actor->SetMapper(ring_mapper);
     ring_actor->SetScale(ring_scale);
@@ -210,7 +210,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius,
     floor_source->SetXLength(floor_dimensions[0]);
     floor_source->SetYLength(floor_dimensions[1]);
     floor_source->SetZLength(floor_dimensions[2]);
-    // Create a mapper and actor.
+    // Create a sphere_mapper and actor.
     vtkSmartPointer<vtkPolyDataMapper> floor_mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
     floor_mapper->SetInputConnection(floor_source->GetOutputPort());
@@ -221,27 +221,68 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius,
     floor_actor->GetProperty()->SetColor(0.7, 0.7, 0.7);
 
     //    floor_actor->SetScale(ring_scale);
-    // Visualize
-
-    line_mapper->SetInputConnection(lineSource->GetOutputPort());
-    vtkSmartPointer<vtkActor> line_actor =
+    // Lines
+    vtkSmartPointer<vtkPolyDataMapper> line1_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    line1_mapper->SetInputConnection(line1_source->GetOutputPort());
+    vtkSmartPointer<vtkActor> line1_actor =
             vtkSmartPointer<vtkActor>::New();
-    line_actor->SetMapper(line_mapper);
-    line_actor->GetProperty()->SetLineWidth(4);
+    line1_actor->SetMapper(line1_mapper);
+    line1_actor->GetProperty()->SetLineWidth(5);
+    line1_actor->GetProperty()->SetColor(1, 0, 1);
 
-    actors.push_back(hq_mesh_actor);
-    actors.push_back(stand_mesh_actor);
-//    actors.push_back(floor_actor);
-    //    actors.push_back(lq_mesh_actor);
-    actors.push_back(ring_actor);
-    actors.push_back(line_actor);
-    actors.push_back(ring_guides_mesh_actor);
+    vtkSmartPointer<vtkPolyDataMapper> line2_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    line2_mapper->SetInputConnection(line2_source->GetOutputPort());
+    vtkSmartPointer<vtkActor> line2_actor =
+            vtkSmartPointer<vtkActor>::New();
+    line2_actor->SetMapper(line2_mapper);
+    line2_actor->GetProperty()->SetLineWidth(3);
+
+
+//    cornerAnnotation =
+//            vtkSmartPointer<vtkCornerAnnotation>::New();
+//    cornerAnnotation->SetLinearFontScaleFactor( 2 );
+//    cornerAnnotation->SetNonlinearFontScaleFactor( 1 );
+//    cornerAnnotation->SetMaximumFontSize( 20 );
+//    cornerAnnotation->SetText( 0, "lower left" );
+//    cornerAnnotation->SetText( 1, "lower right" );
+//    cornerAnnotation->SetText( 2, "upper left" );
+//    cornerAnnotation->SetText( 3, "upper right" );
+////    cornerAnnotation->GetTextProperty()->SetColor( 1, 0, 0 );
+
+
+
+    // --------------------------------------------------
+    // Error sphere
+    vtkSmartPointer<vtkSphereSource> sphereSource =
+            vtkSmartPointer<vtkSphereSource>::New();
+    sphereSource->SetCenter(-0.02, 0.08, 0.01);
+    sphereSource->SetRadius(0.005);
+    sphereSource->SetPhiResolution(10);
+    sphereSource->SetThetaResolution(10);
+    vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    sphere_mapper->SetInputConnection(sphereSource->GetOutputPort());
+    error_sphere_actor->SetMapper(sphere_mapper);
+    error_sphere_actor->GetProperty()->SetColor(0.0, 0.7, 0.1);
 
     if(show_ref_frames_) {
         actors.push_back(task_coordinate_axes);
         actors.push_back(tool_current_frame_axes);
         actors.push_back(tool_desired_frame_axes);
     }
+
+    actors.push_back(hq_mesh_actor);
+    actors.push_back(stand_mesh_actor);
+//    actors.push_back(floor_actor);
+    //    actors.push_back(lq_mesh_actor);
+    actors.push_back(ring_actor);
+    actors.push_back(line1_actor);
+//    actors.push_back(line2_actor);
+    actors.push_back(ring_guides_mesh_actor);
+    actors.push_back(error_sphere_actor);
+    // add the annotation as the last actor
+//    actors.push_back(cornerAnnotation);
+
 
 }
 
@@ -265,12 +306,20 @@ void BuzzWireTask::UpdateActors() {
 
     ring_actor->SetUserMatrix(tool_current_pose);
     ring_guides_mesh_actor->SetUserMatrix(tool_current_pose);
-    FindClosestPoints();
 
     vtkSmartPointer<vtkMatrix4x4> tool_desired_pose =vtkSmartPointer<vtkMatrix4x4>::New();
     VTKConversions::KDLFrameToVTKMatrix(tool_desired_pose_kdl, tool_desired_pose);
     tool_desired_frame_axes->SetUserMatrix(tool_desired_pose);
 
+//    std::stringstream error_message;
+//    error_message << error_position;
+//    cornerAnnotation->SetText( 1, error_message.str().c_str() );
+    double max_error = 0.004;
+    double error_ratio = error_position / max_error;
+    if(error_ratio>1.0)
+        error_ratio = 1.0;
+
+    error_sphere_actor->GetProperty()->SetColor(error_ratio, 1 - error_ratio, 0.1);
 
 }
 
@@ -282,41 +331,58 @@ void BuzzWireTask::FindClosestPoints() {
     vtkIdType cell_id; //the cell id of the cell containing the closest point will be returned here
     int subId; //this is rarely used (in triangle strips only, I believe)
 
-    double tool_point[3] = {tool_current_pose_kdl.p[0],
-                            tool_current_pose_kdl.p[1],
-                            tool_current_pose_kdl.p[2]};
 
+    KDL::Vector ring_centeral_point_kdl =  tool_current_pose_kdl * KDL::Vector(0.0, 0.0, ring_radius_);
+    double ring_central_point[3] = {ring_centeral_point_kdl[0],
+                            ring_centeral_point_kdl[1],
+                            ring_centeral_point_kdl[2]};
 
+    double closest_point[3] = {0.0, 0.0, 0.0};
+
+    //Find the closest cell to the tool point
+    cellLocator->Update();
+    cellLocator->FindClosestPoint(ring_central_point, closest_point, cell_id, subId, closestPointDist2);
+    closest_point_to_ring_center = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
+
+//    // draw the line
+//    line1_source->SetPoint1(ring_central_point);
+//    line1_source->SetPoint2(closest_point);
+//    line1_source->Update();
+
+    //Find the closest cell to the radial tool point
     KDL::Vector radial_tool_point_kdl =  tool_current_pose_kdl * KDL::Vector(ring_radius_, 0.0, ring_radius_);
     double radial_tool_point[3] = {radial_tool_point_kdl[0],
                                    radial_tool_point_kdl[1],
                                    radial_tool_point_kdl[2]};
-
-    double closest_point[3] = {0.0, 0.0, 0.0};
-
-    //Find the closest cell to the radial tool point
-    cellLocator->Update();
-    cellLocator->FindClosestPoint(tool_point, closest_point, cell_id, subId, closestPointDist2);
-    closest_point_to_tool_point = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
-
-    //Find the closest cell to the radial tool point
     cellLocator->Update();
     cellLocator->FindClosestPoint(radial_tool_point, closest_point, cell_id, subId, closestPointDist2);
     closest_point_to_radial_point = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
 
     // this will be calculated at a higher frequency in the main, here we do it once to update the actors
     // according to the new desired poses. may be removed later
-    CalculatedDesiredToolPose(tool_current_pose_kdl, closest_point_to_tool_point, closest_point_to_radial_point, tool_desired_pose_kdl);
+    CalculatedDesiredToolPose(tool_current_pose_kdl,
+                              closest_point_to_ring_center,
+                              closest_point_to_radial_point,
+                              tool_desired_pose_kdl);
 
-    lineSource->SetPoint1(tool_point);
-    lineSource->SetPoint2(tool_desired_pose_kdl.p[0], tool_desired_pose_kdl.p[1], tool_desired_pose_kdl.p[2]);
-    lineSource->Update();}
+    line1_source->SetPoint1(ring_central_point);
+    line1_source->SetPoint2(tool_desired_pose_kdl.p[0], tool_desired_pose_kdl.p[1], tool_desired_pose_kdl.p[2]);
+//    line2_source->SetPoint2(closest_point);
+    line1_source->Update();
+
+
+}
 
 
 //----------------------------------------------------------------------------
 KDL::Frame BuzzWireTask::GetDesiredToolPose() {
 
-    CalculatedDesiredToolPose(tool_current_pose_kdl, closest_point_to_tool_point, closest_point_to_radial_point, tool_desired_pose_kdl);
+    FindClosestPoints();
+
+    CalculatedDesiredToolPose(tool_current_pose_kdl,
+                              closest_point_to_ring_center,
+                              closest_point_to_radial_point,
+                              tool_desired_pose_kdl);
 
     return tool_desired_pose_kdl;
 }
@@ -324,19 +390,37 @@ KDL::Frame BuzzWireTask::GetDesiredToolPose() {
 
 //----------------------------------------------------------------------------
 void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
-                                             const KDL::Vector closest_point_to_tool_point,
+                                             const KDL::Vector closest_point_to_ring_center,
                                              const KDL::Vector closest_point_to_radial_points,
                                              KDL::Frame &desired_pose) {
 
-    // find desired orientation
-    KDL::Vector tool_to_tpcp = closest_point_to_tool_point - current_pose.p;
+    KDL::Vector ring_center = current_pose * KDL::Vector(0.0, 0.0, ring_radius_);
 
-    // desired pose only when the ring is "around the wire" if it is too far we don't want fixtures
-    if (tool_to_tpcp.Norm() < 2*ring_radius_) {
-        desired_pose.p = closest_point_to_tool_point
-                         - (ring_radius_ - wire_radius_) * (tool_to_tpcp / tool_to_tpcp.Norm());
+    KDL::Vector ring_center_to_cp = closest_point_to_ring_center - ring_center;
 
-        KDL::Vector radial_tool_point_kdl = tool_current_pose_kdl *
+    // desired pose only when the ring is close to the wire.if it is too
+    // far we don't want fixtures
+
+    if (ring_center_to_cp.Norm()  < 3*ring_radius_) {
+
+        // Desired positio is one that puts the center of the wire on the
+        // center of the ring.
+
+        //-----------------------------------
+        // Find the desired position
+        //        desired_pose.p = closest_point_to_ring_center
+        //                         - (ring_radius_ - wire_radius_) * (ring_center_to_cp / ring_center_to_cp.Norm());
+        KDL::Vector wire_center =
+                ring_center + ring_center_to_cp + wire_radius_* (ring_center_to_cp / ring_center_to_cp.Norm());
+
+
+
+        error_position = (wire_center - ring_center).Norm();
+        desired_pose.p = current_pose.p + wire_center - ring_center;
+
+           //-----------------------------------
+        // Find the desired orientation
+        KDL::Vector radial_tool_point_kdl = current_pose *
                                             KDL::Vector(ring_radius_, 0.0,
                                                         ring_radius_);
 
@@ -345,7 +429,9 @@ void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
 
         KDL::Vector desired_z, desired_y, desired_x;
 
-        desired_z = tool_to_tpcp / tool_to_tpcp.Norm();
+        KDL::Vector tool_to_cp = closest_point_to_ring_center - current_pose.p;
+
+        desired_z = tool_to_cp / tool_to_cp.Norm();
         desired_x = -radial_to_rpcp / radial_to_rpcp.Norm();
         desired_y = desired_z * desired_x;
 
@@ -367,12 +453,12 @@ void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
 //    KDL::Vector ring_normal = current_pose.M.UnitZ();
 //
 //    // find the normal vector for the rotation to desired pose
-//    KDL::Vector rotation_axis = ring_normal * tool_to_tpcp;
+//    KDL::Vector rotation_axis = ring_normal * ring_center_to_cp;
 //
 //    // find the magnitude of rotation
 //    // we are interested in the smallest rotation (in the same quarter)
-//    double rotation_angle = acos( (KDL::dot(ring_normal, tool_to_tpcp)) /
-//                                  (ring_normal.Norm() * tool_to_tpcp.Norm()) );
+//    double rotation_angle = acos( (KDL::dot(ring_normal, ring_center_to_cp)) /
+//                                  (ring_normal.Norm() * ring_center_to_cp.Norm()) );
 //
 //    // If the ring is perpendicular to the tangent switch the direction of the tangent
 //    // to get the smaller rotation
