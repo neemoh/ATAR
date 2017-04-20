@@ -52,10 +52,13 @@ int main(int argc, char **argv)
 
     graphics.Render();
 
-    BuzzWireTask btask(0.004, 0.0005, rc.show_reference_frames); // ring_radius and wire_radius, show frames
+    // create the task
+    double ring_radius = 0.004;
+    BuzzWireTask buzztask(ring_radius, rc.show_reference_frames);
 
 
-    graphics.AddActorsToScene(btask.GetActors());
+    graphics.AddActorsToScene(buzztask.GetActors());
+    KDL::Frame pose_desired_tool[2];
 
     while (ros::ok())
     {
@@ -70,15 +73,17 @@ int main(int argc, char **argv)
             VisualUtils::SwitchFullScreen(cv_window_name);
         else if (key == '1'){
             ROS_INFO("Task 1 Selected");
-                 }
+        }
 
-        btask.SetCurrentToolPose(rc.pose_current_tool[0]);
+        buzztask.SetCurrentToolPose(rc.pose_current_tool[0]);
 
         if(rc.new_left_image && rc.new_right_image) {
 
+            // Time performance debug
+            //ros::Time start =ros::Time::now();
+
             rc.ImageLeft(ros::Duration(1)).copyTo(cam_images[0]);
             rc.ImageRight(ros::Duration(1)).copyTo(cam_images[1]);
-
 
             // print instructions
             for (int i = 0; i < 2; ++i)
@@ -86,7 +91,7 @@ int main(int argc, char **argv)
                             cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
 
             // update the moving actors
-            btask.UpdateActors();
+            buzztask.UpdateActors();
 
             // update the camera images and view angle (in case window changes size)
             graphics.UpdateBackgroundImage(cam_images);
@@ -98,15 +103,20 @@ int main(int argc, char **argv)
             // Copy the rendered image to memory, show it and publish it.
             graphics.GetRenderedImage(augmented_stereo_image);
             cv::imshow(cv_window_name, augmented_stereo_image);
-            rc.publisher_stereo_overlayed.publish(cv_bridge::CvImage(std_msgs::Header(),
-                                                                     "bgr8", augmented_stereo_image).toImageMsg());
+            rc.publisher_stereo_overlayed.publish(
+                    cv_bridge::CvImage(std_msgs::Header(),
+                                       "bgr8", augmented_stereo_image).toImageMsg());
+            // updating the desired pose
+            pose_desired_tool[0] = buzztask.GetDesiredToolPose();
+
+            // std::cout <<  "it took: " << (ros::Time::now() - start).toNSec() /1000000 << std::endl;
 
         } // if new image
 
-        // updating the desired pose happens at the higher frequency
-        KDL::Frame pose_desired_tool[2];
-        pose_desired_tool[0] = btask.GetDesiredToolPose();
+        // the graphics take already about 30 to 40 milliseconds so publishing
+        // the pose really doesn't happen faster here
         rc.PublishDesiredPose(pose_desired_tool);
+
 
         ros::spinOnce();
         loop_rate.sleep();

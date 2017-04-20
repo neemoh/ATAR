@@ -31,7 +31,7 @@
 class BuzzWireTask {
 public:
 
-    BuzzWireTask(const double ring_radius, const double wire_radius, const bool show_ref_frames);
+    BuzzWireTask(const double ring_radius, const bool show_ref_frames);
 
     std::vector< vtkSmartPointer <vtkProp> > GetActors();
 
@@ -41,7 +41,8 @@ public:
 
     void CalculatedDesiredToolPose(const KDL::Frame current_pose,
                                        const KDL::Vector closest_point_to_ring_center,
-                                       const KDL::Vector closest_point_to_radial_points,
+                                       const KDL::Vector closest_point_to_radial_point,
+                                       const KDL::Vector closest_point_to_grip_point,
                                        KDL::Frame &desired_pose);
 
     KDL::Frame GetDesiredToolPose();
@@ -53,9 +54,11 @@ private:
 private:
 
     double ring_radius_;
-    double wire_radius_; // the curvy tube from the stl file
+//    double wire_radius_; // the curvy tube from the stl file
     KDL::Vector closest_point_to_ring_center;
     KDL::Vector closest_point_to_radial_point;
+    KDL::Vector closest_point_to_grip_point;
+
     double error_position;
     bool show_ref_frames_ = false;
 

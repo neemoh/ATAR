@@ -6,9 +6,9 @@
 #include <vtkCubeSource.h>
 #include "BuzzWireTask.h"
 
-BuzzWireTask::BuzzWireTask(const double ring_radius, const double wire_radius,
-                           const bool show_ref_frames) :
-        ring_radius_(ring_radius), wire_radius_(wire_radius),
+BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
+        :
+        ring_radius_(ring_radius),
         show_ref_frames_(show_ref_frames)
 {
 
@@ -307,6 +307,8 @@ void BuzzWireTask::UpdateActors() {
     ring_actor->SetUserMatrix(tool_current_pose);
     ring_guides_mesh_actor->SetUserMatrix(tool_current_pose);
 
+    FindClosestPoints();
+
     vtkSmartPointer<vtkMatrix4x4> tool_desired_pose =vtkSmartPointer<vtkMatrix4x4>::New();
     VTKConversions::KDLFrameToVTKMatrix(tool_desired_pose_kdl, tool_desired_pose);
     tool_desired_frame_axes->SetUserMatrix(tool_desired_pose);
@@ -332,22 +334,25 @@ void BuzzWireTask::FindClosestPoints() {
     int subId; //this is rarely used (in triangle strips only, I believe)
 
 
-    KDL::Vector ring_centeral_point_kdl =  tool_current_pose_kdl * KDL::Vector(0.0, 0.0, ring_radius_);
-    double ring_central_point[3] = {ring_centeral_point_kdl[0],
-                            ring_centeral_point_kdl[1],
-                            ring_centeral_point_kdl[2]};
+    //Find the closest cell to the grip point
+    double grip_point[3] = {tool_current_pose_kdl.p[0],
+                            tool_current_pose_kdl.p[1],
+                            tool_current_pose_kdl.p[2]};
 
     double closest_point[3] = {0.0, 0.0, 0.0};
+    cellLocator->Update();
+    cellLocator->FindClosestPoint(grip_point, closest_point, cell_id, subId, closestPointDist2);
+    closest_point_to_grip_point = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
 
-    //Find the closest cell to the tool point
+
+    //Find the closest cell to the the central point
+    KDL::Vector ring_centeral_point_kdl =  tool_current_pose_kdl * KDL::Vector(0.0, 0.0, ring_radius_);
+    double ring_central_point[3] = {ring_centeral_point_kdl[0],
+                                    ring_centeral_point_kdl[1],
+                                    ring_centeral_point_kdl[2]};
     cellLocator->Update();
     cellLocator->FindClosestPoint(ring_central_point, closest_point, cell_id, subId, closestPointDist2);
     closest_point_to_ring_center = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
-
-//    // draw the line
-//    line1_source->SetPoint1(ring_central_point);
-//    line1_source->SetPoint2(closest_point);
-//    line1_source->Update();
 
     //Find the closest cell to the radial tool point
     KDL::Vector radial_tool_point_kdl =  tool_current_pose_kdl * KDL::Vector(ring_radius_, 0.0, ring_radius_);
@@ -358,16 +363,15 @@ void BuzzWireTask::FindClosestPoints() {
     cellLocator->FindClosestPoint(radial_tool_point, closest_point, cell_id, subId, closestPointDist2);
     closest_point_to_radial_point = KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
 
-    // this will be calculated at a higher frequency in the main, here we do it once to update the actors
-    // according to the new desired poses. may be removed later
-    CalculatedDesiredToolPose(tool_current_pose_kdl,
-                              closest_point_to_ring_center,
-                              closest_point_to_radial_point,
-                              tool_desired_pose_kdl);
+//    // this will be calculated in the main, here we do it once to update the actors
+//    // according to the new desired poses. may be removed later
+//    CalculatedDesiredToolPose(tool_current_pose_kdl,
+//                              closest_point_to_ring_center,
+//                              closest_point_to_radial_point,
+//                              closest_point_to_grip_point , tool_desired_pose_kdl);
 
     line1_source->SetPoint1(ring_central_point);
     line1_source->SetPoint2(tool_desired_pose_kdl.p[0], tool_desired_pose_kdl.p[1], tool_desired_pose_kdl.p[2]);
-//    line2_source->SetPoint2(closest_point);
     line1_source->Update();
 
 
@@ -377,11 +381,12 @@ void BuzzWireTask::FindClosestPoints() {
 //----------------------------------------------------------------------------
 KDL::Frame BuzzWireTask::GetDesiredToolPose() {
 
-    FindClosestPoints();
+
 
     CalculatedDesiredToolPose(tool_current_pose_kdl,
                               closest_point_to_ring_center,
                               closest_point_to_radial_point,
+                              closest_point_to_grip_point,
                               tool_desired_pose_kdl);
 
     return tool_desired_pose_kdl;
@@ -391,48 +396,54 @@ KDL::Frame BuzzWireTask::GetDesiredToolPose() {
 //----------------------------------------------------------------------------
 void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
                                              const KDL::Vector closest_point_to_ring_center,
-                                             const KDL::Vector closest_point_to_radial_points,
+                                             const KDL::Vector closest_point_to_radial_point,
+                                             const KDL::Vector closest_point_to_grip_point,
                                              KDL::Frame &desired_pose) {
+    // NOTE: All the closest points are on the wire mesh
 
+    // locate the center of the ring
     KDL::Vector ring_center = current_pose * KDL::Vector(0.0, 0.0, ring_radius_);
-
+    // Find the vector from ring center to the corresponding closest point on the wire
     KDL::Vector ring_center_to_cp = closest_point_to_ring_center - ring_center;
 
     // desired pose only when the ring is close to the wire.if it is too
     // far we don't want fixtures
-
     if (ring_center_to_cp.Norm()  < 3*ring_radius_) {
 
-        // Desired positio is one that puts the center of the wire on the
+        // Desired position is one that puts the center of the wire on the
         // center of the ring.
 
-        //-----------------------------------
+        //---------------------------------------------------------------------
         // Find the desired position
-        //        desired_pose.p = closest_point_to_ring_center
-        //                         - (ring_radius_ - wire_radius_) * (ring_center_to_cp / ring_center_to_cp.Norm());
-        KDL::Vector wire_center =
-                ring_center + ring_center_to_cp + wire_radius_* (ring_center_to_cp / ring_center_to_cp.Norm());
-
-
+        KDL::Vector wire_center = ring_center + ring_center_to_cp;
+        // Turns out trying to estimate the center of the wire makes things worse
+        // so I removed the following term that was used in finding wire_center:
+        // wire_radius_ * (ring_center_to_cp/ring_center_to_cp.Norm());
 
         error_position = (wire_center - ring_center).Norm();
         desired_pose.p = current_pose.p + wire_center - ring_center;
 
-           //-----------------------------------
+        //---------------------------------------------------------------------
         // Find the desired orientation
-        KDL::Vector radial_tool_point_kdl = current_pose *
-                                            KDL::Vector(ring_radius_, 0.0,
+        // We use two vectors to estimate the tangent of the direction of the wire.
+        // One is from the grip point (current tool tip) to its closest point on
+        // the wire and the other is from a point on the side of the ring (90 deg
+        // from the grip point). The estimated tangent is the cross product of these
+        // two (after normalization). This is just a quick the non-ideal approximation.
+        // Note that we could have used the central point instead of the tool point
+        // but that vector gets pretty small and unstable when we're close to the
+        // desired pose.
+        KDL::Vector radial_point_kdl = current_pose * KDL::Vector(ring_radius_, 0.0,
                                                         ring_radius_);
-
-        KDL::Vector radial_to_rpcp =
-                closest_point_to_radial_points - radial_tool_point_kdl;
+        KDL::Vector radial_to_cp =
+                closest_point_to_radial_point - radial_point_kdl;
 
         KDL::Vector desired_z, desired_y, desired_x;
 
-        KDL::Vector tool_to_cp = closest_point_to_ring_center - current_pose.p;
+        KDL::Vector grip_to_cp = closest_point_to_grip_point - current_pose.p;
 
-        desired_z = tool_to_cp / tool_to_cp.Norm();
-        desired_x = -radial_to_rpcp / radial_to_rpcp.Norm();
+        desired_z = grip_to_cp / grip_to_cp.Norm();
+        desired_x = -radial_to_cp / radial_to_cp.Norm();
         desired_y = desired_z * desired_x;
 
         // make sure axes are perpendicular and normal
@@ -442,7 +453,8 @@ void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
         desired_z = desired_x * desired_y;
         desired_z = desired_z / desired_z.Norm();
 
-        desired_pose.M = KDL::Rotation(desired_x, desired_y, desired_z);
+         desired_pose.M = KDL::Rotation(desired_x, desired_y, desired_z);
+        //        desired_pose.M = current_pose.M;
     }
     else
     {
