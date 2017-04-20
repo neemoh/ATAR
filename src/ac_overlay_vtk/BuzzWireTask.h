@@ -30,7 +30,7 @@
 class BuzzWireTask {
 public:
 
-    BuzzWireTask(const double ring_radius, const double wire_radius);
+    BuzzWireTask(const double ring_radius, const double wire_radius, const bool show_ref_frames);
 
     std::vector< vtkSmartPointer <vtkProp> > GetActors();
 
@@ -45,6 +45,7 @@ public:
 
     KDL::Frame GetDesiredToolPose();
 
+
 private:
 
     void FindClosestPoints();
@@ -55,7 +56,7 @@ private:
     KDL::Vector closest_point_to_tool_point;
     KDL::Vector closest_point_to_radial_point;
 
-    int counter =0; // TEMPORARY
+    bool show_ref_frames_ = false;
 
     KDL::Frame tool_desired_pose_kdl;
     KDL::Frame tool_current_pose_kdl;
@@ -65,18 +66,7 @@ private:
 
     std::vector<vtkSmartPointer<vtkProp>> actors;
 
-    vtkSmartPointer<vtkSphereSource>                sphereSource;
-    vtkSmartPointer<vtkTransform>                   sphere_translation;
-    vtkSmartPointer<vtkTransformPolyDataFilter>     transformFilter;
-    vtkSmartPointer<vtkPolyDataMapper>              sphereMapper;
-    vtkSmartPointer<vtkActor>                       sphereActor;
-
-    vtkSmartPointer<vtkParametricTorus>             parametricObject;
-    vtkSmartPointer<vtkParametricFunctionSource>    parametricFunctionSource;
-    vtkSmartPointer<vtkTransform>                   ring_local_transform;
-    vtkSmartPointer<vtkTransformPolyDataFilter>     ring_local_transform_filter;
     vtkSmartPointer<vtkActor>                       ring_actor;
-    vtkSmartPointer<vtkPolyDataMapper>              ring_mapper;
 
     vtkSmartPointer<vtkAxesActor>                   task_coordinate_axes;
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes;
@@ -87,5 +77,6 @@ private:
     vtkSmartPointer<vtkLineSource>                  lineSource;
     vtkSmartPointer<vtkPolyDataMapper>              line_mapper;
 
+    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
 };
 #endif //TELEOP_VISION_BUZZWIRETASK_H
