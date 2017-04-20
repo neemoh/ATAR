@@ -67,9 +67,6 @@ public:
 
     cv::Mat &ImageRight(ros::Duration timeout = ros::Duration(1));
 
-    // Publisher for the ac path in use
-    ros::Publisher publisher_ac_path;
-
     //overlay image publishers
     image_transport::Publisher publisher_overlayed[2];
     image_transport::Publisher publisher_stereo_overlayed;
@@ -86,8 +83,7 @@ public:
     double desired_pose_update_freq;
     std::vector<cv::Point3d> ac_path;
     bool foot_switch_pressed = false;
-
-    cv::Mat image_msg;
+    bool show_reference_frames;
     CameraIntrinsics cam_intrinsics[2];
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
@@ -96,8 +92,6 @@ public:
     KDL::Frame slave_frame_to_task_frame[2];
 
     KDL::Frame left_cam_to_right_cam_tr;
-
-
 
 
 

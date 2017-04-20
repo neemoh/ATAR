@@ -245,13 +245,7 @@ void OverlayROSConfig::SetupROS() {
     }
 
 
-    // ------------------------------------- AC PATH -----------------------------------------
-    //subscriber_ac_path = n.subscribe("/ac_path", 1, &OverlayROSConfig::ACPathCallback, this);
-
-    std::string topic_name = "/ac_path";
-    publisher_ac_path = n.advertise<geometry_msgs::PoseArray>(topic_name, 1 );
-    ROS_INFO("Will publish on %s",
-             topic_name.c_str());
+    // ------------------------------------- Clutches---------------------------------------
 
     subscriber_foot_pedal_clutch = n.subscribe("/dvrk/footpedals/camera", 1,
                                                &OverlayROSConfig::FootSwitchCallback, this);
@@ -326,6 +320,8 @@ void OverlayROSConfig::SetupROS() {
         else
             ROS_ERROR("Parameter %s is needed.", param_name.str().c_str());
     }
+
+    n.param<bool>("show_reference_frames", show_reference_frames, true);
 
     // advertise publishers
 //    std::string board_to_cam_pose_topic_name;
