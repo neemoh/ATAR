@@ -100,7 +100,7 @@ int main(int argc, char **argv)
             // Render!
             graphics.Render();
 
-            // Copy the rendered image to memory, show it and publish it.
+            // Copy the rendered image to memory, show it and/or publish it.
             graphics.GetRenderedImage(augmented_stereo_image);
             cv::imshow(cv_window_name, augmented_stereo_image);
             rc.publisher_stereo_overlayed.publish(
@@ -109,6 +109,8 @@ int main(int argc, char **argv)
             // updating the desired pose
             pose_desired_tool[0] = buzztask.GetDesiredToolPose();
 
+            if(buzztask.IsACParamChanged())
+                rc.PublishACtiveConstraintParameters(0, buzztask.GetACParameters());
             // std::cout <<  "it took: " << (ros::Time::now() - start).toNSec() /1000000 << std::endl;
 
         } // if new image

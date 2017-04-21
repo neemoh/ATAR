@@ -5,7 +5,6 @@
 #ifndef TELEOP_VISION_BUZZWIRETASK_H
 #define TELEOP_VISION_BUZZWIRETASK_H
 
-
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
 #include <vtkPolyData.h>
@@ -28,6 +27,8 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkCornerAnnotation.h>
 
+#include "active_constraints/ActiveConstraintParameters.h"
+
 class BuzzWireTask {
 public:
 
@@ -47,6 +48,10 @@ public:
 
     KDL::Frame GetDesiredToolPose();
 
+    bool IsACParamChanged();
+
+    active_constraints::ActiveConstraintParameters GetACParameters();
+
 
 private:
 
@@ -60,11 +65,16 @@ private:
     KDL::Vector closest_point_to_grip_point;
 
     double error_position;
+
     bool show_ref_frames_ = false;
+
+    bool ac_params_changed = true; // to publish once at the begging
+    active_constraints::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl;
     KDL::Frame tool_current_pose_kdl;
 
+    // graphics
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose;
 //    vtkSmartPointer<vtkMatrix4x4> tool_desired_pose;
 

@@ -50,6 +50,7 @@
         <param name="number_of_arms" value="1"/>
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
 
         <!-- About desired_pose_update_frequency:
             //The overlayed images will be published only when new images are received.

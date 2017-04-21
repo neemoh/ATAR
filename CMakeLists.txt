@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
         image_transport
         message_generation
         geometry_msgs
+        active_constraints
         )
 
 add_service_files(

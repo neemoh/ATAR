@@ -20,6 +20,7 @@
 // service
 #include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
 #include "utils/Drawings.h"
+#include "active_constraints/ActiveConstraintParameters.h"
 
 
 class OverlayROSConfig {
@@ -74,6 +75,9 @@ public:
     // converts the desired poses to geometry pose messages and published them
     void PublishDesiredPose(const KDL::Frame *);
 
+    // converts the desired poses to geometry pose messages and published them
+    void PublishACtiveConstraintParameters(const int arm_number, const active_constraints::ActiveConstraintParameters &);
+
 
 public:
     // IN ALL CODE 0 is Left Cam, 1 is Right cam
@@ -121,8 +125,9 @@ private:
     ros::Subscriber subscriber_camera_pose_right;
 
 
-    ros::Subscriber *subscriber_tool_current_pose;
-    ros::Publisher *publisher_tool_pose_desired;
+    ros::Subscriber * subscriber_tool_current_pose;
+    ros::Publisher * publisher_tool_pose_desired;
+    ros::Publisher * publisher_ac_params;
     //    // Current twists Not used for now
     //    ros::Subscriber *subscriber_twist_current_tool;
     //    ros::Publisher *publisher_twist_current_tool;

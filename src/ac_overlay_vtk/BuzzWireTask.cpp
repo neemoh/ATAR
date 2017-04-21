@@ -12,6 +12,27 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
         show_ref_frames_(show_ref_frames)
 {
 
+    // --------------------------------------------------
+    //  ACTIVE CONSTRAINT
+    // --------------------------------------------------
+    // these parameters could be set as ros parameters but since
+    // they change during the task we are hard coding them here.
+    ac_parameters.method =                  0; // 0 for visco/elastic
+    ac_parameters.active =                  1; // 0 for visco/elastic
+
+    ac_parameters.max_force =               4.0;
+    ac_parameters.linear_elastic_coeff =    1000.0;
+    ac_parameters.linear_damping_coeff =    10.0;
+
+    ac_parameters.max_torque =              0.03;
+    ac_parameters.angular_elastic_coeff =   0.04;
+    ac_parameters.angular_damping_coeff =   0.002;
+
+
+    // --------------------------------------------------
+    //  INITIALIZING GRAPHICS ACTORS
+    // --------------------------------------------------
+
     ring_actor = vtkSmartPointer<vtkActor>::New();
     error_sphere_actor = vtkSmartPointer<vtkActor>::New();
 
@@ -409,6 +430,8 @@ void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
     // desired pose only when the ring is close to the wire.if it is too
     // far we don't want fixtures
     if (ring_center_to_cp.Norm()  < 3*ring_radius_) {
+        ac_parameters.active = 1;
+        ac_params_changed = true;
 
         // Desired position is one that puts the center of the wire on the
         // center of the ring.
@@ -459,6 +482,8 @@ void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
     else
     {
         desired_pose = current_pose;
+        ac_parameters.active = 0;
+        ac_params_changed = true;
 
     }
 //    // Assuming that the normal to the ring is the z vector of current_orientation
@@ -483,5 +508,15 @@ void BuzzWireTask::CalculatedDesiredToolPose(const KDL::Frame current_pose,
 //
 //    desired_pose.M = rotation_to_desired * current_pose.M ;
 
+}
+
+bool BuzzWireTask::IsACParamChanged() {
+    return ac_params_changed;
+}
+
+active_constraints::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
+
+    ac_params_changed =false; // assuming once we read it we can consider it unchanged
+    return ac_parameters;
 }
 

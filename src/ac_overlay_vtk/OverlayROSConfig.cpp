@@ -6,7 +6,7 @@
 
 #include <utils/Conversions.hpp>
 #include <pwd.h>
-#include "opencv2/calib3d/calib3d.hpp"
+#include <active_constraints/ActiveConstraintParameters.h>
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
         : n(node_name), image_width(width), image_height(height)
@@ -260,12 +260,14 @@ void OverlayROSConfig::SetupROS() {
 
     publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
     subscriber_tool_current_pose = new ros::Subscriber[(uint)n_arms];
+    publisher_ac_params = new ros::Publisher[(uint)n_arms];
 
     //    // Twists not needed for now
     //    publisher_twist_current_tool = new ros::Publisher[(uint)n_arms];
     //    subscriber_twist_current_tool = new ros::Subscriber[(uint)n_arms];
 
     std::string slave_names[n_arms];
+    std::string master_names[n_arms];
     //std::string master_names[n_arms];
     std::string check_topic_name;
 
@@ -275,6 +277,11 @@ void OverlayROSConfig::SetupROS() {
         std::stringstream param_name;
         param_name << std::string("slave_") << n_arm + 1 << "_name";
         n.getParam(param_name.str(), slave_names[n_arm]);
+
+
+        param_name.str("");
+        param_name << std::string("master_") << n_arm + 1 << "_name";
+        n.getParam(param_name.str(), master_names[n_arm]);
 
         // the current pose of the tools (slaves)
         param_name.str("");
@@ -289,6 +296,13 @@ void OverlayROSConfig::SetupROS() {
         param_name.str("");
         param_name << std::string("/")<< slave_names[n_arm] << "/tool_pose_desired";
         publisher_tool_pose_desired[n_arm] = n.advertise<geometry_msgs::PoseStamped>(
+                param_name.str().c_str(), 1 );
+        ROS_INFO("Will publish on %s", param_name.str().c_str());
+
+        // Publishing the active constraint parameters that may change during the task
+        param_name.str("");
+        param_name << std::string("/")<< master_names[n_arm] << "/active_constraint_param";
+        publisher_ac_params[n_arm] = n.advertise<active_constraints::ActiveConstraintParameters>(
                 param_name.str().c_str(), 1 );
         ROS_INFO("Will publish on %s", param_name.str().c_str());
 
@@ -499,6 +513,12 @@ void OverlayROSConfig::PublishDesiredPose(const KDL::Frame * pose_desired) {
     }
 }
 
+void OverlayROSConfig::PublishACtiveConstraintParameters(const int arm_number,
+                                                         const active_constraints::ActiveConstraintParameters & ac_params) {
+
+    publisher_ac_params[arm_number].publish(ac_params);
+
+}
 
 
 void VisualUtils::SwitchFullScreen(const std::string window_name) {
