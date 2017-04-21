@@ -29,17 +29,11 @@ int main(int argc, char **argv)
     std::string cv_window_name = "Augmented Stereo images";
     cvNamedWindow(cv_window_name.c_str() ,CV_WINDOW_NORMAL);
 
-    cv::Mat cam_images[2];
-    cv::Mat augmented_stereo_image;
-
-    std::vector<cv::Point3d> ac_path_in_use;
-
     std::stringstream ui_instructions;
     ui_instructions <<"Test. " ;
 
-
-    rc.ImageLeft(ros::Duration(1)).copyTo(cam_images[0]);
-    rc.ImageRight(ros::Duration(1)).copyTo(cam_images[1]);
+    cv::Mat cam_images[2];
+    rc.LockAndGetImages(ros::Duration(1), cam_images);
 
     Rendering graphics;
     graphics.SetWorldToCameraTransform(rc.cam_rvec, rc.cam_tvec);
@@ -49,16 +43,17 @@ int main(int argc, char **argv)
     graphics.SetCameraIntrinsics(cam_matrices);
     graphics.ConfigureBackgroundImage(cam_images);
     graphics.SetEnableBackgroundImage(true);
-
     graphics.Render();
 
     // create the task
     double ring_radius = 0.004;
     BuzzWireTask buzztask(ring_radius, rc.show_reference_frames);
 
-
+    // Add the task actors to the graphics
     graphics.AddActorsToScene(buzztask.GetActors());
+
     KDL::Frame pose_desired_tool[2];
+    cv::Mat augmented_stereo_image;
 
     while (ros::ok())
     {
@@ -77,13 +72,10 @@ int main(int argc, char **argv)
 
         buzztask.SetCurrentToolPose(rc.pose_current_tool[0]);
 
-        if(rc.new_left_image && rc.new_right_image) {
+        if(rc.GetNewImages(cam_images)) {
 
             // Time performance debug
             //ros::Time start =ros::Time::now();
-
-            rc.ImageLeft(ros::Duration(1)).copyTo(cam_images[0]);
-            rc.ImageRight(ros::Duration(1)).copyTo(cam_images[1]);
 
             // print instructions
             for (int i = 0; i < 2; ++i)

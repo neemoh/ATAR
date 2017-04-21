@@ -354,7 +354,7 @@ void OverlayROSConfig::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
-        image_right = cv_bridge::toCvCopy(msg, "bgr8")->image;
+        image_from_ros[1] = cv_bridge::toCvCopy(msg, "bgr8")->image;
         new_right_image = true;
     }
     catch (cv_bridge::Exception& e)
@@ -368,7 +368,7 @@ void OverlayROSConfig::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
-        image_left = cv_bridge::toCvCopy(msg, "bgr8")->image;
+        image_from_ros[0] = cv_bridge::toCvCopy(msg, "bgr8")->image;
         new_left_image = true;
 
     }
@@ -422,70 +422,41 @@ void OverlayROSConfig::Tool2PoseCurrentCallback(
     pose_current_tool[1] =  slave_frame_to_task_frame[1] * frame;
 }
 
-// Twists are not needed for the moment
-//void OverlayROSConfig::Tool1TwistCallback(
-//        const geometry_msgs::TwistStamped::ConstPtr &msg) {
-//    // take the twist from the arm frame to the task frame
-//    tf::twistMsgToKDL(msg->twist, twist_tool_current[0]);
-//    twist_tool_current[0] = slave_frame_to_task_frame[0] * twist_tool_current[0];
-//}
-//
-//void OverlayROSConfig::Tool2TwistCallback(
-//        const geometry_msgs::TwistStamped::ConstPtr &msg) {
-//    // take the twist from the arm frame to the task frame
-//    tf::twistMsgToKDL(msg->twist, twist_tool_current[1]);
-//    twist_tool_current[1] = slave_frame_to_task_frame[1] * twist_tool_current[1];
-//
-//}
-
-
-
-
-//void OverlayROSConfig::ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg){
-//
-//    for (int n_point = 0; n_point < msg->poses.size(); ++n_point) {
-//        ac_path.push_back(cv::Point3d(msg->poses[n_point].position.x,
-//                                      msg->poses[n_point].position.y,
-//                                      msg->poses[n_point].position.z));
-//    }
-//}
-
-//void OverlayROSConfig::ACPoseDesiredLeftCallback(const geometry_msgs::PoseStampedConstPtr & msg){
-//    // Convert message to KDL
-//    tf::poseMsgToKDL(msg->pose, pose_desired_tool[0]);
-//}
-//
-//void OverlayROSConfig::ACPoseDesiredRightCallback(const geometry_msgs::PoseStampedConstPtr & msg){
-//    // Convert message to KDL
-//    tf::poseMsgToKDL(msg->pose, pose_desired_tool[1]);
-//}
 
 void OverlayROSConfig::FootSwitchCallback(const sensor_msgs::Joy & msg){
     foot_switch_pressed = (bool)msg.buttons[0];
 }
 
-cv::Mat& OverlayROSConfig::ImageLeft(ros::Duration timeout) {
+bool OverlayROSConfig::GetNewImages( cv::Mat images[]) {
+
+    if(new_left_image && new_right_image) {
+        image_from_ros[0].copyTo(images[0]);
+        image_from_ros[1].copyTo(images[1]);
+        new_left_image = false;
+        new_right_image = false;
+        return true;
+    }
+
+    return false;
+
+}
+
+void OverlayROSConfig::LockAndGetImages(ros::Duration timeout, cv::Mat images[]) {
     ros::Rate loop_rate(10);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
-    while(image_left.empty()) {
+    while(image_from_ros[0].empty()) {
         ros::spinOnce();
         loop_rate.sleep();
 
         if (ros::Time::now() > timeout_time)
             ROS_WARN("Timeout: No new left Image.");
     }
+    image_from_ros[0].copyTo(images[0]);
+
     new_left_image = false;
-    return image_left;
-}
 
-
-
-cv::Mat& OverlayROSConfig::ImageRight(ros::Duration timeout) {
-    ros::Rate loop_rate(10);
-    ros::Time timeout_time = ros::Time::now() + timeout;
-
-    while(image_right.empty()) {
+    while(image_from_ros[1].empty()) {
         ros::spinOnce();
         loop_rate.sleep();
 
@@ -493,9 +464,12 @@ cv::Mat& OverlayROSConfig::ImageRight(ros::Duration timeout) {
             ROS_WARN("Timeout: No new right Image.");
         }
     }
+    image_from_ros[1].copyTo(images[1]);
+
     new_right_image = false;
-    return image_right;
+
 }
+
 
 
 void OverlayROSConfig::PublishDesiredPose(const KDL::Frame * pose_desired) {

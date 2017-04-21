@@ -38,6 +38,23 @@ public:
 
     OverlayROSConfig(std::string node_name, int width, int height);
 
+    // Locking call to retrieve the images
+    void LockAndGetImages(ros::Duration timeout, cv::Mat images[]);
+
+    // return true if both images are newly received and copy them in imgs
+    bool GetNewImages(cv::Mat imgs[]) ;
+
+    //overlay image publishers
+    image_transport::Publisher publisher_overlayed[2];
+    image_transport::Publisher publisher_stereo_overlayed;
+
+    // converts the desired poses to geometry pose messages and published them
+    void PublishDesiredPose(const KDL::Frame *);
+
+    // converts the desired poses to geometry pose messages and published them
+    void PublishACtiveConstraintParameters(const int arm_number,
+                                           const active_constraints::ActiveConstraintParameters &);
+
     // CALLBACKS
     void ImageLeftCallback(const sensor_msgs::ImageConstPtr &msg);
 
@@ -52,31 +69,12 @@ public:
     // Tool poses in task coordinate frame (taskspace).
     void Tool1PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
     void Tool2PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
-//    void Tool1TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
-//    void Tool2TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
 
-    // Receives ac path from the ac geometry node as an array of poses.
-    // Currently only the positions are used.
-    //    void ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg);
-
+    //    void Tool1TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
+    //    void Tool2TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
 
     // foot switch used to select the ac path
     void FootSwitchCallback(const sensor_msgs::Joy &msg);
-
-    // Locking call to retrieve the images
-    cv::Mat &ImageLeft(ros::Duration timeout = ros::Duration(1));
-
-    cv::Mat &ImageRight(ros::Duration timeout = ros::Duration(1));
-
-    //overlay image publishers
-    image_transport::Publisher publisher_overlayed[2];
-    image_transport::Publisher publisher_stereo_overlayed;
-
-    // converts the desired poses to geometry pose messages and published them
-    void PublishDesiredPose(const KDL::Frame *);
-
-    // converts the desired poses to geometry pose messages and published them
-    void PublishACtiveConstraintParameters(const int arm_number, const active_constraints::ActiveConstraintParameters &);
 
 
 public:
@@ -101,8 +99,7 @@ public:
 
     cv::Vec3d cam_rvec[2];
     cv::Vec3d cam_tvec[2];
-    cv::Mat image_left;
-    cv::Mat image_right;
+
     bool new_right_image = false;
     bool new_left_image = false;
     ros::ServiceClient stereo_tr_calc_client;
@@ -111,6 +108,7 @@ public:
 private:
 
     int n_arms;
+    cv::Mat image_from_ros[2];
 
     int image_width;
     int image_height;
@@ -162,8 +160,8 @@ namespace CricleACTask {
 }
 
 
-    KDL::Rotation CalculateDesiredOrientation(const KDL::Vector ac_path_tangent_current,
-                                              const KDL::Rotation current_orientation);
+KDL::Rotation CalculateDesiredOrientation(const KDL::Vector ac_path_tangent_current,
+                                          const KDL::Rotation current_orientation);
 
 
 // other functions to be sorted later
