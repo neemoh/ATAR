@@ -4,6 +4,7 @@
 
 #include <utils/Conversions.hpp>
 #include <vtkCubeSource.h>
+#include <vtkConeSource.h>
 #include "BuzzWireTask.h"
 
 BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
@@ -51,13 +52,13 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
     // --------------------------------------------------
     // RING
     double ring_cross_section_radius = 0.0005;
-    double ring_scale = 0.006;
+    double source_scales = 0.006;
 
     vtkSmartPointer<vtkParametricTorus> parametricObject =
             vtkSmartPointer<vtkParametricTorus>::New();
     parametricObject->SetCrossSectionRadius(
-            ring_cross_section_radius / ring_scale);
-    parametricObject->SetRingRadius(ring_radius_ / ring_scale);
+            ring_cross_section_radius / source_scales);
+    parametricObject->SetRingRadius(ring_radius_ / source_scales);
 
     vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource =
             vtkSmartPointer<vtkParametricFunctionSource>::New();
@@ -73,7 +74,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
     vtkSmartPointer<vtkTransform> ring_local_transform =
             vtkSmartPointer<vtkTransform>::New();
     ring_local_transform->RotateX(90);
-    ring_local_transform->Translate(0.0, ring_radius_ / ring_scale, 0.0);
+    ring_local_transform->Translate(0.0, ring_radius_ / source_scales, 0.0);
 
     ring_local_transform_filter->SetTransform(ring_local_transform);
     ring_local_transform_filter->Update();
@@ -84,7 +85,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
             ring_local_transform_filter->GetOutputPort());
 
     ring_actor->SetMapper(ring_mapper);
-    ring_actor->SetScale(ring_scale);
+    ring_actor->SetScale(source_scales);
     ring_actor->GetProperty()->SetColor(0.1, 0.3, 0.4);
     ring_actor->GetProperty()->SetSpecular(0.7);
 
@@ -255,7 +256,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
     floor_actor->GetProperty()->SetOpacity(0.3);
     floor_actor->GetProperty()->SetColor(0.7, 0.7, 0.7);
 
-    //    floor_actor->SetScale(ring_scale);
+    // --------------------------------------------------
     // Lines
     vtkSmartPointer<vtkPolyDataMapper> line1_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     line1_mapper->SetInputConnection(line1_source->GetOutputPort());
@@ -271,6 +272,27 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
             vtkSmartPointer<vtkActor>::New();
     line2_actor->SetMapper(line2_mapper);
     line2_actor->GetProperty()->SetLineWidth(3);
+
+    // --------------------------------------------------
+    // destination cone
+    vtkSmartPointer<vtkConeSource> destination_cone_source =
+            vtkSmartPointer<vtkConeSource>::New();
+    destination_cone_source->SetRadius(0.003/source_scales);
+    destination_cone_source->SetHeight(0.008/source_scales);
+    destination_cone_source->SetResolution(7);
+
+    vtkSmartPointer<vtkPolyDataMapper> destination_cone_mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    destination_cone_mapper->SetInputConnection(
+            destination_cone_source->GetOutputPort());
+    destination_cone_actor= vtkSmartPointer<vtkActor>::New();
+    destination_cone_actor->SetMapper(destination_cone_mapper);
+    destination_cone_actor->SetScale(source_scales);
+    destination_cone_actor->GetProperty()->SetColor(1.0, 0.1, 0.03);
+    destination_cone_actor->GetProperty()->SetOpacity(0.5);
+    destination_cone_actor->RotateY(90);
+    destination_cone_actor->RotateZ(30);
+    destination_cone_actor->SetPosition( 0.021, 0.008, 0.040);
 
 
 //    cornerAnnotation =
@@ -308,10 +330,11 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames)
 
     actors.push_back(hq_mesh_actor);
     actors.push_back(stand_mesh_actor);
-//    actors.push_back(floor_actor);
-    //    actors.push_back(lq_mesh_actor);
+    actors.push_back(floor_actor);
+        actors.push_back(lq_mesh_actor);
     actors.push_back(ring_actor);
     actors.push_back(line1_actor);
+    actors.push_back(destination_cone_actor);
 //    actors.push_back(line2_actor);
     actors.push_back(ring_guides_mesh_actor);
     actors.push_back(error_sphere_actor);
@@ -348,6 +371,10 @@ void BuzzWireTask::UpdateActors() {
     VTKConversions::KDLFrameToVTKMatrix(tool_desired_pose_kdl,
                                         tool_desired_pose);
     tool_desired_frame_axes->SetUserMatrix(tool_desired_pose);
+
+    double dz = 0.004 * sin(2* M_PI * double(destination_cone_counter)/90);
+    destination_cone_counter++;
+    destination_cone_actor->SetPosition( 0.021, 0.008, 0.040 + dz);
 
 //    std::stringstream error_message;
 //    error_message << error_position;

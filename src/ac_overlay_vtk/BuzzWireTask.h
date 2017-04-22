@@ -74,6 +74,7 @@ private:
     KDL::Frame tool_desired_pose_kdl;
     KDL::Frame tool_current_pose_kdl;
 
+    uint destination_cone_counter = 0;
     // graphics
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose;
 //    vtkSmartPointer<vtkMatrix4x4> tool_desired_pose;
@@ -93,6 +94,9 @@ private:
     vtkSmartPointer<vtkLineSource>                  line2_source;
 
     vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
+
+    vtkSmartPointer<vtkActor>                       destination_cone_actor;
+
     vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
 };
 #endif //TELEOP_VISION_BUZZWIRETASK_H
