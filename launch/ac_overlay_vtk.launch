@@ -68,10 +68,10 @@
     </node>
 
 
-    <!-- The dvrk_active_constraint_enforcement node generates force based on the received desired pose and
+    <!-- The dvrk_active_constraint_enforcement node generates wrench based on the received desired pose and
         current pose of each master/slave couple.
-	The node generates wrench when receives desired pose, so the rate depends on the desired pose topic.
-	The sampling_frequency param is for filtering.
+	The node generates wrench when receives desired pose, so the loop rate depends on the frequency of the
+	desired pose topic. The sampling_frequency param is for filtering.
     -->
     <node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
