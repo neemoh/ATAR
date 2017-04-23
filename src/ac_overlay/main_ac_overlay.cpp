@@ -4,10 +4,7 @@
 #include "utils/Conversions.hpp"
 #include "ACOverlay.h"
 #include <std_msgs/Float32.h>
-//#include "Drawings.h"
-//#include <iostream>
-//#include <GLFW/glfw3.h>
-//#include <GL/glu.h>
+
 
 
 
@@ -53,14 +50,15 @@ int main(int argc, char **argv)
     targets_original.push_back(cv::Point3d(0.011+ 2*h ,  0.028 + 1*w, 0.026));
 
     std::vector<cv::Point3d> targets = targets_original;
-
     MultiplePathsTask::Status task_state = MultiplePathsTask::Status::Ready;
-
     std::vector<cv::Point3d> ac_path_in_use;
     size_t selected_ac = 0;
 
     std::stringstream ui_instructions;
     ui_instructions <<"Press 1 for task1 and 2 for task2. " ;
+
+
+
 
     while (ros::ok())
     {
@@ -102,6 +100,7 @@ int main(int argc, char **argv)
             ROS_INFO("No task Selected");
             selected_task = Tasks::None;
         }
+
 
         if(ao.new_left_image && ao.new_right_image) {
 
@@ -244,7 +243,7 @@ int main(int argc, char **argv)
                 //draw the desired pose frame
                 DrawingsCV::DrawCoordinateFrameInTaskSpace(cam_images[j], ao.cam_intrinsics[j],
                                                            ao.pose_desired_tool[0],
-                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.01);;
+                                                           ao.cam_rvec[j], ao.cam_tvec[j], 0.005);;
 //                //draw the  tangent
 //                DrawingsCV::DrawLineFrom2KDLPoints(cam_images[j],
 //                                                   ao.cam_intrinsics[j],
@@ -262,12 +261,6 @@ int main(int argc, char **argv)
                             cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
 
 
-            for (int j = 0; j <2 ; ++j) {
-                cv::imshow(window_name[j], cam_images[j]);
-                ao.publisher_overlayed[j].publish(
-                        cv_bridge::CvImage(std_msgs::Header(), "bgr8", cam_images[j]).toImageMsg());
-
-            }
 
             // publishing the ac path not needed anymore
             //            if (selected_task == Tasks::CricleAC || task_state == MultiplePathsTask::Status::ACSelected) {
@@ -278,7 +271,15 @@ int main(int argc, char **argv)
             //                ao.publisher_ac_path.publish(out);
             //            }
 
-        }
+            for (int j = 0; j <2 ; ++j) {
+                cv::imshow(window_name[j], cam_images[j]);
+                ao.publisher_overlayed[j].publish(
+                        cv_bridge::CvImage(std_msgs::Header(), "bgr8", cam_images[j]).toImageMsg());
+
+            }
+
+
+        } // if new image
 
         // updating the desired pose happens at the higher frequency
         if(ac_path_in_use.size()>0){
@@ -301,8 +302,7 @@ int main(int argc, char **argv)
         loop_rate.sleep();
     }
 
-//	glfwDestroyWindow(window);
-//	glfwTerminate();
+
     return 0;
 }
 

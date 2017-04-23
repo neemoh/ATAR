@@ -1,12 +1,10 @@
 //
-// Created by charm on 2/21/17.
+// Created by nima on 4/17/17.
 //
 
-#ifndef TELEOP_VISION_ACOVERLAY_H
-#define TELEOP_VISION_ACOVERLAY_H
+#ifndef TELEOP_VISION_OVERLAYROSCONFIG_H
+#define TELEOP_VISION_OVERLAYROSCONFIG_H
 
-//#include <GLFW/glfw3.h>
-//#include <GL/glu.h>
 #include "ros/ros.h"
 
 #include "opencv2/highgui/highgui.hpp"
@@ -22,22 +20,35 @@
 // service
 #include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
 #include "utils/Drawings.h"
+#include "active_constraints/ActiveConstraintParameters.h"
+#include "teleop_vision/TaskState.h"
 
+class OverlayROSConfig {
 
-class ACOverlay {
-
-private:
-
-    // Reads parameters and sets up subscribers and publishers
-    void SetupROS();
-
-    // reads the intrinsic camera parameters
-    void ReadCameraParameters(const std::string file_path,
-                              CameraIntrinsics &camera_intrins);
 
 public:
 
-    ACOverlay(std::string node_name, int width, int height);
+    OverlayROSConfig(std::string node_name, int width, int height);
+
+    // Locking call to retrieve the images
+    void LockAndGetImages(ros::Duration timeout, cv::Mat images[]);
+
+    // return true if both images are newly received and copy them in imgs
+    bool GetNewImages(cv::Mat imgs[]) ;
+
+    //overlay image publishers
+    image_transport::Publisher publisher_overlayed[2];
+    image_transport::Publisher publisher_stereo_overlayed;
+
+    // converts the desired poses to geometry pose messages and published them
+    void PublishDesiredPose(const KDL::Frame *);
+
+    // publishes the active constraint parameters
+    void PublishACtiveConstraintParameters(const int arm_number,
+                                           const active_constraints::ActiveConstraintParameters &);
+
+    // publishes the active constraint parameters
+    void PublishTaskState(teleop_vision::TaskState msg);
 
     // CALLBACKS
     void ImageLeftCallback(const sensor_msgs::ImageConstPtr &msg);
@@ -53,32 +64,22 @@ public:
     // Tool poses in task coordinate frame (taskspace).
     void Tool1PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
     void Tool2PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
-//    void Tool1TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
-//    void Tool2TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
 
-    // Receives ac path from the ac geometry node as an array of poses.
-    // Currently only the positions are used.
-    //    void ACPathCallback(const geometry_msgs::PoseArrayConstPtr & msg);
-
+    //    void Tool1TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
+    //    void Tool2TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
 
     // foot switch used to select the ac path
     void FootSwitchCallback(const sensor_msgs::Joy &msg);
 
-    // Locking call to retrieve the images
-    cv::Mat &ImageLeft(ros::Duration timeout = ros::Duration(1));
 
-    cv::Mat &ImageRight(ros::Duration timeout = ros::Duration(1));
+private:
 
-    // Publisher for the ac path in use
-    ros::Publisher publisher_ac_path;
+    // Reads parameters and sets up subscribers and publishers
+    void SetupROS();
 
-    //overlay image publishers
-    image_transport::Publisher publisher_overlayed[2];
-    image_transport::Publisher publisher_stereo_overlayed;
-
-    // converts the desired poses to geometry pose messages and published them
-    void PublishDesiredPose();
-
+    // reads the intrinsic camera parameters
+    void ReadCameraParameters(const std::string file_path,
+                              CameraIntrinsics &camera_intrins);
 
 public:
     // IN ALL CODE 0 is Left Cam, 1 is Right cam
@@ -88,26 +89,18 @@ public:
     double desired_pose_update_freq;
     std::vector<cv::Point3d> ac_path;
     bool foot_switch_pressed = false;
-
-    cv::Mat image_msg;
+    bool show_reference_frames;
     CameraIntrinsics cam_intrinsics[2];
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
-//    KDL::Twist twist_tool_current[2];
 
     KDL::Frame slave_frame_to_task_frame[2];
 
     KDL::Frame left_cam_to_right_cam_tr;
 
-    KDL::Frame pose_desired_tool[2];
-
-    // used for the ring task
-    KDL::Vector ac_path_tangent_current[2];
-
     cv::Vec3d cam_rvec[2];
     cv::Vec3d cam_tvec[2];
-    cv::Mat image_left;
-    cv::Mat image_right;
+
     bool new_right_image = false;
     bool new_left_image = false;
     ros::ServiceClient stereo_tr_calc_client;
@@ -116,6 +109,7 @@ public:
 private:
 
     int n_arms;
+    cv::Mat image_from_ros[2];
 
     int image_width;
     int image_height;
@@ -130,18 +124,21 @@ private:
     ros::Subscriber subscriber_camera_pose_right;
 
 
-    ros::Subscriber *subscriber_tool_current_pose;
-    ros::Publisher *publisher_tool_pose_desired;
+    ros::Subscriber * subscriber_tool_current_pose;
+    ros::Publisher * publisher_tool_pose_desired;
+    ros::Publisher * publisher_ac_params;
+    ros::Publisher publisher_task_state;
+
     //    // Current twists Not used for now
     //    ros::Subscriber *subscriber_twist_current_tool;
     //    ros::Publisher *publisher_twist_current_tool;
 
     // two function pointers for slave pose callbacks
-    void (ACOverlay::*pose_current_tool_callbacks[2])
+    void (OverlayROSConfig::*pose_current_tool_callbacks[2])
             (const geometry_msgs::PoseStamped::ConstPtr &msg);
 
     // two function pointers for slave twist callbacks
-    void (ACOverlay::*twist_current_tool_callbacks[2])
+    void (OverlayROSConfig::*twist_current_tool_callbacks[2])
             (const geometry_msgs::TwistStamped::ConstPtr &msg);
 
     //ros::Subscriber subscriber_ac_path;
@@ -150,7 +147,6 @@ private:
 
 };
 
-#endif //TELEOP_VISION_ACOVERLAY_H
 
 
 namespace VisualUtils {
@@ -166,38 +162,10 @@ namespace CricleACTask {
 
 }
 
-namespace MultiplePathsTask {
-    enum class Status {
-        Ready, ACSelected, SubTaskFinished, TaskFinished
-    };
 
+KDL::Rotation CalculateDesiredOrientation(const KDL::Vector ac_path_tangent_current,
+                                          const KDL::Rotation current_orientation);
 
-    size_t FindClosestTarget(const KDL::Vector tool_current_position,
-                             const std::vector<cv::Point3d> targets);
-
-    void GeneratePathPoints(const KDL::Vector tool_current_position,
-                            const cv::Point3d targets, std::vector<cv::Point3d> &ac_path);
-
-    void DrawAllPaths(cv::InputOutputArray image,
-                      const CameraIntrinsics &cam_intrinsics,
-                      const cv::Vec3d &rvec, const cv::Vec3d &tvec,
-                      const KDL::Vector &tooltip_pos,
-                      std::vector<cv::Point3d> targets,
-                      const size_t &selected_index,
-                      const cv::Scalar &color_selected,
-                      const cv::Scalar &color_others);
-}
-
-namespace RingTask{
-
-    // in the ring task we want the ring's normal vector to be in along the direction of the path normal
-    // this leaves the rotation around the normal unconstrained. Also the direction of the tangent is
-    // not important, so we find the smallest rotation that takes the ring's normal vector from its
-    // current one to that of the path's tangent vector
-    // Assuming that the normal to the ring is the x vector of current_orientation.
-    KDL::Rotation CalculateDesiredOrientation(const KDL::Vector ac_path_tangent_current,
-                                              const KDL::Rotation current_orientation);
-}
 
 // other functions to be sorted later
 void  VecPoint3dToPoseArray(std::vector<cv::Point3d> vec, geometry_msgs::PoseArray & out) ;
@@ -206,3 +174,6 @@ void ClosestPointOnACPathAndItsTangent(const KDL::Vector tool_current_position,
                                        const std::vector<cv::Point3d> &ac_path,
                                        KDL::Vector &tool_desired_position,
                                        KDL::Vector &tangent_vector);
+
+
+#endif //TELEOP_VISION_OVERLAYROSCONFIG_H

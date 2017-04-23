@@ -37,7 +37,7 @@
         <group ns="right" >
             <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco_right" output="screen" >
                 <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
-                <param name= "cam_name" value= "$(arg left_cam_name)" />
+                <param name= "cam_name" value= "$(arg right_cam_name)" />
                 <param name="image_transport_namespace" value="/$(arg camera_name)/right/image_color"/>
                 <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/right/board_to_camera"/>
                 <param name="show_image" value="true"/>

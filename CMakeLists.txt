@@ -22,11 +22,17 @@ find_package(catkin REQUIRED COMPONENTS
         image_transport
         message_generation
         geometry_msgs
+        active_constraints
         )
 
 add_service_files(
         FILES
         CalculateStereoCamsTransfromFromTopics.srv)
+
+add_message_files(
+        FILES
+        TaskState.msg
+)
 
 generate_messages(
         DEPENDENCIES
@@ -178,19 +184,6 @@ target_link_libraries(
 )
 
 
-add_executable(
-        ac_overlay
-        src/ac_overlay/main_ac_overlay.cpp
-        src/ac_overlay/ACOverlay.cpp
-        src/ac_overlay/ACOverlay.h
-        src/utils/Drawings.cpp
-        include/utils/Drawings.h
-)
-target_link_libraries(
-        ac_overlay
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES}
-        arucoUtils)
 
 
 set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco )
@@ -201,6 +194,72 @@ foreach (_executable ${_executables})
             ${catkin_LIBRARIES}
             arucoUtils)
 endforeach ()
+##########################################################################
+#                           AC OVERLAY
+##########################################################################
+
+
+
+add_executable(
+        ac_overlay
+        src/ac_overlay/main_ac_overlay.cpp
+        src/ac_overlay/ACOverlay.cpp
+        src/ac_overlay/ACOverlay.h
+        src/utils/Drawings.cpp
+        include/utils/Drawings.h
+)
+
+target_link_libraries(
+        ac_overlay
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES}
+        arucoUtils)
+
+##########################################################################
+#                           AC OVERLAY VTK
+
+if(POLICY CMP0025)
+    cmake_policy(SET CMP0025 NEW) # CMake 3.0
+endif()
+if(POLICY CMP0053)
+    cmake_policy(SET CMP0053 NEW) # CMake 3.1
+endif()
+
+find_package(VTK REQUIRED)
+vtk_module_config(VTK
+        vtkCommonCore
+        vtkCommonDataModel
+        vtkFiltersCore
+        vtkFiltersModeling
+        vtkIOXML
+        vtkInteractionStyle
+        vtkRendering${VTK_RENDERING_BACKEND}
+        vtkImagingGeneral
+        vtkInteractionWidgets
+        vtkIOGeometry
+        )
+
+include(${VTK_USE_FILE})
+add_executable(
+        ac_overlay_vtk
+        src/ac_overlay_vtk/main_ac_overlay_vtk.cpp
+        src/ac_overlay_vtk/CalibratedCamera.cpp
+        src/ac_overlay_vtk/CalibratedCamera.h
+        src/ac_overlay_vtk/Rendering.cpp
+        src/ac_overlay_vtk/Rendering.h
+        src/utils/Drawings.cpp
+        include/utils/Drawings.h
+        src/ac_overlay_vtk/OverlayROSConfig.cpp
+        src/ac_overlay_vtk/OverlayROSConfig.h src/ac_overlay_vtk/BuzzWireTask.cpp src/ac_overlay_vtk/BuzzWireTask.h)
+
+target_link_libraries(
+        ac_overlay_vtk
+        ${OpenCV_LIBRARIES}
+        ${VTK_LIBRARIES}
+        ${catkin_LIBRARIES}
+        arucoUtils)
+
+
 
 ##########################################################################
 #                           Install Targets
