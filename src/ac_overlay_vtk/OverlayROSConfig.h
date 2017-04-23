@@ -21,18 +21,10 @@
 #include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
 #include "utils/Drawings.h"
 #include "active_constraints/ActiveConstraintParameters.h"
-
+#include "teleop_vision/TaskState.h"
 
 class OverlayROSConfig {
 
-private:
-
-    // Reads parameters and sets up subscribers and publishers
-    void SetupROS();
-
-    // reads the intrinsic camera parameters
-    void ReadCameraParameters(const std::string file_path,
-                              CameraIntrinsics &camera_intrins);
 
 public:
 
@@ -51,9 +43,12 @@ public:
     // converts the desired poses to geometry pose messages and published them
     void PublishDesiredPose(const KDL::Frame *);
 
-    // converts the desired poses to geometry pose messages and published them
+    // publishes the active constraint parameters
     void PublishACtiveConstraintParameters(const int arm_number,
                                            const active_constraints::ActiveConstraintParameters &);
+
+    // publishes the active constraint parameters
+    void PublishTaskState(teleop_vision::TaskState msg);
 
     // CALLBACKS
     void ImageLeftCallback(const sensor_msgs::ImageConstPtr &msg);
@@ -77,6 +72,15 @@ public:
     void FootSwitchCallback(const sensor_msgs::Joy &msg);
 
 
+private:
+
+    // Reads parameters and sets up subscribers and publishers
+    void SetupROS();
+
+    // reads the intrinsic camera parameters
+    void ReadCameraParameters(const std::string file_path,
+                              CameraIntrinsics &camera_intrins);
+
 public:
     // IN ALL CODE 0 is Left Cam, 1 is Right cam
     // ----------------------------------
@@ -89,13 +93,10 @@ public:
     CameraIntrinsics cam_intrinsics[2];
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
-//    KDL::Twist twist_tool_current[2];
 
     KDL::Frame slave_frame_to_task_frame[2];
 
     KDL::Frame left_cam_to_right_cam_tr;
-
-
 
     cv::Vec3d cam_rvec[2];
     cv::Vec3d cam_tvec[2];
@@ -126,6 +127,8 @@ private:
     ros::Subscriber * subscriber_tool_current_pose;
     ros::Publisher * publisher_tool_pose_desired;
     ros::Publisher * publisher_ac_params;
+    ros::Publisher publisher_task_state;
+
     //    // Current twists Not used for now
     //    ros::Subscriber *subscriber_twist_current_tool;
     //    ros::Publisher *publisher_twist_current_tool;

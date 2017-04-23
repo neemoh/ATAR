@@ -31,7 +31,7 @@ add_service_files(
 
 add_message_files(
         FILES
-        BuzzWireTaskState.msg
+        TaskState.msg
 )
 
 generate_messages(

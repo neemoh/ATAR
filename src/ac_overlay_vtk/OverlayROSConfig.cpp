@@ -27,7 +27,7 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
 
 
 void OverlayROSConfig::ReadCameraParameters(const std::string file_path,
-                                     CameraIntrinsics & camera) {
+                                            CameraIntrinsics & camera) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
     ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
 
@@ -335,6 +335,13 @@ void OverlayROSConfig::SetupROS() {
             ROS_ERROR("Parameter %s is needed.", param_name.str().c_str());
     }
 
+    // Publisher for the task state
+    std::string task_state_topic_name = "task_state";
+    publisher_task_state = n.advertise<teleop_vision::TaskState>(
+            task_state_topic_name.c_str(), 1);
+    ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
+
+
     n.param<bool>("show_reference_frames", show_reference_frames, true);
 
     // advertise publishers
@@ -491,6 +498,11 @@ void OverlayROSConfig::PublishACtiveConstraintParameters(const int arm_number,
                                                          const active_constraints::ActiveConstraintParameters & ac_params) {
 
     publisher_ac_params[arm_number].publish(ac_params);
+
+}
+
+void OverlayROSConfig::PublishTaskState(teleop_vision::TaskState msg) {
+    publisher_task_state.publish(msg);
 
 }
 
