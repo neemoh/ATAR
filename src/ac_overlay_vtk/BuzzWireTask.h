@@ -29,62 +29,87 @@
 
 #include "active_constraints/ActiveConstraintParameters.h"
 
+
+// P1 is the point where the ring enters the wire
+// P2 is the destination point shown to the user.
+// The user goes from the start point to the end point and back.
+enum TaskState {Idle, ToStartPoint, ToEndPoint, RepetitionComplete};
+
+
 class BuzzWireTask {
 public:
 
     BuzzWireTask(const double ring_radius, const bool show_ref_frames);
 
+    // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors();
 
+    // sets the pose of the tools
     void SetCurrentToolPose(const KDL::Frame & tool_pose);
 
+    // updates the task logic and the actors
     void UpdateActors();
 
-    void CalculatedDesiredToolPose(const KDL::Frame current_pose,
-                                       const KDL::Vector closest_point_to_ring_center,
-                                       const KDL::Vector closest_point_to_radial_point,
-                                       const KDL::Vector closest_point_to_grip_point,
-                                       KDL::Frame &desired_pose);
+    // calculates the desired tool pose
+    void CalculatedDesiredToolPose();
 
+    // calculates and returns the desired pose.
+    // It called faster than the graphic loop rate
     KDL::Frame GetDesiredToolPose();
 
+    // returns the status of the change of the ac_param
     bool IsACParamChanged();
 
+    // returns the ac parameters
     active_constraints::ActiveConstraintParameters GetACParameters();
 
 
 private:
 
+    // updates the error actor
+    void UpdatePositionErrorActor();
+
+    // Calculates the closest points of the wire mesh to three points of
+    // interest on the ring used for calculating the desired pose of the ring
     void FindClosestPoints();
+
 private:
 
+    // -------------------------------------------------------------------------
+    // task logic
+    TaskState task_state;
+
+    KDL::Vector idle_point;
+    KDL::Vector start_point;
+    KDL::Vector end_point;
+
+    // -------------------------------------------------------------------------
+    // graphics
     double ring_radius_;
-//    double wire_radius_; // the curvy tube from the stl file
+    KDL::Vector ring_center;
     KDL::Vector closest_point_to_ring_center;
     KDL::Vector closest_point_to_radial_point;
     KDL::Vector closest_point_to_grip_point;
 
-    double error_position;
+    double position_error;
 
-    bool show_ref_frames_ = false;
+    bool show_ref_frames;
 
-    bool ac_params_changed = true; // to publish once at the begging
+    bool ac_params_changed;
     active_constraints::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl;
     KDL::Frame tool_current_pose_kdl;
 
-    uint destination_cone_counter = 0;
-    // graphics
+    uint destination_cone_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose;
-//    vtkSmartPointer<vtkMatrix4x4> tool_desired_pose;
 
-    std::vector<vtkSmartPointer<vtkProp>> actors;
+    std::vector<vtkSmartPointer<vtkProp>>           actors;
 
+    // actors that are updated during the task
     vtkSmartPointer<vtkActor>                       ring_actor;
     vtkSmartPointer<vtkActor>                       error_sphere_actor;
 
-    vtkSmartPointer<vtkAxesActor>                   task_coordinate_axes;
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes;
     vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes;
 
@@ -94,9 +119,10 @@ private:
     vtkSmartPointer<vtkLineSource>                  line2_source;
 
     vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
-
     vtkSmartPointer<vtkActor>                       destination_cone_actor;
 
     vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
 };
+
+
 #endif //TELEOP_VISION_BUZZWIRETASK_H
