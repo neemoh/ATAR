@@ -26,6 +26,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
         destination_cone_counter(0),
         ac_params_changed(true),
         task_state(TaskState::Idle),
+        position_error_norm(0.0),
         number_of_repetition(0),
         idle_point(KDL::Vector(0.010, 0.011, 0.033)),
         start_point(KDL::Vector(0.017, 0.015, 0.033)),
@@ -418,31 +419,30 @@ void BuzzWireTask::UpdateActors() {
     double positioning_tolerance = 0.005;
     KDL::Vector destination_cone_position;
 
-
+    // if the tool is placed close to the starting point while being idle
+    //  we can start the task. but we first enable the active constraint.
     if (task_state == TaskState::Idle &&
-        (ring_center - start_point).Norm() >
+        (ring_center - start_point).Norm() <
         positioning_tolerance) {
         // Make sure the active constraint is inactive
-        if (ac_parameters.active == 1) {
-            ac_parameters.active = 0;
+        if (ac_parameters.active == 0) {
+            ac_parameters.active = 1;
             ac_params_changed = true;
         }
     }
 
-        // if the tool is placed close to the starting point while being idle
-        // the task starts
-    else if (task_state == TaskState::Idle &&
-             (ring_center - start_point).Norm() <
-             positioning_tolerance) {
+    // when the active constraints is suddenly enabled the tool moves
+    // significantly. to prevent having a peak in the error always at the
+    // beginning of the task data we start the task when the tool is
+    // positioned well
+    if (task_state == TaskState::Idle &&
+        position_error_norm < 0.002 && ac_parameters.active == 1)
+    {
         task_state = TaskState::ToEndPoint;
-        // activate the guidance
-        ac_parameters.active = 1;
-        ac_params_changed = true;
         //increment the repetition number
         number_of_repetition++;
         // save starting time
         start_time = ros::Time::now();
-
     }
 
         // If the tool reaches the end point the user needs to go back to
@@ -459,8 +459,8 @@ void BuzzWireTask::UpdateActors() {
         // If the tool reaches the start point while in ToStartPoint state,
         // we can mark the task complete
     else if (task_state == TaskState::ToStartPoint &&
-               (ring_center - start_point).Norm() <
-               positioning_tolerance) {
+             (ring_center - start_point).Norm() <
+             positioning_tolerance) {
         task_state = TaskState::RepetitionComplete;
         ac_parameters.active = 0;
         ac_params_changed = true;
@@ -470,8 +470,8 @@ void BuzzWireTask::UpdateActors() {
         // and in case another repetition is to be performed, the user can
         // flag that by going to the starting position again
     else if (task_state == TaskState::RepetitionComplete &&
-               (ring_center - idle_point).Norm() <
-               positioning_tolerance) {
+             (ring_center - idle_point).Norm() <
+             positioning_tolerance) {
         task_state = TaskState::Idle;
     }
 
@@ -480,17 +480,14 @@ void BuzzWireTask::UpdateActors() {
         destination_cone_position = start_point;
         destination_cone_actor->GetProperty()->SetColor(Colors::Green);
 
-    }
-    else if ( task_state == TaskState::ToStartPoint) {
+    } else if (task_state == TaskState::ToStartPoint) {
         destination_cone_position = start_point;
         destination_cone_actor->GetProperty()->SetColor(Colors::DeepPink);
 
-    }
-    else if (task_state == TaskState::ToEndPoint) {
+    } else if (task_state == TaskState::ToEndPoint) {
         destination_cone_position = end_point;
         destination_cone_actor->GetProperty()->SetColor(Colors::DeepPink);
-    }
-    else if (task_state == TaskState::RepetitionComplete) {
+    } else if (task_state == TaskState::RepetitionComplete) {
         destination_cone_position = idle_point;
         destination_cone_actor->GetProperty()->SetColor(Colors::Green);
 
@@ -498,7 +495,7 @@ void BuzzWireTask::UpdateActors() {
 
     // show the destination to the user
     double dz = 0.005 +
-                0.003 * sin(2 * M_PI *double(destination_cone_counter) / 90);
+                0.003 * sin(2 * M_PI * double(destination_cone_counter) / 90);
 
     destination_cone_counter++;
     destination_cone_actor->SetPosition(destination_cone_position[0],
@@ -510,12 +507,21 @@ void BuzzWireTask::UpdateActors() {
     UpdatePositionErrorActor();
 
     // Populate the task state message
+    task_state_msg.task_name = "BuzzWire";
     task_state_msg.task_state = task_state;
     task_state_msg.number_of_repetition = number_of_repetition;
-    task_state_msg.position_error_norm = position_error_norm;
-    task_state_msg.time_stamp = (ros::Time::now() - start_time).toSec();
+    if (task_state == TaskState::ToStartPoint
+        || task_state == TaskState::ToEndPoint) {
 
+        task_state_msg.time_stamp = (ros::Time::now() - start_time).toSec();
+        task_state_msg.position_error_norm = position_error_norm;
+    } else {
+        task_state_msg.time_stamp = 0.0;
+        task_state_msg.position_error_norm = 0.0;
+
+    }
 }
+
 
 
 //------------------------------------------------------------------------------
@@ -696,7 +702,7 @@ void BuzzWireTask::UpdatePositionErrorActor() {
 
 }
 
-teleop_vision::BuzzWireTaskState BuzzWireTask::GetTaskStateMsg() {
+teleop_vision::TaskState BuzzWireTask::GetTaskStateMsg() {
     return task_state_msg;
 }
 

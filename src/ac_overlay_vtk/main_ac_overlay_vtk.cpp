@@ -101,8 +101,14 @@ int main(int argc, char **argv)
             // updating the desired pose
             pose_desired_tool[0] = buzztask.GetDesiredToolPose();
 
+            // publish the active constraint parameters if needed
             if(buzztask.IsACParamChanged())
                 rc.PublishACtiveConstraintParameters(0, buzztask.GetACParameters());
+
+            // publish the task state
+            rc.PublishTaskState(buzztask.GetTaskStateMsg());
+
+            // check time performance
             // std::cout <<  "it took: " << (ros::Time::now() - start).toNSec() /1000000 << std::endl;
 
         } // if new image

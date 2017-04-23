@@ -28,12 +28,12 @@
 #include <vtkCornerAnnotation.h>
 
 #include "active_constraints/ActiveConstraintParameters.h"
-#include "teleop_vision/BuzzWireTaskState.h"
+#include "teleop_vision/TaskState.h"
 
 // P1 is the point where the ring enters the wire
 // P2 is the destination point shown to the user.
 // The user goes from the start point to the end point and back.
-enum TaskState: uint8_t {Idle, ToStartPoint, ToEndPoint, RepetitionComplete};
+enum TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint, RepetitionComplete};
 
 
 class BuzzWireTask {
@@ -63,7 +63,7 @@ public:
     // returns the ac parameters
     active_constraints::ActiveConstraintParameters GetACParameters();
 
-    teleop_vision::BuzzWireTaskState GetTaskStateMsg();
+    teleop_vision::TaskState GetTaskStateMsg();
 
 private:
 
@@ -83,7 +83,7 @@ private:
     KDL::Vector idle_point;
     KDL::Vector start_point;
     KDL::Vector end_point;
-    teleop_vision::BuzzWireTaskState task_state_msg;
+    teleop_vision::TaskState task_state_msg;
     uint8_t number_of_repetition;
     ros::Time start_time;
 
