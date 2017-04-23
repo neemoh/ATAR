@@ -28,12 +28,12 @@
 #include <vtkCornerAnnotation.h>
 
 #include "active_constraints/ActiveConstraintParameters.h"
-
+#include "teleop_vision/BuzzWireTaskState.h"
 
 // P1 is the point where the ring enters the wire
 // P2 is the destination point shown to the user.
 // The user goes from the start point to the end point and back.
-enum TaskState {Idle, ToStartPoint, ToEndPoint, RepetitionComplete};
+enum TaskState: uint8_t {Idle, ToStartPoint, ToEndPoint, RepetitionComplete};
 
 
 class BuzzWireTask {
@@ -63,6 +63,7 @@ public:
     // returns the ac parameters
     active_constraints::ActiveConstraintParameters GetACParameters();
 
+    teleop_vision::BuzzWireTaskState GetTaskStateMsg();
 
 private:
 
@@ -82,6 +83,9 @@ private:
     KDL::Vector idle_point;
     KDL::Vector start_point;
     KDL::Vector end_point;
+    teleop_vision::BuzzWireTaskState task_state_msg;
+    uint8_t number_of_repetition;
+    ros::Time start_time;
 
     // -------------------------------------------------------------------------
     // graphics
@@ -91,7 +95,11 @@ private:
     KDL::Vector closest_point_to_radial_point;
     KDL::Vector closest_point_to_grip_point;
 
-    double position_error;
+    // the distance between the center of the ring and the closest point on
+    // the wire. This is could be slightly different from the error
+    // calculated from the difference of the desired pose and the current
+    // pose, though not significantly.
+    double position_error_norm;
 
     bool show_ref_frames;
 

@@ -26,6 +26,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
         destination_cone_counter(0),
         ac_params_changed(true),
         task_state(TaskState::Idle),
+        number_of_repetition(0),
         idle_point(KDL::Vector(0.010, 0.011, 0.033)),
         start_point(KDL::Vector(0.017, 0.015, 0.033)),
         end_point(KDL::Vector(0.049, 0.028, 0.056)) {
@@ -437,14 +438,23 @@ void BuzzWireTask::UpdateActors() {
         // activate the guidance
         ac_parameters.active = 1;
         ac_params_changed = true;
+        //increment the repetition number
+        number_of_repetition++;
+        // save starting time
+        start_time = ros::Time::now();
+
     }
 
         // If the tool reaches the end point the user needs to go back to
-        // the starting point
+        // the starting point. This counts as a separate repetition of the task
     else if (task_state == TaskState::ToEndPoint &&
              (ring_center - end_point).Norm() <
              positioning_tolerance) {
         task_state = TaskState::ToStartPoint;
+        //increment the repetition number
+        number_of_repetition++;
+        // save starting time
+        start_time = ros::Time::now();
     }
         // If the tool reaches the start point while in ToStartPoint state,
         // we can mark the task complete
@@ -498,6 +508,13 @@ void BuzzWireTask::UpdateActors() {
     // -------------------------------------------------------------------------
     // Performance Metrics
     UpdatePositionErrorActor();
+
+    // Populate the task state message
+    task_state_msg.task_state = task_state;
+    task_state_msg.number_of_repetition = number_of_repetition;
+    task_state_msg.position_error_norm = position_error_norm;
+    task_state_msg.time_stamp = (ros::Time::now() - start_time).toSec();
+
 }
 
 
@@ -596,7 +613,7 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
         // wire_center:
         // wire_radius_ * (ring_center_to_cp/ring_center_to_cp.Norm());
 
-        position_error = (wire_center - ring_center).Norm();
+        position_error_norm = (wire_center - ring_center).Norm();
         tool_desired_pose_kdl.p =
                 tool_current_pose_kdl.p + wire_center - ring_center;
 
@@ -668,15 +685,18 @@ active_constraints::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
 
 //------------------------------------------------------------------------------
 void BuzzWireTask::UpdatePositionErrorActor() {
-    \
 
     double max_error = 0.004;
-    double error_ratio = position_error / max_error;
+    double error_ratio = position_error_norm / max_error;
     if (error_ratio > 1.0)
         error_ratio = 1.0;
 
     error_sphere_actor->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
                                                 0.1);
 
+}
+
+teleop_vision::BuzzWireTaskState BuzzWireTask::GetTaskStateMsg() {
+    return task_state_msg;
 }
 

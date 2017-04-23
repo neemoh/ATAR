@@ -1,0 +1,4 @@
+uint8 task_state
+uint8 number_of_repetition
+float64 time_stamp
+float64 position_error_norm

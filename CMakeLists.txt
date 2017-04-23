@@ -29,6 +29,11 @@ add_service_files(
         FILES
         CalculateStereoCamsTransfromFromTopics.srv)
 
+add_message_files(
+        FILES
+        BuzzWireTaskState.msg
+)
+
 generate_messages(
         DEPENDENCIES
         geometry_msgs
