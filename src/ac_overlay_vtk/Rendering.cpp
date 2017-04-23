@@ -14,7 +14,6 @@
 #include <vtkOpenGLRenderer.h>
 #include <vtkFrameBufferObject2.h>
 
-//----------------------------------------------------------------------------
 Rendering::Rendering()
 //        : background_renderer_(NULL)
 //        , scene_renderer_(NULL)
@@ -37,8 +36,11 @@ Rendering::Rendering()
 
         background_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
         background_renderer_[i]->InteractiveOff();
-        background_renderer_[i]->SetBackground(0, 0, 0);
         background_renderer_[i]->SetLayer(0);
+
+        background_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
+        background_renderer_[i]->SetActiveCamera(background_camera_[i]);
+        background_renderer_[i]->SetViewport(view_port[i]);
 
         scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
         scene_renderer_[i]->InteractiveOff();
@@ -47,10 +49,6 @@ Rendering::Rendering()
 
         scene_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
         scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
-
-        background_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
-        background_renderer_[i]->SetActiveCamera(background_camera_[i]);
-        background_renderer_[i]->SetViewport(view_port[i]);
 
         camera_to_world_transform_[i] = vtkSmartPointer<vtkMatrix4x4>::New();
         camera_to_world_transform_[i]->Identity();
@@ -62,27 +60,20 @@ Rendering::Rendering()
 
 
     }
-    // important for getting high update rate (If needed, images can be shown with opencv)
+    // important for getting high update rate (If needed, images can be shown
+    // with opencv)
     render_window_->SetOffScreenRendering(1);
-//        render_window_->LineSmoothingOn();
-//        render_window_->PolygonSmoothingOn();
-
-    // could be usefull for shadows?
-    render_window_->SetMultiSamples(0);
-    render_window_->SetAlphaBitPlanes(1);
 
     window_to_image_filter_ = vtkSmartPointer<vtkWindowToImageFilter>::New();
     window_to_image_filter_->SetInput(render_window_);
-//    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record the alpha (transparency) channel for future use
+    //    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record  he
+    // alpha (transparency) channel for future use
     window_to_image_filter_->ReadFrontBufferOff(); // read from the back buffer
-
-//    if(!vtkFrameBufferObject2::IsSupported(render_window_))
-//        std::cerr << "Shadow rendering is not supported by the current video"
-//                  << " driver!" << std::endl;
 
 }
 
-//-----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 Rendering::~Rendering()
 {
 
@@ -94,7 +85,8 @@ Rendering::~Rendering()
 
 }
 
-//----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::Vec3d cam_tvec[]) {
 
     for (int k = 0; k < 2; ++k) {
@@ -123,7 +115,7 @@ void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::
 }
 
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void Rendering::SetEnableBackgroundImage(bool isEnabled)
 {
     for (int i = 0; i < 2; ++i) {
@@ -141,7 +133,7 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
 }
 
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void Rendering::SetCameraIntrinsics(const cv::Matx33d intrinsics[])
 {
     for (int i = 0; i < 2; ++i) {
@@ -160,7 +152,7 @@ void Rendering::SetCameraIntrinsics(const cv::Matx33d intrinsics[])
 }
 
 
-//----------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void Rendering::SetImageCameraToFaceImage(const int id) {
 
     int *windowSize = render_window_->GetSize();
@@ -233,7 +225,8 @@ void Rendering::SetImageCameraToFaceImage(const int id) {
 
 }
 
-//----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void Rendering::UpdateBackgroundImage(cv::Mat  img[]) {
 
     for (int i = 0; i < 2; ++i) {
@@ -245,7 +238,8 @@ void Rendering::UpdateBackgroundImage(cv::Mat  img[]) {
     }
 }
 
-//----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void Rendering::UpdateViewAngleForActualWindowSize() {
     for (int i = 0; i < 2; ++i) {
         SetImageCameraToFaceImage(i);
@@ -254,7 +248,8 @@ void Rendering::UpdateViewAngleForActualWindowSize() {
     }
 }
 
-//----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
     int image_width = img[0].size().width;
@@ -286,7 +281,8 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
 }
 
-//----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 
     scene_renderer_[0]->AddActor(actor);
@@ -308,7 +304,8 @@ Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
 
 }
 
-//----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void Rendering::Render() {
 
 //    scene_renderer_->Modified();
@@ -320,7 +317,8 @@ void Rendering::Render() {
 
 }
 
-//----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void Rendering::GetRenderedImage(cv::Mat &img) {
 
     window_to_image_filter_->Modified();
@@ -343,6 +341,7 @@ void Rendering::GetRenderedImage(cv::Mat &img) {
 }
 
 
+//------------------------------------------------------------------------------
 void VTKConversions::AxisAngleToVTKMatrix(const cv::Vec3d cam_rvec,
                                           const cv::Vec3d cam_tvec,
                                           vtkSmartPointer<vtkMatrix4x4>  out) {
@@ -364,6 +363,8 @@ void VTKConversions::AxisAngleToVTKMatrix(const cv::Vec3d cam_rvec,
 
 }
 
+
+//------------------------------------------------------------------------------
 void ::VTKConversions::KDLFrameToVTKMatrix(const KDL::Frame in,
                                            vtkSmartPointer<vtkMatrix4x4> out) {
     // Convert to VTK matrix.
@@ -377,8 +378,9 @@ void ::VTKConversions::KDLFrameToVTKMatrix(const KDL::Frame in,
 }
 
 
+//------------------------------------------------------------------------------
 void VTKConversions::VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4> in,
-                                           KDL::Frame & out) {
+                                         KDL::Frame & out) {
     // Convert to VTK matrix.
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
