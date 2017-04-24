@@ -54,7 +54,7 @@ find_package(Boost REQUIRED)
 include_directories(
         ${catkin_INCLUDE_DIRS}
         include/
-        )
+)
 
 ##########################################################################
 #                           ArucoUtils Library
@@ -107,7 +107,7 @@ add_executable(extrinsic_calib_aruco
         )
 target_link_libraries(extrinsic_calib_aruco
         ${OpenCV_LIBRARIES}
-)
+        )
 
 add_library(ExtrinsicCalibArucoNodelet
         src/extrinsic_calib_aruco/ExtrinsicArucoNodelet.cpp
@@ -259,6 +259,48 @@ target_link_libraries(
         ${catkin_LIBRARIES}
         arucoUtils)
 
+
+
+##########################################################################
+#                           AC OVERLAY VTK
+
+find_package(Qt5Widgets)
+find_package(Qt5Core REQUIRED)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(PROJECT_INCLUDE_DIR include)
+
+set (MyProjectLib_hdr
+        src/reporter/include/mainwindow.hpp
+        src/reporter/include/cvimagewidget.h)
+set (MyProjectLib_src
+        src/reporter/mainwindow.cpp
+        src/reporter/rosclass.cpp)
+qt5_wrap_cpp(MyProjectLib_hdr_moc ${MyProjectLib_hdr})
+qt5_wrap_ui (MyProjectLib_ui_moc  src/reporter/mainwindow.ui)
+
+include_directories (${PROJECT_SOURCE_DIR})
+include_directories (${PROJECT_BINARY_DIR})
+include_directories (src/reporter/include)
+
+add_library (reporter_utils SHARED
+        ${MyProjectLib_src}
+        ${MyProjectLib_hdr_moc}
+        ${MyProjectLib_ui_moc}
+        )
+
+target_link_libraries (reporter_utils
+        Qt5::Widgets
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES})
+
+add_executable(labelling_node src/reporter/labelling_node.cpp)
+target_link_libraries (labelling_node
+        ${catkin_LIBRARIES}
+        reporter_utils
+        )
 
 
 ##########################################################################
