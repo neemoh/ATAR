@@ -14,8 +14,6 @@ int main(int argc, char **argv)
   w.StartRosLoop();
   w.showImage();
 
-
-
   w.show();
   a.exec();
 

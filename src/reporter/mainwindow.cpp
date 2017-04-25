@@ -14,7 +14,12 @@ MainWindow::MainWindow(QWidget *parent) :
   // Create the image widget
   imageWidget = new CVImageWidget();
   //  ui->imageWidgetUI
-  ui->imageLayout->addWidget(imageWidget);
+  //ui->imageLayout->addWidget(imageWidget);
+
+  QTimer *timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+
+  timer->start(100);
 }
 
 MainWindow::~MainWindow()
@@ -22,11 +27,19 @@ MainWindow::~MainWindow()
   delete ui;
 }
 
+void MainWindow::onTimeout()
+{
+
+  ui->line_edit_num_repetitions->setText(QString::number(ros_obj.task_state.number_of_repetition));
+
+    ui->line_edit_duration->setText(QString::number(ros_obj.task_state.time_stamp, 'f', 1));
+}
+
 void MainWindow::showImage(){
 
   // Load an image
-  cv::Mat image = cv::imread("/home/nearlab/Downloads/VRFT_R2014a/1dof.jpg", true);
-  imageWidget->showImage(image);
+//  cv::Mat image = cv::imread("/home/nearlab/Downloads/VRFT_R2014a/1dof.jpg", true);
+//  imageWidget->showImage(image);
 
 }
 
@@ -66,17 +79,16 @@ void MainWindow::on_record_clicked()
     ui->record->setChecked(false);
   }
   else{
-
     //  qDebug() << ui->file_name->text();
     ros_obj.OpenRecordingFile(filename);
     ui->file_name->setDisabled(true);
     ros_obj.StartRecording();
     qDebug() << "Started recording." ;
+
   }
 
 
 }
-
 
 
 void MainWindow::on_stop_released()
@@ -87,18 +99,25 @@ void MainWindow::on_stop_released()
   ui->record->setChecked(false);
   ui->file_name->setDisabled(false);
 
+//  QPalette pal = ui->record->palette();
+//  pal.setColor(QPalette::Window, QColor(Qt::blue));
+//  ui->record->setAutoFillBackground(true);
+//  ui->record->setPalette(pal);
+//  ui->record->update();
 }
 
-
-void MainWindow::on_button_get_point_clicked()
+void MainWindow::on_button_repeat_clicked()
 {
-  int num_points = ros_obj.AddRegistrationPoint();
-  ui->line_edit_num_reg_points->setText(QString::number(num_points));
+//
+    std_msgs::Char msg;
+    msg.data= 'd';
+    ros_obj.publisher_recording_events.publish(msg);
 }
 
-void MainWindow::on_buttin_reset_points_clicked()
+void MainWindow::on_button_reset_clicked()
 {
-  ros_obj.ResetRegistrationPoints();
-  ui->line_edit_num_reg_points->setText("");
+    std_msgs::Char msg;
+    msg.data =  'r';
+    ros_obj.publisher_recording_events.publish(msg);
 
 }

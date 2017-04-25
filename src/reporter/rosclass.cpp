@@ -8,65 +8,207 @@
 
 #include "rosclass.hpp"
 
-using namespace std;
+#include <active_constraints/ActiveConstraintParameters.h>
+#include "teleop_vision/TaskState.h"
 
-RosObj::RosObj(QObject *parent, string node_name)
-  : n(node_name), ros_freq(0), node_name(node_name),
-    state_label(0), recording(false)
+
+RosObj::RosObj(QObject *parent, std::string node_name)
+    : n(node_name), ros_freq(0), node_name(node_name),
+      state_label(0), recording(false), new_task_state_msg(false)
 {
-  GetROSParameterValues();
+
+    slave_pose_current_callbacks[0] = &RosObj::Slave0CurrentPoseCallback;
+    slave_pose_current_callbacks[1] = &RosObj::Slave1CurrentPoseCallback;
+
+    slave_pose_desired_callbacks[0] = &RosObj::Slave0DesiredPoseCallback;
+    slave_pose_desired_callbacks[1] = &RosObj::Slave1DesiredPoseCallback;
+
+    master_pose_current_callbacks[0] = &RosObj::Master0CurrentPoseCallback;
+    master_pose_current_callbacks[1] = &RosObj::Master1CurrentPoseCallback;
+
+    slave_twist_callbacks[0] = &RosObj::Slave0TwistCallback;
+    slave_twist_callbacks[1] = &RosObj::Slave1TwistCallback;
+
+    master_twist_callbacks[0] = &RosObj::Master0TwistCallback;
+    master_twist_callbacks[1] = &RosObj::Master1TwistCallback;
+
+    master_wrench_callbacks[0] = &RosObj::Master0WrenchCallback;
+    master_wrench_callbacks[1] = &RosObj::Master1WrenchCallback;
+
+    master_ac_params_callbacks[0] = &RosObj::Master0ACParamsCallback;
+    master_ac_params_callbacks[1] = &RosObj::Master1ACParamsCallback;
+
+    task_frame_to_slave_frame[0] = std::vector<double>(7, 0.0);
+    task_frame_to_slave_frame[1] = std::vector<double>(7, 0.0);
+
+    GetROSParameterValues();
 }
 
+
+RosObj::~RosObj(){
+    //    delete task_frame_to_slave_frame;;
+}
 
 //-----------------------------------------------------------------------------------
 // GetROSParameterValues
 //-----------------------------------------------------------------------------------
 
 void RosObj::GetROSParameterValues() {
-  bool all_required_params_found = true;
+    bool all_required_params_found = true;
 
-  n.param<double>("rate", ros_freq, 100);
-
-  std::string psm1_cartesian_pose_topic_name_param;
-  if (!n.getParam("/psm1_cartesian_pose_topic_name", psm1_cartesian_pose_topic_name_param)) {
-    ROS_ERROR("Parameter /psm1_cartesian_pose_topic_name is required.");
-    all_required_params_found = false;
-  }
-
-  std::string psm2_cartesian_pose_topic_name_param;
-  if (!n.getParam("/psm2_cartesian_pose_topic_name", psm2_cartesian_pose_topic_name_param))  {
-    ROS_ERROR("/Parameter /psm2_cartesian_pose_topic_name is required.");
-    all_required_params_found = false;
-  }
-
-  std::string psm1_joint_state_topic_name_param;
-  if (!n.getParam("/psm1_joint_state_topic_name", psm1_joint_state_topic_name_param)) {
-    ROS_ERROR("Parameter /psm1_joint_state_topic_name is required.");
-    all_required_params_found = false;
-  }
-
-  std::string psm2_joint_state_topic_name_param;
-  if (!n.getParam("/psm2_joint_state_topic_name", psm2_joint_state_topic_name_param)) {
-    ROS_ERROR("Parameter /psm2_joint_state_topic_name is required.");
-    all_required_params_found = false;
-  }
-
-  std::string pedal_topic_name_param;
-  if (!n.getParam("/pedal_topic_name", pedal_topic_name_param)) {
-    ROS_ERROR("Parameter /pedal_topic_name is required.");
-    all_required_params_found = false;
-  }
-
-  if (!all_required_params_found)
-    throw std::runtime_error("ERROR: some required topics are not set");
+    n.param<double>("rate", ros_freq, 100);
 
 
-  psm1_cart_subscriber = n.subscribe(psm1_cartesian_pose_topic_name_param, 10, &RosObj::OnPsm1CartesianPoseMessage, this);
-  psm2_cart_subscriber = n.subscribe(psm2_cartesian_pose_topic_name_param, 10, &RosObj::OnPsm2CartesianPoseMessage, this);
-  psm1_joint_subscriber = n.subscribe(psm1_joint_state_topic_name_param, 10, &RosObj::OnPsm1JointStateMessage, this);
-  psm2_joint_subscriber = n.subscribe(psm2_joint_state_topic_name_param, 10, &RosObj::OnPsm2JointStateMessage, this);
+    n.param<int>("number_of_arms", n_arms, 1);
+    ROS_INFO("Expecting '%d' arm(s)", n_arms);
 
-  ros_rate = new ros::Rate(ros_freq);
+    if (n_arms < 1)
+        ROS_ERROR("Number of arms must be at least 1.");
+
+    subscriber_slave_pose_current = new ros::Subscriber[n_arms];
+    subscriber_master_pose_current = new ros::Subscriber[n_arms];
+    subscriber_slave_pose_desired = new ros::Subscriber[n_arms];
+    subscriber_slave_twist = new ros::Subscriber[n_arms];
+    subscriber_master_twist = new ros::Subscriber[n_arms];
+    subscriber_master_wrench = new ros::Subscriber[n_arms];
+    subscriber_ac_params = new ros::Subscriber[n_arms];
+
+    // tool1 name
+    std::string slave_names[2] = {"PSM2", "PSM1"};
+    std::string master_names[2] = {"MTMR", "MTML"};
+
+    for (int n_arm = 0; n_arm < n_arms; n_arm++) {
+
+        //getting the name of the arms
+        std::stringstream param_name;
+        param_name << std::string("slave_") << n_arm + 1 << "_name";
+        n.getParam(param_name.str(), slave_names[n_arm]);
+
+        param_name.str("");
+        param_name << std::string("master_") << n_arm + 1 << "_name";
+        n.getParam(param_name.str(), master_names[n_arm]);
+
+
+        //        // publishers
+        //        param_name.str("");
+        //        param_name << std::string("/dvrk/") << master_names[n_arm]
+        //                      << "/set_wrench_body";
+        //        publisher_wrench[n_arm] = n.advertise<geometry_msgs::Wrench>(
+        //                    param_name.str().c_str(), 1);
+        //        ROS_INFO("Will publish on %s", param_name.str().c_str());
+
+        // subscribers
+        param_name.str("");
+        param_name << std::string("/")
+                   << slave_names[n_arm]<< "/tool_pose_desired";
+        subscriber_slave_pose_desired[n_arm] = n.subscribe(
+                    param_name.str(), 1,
+                    slave_pose_desired_callbacks[n_arm],
+                    this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+                 param_name.str().c_str());
+
+        // the current pose of the slaves
+        param_name.str("");
+        param_name << std::string("/dvrk/") << slave_names[n_arm]
+                      << "/position_cartesian_current";
+        subscriber_slave_pose_current[n_arm] = n.subscribe(param_name.str(), 1,
+                                                           slave_pose_current_callbacks[n_arm],
+                                                           this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+                 param_name.str().c_str());
+
+
+        // the current pose of the masters
+        param_name.str("");
+        param_name << std::string("/dvrk/") << master_names[n_arm]
+                      << "/position_cartesian_current";
+        subscriber_master_pose_current[n_arm] = n.subscribe(param_name.str(), 1,
+                                                            master_pose_current_callbacks[n_arm],
+                                                            this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+                 param_name.str().c_str());
+
+
+        //  master's twist
+        param_name.str("");
+        param_name << std::string("/dvrk/") << master_names[n_arm]
+                      << "/twist_body_current";
+        subscriber_master_twist[n_arm] = n.subscribe(param_name.str(),
+                                                     1,
+                                                     master_twist_callbacks[n_arm],
+                                                     this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+                 param_name.str().c_str());
+
+
+        //  Slave's twist
+        param_name.str("");
+        param_name << std::string("/dvrk/") << slave_names[n_arm]
+                      << "/twist_body_current";
+        subscriber_slave_twist[n_arm] = n.subscribe(param_name.str(),
+                                                    1,
+                                                    slave_twist_callbacks[n_arm],
+                                                    this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+                 param_name.str().c_str());
+
+        //master's wrench
+        param_name.str("");
+        param_name << std::string("/dvrk/") << master_names[n_arm]
+                      << "/set_wrench_body";
+        subscriber_master_wrench[n_arm] = n.subscribe(param_name.str(),
+                                                      1,
+                                                      master_wrench_callbacks[n_arm],
+                                                      this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+                 param_name.str().c_str());
+
+
+        param_name.str("");
+        param_name << std::string("/") << master_names[n_arm]
+                      << "/active_constraint_param";
+        subscriber_ac_params[n_arm] = n.subscribe(param_name.str(), 1,
+                                                  master_ac_params_callbacks[n_arm],
+                                                  this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+                 param_name.str().c_str());
+
+
+        // the transformation from the coordinate frame of the slave (RCM) to the task coordinate
+        // frame.
+        param_name.str("");
+        param_name << (std::string) "/calibrations/task_frame_to_"
+                   << slave_names[n_arm] << "_frame";
+        if (!n.getParam(param_name.str(), task_frame_to_slave_frame[n_arm]))
+            ROS_WARN("Parameter %s was not found.", param_name.str().c_str());
+
+
+    }
+
+    // common subscriber
+    subscriber_foot_pedal_coag = n.subscribe("/dvrk/footpedals/coag", 1,
+                                             &RosObj::CoagFootSwitchCallback,
+                                             this);
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/coag");
+
+    subscriber_foot_pedal_clutch = n.subscribe("/dvrk/footpedals/clutch", 1,
+                                               &RosObj::ClutchFootSwitchCallback,
+                                               this);
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/clutch");
+
+
+    subscriber_task_state = n.subscribe("/task_state", 1,
+                                        &RosObj::TaskSTateCallback,
+                                        this);
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to /task_state");
+
+    //publisher
+    publisher_recording_events = n.advertise<std_msgs::Char>
+            ("/recording_events", 1);
+    ROS_INFO("Will publish on /recording_events");
+
+    ros_rate = new ros::Rate(ros_freq);
 
 }
 
@@ -77,228 +219,319 @@ void RosObj::GetROSParameterValues() {
 // Callbacks
 //-----------------------------------------------------------------------------------
 
-void RosObj::OnPsm1CartesianPoseMessage(const geometry_msgs::PoseStamped::ConstPtr &msg) {
-  psm1_pose.position = msg->pose.position;
-  psm1_pose.orientation = msg->pose.orientation;
+// PSMs current pose
+void RosObj::Slave0CurrentPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    slave_current_pose[0].position = msg->pose.position;
+    slave_current_pose[0].orientation = msg->pose.orientation;
 }
 
-void RosObj::OnPsm2CartesianPoseMessage(const geometry_msgs::PoseStamped::ConstPtr &msg) {
-  psm2_pose.position = msg->pose.position;
-  psm2_pose.orientation = msg->pose.orientation;
+void RosObj::Slave1CurrentPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    slave_current_pose[1].position = msg->pose.position;
+    slave_current_pose[1].orientation = msg->pose.orientation;
 }
 
-void RosObj::OnPsm1JointStateMessage(const sensor_msgs::JointState::ConstPtr &msg) {
-  psm1_joint_state.position = msg->position;
-  psm1_joint_state.velocity = msg->velocity;
+// PSMs Desired pose
+void RosObj::Slave0DesiredPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    slave_desired_pose[0].position = msg->pose.position;
+    slave_desired_pose[0].orientation = msg->pose.orientation;
 }
 
-void RosObj::OnPsm2JointStateMessage(const sensor_msgs::JointState::ConstPtr &msg) {
-  psm2_joint_state.position = msg->position;
-  psm2_joint_state.velocity = msg->velocity;
+void RosObj::Slave1DesiredPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    slave_desired_pose[1].position = msg->pose.position;
+    slave_desired_pose[1].orientation = msg->pose.orientation;
+}
+
+// MTMs current pose
+void RosObj::Master0CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
+    master_current_pose[0].position = msg->pose.position;
+    master_current_pose[0].orientation = msg->pose.orientation;
+}
+
+void RosObj::Master1CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
+    master_current_pose[1].position = msg->pose.position;
+    master_current_pose[1].orientation = msg->pose.orientation;
+}
+
+
+// Slave Twist
+void RosObj::Slave0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
+    slave_twist[0].linear = msg->twist.linear;
+    slave_twist[0].linear = msg->twist.linear;
+}
+
+void RosObj::Slave1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
+    slave_twist[1].linear = msg->twist.linear;
+    slave_twist[1].linear = msg->twist.linear;
+}
+
+
+// MTMs Twist
+void RosObj::Master0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
+    master_twist[0].linear = msg->twist.linear;
+    master_twist[0].linear = msg->twist.linear;
+}
+
+void RosObj::Master1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
+    master_twist[1].linear = msg->twist.linear;
+    master_twist[1].linear = msg->twist.linear;
+}
+
+
+// MTMs Wrench
+void RosObj::Master0WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) {
+    master_wrench[0].force= msg->force;
+    master_wrench[0].torque= msg->torque;
+}
+
+void RosObj::Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) {
+    master_wrench[1].force= msg->force;
+    master_wrench[1].torque= msg->torque;
+}
+
+
+// MTMs AC params
+void RosObj::Master0ACParamsCallback(
+        const active_constraints::ActiveConstraintParametersConstPtr & msg){
+    ac_params[0].active = msg->active;
+    ac_params[0].method = msg->method;
+    ac_params[0].angular_damping_coeff = msg->angular_damping_coeff;
+    ac_params[0].angular_elastic_coeff = msg->angular_elastic_coeff;
+    ac_params[0].linear_damping_coeff = msg->linear_damping_coeff;
+    ac_params[0].linear_elastic_coeff = msg->linear_elastic_coeff;
+    ac_params[0].max_force = msg->max_force;
+    ac_params[0].max_torque = msg->max_torque;
+}
+
+
+void RosObj::Master1ACParamsCallback(
+        const active_constraints::ActiveConstraintParametersConstPtr & msg){
+    ac_params[1].active = msg->active;
+    ac_params[1].method = msg->method;
+    ac_params[1].angular_damping_coeff = msg->angular_damping_coeff;
+    ac_params[1].angular_elastic_coeff = msg->angular_elastic_coeff;
+    ac_params[1].linear_damping_coeff = msg->linear_damping_coeff;
+    ac_params[1].linear_elastic_coeff = msg->linear_elastic_coeff;
+    ac_params[1].max_force = msg->max_force;
+    ac_params[1].max_torque = msg->max_torque;
+}
+
+// task state
+void RosObj::TaskSTateCallback(const teleop_vision::TaskStateConstPtr &msg){
+    task_state.task_name = msg->task_name;
+    task_state.number_of_repetition = msg->number_of_repetition;
+    task_state.task_state = msg->task_state;
+    task_state.time_stamp = msg->time_stamp;
+    task_state.position_error_norm = msg->position_error_norm;
+    new_task_state_msg = true;
+}
+
+// foot pedals
+void RosObj::CoagFootSwitchCallback(const sensor_msgs::Joy &msg){
+    clutch_pedal_pressed = (bool) msg.buttons[0];
+}
+
+void RosObj::ClutchFootSwitchCallback(const sensor_msgs::Joy &msg){
+    coag_pedal_pressed = (bool) msg.buttons[0];
 }
 
 
 void RosObj::OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg) {
     try
     {
-      image_msg = cv_bridge::toCvShare(msg, "bgr8")->image;
+        image_msg = cv_bridge::toCvShare(msg, "bgr8")->image;
     }
     catch (cv_bridge::Exception& e)
     {
-      ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
+        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
     }
 }
 
 cv::Mat& RosObj::Image(ros::Duration timeout) {
-  ros::Rate loop_rate(100);
-  ros::Time timeout_time = ros::Time::now() + timeout;
+    ros::Rate loop_rate(100);
+    ros::Time timeout_time = ros::Time::now() + timeout;
 
-  while(image_msg.empty()) {
-    ros::spinOnce();
-    loop_rate.sleep();
+    while(image_msg.empty()) {
+        ros::spinOnce();
+        loop_rate.sleep();
 
-    if (ros::Time::now() > timeout_time) {
-      ROS_ERROR("Timeout whilst waiting for a new image from the image topic. "
-                "Is the camera still publishing ?");
+        if (ros::Time::now() > timeout_time) {
+            ROS_ERROR("Timeout whilst waiting for a new image from the image topic. "
+                      "Is the camera still publishing ?");
+        }
     }
-  }
 
-  return image_msg;
+    return image_msg;
 }
 
 
 void RosObj::run(){
 
-  while(ros::ok()){
-    ros::Time begin = ros::Time::now();
+    while(ros::ok() ){
+        ros::Time begin = ros::Time::now();
 
+        if(recording && new_task_state_msg &&
+                (task_state.task_state==1 || task_state.task_state==2) ){
+            new_task_state_msg = false;
 
-    if(recording){
-      ros::Duration past = ros::Time::now() - begin;
-      double secs = past.toSec();
-      double nsecs = past.toNSec();
+            //seconds = psm1_joint_state.header.stamp.nsec;
+            //	std::cout << "sec=" << secs << "  nsec= " << nsecs << std::endl;
 
-      //seconds = psm1_joint_state.header.stamp.nsec;
-      //	std::cout << "sec=" << secs << "  nsec= " << nsecs << std::endl;
-      std::vector<double> data{secs, nsecs,
+            std::vector<double> data;
 
-            double(state_label),
-            psm1_pose.position.x, psm1_pose.position.y
-            ,psm1_pose.position.z,  psm1_pose.orientation.x
-            ,psm1_pose.orientation.y,  psm1_pose.orientation.z
-            ,psm1_pose.orientation.w
-            ,psm2_pose.position.x,  psm2_pose.position.y
-            ,psm2_pose.position.z,  psm2_pose.orientation.x
-            ,psm2_pose.orientation.y , psm2_pose.orientation.z
-            ,psm2_pose.orientation.w
-            ,psm1_joint_state.position[0]
-            ,psm1_joint_state.position[1]
-            ,psm1_joint_state.position[2]
-            ,psm1_joint_state.position[3]
-            ,psm1_joint_state.position[4]
-            ,psm1_joint_state.position[5]
-            ,psm1_joint_state.position[6]
-            ,psm1_joint_state.velocity[0]
-            ,psm1_joint_state.velocity[1]
-            ,psm1_joint_state.velocity[2]
-            ,psm1_joint_state.velocity[3]
-            ,psm1_joint_state.velocity[4]
-            ,psm1_joint_state.velocity[5]
-            ,psm1_joint_state.velocity[6]
-            ,psm2_joint_state.position[0]
-            ,psm2_joint_state.position[1]
-            ,psm2_joint_state.position[2]
-            ,psm2_joint_state.position[3]
-            ,psm2_joint_state.position[4]
-            ,psm2_joint_state.position[5]
-            ,psm2_joint_state.position[6]
-            ,psm2_joint_state.velocity[0]
-            ,psm2_joint_state.velocity[1]
-            ,psm2_joint_state.velocity[2]
-            ,psm2_joint_state.velocity[3]
-            ,psm2_joint_state.velocity[4]
-            ,psm2_joint_state.velocity[5]
-            ,psm2_joint_state.velocity[6]
-                              };
+            data.push_back(double(task_state.number_of_repetition));
+            data.push_back(double(task_state.task_state));
+            data.push_back(task_state.time_stamp);
+            data.push_back(task_state.position_error_norm);
+            data.push_back(double(clutch_pedal_pressed));
+            data.push_back(double(coag_pedal_pressed));
 
-      for(int i= 0; i<data.size()-1; i++){
-        reporting_file << data[i] << ", ";
-      }
-      reporting_file << data.back() << std::endl;
+            for(uint j=0; j<n_arms; j++){
 
+                data.push_back(slave_current_pose[j].position.x);
+                data.push_back(slave_current_pose[j].position.y);
+                data.push_back(slave_current_pose[j].position.z);
+                data.push_back(slave_current_pose[j].orientation.x);
+                data.push_back(slave_current_pose[j].orientation.y);
+                data.push_back(slave_current_pose[j].orientation.z);
+                data.push_back(slave_current_pose[j].orientation.w);
+
+                data.push_back(slave_desired_pose[j].position.x);
+                data.push_back(slave_desired_pose[j].position.y);
+                data.push_back(slave_desired_pose[j].position.z);
+                data.push_back(slave_desired_pose[j].orientation.x);
+                data.push_back(slave_desired_pose[j].orientation.y);
+                data.push_back(slave_desired_pose[j].orientation.z);
+                data.push_back(slave_desired_pose[j].orientation.w);
+
+                data.push_back(master_current_pose[j].position.x);
+                data.push_back(master_current_pose[j].position.y);
+                data.push_back(master_current_pose[j].position.z);
+                data.push_back(master_current_pose[j].orientation.x);
+                data.push_back(master_current_pose[j].orientation.y);
+                data.push_back(master_current_pose[j].orientation.z);
+                data.push_back(master_current_pose[j].orientation.w);
+
+                data.push_back(slave_twist[j].linear.x);
+                data.push_back(slave_twist[j].linear.y);
+                data.push_back(slave_twist[j].linear.z);
+                data.push_back(slave_twist[j].angular.x);
+                data.push_back(slave_twist[j].angular.y);
+                data.push_back(slave_twist[j].angular.z);
+
+                data.push_back(master_twist[j].linear.x);
+                data.push_back(master_twist[j].linear.y);
+                data.push_back(master_twist[j].linear.z);
+                data.push_back(master_twist[j].angular.x);
+                data.push_back(master_twist[j].angular.y);
+                data.push_back(master_twist[j].angular.z);
+
+                data.push_back(master_wrench[j].force.x);
+                data.push_back(master_wrench[j].force.y);
+                data.push_back(master_wrench[j].force.z);
+                data.push_back(master_wrench[j].torque.x);
+                data.push_back(master_wrench[j].torque.y);
+                data.push_back(master_wrench[j].torque.z);
+
+                data.push_back(double(ac_params[j].active));
+                data.push_back(double(ac_params[j].method));
+                data.push_back(ac_params[j].angular_damping_coeff);
+                data.push_back(ac_params[j].angular_elastic_coeff);
+                data.push_back(ac_params[j].linear_damping_coeff);
+                data.push_back(ac_params[j].linear_elastic_coeff);
+                data.push_back(ac_params[j].max_force);
+                data.push_back(ac_params[j].max_torque);
+            }
+
+            for(int i= 0; i<data.size()-1; i++){
+                reporting_file << data[i] << ", ";
+            }
+            reporting_file << data.back() << std::endl;
+        }
+
+        ros::spinOnce();
+        ros_rate->sleep();
     }
-
-    ros::spinOnce();
-    ros_rate->sleep();
-  }
-
 }
 
 
 void RosObj::OpenRecordingFile(std::string filename){
 
-  reporting_file.open(filename);
-  reporting_file
-      << "state_label"
-      << ", psm1_pose.position.x" << ", psm1_pose.position.y"
-      << ", psm1_pose.position.z" << ", psm1_pose.orientation.x "
-      << ", psm1_pose.orientation.y" << ", psm1_pose.orientation.z "
-      << ", psm1_pose.orientation.w"
-      << ", psm2_pose.position.x" << ", psm2_pose.position.y "
-      << ", psm2_pose.position.z" << ", psm2_pose.orientation.x "
-      << ", psm2_pose.orientation.y" << ", psm2_pose.orientation.z "
-      << ", psm2_pose.orientation.w"
-      <<",psm1_joint_state.position[0]"
-     <<", psm1_joint_state.position[1]"
-    <<", psm1_joint_state.position[2]"
-   <<", psm1_joint_state.position[3]"
-  <<", psm1_joint_state.position[4]"
-  <<", psm1_joint_state.position[5]"
-  <<", psm1_joint_state.position[6]"
-  <<", psm1_joint_state.velocity[0]"
-  <<", psm1_joint_state.velocity[1]"
-  <<", psm1_joint_state.velocity[2]"
-  <<", psm1_joint_state.velocity[3]"
-  <<", psm1_joint_state.velocity[4]"
-  <<", psm1_joint_state.velocity[5]"
-  <<", psm1_joint_state.velocity[6]"
-  <<",psm2_joint_state.position[0]"
-  <<", psm2_joint_state.position[1]"
-  <<", psm2_joint_state.position[2]"
-  <<", psm2_joint_state.position[3]"
-  <<", psm2_joint_state.position[4]"
-  <<", psm2_joint_state.position[5]"
-  <<", psm2_joint_state.position[6]"
-  <<", psm2_joint_state.velocity[0]"
-  <<", psm2_joint_state.velocity[1]"
-  <<", psm2_joint_state.velocity[2]"
-  <<", psm2_joint_state.velocity[3]"
-  <<", psm2_joint_state.velocity[4]"
-  <<", psm2_joint_state.velocity[5]"
-  <<", psm2_joint_state.velocity[6]"<< std::endl;
+    reporting_file.open(filename);
+    reporting_file
+            << "number_of_repetition"
+            << ", task_state"
+            << ", time_stamp"
+            << ", position_error_norm"
+            << ", clutch_pedal_pressed"
+            << ", coag_pedal_pressed"
+
+            << ", slave_current_pose.position.x"
+            << ", slave_current_pose.position.y"
+            << ", slave_current_pose.position.z"
+            << ", slave_current_pose.orientation.x"
+            << ", slave_current_pose.orientation.y"
+            << ", slave_current_pose.orientation.z"
+            << ", slave_current_pose.orientation.w"
+
+            << ", slave_desired_pose.position.x"
+            << ", slave_desired_pose.position.y"
+            << ", slave_desired_pose.position.z"
+            << ", slave_desired_pose.orientation.x"
+            << ", slave_desired_pose.orientation.y"
+            << ", slave_desired_pose.orientation.z"
+            << ", slave_desired_pose.orientation.w"
+
+            << ", master_current_pose.position.x"
+            << ", master_current_pose.position.y"
+            << ", master_current_pose.position.z"
+            << ", master_current_pose.orientation.x"
+            << ", master_current_pose.orientation.y"
+            << ", master_current_pose.orientation.z"
+            << ", master_current_pose.orientation.w"
+
+            << ", slave_twist.linear.x"
+            << ", slave_twist.linear.y"
+            << ", slave_twist.linear.z"
+            << ", slave_twist.angular.x"
+            << ", slave_twist.angular.y"
+            << ", slave_twist.angular.z"
+
+            << ", master_twist.linear.x"
+            << ", master_twist.linear.y"
+            << ", master_twist.linear.z"
+            << ", master_twist.angular.x"
+            << ", master_twist.angular.y"
+            << ", master_twist.angular.z"
+
+            << ", master_wrench.force.x"
+            << ", master_wrench.force.y"
+            << ", master_wrench.force.z"
+            << ", master_wrench.torque.x"
+            << ", master_wrench.torque.y"
+            << ", master_wrench.torque.z"
+
+            << ",ac_params.active"
+            << ",ac_params.method"
+            << ",ac_params.angular_damping_coeff"
+            << ",ac_params.angular_elastic_coeff"
+            << ",ac_params.linear_damping_coeff"
+            << ",ac_params.linear_elastic_coeff"
+            << ",ac_params.max_force"
+            << ",ac_params.max_torque"
+            << std::endl;
 
 }
 
 void RosObj::CloseRecordingFile(){
 
-  reporting_file.close();
-  qDebug() << "Closed reporting file";
+    reporting_file.close();
+    qDebug() << "Closed reporting file";
 
 
 }
 
 
 
-int RosObj::AddRegistrationPoint(){
-
-  int num_registeration_points = 6;
-
-  if(registration_points.size() < num_registeration_points){
-    // taking 5 points for psm1
-
-    std::vector<double> point{psm1_pose.position.x, psm1_pose.position.y, psm1_pose.position.z};
-    registration_points.push_back(point);
-  }
-  else if(registration_points.size() < (2*num_registeration_points)){
-
-    std::vector<double> point{psm2_pose.position.x, psm2_pose.position.y, psm2_pose.position.z};
-    registration_points.push_back(point);
-  }
-
-
-  // check if we got all points
-  if(registration_points.size() == (2*num_registeration_points)){
-
-    // write the values in a file
-    std::ofstream registration_file;
-    registration_file.open("registration_pints.csv");
-    // write a header
-    registration_file << "position.x, position.y, position.z #num registeration points per arm= " <<
-                         num_registeration_points << std::endl;
-
-    for(int i=0; i< registration_points.size(); i++){
-
-      registration_file
-          << registration_points[i][0]
-          << ", " << registration_points[i][1]
-          << ", " << registration_points[i][2] << std::endl;
-
-    }
-    registration_file.close();
-
-  }
-
-  return registration_points.size();
-
-}
-
-
-
-void RosObj::ResetRegistrationPoints(){
-
-  registration_points.clear();
-  qDebug() << "registration_points size "<<registration_points.size();
-}
 
 
 

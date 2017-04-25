@@ -65,6 +65,13 @@ public:
 
     teleop_vision::TaskState GetTaskStateMsg();
 
+    // resets the number of repetitions and task state;
+    void Reset();
+
+    // decrements the number of repetitions. Used in case something goes
+    // wrong during that repetition.
+    void RepeatLastAcquisition();
+
 private:
 
     // updates the error actor

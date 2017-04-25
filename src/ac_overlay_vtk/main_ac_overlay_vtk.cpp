@@ -45,12 +45,9 @@ int main(int argc, char **argv)
     graphics.SetEnableBackgroundImage(true);
     graphics.Render();
 
-    // create the task
-    double ring_radius = 0.004;
-    BuzzWireTask buzztask(ring_radius, rc.show_reference_frames);
 
     // Add the task actors to the graphics
-    graphics.AddActorsToScene(buzztask.GetActors());
+    graphics.AddActorsToScene(rc.buzz_task->GetActors());
 
     KDL::Frame pose_desired_tool[2];
     cv::Mat augmented_stereo_image;
@@ -70,7 +67,7 @@ int main(int argc, char **argv)
             ROS_INFO("Task 1 Selected");
         }
 
-        buzztask.SetCurrentToolPose(rc.pose_current_tool[0]);
+        rc.buzz_task->SetCurrentToolPose(rc.pose_current_tool[0]);
 
         if(rc.GetNewImages(cam_images)) {
 
@@ -83,7 +80,7 @@ int main(int argc, char **argv)
                             cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
 
             // update the moving actors
-            buzztask.UpdateActors();
+            rc.buzz_task->UpdateActors();
 
             // update the camera images and view angle (in case window changes size)
             graphics.UpdateBackgroundImage(cam_images);
@@ -99,14 +96,14 @@ int main(int argc, char **argv)
                     cv_bridge::CvImage(std_msgs::Header(),
                                        "bgr8", augmented_stereo_image).toImageMsg());
             // updating the desired pose
-            pose_desired_tool[0] = buzztask.GetDesiredToolPose();
+            pose_desired_tool[0] = rc.buzz_task->GetDesiredToolPose();
 
             // publish the active constraint parameters if needed
-            if(buzztask.IsACParamChanged())
-                rc.PublishACtiveConstraintParameters(0, buzztask.GetACParameters());
+            if(rc.buzz_task->IsACParamChanged())
+                rc.PublishACtiveConstraintParameters(0, rc.buzz_task->GetACParameters());
 
             // publish the task state
-            rc.PublishTaskState(buzztask.GetTaskStateMsg());
+            rc.PublishTaskState(rc.buzz_task->GetTaskStateMsg());
 
             // check time performance
             // std::cout <<  "it took: " << (ros::Time::now() - start).toNSec() /1000000 << std::endl;

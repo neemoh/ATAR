@@ -4,6 +4,10 @@
 #include <QMainWindow>
 #include <QLabel>
 #include <QProgressBar>
+#include <QTimer>
+#include <QPushButton>
+#include <QPageLayout>
+
 #include <rosclass.hpp>
 #include "cvimagewidget.h"
 
@@ -33,9 +37,11 @@ private slots:
   void on_stop_released();
 
   void on_record_clicked();
-  void on_button_get_point_clicked();
+  void on_button_repeat_clicked();
 
-  void on_buttin_reset_points_clicked();
+  void on_button_reset_clicked();
+
+  void onTimeout();
 
 
 private:
@@ -44,6 +50,7 @@ private:
   QProgressBar *stat_progress;
   RosObj ros_obj;
   CVImageWidget *imageWidget;
+  QTimer *timer;
 
 };
 

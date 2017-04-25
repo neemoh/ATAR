@@ -1,0 +1,8 @@
+prefix=/home/charm/development/ros_ws/src/teleop-vision/ /home/charm/development/ros_ws/build/qt_teleop-vision/devel
+
+Name: teleop_vision
+Description: Description of teleop_vision
+Version: 0.0.0
+Cflags: -I/home/charm/development/ros_ws/src/teleop-vision/ /home/charm/development/ros_ws/build/qt_teleop-vision/devel/include
+Libs: -L/home/charm/development/ros_ws/src/teleop-vision/ /home/charm/development/ros_ws/build/qt_teleop-vision/devel/lib 
+Requires: message_runtime cv_bridge image_transport sensor_msgs

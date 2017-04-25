@@ -706,3 +706,13 @@ teleop_vision::TaskState BuzzWireTask::GetTaskStateMsg() {
     return task_state_msg;
 }
 
+void BuzzWireTask::Reset() {
+    number_of_repetition = 0;
+    task_state = TaskState::RepetitionComplete;
+}
+
+void BuzzWireTask::RepeatLastAcquisition() {
+    number_of_repetition--;
+    task_state = TaskState::RepetitionComplete;
+}
+

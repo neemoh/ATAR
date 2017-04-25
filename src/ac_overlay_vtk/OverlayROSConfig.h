@@ -16,12 +16,15 @@
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Joy.h>
+#include <std_msgs/Char.h>
 
 // service
 #include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
 #include "utils/Drawings.h"
 #include "active_constraints/ActiveConstraintParameters.h"
 #include "teleop_vision/TaskState.h"
+#include "BuzzWireTask.h"
+
 
 class OverlayROSConfig {
 
@@ -71,6 +74,10 @@ public:
     // foot switch used to select the ac path
     void FootSwitchCallback(const sensor_msgs::Joy &msg);
 
+    // this topic is used to control the task state from the recording node
+    // during the acquisitions.
+    void RecordingEventsCallback(const std_msgs::CharConstPtr &msg);
+
 
 private:
 
@@ -89,7 +96,6 @@ public:
     double desired_pose_update_freq;
     std::vector<cv::Point3d> ac_path;
     bool foot_switch_pressed = false;
-    bool show_reference_frames;
     CameraIntrinsics cam_intrinsics[2];
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
@@ -106,14 +112,21 @@ public:
     ros::ServiceClient stereo_tr_calc_client;
     teleop_vision::CalculateStereoCamsTransfromFromTopics stereo_tr_srv;
 
+    BuzzWireTask *buzz_task;
+
 private:
 
     int n_arms;
     cv::Mat image_from_ros[2];
 
+    char recording_event;
+    bool new_recording_event;
+    bool show_reference_frames;
+
     int image_width;
     int image_height;
     int num_cam_pose_publishers;
+
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscribers[2];
 
@@ -123,6 +136,8 @@ private:
     ros::Subscriber subscriber_camera_pose_left;
     ros::Subscriber subscriber_camera_pose_right;
 
+
+    ros::Subscriber subscriber_recording_events;
 
     ros::Subscriber * subscriber_tool_current_pose;
     ros::Publisher * publisher_tool_pose_desired;

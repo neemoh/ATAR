@@ -15,11 +15,16 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
     // assign the callback functions
     pose_current_tool_callbacks[0] = &OverlayROSConfig::Tool1PoseCurrentCallback;
     pose_current_tool_callbacks[1] = &OverlayROSConfig::Tool2PoseCurrentCallback;
-//    twist_current_tool_callbacks[0] = &OverlayROSConfig::Tool1TwistCallback;
-//    twist_current_tool_callbacks[1] = &OverlayROSConfig::Tool2TwistCallback;
+    //    twist_current_tool_callbacks[0] = &OverlayROSConfig::Tool1TwistCallback;
+    //    twist_current_tool_callbacks[1] = &OverlayROSConfig::Tool2TwistCallback;
 
     it = new image_transport::ImageTransport(n);
     SetupROS();
+
+
+    // create the task
+    double ring_radius = 0.004;
+    buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames);
 
 
 }
@@ -336,21 +341,25 @@ void OverlayROSConfig::SetupROS() {
     }
 
     // Publisher for the task state
-    std::string task_state_topic_name = "task_state";
+    std::string task_state_topic_name = "/task_state";
     publisher_task_state = n.advertise<teleop_vision::TaskState>(
             task_state_topic_name.c_str(), 1);
     ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
 
+    subscriber_recording_events = n.subscribe(
+            "/recording_events", 1, &OverlayROSConfig::RecordingEventsCallback,
+                                              this);
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to /task_state");
 
     n.param<bool>("show_reference_frames", show_reference_frames, true);
 
-    // advertise publishers
-//    std::string board_to_cam_pose_topic_name;
-//    if (!n.getParam("board_to_cam_pose_topic_name", board_to_cam_pose_topic_name))
-//        board_to_cam_pose_topic_name = "board_to_camera";
-//
-//    pub_board_to_cam_pose = n.advertise<geometry_msgs::PoseStamped>(board_to_cam_pose_topic_name, 1, 0);
-//    ROS_INFO("Publishing board to camera pose on '%s'", n.resolveName(board_to_cam_pose_topic_name).c_str());
+        // advertise publishers
+    //    std::string board_to_cam_pose_topic_name;
+    //    if (!n.getParam("board_to_cam_pose_topic_name", board_to_cam_pose_topic_name))
+    //        board_to_cam_pose_topic_name = "board_to_camera";
+    //
+    //    pub_board_to_cam_pose = n.advertise<geometry_msgs::PoseStamped>(board_to_cam_pose_topic_name, 1, 0);
+    //    ROS_INFO("Publishing board to camera pose on '%s'", n.resolveName(board_to_cam_pose_topic_name).c_str());
     if (!all_required_params_found)
         throw std::runtime_error("ERROR: some required topics are not set");
 }
@@ -503,6 +512,26 @@ void OverlayROSConfig::PublishACtiveConstraintParameters(const int arm_number,
 
 void OverlayROSConfig::PublishTaskState(teleop_vision::TaskState msg) {
     publisher_task_state.publish(msg);
+
+}
+
+void OverlayROSConfig::RecordingEventsCallback(const std_msgs::CharConstPtr
+                                               &msg) {
+
+    recording_event = msg->data;
+    new_recording_event = true;
+
+    switch(msg->data){
+        case 'r':
+            buzz_task->Reset();
+            break;
+
+        case 'd':
+            buzz_task->RepeatLastAcquisition();
+            break;
+
+
+    }
 
 }
 

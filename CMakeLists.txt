@@ -121,9 +121,9 @@ target_link_libraries(ExtrinsicCalibArucoNodelet
 #                           FlyCapture SDK
 ##########################################################################
 
-option(WITH_FlyCapture "Enable support for the FlyCapture SDK" OFF)
+option(WITH_FlyCapture "Enable support for the FlyCapture SDK" ON)
 
-if (WITH_FlyCapture)
+#if (WITH_FlyCapture)
     # Find the Flycapture include files and libraries
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
 
@@ -146,7 +146,7 @@ if (WITH_FlyCapture)
                 arucoUtils
                 )
     endif (FLYCAPTURE2_FOUND)
-endif (WITH_FlyCapture)
+#endif (WITH_FlyCapture)
 
 ##########################################################################
 #                           Build Common Nodes
