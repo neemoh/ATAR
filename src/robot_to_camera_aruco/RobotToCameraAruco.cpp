@@ -36,8 +36,8 @@ RobotToCameraAruco::RobotToCameraAruco(std::string node_name)
             target.push_back(cv::Point3d((1+i)*(aruco_marker_length_in_meters+aruco_marker_separation_in_meters), 2*aruco_marker_length_in_meters+aruco_marker_separation_in_meters, 0.0));
     }
 
-    cv::projectPoints(target, task_frame_to_cam_rvec,
-                      task_frame_to_cam_tvec, camera_intrinsics.camMatrix,
+    cv::projectPoints(target, task_frame_to_cam_rvec[cam_id],
+                      task_frame_to_cam_tvec[cam_id], camera_intrinsics.camMatrix,
                       camera_intrinsics.distCoeffs, calib_points_screen);
 };
 
@@ -51,8 +51,17 @@ void RobotToCameraAruco::SetupROS() {
 
     n.param<double>("frequency", ros_freq, 25);
 
+    n.param<int>("cam_id", cam_id, 0);
+    if(cam_id==1)
+        ROS_INFO("Using right camera.");
+    else if (cam_id == 0)
+        ROS_INFO("Using Left camera.");
+    else
+        ROS_ERROR("cam_is param can be set as either 0 (for left) or 1 (for "
+                          "right)");
+
     if (n.getParam("visual_axis_length", visual_axis_length))
-        ROS_INFO_STREAM("Using parameter "
+        ROS_INFO_STREAM(std::string("Using parameter ")
                             << n.resolveName("visual_axis_length").c_str()
                             << " with value " << visual_axis_length);
 
@@ -103,32 +112,22 @@ void RobotToCameraAruco::SetupROS() {
 
 
     // a topic name is required for the images
+    std::string image_topic_name;
+    if(cam_id)
+        image_topic_name = "/camera/right/image_color";
+    else
+        image_topic_name = "/camera/left/image_color";
 
-    std::string image_transport_namespace;
-    if (n.getParam("image_transport_namespace", image_transport_namespace)) {
-
-        // if the topic name is found, check if something is being published on it
-        if (!ros::topic::waitForMessage<sensor_msgs::Image>( image_transport_namespace, ros::Duration(5))) {
-            ROS_ERROR("Topic '%s' is not publishing.", image_transport_namespace.c_str());
-            all_required_params_found = false;
-        }
-        else
-            ROS_INFO("Reading camera images from transport '%s'", image_transport_namespace.c_str());
-
-    } else {
-        ROS_ERROR("Parameter '%s' is required.", n.resolveName("image_transport_namespace").c_str());
-        all_required_params_found = false;
-    }
-
-    // register image transport subscriber
+    ROS_INFO("Camera images will be read from topic '%s'", image_topic_name
+            .c_str());
     camera_image_subscriber = it->subscribe(
-        image_transport_namespace, 1, &RobotToCameraAruco::CameraImageCallback, this);
-
+            image_topic_name, 1, &RobotToCameraAruco::CameraImageCallback,
+            this);
 
 
     // a topic name is required for the camera pose
     std::string cam_pose_topic_name;
-    if (n.getParam("cam_pose_topic_name", cam_pose_topic_name)) {
+    if (n.getParam("left_cam_pose_topic_name", cam_pose_topic_name)) {
 
         // if the topic name is found, check if something is being published
         // on it
@@ -136,44 +135,63 @@ void RobotToCameraAruco::SetupROS() {
             cam_pose_topic_name, ros::Duration(1))) {
             ROS_WARN("Topic '%s' is not publishing.",
                      cam_pose_topic_name.c_str());
-            //                      all_required_params_found = false;
-
         } else
-            ROS_INFO("Reading camera pose from topic '%s'",
+            ROS_INFO("Reading left camera pose from topic '%s'",
                      cam_pose_topic_name.c_str());
     } else {
-        ROS_ERROR("Parameter '%s' is required.", n.resolveName("cam_pose_topic_name").c_str());
+        ROS_ERROR("Parameter '%s' is required.", n.resolveName("left_cam_pose_topic_name").c_str());
         all_required_params_found = false;
     }
 
     // register camera pose subscriber
-    camera_pose_subscriber =
+    left_camera_pose_subscriber =
         n.subscribe(cam_pose_topic_name, 10,
-                    &RobotToCameraAruco::CameraPoseCallback, this);
+                    &RobotToCameraAruco::LeftCameraPoseCallback, this);
 
 
-    // a topic name is required for the robot pose
-    std::string robot_pose_topic_name;
-    if (n.getParam("robot_pose_topic_name", robot_pose_topic_name)) {
+    // a topic name is required for the camera pose
+    if (n.getParam("right_cam_pose_topic_name", cam_pose_topic_name)) {
 
         // if the topic name is found, check if something is being published
         // on it
         if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-            robot_pose_topic_name, ros::Duration(1))) {
-            ROS_ERROR("Topic '%s' is not publishing.",
-                      robot_pose_topic_name.c_str());
-            //              all_required_params_found = false;
-
+            cam_pose_topic_name, ros::Duration(1))) {
+            ROS_WARN("Topic '%s' is not publishing.",
+                     cam_pose_topic_name.c_str());
         } else
-            ROS_INFO("Reading robot pose from topic '%s'", robot_pose_topic_name.c_str());
+            ROS_INFO("Reading right camera pose from topic '%s'",
+                     cam_pose_topic_name.c_str());
     } else {
-        ROS_ERROR("Parameter '%s' is required.", n.resolveName("robot_pose_topic_name").c_str());
+        ROS_ERROR("Parameter '%s' is required.", n.resolveName("right_cam_pose_topic_name").c_str());
         all_required_params_found = false;
     }
 
     // register camera pose subscriber
+    right_camera_pose_subscriber =
+        n.subscribe(cam_pose_topic_name, 10,
+                    &RobotToCameraAruco::RightCameraPoseCallback, this);
+
+
+
+
+    // a topic name is required for the robot pose
+    std::stringstream robot_pose_topic_name;
+    robot_pose_topic_name << std::string("/dvrk/")
+            << arm_name << "/position_cartesian_current";
+        // if the topic name is found, check if something is being published
+        // on it
+        if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
+            robot_pose_topic_name.str().c_str(), ros::Duration(1))) {
+            ROS_ERROR("Topic '%s' is not publishing.",
+                      robot_pose_topic_name.str().c_str());
+                          all_required_params_found = false;
+        } else{
+            ROS_INFO("Reading robot pose from topic '%s'",
+                     robot_pose_topic_name.str().c_str());
+    }
+    // register camera pose subscriber
     robot_pose_subscriber =
-        n.subscribe(robot_pose_topic_name, 10,
+        n.subscribe(robot_pose_topic_name.str(), 10,
                     &RobotToCameraAruco::RobotPoseCallback, this);
 
 
@@ -195,7 +213,8 @@ void RobotToCameraAruco::Calib1DrawCalibrationAxis(cv::String &instructions,
     };
 
     std::vector<cv::Point2f> imagePoints;
-    cv::projectPoints(axisPoints, task_frame_to_cam_rvec, task_frame_to_cam_tvec,
+    cv::projectPoints(axisPoints, task_frame_to_cam_rvec[cam_id],
+    task_frame_to_cam_tvec[cam_id],
                       camera_intrinsics.camMatrix,
                       camera_intrinsics.distCoeffs, imagePoints);
 
@@ -410,7 +429,7 @@ void RobotToCameraAruco::Calib2CalculateTransformation() {
 }
 
 
-void RobotToCameraAruco::SetTaskFrameToRobotFrameParam() {
+void RobotToCameraAruco::SetROSParameters() {
 
     std::string arm_name;
     (n.getParam("robot_arm_name", arm_name));
@@ -418,17 +437,32 @@ void RobotToCameraAruco::SetTaskFrameToRobotFrameParam() {
     std::stringstream param_name;
     param_name << std::string("/calibrations/task_frame_to_") << arm_name << "_frame";
 
-    std::vector<double> task_frame_to_robot_frame_vec7(7, 0.0);
+    std::vector<double> vec7(7, 0.0);
+    conversions::KDLFrameToVector(task_frame_to_robot_frame, vec7);
+    n.setParam(param_name.str(), vec7);
+    std::cout<< param_name.str()<< " parameter was set to: "<< vec7 << std::endl;
 
-    conversions::KDLFrameToVector(task_frame_to_robot_frame, task_frame_to_robot_frame_vec7);
-    n.setParam(param_name.str(), task_frame_to_robot_frame_vec7);
-    std::cout << param_name.str() << " parameter was set to: "
-              << task_frame_to_robot_frame_vec7 << std::endl;
+
+    param_name.str("");
+    param_name << std::string("/calibrations/task_frame_to_left_cam_frame");
+    conversions::KDLFrameToVector(task_frame_to_cam_frame[0], vec7);
+    n.setParam(param_name.str(), vec7);
+    std::cout<< param_name.str()<< " parameter was set to: "<< vec7 << std::endl;
+
+
+    param_name.str("");
+    param_name << std::string("/calibrations/task_frame_to_right_cam_frame");
+    conversions::KDLFrameToVector(task_frame_to_cam_frame[1], vec7);
+    n.setParam(param_name.str(), vec7);
+    std::cout<< param_name.str()<< " parameter was set to: "<< vec7 << std::endl;
+
 
     // print the pose of board_to_cam
-    geometry_msgs::Pose temp_pose;
-    tf::poseKDLToMsg(task_frame_to_cam_frame, temp_pose);
-    std::cout << "  -> task_frame_to_cam_frame: \n" << temp_pose << std::endl;
+    auto camera_frame_to_robot_frame = task_frame_to_robot_frame *
+    task_frame_to_cam_frame[cam_id].Inverse();
+    conversions::KDLFrameToVector(camera_frame_to_robot_frame, vec7);
+    std::cout<< " camera_frame_to_robot_frame is: "<< vec7 << std::endl;
+
 
 }
 
@@ -470,17 +504,28 @@ void RobotToCameraAruco::CameraImageCallback(
     }
 }
 
-void RobotToCameraAruco::CameraPoseCallback(
-    const geometry_msgs::PoseStamped::ConstPtr &msg) {
+void RobotToCameraAruco::LeftCameraPoseCallback(
+        const geometry_msgs::PoseStamped::ConstPtr &msg) {
 
     // converting to frame and rvec/tvec
-    tf::poseMsgToKDL(msg->pose, task_frame_to_cam_frame);
-    conversions::KDLFrameToRvectvec(task_frame_to_cam_frame, task_frame_to_cam_rvec,
-                                    task_frame_to_cam_tvec);
+    tf::poseMsgToKDL(msg->pose, task_frame_to_cam_frame[0]);
+    conversions::KDLFrameToRvectvec(task_frame_to_cam_frame[0],
+                                    task_frame_to_cam_rvec[0],
+                                    task_frame_to_cam_tvec[0]);
+}
+
+void RobotToCameraAruco::RightCameraPoseCallback(
+        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+
+    // converting to frame and rvec/tvec
+    tf::poseMsgToKDL(msg->pose, task_frame_to_cam_frame[1]);
+    conversions::KDLFrameToRvectvec(task_frame_to_cam_frame[1],
+                                    task_frame_to_cam_rvec[1],
+                                    task_frame_to_cam_tvec[1]);
 }
 
 cv::Mat &RobotToCameraAruco::Image(ros::Duration timeout) {
-    ros::Rate loop_rate(0.2);
+    ros::Rate loop_rate(1);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
     while (image_msg.empty()) {
@@ -488,9 +533,7 @@ cv::Mat &RobotToCameraAruco::Image(ros::Duration timeout) {
         loop_rate.sleep();
 
         if (ros::Time::now() > timeout_time) {
-            ROS_WARN("Timeout whilst waiting for a new image from the "
-                         "image topic. "
-                         "Is the camera publishing?");
+            ROS_WARN("Timeout: No new Image received.");
         }
     }
 

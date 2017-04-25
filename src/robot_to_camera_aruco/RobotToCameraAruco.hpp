@@ -31,22 +31,16 @@ public:
 
     void DrawToolTarget(cv::String &instructions, cv::Mat img);
 
-    // Eddy Andre Addition
-    //
-    //
-    //
     void Calib2DrawTarget(cv::String &instructions, cv::Mat img);
     void Calib2SaveCalibrationPoint();
     void Calib2CalculateTransformation();
-    //
-    //
-    //
+
     void Calib1DrawCalibrationAxis(cv::String &instructions, cv::Mat img);
     void Calib1SaveCalibrationPoint();
     void Calib1CalculateTransformation(const std::vector<Eigen::Vector3d> axis_points,
                                        KDL::Frame &transformation);
 
-    void SetTaskFrameToRobotFrameParam();
+    void SetROSParameters();
 
     std::pair<Eigen::Vector3d, Eigen::Vector3d>
     FindAxis(Eigen::MatrixXd axis_points);
@@ -60,13 +54,14 @@ public:
 
     void RobotPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
 
-    void CameraPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
+    void LeftCameraPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
+
+    void RightCameraPoseCallback(const geometry_msgs::PoseStamped::ConstPtr
+                                &msg);
 
     cv::Mat &Image(ros::Duration timeout);
 
     // Eddy Andre addition
-    //
-    //
     const double length_x = 0.0782, length_y = 0.0514;
     const double  aruco_marker_length_in_meters = 0.0129, aruco_marker_separation_in_meters = 0.0027;
     std::vector< Eigen::Vector3d> meas_points;
@@ -75,19 +70,19 @@ public:
     Eigen::Matrix<double, 3, 6> meas_points_mat;
     Eigen::Matrix4d camera_to_robot;
     //
-    //
-    //
+
 
 public:
     CameraIntrinsics camera_intrinsics;
+    int cam_id; // 0 for left, 1 for right
     double ros_freq = 0.0;
-    KDL::Frame task_frame_to_cam_frame;
+    KDL::Frame task_frame_to_cam_frame[2];
     KDL::Frame tool_pose_in_robot_frame;
     KDL::Frame tool_pose_in_task_frame;
     KDL::Frame task_frame_to_robot_frame;
     bool task_frame_to_robot_frame_param_present;
 
-    cv::Vec3d task_frame_to_cam_rvec, task_frame_to_cam_tvec;
+    cv::Vec3d task_frame_to_cam_rvec[2], task_frame_to_cam_tvec[2];
 
 private:
     void SetupROS();
@@ -107,7 +102,8 @@ private:
     bool calib_finished;
 
     ros::NodeHandle n;
-    ros::Subscriber camera_pose_subscriber;
+    ros::Subscriber left_camera_pose_subscriber;
+    ros::Subscriber right_camera_pose_subscriber;
     ros::Subscriber robot_pose_subscriber;
 
     image_transport::Subscriber camera_image_subscriber;

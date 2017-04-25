@@ -62,9 +62,10 @@ int main(int argc, char *argv[]) {
         }
         if (key == 'f') { //full screen
             cvSetWindowProperty(
-                "PSM to board Calib", CV_WND_PROP_FULLSCREEN,
-                CV_WINDOW_FULLSCREEN);
+                    "PSM to board Calib", CV_WND_PROP_FULLSCREEN,
+                    CV_WINDOW_FULLSCREEN);
         }
+
         if (progress == CalibProgress::Method1Calibrating) {
 
             //			r.DrawToolTarget(instructions,
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
                     progress = CalibProgress::Finished;
 
                     // set the calibration data
-                    r.SetTaskFrameToRobotFrameParam();
+                    r.SetROSParameters();
                 }
             }
         }
@@ -100,51 +101,43 @@ int main(int argc, char *argv[]) {
                     progress = CalibProgress::Finished;
 
                     // set the calibration data
-                    r.SetTaskFrameToRobotFrameParam();
+                    r.SetROSParameters();
                 }
             }
+        }
 
-            if (progress == CalibProgress::Finished) {
-                // computing camera_to_robot_transform using chain rule (rTk=rTb*bTk with r=robot, b=board, k=camera)
+        if (progress == CalibProgress::Finished) {
+            instructions = "Calibration finished. Press 'Esc' to exit";
+        }
 
-                auto camera_frame_to_robot_frame = r.task_frame_to_robot_frame * r.task_frame_to_cam_frame.Inverse();
-                cv::Vec3d rvec, tvec;
-                conversions::KDLFrameToRvectvec(camera_frame_to_robot_frame, rvec, tvec);
-                ROS_INFO_STREAM("  -> chain rule for camera to PSM base transformation: \n" << rvec << std::endl << tvec
-                                                                                            << std::endl);
+        if (progress == CalibProgress::Finished || r.task_frame_to_robot_frame_param_present) {
 
-                instructions = "Calibration finished. Press 'Esc' to exit";
-            }
+            // take the tool tip to task space
+            r.tool_pose_in_task_frame = r.task_frame_to_robot_frame.Inverse() *
+                                        r.tool_pose_in_robot_frame;
 
-            if (progress == CalibProgress::Finished || r.task_frame_to_robot_frame_param_present) {
-
-                // take the tool tip to task space
-                r.tool_pose_in_task_frame = r.task_frame_to_robot_frame.Inverse() *
-                                            r.tool_pose_in_robot_frame;
-
-                DrawingsCV::DrawCoordinateFrameInTaskSpace(
+            DrawingsCV::DrawCoordinateFrameInTaskSpace(
                     back_buffer, r.camera_intrinsics,
                     r.tool_pose_in_task_frame,
-                    r.task_frame_to_cam_rvec,
-                    r.task_frame_to_cam_tvec, 0.01);
-            }
+                    r.task_frame_to_cam_rvec[r.cam_id],
+                    r.task_frame_to_cam_tvec[r.cam_id], 0.01);
+        }
 
-//        drawings.showTransientNotification(back_buffer);
-            // draw the coordinate frame of the board
-            DrawingsCV::DrawCoordinateFrameInTaskSpace(
+        // draw the coordinate frame of the board
+        DrawingsCV::DrawCoordinateFrameInTaskSpace(
                 back_buffer, r.camera_intrinsics,
                 KDL::Frame(),
-                r.task_frame_to_cam_rvec,
-                r.task_frame_to_cam_tvec, 0.01);
-            cv::Point textOrigin(10, 20);
-            auto text_color = (!r.IsCalibrated()) ? Colors::Red : Colors::Green;
-            cv::putText(back_buffer, instructions, textOrigin, 1, 1, text_color);
+                r.task_frame_to_cam_rvec[r.cam_id],
+                r.task_frame_to_cam_tvec[r.cam_id], 0.01);
+        cv::Point textOrigin(10, 20);
+        auto text_color = (!r.IsCalibrated()) ? Colors::Red : Colors::Green;
+        cv::putText(back_buffer, instructions, textOrigin, 1, 1, text_color);
 
-            cv::imshow(ros::this_node::getName().c_str(), back_buffer);
+        cv::imshow(ros::this_node::getName().c_str(), back_buffer);
 
-            ros::spinOnce();
-            loop_rate.sleep();
-        }
+        ros::spinOnce();
+        loop_rate.sleep();
+
 
 
     }
