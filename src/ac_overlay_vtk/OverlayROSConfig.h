@@ -18,9 +18,7 @@
 #include <sensor_msgs/Joy.h>
 #include <std_msgs/Char.h>
 
-// service
-#include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
-#include "utils/Drawings.h"
+//#include "utils/Drawings.h"
 #include "active_constraints/ActiveConstraintParameters.h"
 #include "teleop_vision/TaskState.h"
 #include "BuzzWireTask.h"
@@ -43,12 +41,10 @@ public:
     image_transport::Publisher publisher_overlayed[2];
     image_transport::Publisher publisher_stereo_overlayed;
 
-    // converts the desired poses to geometry pose messages and published them
-    void PublishDesiredPose(const KDL::Frame *);
-
     // publishes the active constraint parameters
-    void PublishACtiveConstraintParameters(const int arm_number,
-                                           const active_constraints::ActiveConstraintParameters &);
+    void PublishACtiveConstraintParameters(
+            const int arm_number,
+            const active_constraints::ActiveConstraintParameters &);
 
     // publishes the active constraint parameters
     void PublishTaskState(teleop_vision::TaskState msg);
@@ -68,9 +64,6 @@ public:
     void Tool1PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
     void Tool2PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
 
-    //    void Tool1TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
-    //    void Tool2TwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg);
-
     // foot switch used to select the ac path
     void FootSwitchCallback(const sensor_msgs::Joy &msg);
 
@@ -86,7 +79,8 @@ private:
 
     // reads the intrinsic camera parameters
     void ReadCameraParameters(const std::string file_path,
-                              CameraIntrinsics &camera_intrins);
+                              cv::Mat &camera_matrix,
+                              cv::Mat &camera_distortion);
 
 public:
     // IN ALL CODE 0 is Left Cam, 1 is Right cam
@@ -96,7 +90,9 @@ public:
     double desired_pose_update_freq;
     std::vector<cv::Point3d> ac_path;
     bool foot_switch_pressed = false;
-    CameraIntrinsics cam_intrinsics[2];
+
+        cv::Mat camera_matrix[2];
+        cv::Mat camera_distortion[2];
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
 
@@ -109,8 +105,6 @@ public:
 
     bool new_right_image = false;
     bool new_left_image = false;
-    ros::ServiceClient stereo_tr_calc_client;
-    teleop_vision::CalculateStereoCamsTransfromFromTopics stereo_tr_srv;
 
     BuzzWireTask *buzz_task;
 
@@ -130,13 +124,11 @@ private:
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscribers[2];
 
-
     image_transport::Subscriber subscriber_image_left;
     image_transport::Subscriber subscriber_image_right;
     ros::Subscriber subscriber_camera_pose_left;
     ros::Subscriber subscriber_camera_pose_right;
-
-
+    ros::Subscriber subscriber_foot_pedal_clutch;
     ros::Subscriber subscriber_recording_events;
 
     ros::Subscriber * subscriber_tool_current_pose;
@@ -148,16 +140,8 @@ private:
     void (OverlayROSConfig::*pose_current_tool_callbacks[2])
             (const geometry_msgs::PoseStamped::ConstPtr &msg);
 
-    // two function pointers for slave twist callbacks
-    void (OverlayROSConfig::*twist_current_tool_callbacks[2])
-            (const geometry_msgs::TwistStamped::ConstPtr &msg);
-
-    //ros::Subscriber subscriber_ac_path;
-    ros::Subscriber subscriber_foot_pedal_clutch;
-
 
 };
-
 
 
 namespace VisualUtils {
@@ -165,26 +149,5 @@ namespace VisualUtils {
     void SwitchFullScreen(const std::string window_name);
 
 }
-
-namespace CricleACTask {
-
-    void GenerateXYCircle(const KDL::Vector center, const double radius, const int num_points,
-                          std::vector<cv::Point3d> &ac_path);
-
-}
-
-
-KDL::Rotation CalculateDesiredOrientation(const KDL::Vector ac_path_tangent_current,
-                                          const KDL::Rotation current_orientation);
-
-
-// other functions to be sorted later
-void  VecPoint3dToPoseArray(std::vector<cv::Point3d> vec, geometry_msgs::PoseArray & out) ;
-
-void ClosestPointOnACPathAndItsTangent(const KDL::Vector tool_current_position,
-                                       const std::vector<cv::Point3d> &ac_path,
-                                       KDL::Vector &tool_desired_position,
-                                       KDL::Vector &tangent_vector);
-
 
 #endif //TELEOP_VISION_OVERLAYROSCONFIG_H

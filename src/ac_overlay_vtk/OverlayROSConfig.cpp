@@ -6,7 +6,6 @@
 
 #include <utils/Conversions.hpp>
 #include <pwd.h>
-#include <active_constraints/ActiveConstraintParameters.h>
 #include <boost/thread/thread.hpp>
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
@@ -31,29 +30,31 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
     buzz_task->SetCurrentToolPose(pose_current_tool[0], 0);
     buzz_task->SetCurrentToolPose(pose_current_tool[1], 1);
 
-    boost::thread thread_b(boost::bind(&BuzzWireTask::do_stuff, buzz_task));
+    boost::thread thread_b(boost::bind(
+            &BuzzWireTask::FindAndPublishDesiredToolPose, buzz_task));
 
 }
 
 
 
 void OverlayROSConfig::ReadCameraParameters(const std::string file_path,
-                                            CameraIntrinsics & camera) {
+                                            cv::Mat &camera_matrix,
+                                            cv::Mat &camera_distortion) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
     ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
 
     if (!fs.isOpened())
         throw std::runtime_error("Unable to read the camera parameters file.");
 
-    fs["camera_matrix"] >> camera.camMatrix;
-    fs["distortion_coefficients"] >> camera.distCoeffs;
+    fs["camera_matrix"] >> camera_matrix;
+    fs["distortion_coefficients"] >> camera_distortion;
 
-    // check if we got osomething
-    if(camera.distCoeffs.empty()){
+    // check if we got something
+    if(camera_matrix.empty()){
         ROS_ERROR("distortion_coefficients was not found in '%s' ", file_path.c_str());
         throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
     }
-    if(camera.camMatrix.empty()){
+    if(camera_distortion.empty()){
         ROS_ERROR("camera_matrix was not found in '%s' ", file_path.c_str());
         throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
     }
@@ -91,7 +92,8 @@ void OverlayROSConfig::SetupROS() {
         std::stringstream path;
         path << std::string(home_dir) << std::string("/.ros/camera_info/")
              << left_cam_name << "_intrinsics.xml";
-        ReadCameraParameters(path.str(), cam_intrinsics[0]);
+        ReadCameraParameters(path.str(), camera_matrix[0],
+                camera_distortion[0]);
     } else
         ROS_ERROR(
                 "Parameter '%s' is required. Place the intrinsic calibration "
@@ -103,7 +105,8 @@ void OverlayROSConfig::SetupROS() {
         std::stringstream path;
         path << std::string(home_dir) << std::string("/.ros/camera_info/")
              << right_cam_name << "_intrinsics.xml";
-        ReadCameraParameters(path.str(), cam_intrinsics[1]);
+        ReadCameraParameters(path.str(), camera_matrix[1],
+                             camera_distortion[1]);
     } else
         ROS_ERROR(
                 "Parameter '%s' is required. Place the intrinsic calibration "
@@ -244,13 +247,6 @@ void OverlayROSConfig::SetupROS() {
             subscriber_camera_pose_right = n.subscribe(
                     right_cam_pose_topic_name, 1, &OverlayROSConfig::RightCamPoseCallback, this);
 
-            //----------
-            // to find the transformation between the cameras we defined a simple service.
-            stereo_tr_calc_client =
-                    n.serviceClient<teleop_vision::CalculateStereoCamsTransfromFromTopics>
-                            ("/calculate_stereo_cams_transform_from_topics");
-            stereo_tr_srv.request.cam_1_pose_topic_name = left_cam_pose_topic_name;
-            stereo_tr_srv.request.cam_2_pose_topic_name = right_cam_pose_topic_name;
 
         }
     }
@@ -493,22 +489,6 @@ void OverlayROSConfig::LockAndGetImages(ros::Duration timeout, cv::Mat images[])
 }
 
 
-
-void OverlayROSConfig::PublishDesiredPose(const KDL::Frame * pose_desired) {
-
-    for (int n_arm = 0; n_arm < n_arms; ++n_arm) {
-
-        // convert to pose message
-        geometry_msgs::PoseStamped pose_msg;
-        tf::poseKDLToMsg(pose_desired[n_arm], pose_msg.pose);
-        // fill the header
-        pose_msg.header.frame_id = "/task_space";
-        pose_msg.header.stamp = ros::Time::now();
-        // publish
-        publisher_tool_pose_desired[n_arm].publish(pose_msg);
-    }
-}
-
 void OverlayROSConfig::PublishACtiveConstraintParameters(const int arm_number,
                                                          const active_constraints::ActiveConstraintParameters & ac_params) {
 
@@ -535,8 +515,6 @@ void OverlayROSConfig::RecordingEventsCallback(const std_msgs::CharConstPtr
         case 'd':
             buzz_task->RepeatLastAcquisition();
             break;
-
-
     }
 
 }
@@ -552,31 +530,4 @@ void VisualUtils::SwitchFullScreen(const std::string window_name) {
 
 }
 
-
-
-KDL::Rotation CalculateDesiredOrientation(
-        const KDL::Vector ac_path_tangent_current,
-        const KDL::Rotation current_orientation) {
-
-    // Assuming that the normal to the ring is the x vector of current_orientation
-    KDL::Vector ring_normal = current_orientation.UnitZ();
-
-    // find the normal vector for the rotation to desired pose
-    KDL::Vector rotation_axis = ring_normal * ac_path_tangent_current;
-
-    // find the magnitude of rotation
-    // we are interested in the smallest rotation (in the same quarter)
-    double rotation_angle = acos( (KDL::dot(ring_normal, ac_path_tangent_current)) /
-                                  (ring_normal.Norm() * ac_path_tangent_current.Norm()) );
-
-    // If the ring is perpendicular to the tangent switch the direction of the tangent
-    // to get the smaller rotation
-    if(rotation_angle > M_PI/2)
-        rotation_angle = rotation_angle - M_PI;
-
-    KDL::Rotation rotation_to_desired;
-    conversions::AxisAngleToKDLRotation(rotation_axis, rotation_angle, rotation_to_desired);
-
-    return (rotation_to_desired * current_orientation );
-}
 
