@@ -49,17 +49,13 @@ public:
     std::vector< vtkSmartPointer <vtkProp> > GetActors();
 
     // sets the pose of the tools
-    void SetCurrentToolPose(KDL::Frame &tool_pose, const int tool_id);
+    void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
 
     // updates the task logic and the actors
     void UpdateActors();
 
     // calculates the desired tool pose
     void CalculatedDesiredToolPose();
-
-    // calculates and returns the desired pose.
-    // It called faster than the graphic loop rate
-    KDL::Frame GetDesiredToolPose(const uint tool_id);
 
     // returns the status of the change of the ac_param
     bool IsACParamChanged();
@@ -78,7 +74,7 @@ public:
 
 
 
-    void do_stuff();
+    void FindAndPublishDesiredToolPose();
 
 private:
 

@@ -200,7 +200,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for finding generating
     // active constraints
-    inputFilename = "/home/charm/Desktop/cads/task1_4_tube.STL";
+    inputFilename = "/home/charm/Desktop/cads/task1_5_tube.STL";
     vtkSmartPointer<vtkSTLReader> hq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
     std::cout << "Loading stl file from: " << inputFilename << std::endl;
@@ -231,42 +231,9 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     //    hq_mesh_actor->GetProperty()->SetOpacity(0.5);
 
 
-//    // -------------------------------------------------------------------------
-//    // MESH hq is for rendering and lq is for finding generating
-//    // active constraints
-//    inputFilename = "/home/charm/Desktop/cads/super_ring_lq.STL";
-//    vtkSmartPointer<vtkSTLReader> ring_guides_mesh_reader =
-//            vtkSmartPointer<vtkSTLReader>::New();
-//    std::cout << "Loading stl file from: " << inputFilename << std::endl;
-//    ring_guides_mesh_reader->SetFileName(inputFilename.c_str());
-//    ring_guides_mesh_reader->Update();
-//
-//    // transform
-//    vtkSmartPointer<vtkTransform> ring_transform =
-//            vtkSmartPointer<vtkTransform>::New();
-//    ring_transform->Translate(0.0, 0.0, 0.0035);
-//    ring_transform->RotateX(90);
-//
-//    vtkSmartPointer<vtkTransformPolyDataFilter> ring_guides_mesh_transformFilter =
-//            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-//    ring_guides_mesh_transformFilter->SetInputConnection(
-//            ring_guides_mesh_reader->GetOutputPort());
-//    ring_guides_mesh_transformFilter->SetTransform(ring_transform);
-//    ring_guides_mesh_transformFilter->Update();
-//
-//    vtkSmartPointer<vtkPolyDataMapper> ring_guides_mesh_mapper =
-//            vtkSmartPointer<vtkPolyDataMapper>::New();
-//    ring_guides_mesh_mapper->SetInputConnection(
-//            ring_guides_mesh_transformFilter->GetOutputPort());
-//
-//    ring_guides_mesh_actor = vtkSmartPointer<vtkActor>::New();
-//    ring_guides_mesh_actor->SetMapper(ring_guides_mesh_mapper);
-//    ring_guides_mesh_actor->GetProperty()->SetColor(1.0, 1.0, 1.0);
-//    ring_guides_mesh_actor->GetProperty()->SetOpacity(0.5);
-
     // -------------------------------------------------------------------------
     // MESH lq
-    inputFilename = "/home/charm/Desktop/cads/task1_4_wire.STL";
+    inputFilename = "/home/charm/Desktop/cads/task1_5_wire.STL";
     vtkSmartPointer<vtkSTLReader> lq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
     std::cout << "Loading stl file from: " << inputFilename << std::endl;
@@ -417,19 +384,10 @@ std::vector<vtkSmartPointer<vtkProp> > BuzzWireTask::GetActors() {
 }
 
 //------------------------------------------------------------------------------
-void BuzzWireTask::SetCurrentToolPose(KDL::Frame &tool_pose,
-                                      const int tool_id) {
-
+void BuzzWireTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+                                             const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
-
-//    // find the center of the ring
-//    if(tool_id==0)
-//        ring_center[tool_id] = *tool_current_pose_kdl[tool_id] *
-//                               KDL::Vector(0.0, 0.0,ring_radius);
-//    else
-//        ring_center[tool_id] = *tool_current_pose_kdl[tool_id] *
-//                               KDL::Vector(0.0, ring_radius, 0.0);
 
 }
 
@@ -446,7 +404,6 @@ void BuzzWireTask::UpdateActors() {
 //    ring_guides_mesh_actor->SetUserMatrix(tool_current_pose[0]);
 
 
-
     vtkSmartPointer<vtkMatrix4x4> tool_desired_pose[2];
 
     for (int k = 0; k < 1 + (int)bimanual; ++k) {
@@ -456,6 +413,7 @@ void BuzzWireTask::UpdateActors() {
                                             tool_desired_pose[k]);
         tool_desired_frame_axes[k]->SetUserMatrix(tool_desired_pose[k]);
     }
+
     // -------------------------------------------------------------------------
     // Task logic
     // -------------------------------------------------------------------------
@@ -633,13 +591,6 @@ void BuzzWireTask::FindClosestPoints() {
 }
 
 
-//------------------------------------------------------------------------------
-KDL::Frame BuzzWireTask::GetDesiredToolPose(const uint tool_id) {
-
-    CalculatedDesiredToolPose();
-
-    return tool_desired_pose_kdl[tool_id];
-}
 
 
 //------------------------------------------------------------------------------
@@ -657,11 +608,6 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
         // far we don't want fixtures
         if (ring_center_to_cp.Norm() < 3 * ring_radius) {
 
-//        // activate the guidance if it is not already active
-//        if (ac_parameters.active == 0) {
-//            ac_params_changed = true;
-//            ac_parameters.active = 1;
-//        }
 
             // Desired position is one that puts the center of the wire on the
             // center of the ring.
@@ -738,17 +684,10 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
             }
             tool_desired_pose_kdl[k].M = KDL::Rotation(desired_x, desired_y,
                                                        desired_z);
-            //        tool_desired_pose_kdl.M = *tool_current_pose_kdl.M;
         } else {
-//        // deactivate the guidance if not already inactive
-//        if (ac_parameters.active == 1) {
-//            ac_params_changed = true;
-//            ac_parameters.active = 0;
-//        }
-
             tool_desired_pose_kdl[k] = *tool_current_pose_kdl[k];
-            // due to the delay in teleop loop this will some create forces if the
-            // guidance is still active
+            // due to the delay in teleop loop this will create some wrneches if
+            // the guidance is still active
         }
 
     }
@@ -798,7 +737,7 @@ void BuzzWireTask::RepeatLastAcquisition() {
 }
 
 
-void BuzzWireTask::do_stuff() {
+void BuzzWireTask::FindAndPublishDesiredToolPose() {
 
     ros::Publisher pub_desired[2];
 
@@ -820,16 +759,17 @@ void BuzzWireTask::do_stuff() {
                                             tool_current_pose[1]);
 
         // find the center of the ring
+        ring_center[0] = *tool_current_pose_kdl[0] *
+                         KDL::Vector(0.0, 0.0,ring_radius);
 
-            ring_center[0] = *tool_current_pose_kdl[0] *
-                                   KDL::Vector(0.0, 0.0,ring_radius);
+        ring_center[1] = *tool_current_pose_kdl[1] *
+                         KDL::Vector(0.0, ring_radius, 0.0);
 
-            ring_center[1] = *tool_current_pose_kdl[1] *
-                                   KDL::Vector(0.0, ring_radius, 0.0);
         FindClosestPoints();
 
         CalculatedDesiredToolPose();
 
+        // publish desired poses
         for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
 
             // convert to pose message
