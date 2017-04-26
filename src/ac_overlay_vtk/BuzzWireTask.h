@@ -29,6 +29,8 @@
 
 #include "active_constraints/ActiveConstraintParameters.h"
 #include "teleop_vision/TaskState.h"
+#include <ros/ros.h>
+#include <std_msgs/Empty.h>
 
 // P1 is the point where the ring enters the wire
 // P2 is the destination point shown to the user.
@@ -47,7 +49,7 @@ public:
     std::vector< vtkSmartPointer <vtkProp> > GetActors();
 
     // sets the pose of the tools
-    void SetCurrentToolPose(const KDL::Frame &tool_pose, const int tool_id);
+    void SetCurrentToolPose(KDL::Frame &tool_pose, const int tool_id);
 
     // updates the task logic and the actors
     void UpdateActors();
@@ -73,6 +75,10 @@ public:
     // decrements the number of repetitions. Used in case something goes
     // wrong during that repetition.
     void RepeatLastAcquisition();
+
+
+
+    void do_stuff();
 
 private:
 
@@ -118,8 +124,7 @@ private:
     active_constraints::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl[2];
-    KDL::Frame tool_current_pose_kdl[2];
-
+    KDL::Frame *tool_current_pose_kdl[2];
     uint destination_cone_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
 

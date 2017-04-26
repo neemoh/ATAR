@@ -7,6 +7,7 @@
 #include <utils/Conversions.hpp>
 #include <pwd.h>
 #include <active_constraints/ActiveConstraintParameters.h>
+#include <boost/thread/thread.hpp>
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
         : n(node_name), image_width(width), image_height(height)
@@ -26,6 +27,11 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
     double ring_radius = 0.004;
     buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames, true);
 
+    ros::spinOnce();
+    buzz_task->SetCurrentToolPose(pose_current_tool[0], 0);
+    buzz_task->SetCurrentToolPose(pose_current_tool[1], 1);
+
+    boost::thread thread_b(boost::bind(&BuzzWireTask::do_stuff, buzz_task));
 
 }
 
@@ -263,7 +269,7 @@ void OverlayROSConfig::SetupROS() {
     n.param<int>("number_of_arms", n_arms, 1);
     ROS_INFO("Expecting '%d' arm(s)", n_arms);
 
-    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
+//    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
     subscriber_tool_current_pose = new ros::Subscriber[(uint)n_arms];
     publisher_ac_params = new ros::Publisher[(uint)n_arms];
 
@@ -297,12 +303,12 @@ void OverlayROSConfig::SetupROS() {
         // we will later check to see if something is publishing on the current slave pose
         check_topic_name = param_name.str();
 
-        // The desired point according to the active constraint geometry definition
-        param_name.str("");
-        param_name << std::string("/")<< slave_names[n_arm] << "/tool_pose_desired";
-        publisher_tool_pose_desired[n_arm] = n.advertise<geometry_msgs::PoseStamped>(
-                param_name.str().c_str(), 1 );
-        ROS_INFO("Will publish on %s", param_name.str().c_str());
+//        // The desired point according to the active constraint geometry definition
+//        param_name.str("");
+//        param_name << std::string("/")<< slave_names[n_arm] << "/tool_pose_desired";
+//        publisher_tool_pose_desired[n_arm] = n.advertise<geometry_msgs::PoseStamped>(
+//                param_name.str().c_str(), 1 );
+//        ROS_INFO("Will publish on %s", param_name.str().c_str());
 
         // Publishing the active constraint parameters that may change during the task
         param_name.str("");
@@ -573,3 +579,4 @@ KDL::Rotation CalculateDesiredOrientation(
 
     return (rotation_to_desired * current_orientation );
 }
+

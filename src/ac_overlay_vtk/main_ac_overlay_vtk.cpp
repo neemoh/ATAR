@@ -10,7 +10,7 @@
 #include "CalibratedCamera.h"
 #include "BuzzWireTask.h"
 
-
+#include <boost/thread/thread.hpp>
 
 enum class Tasks {None, CricleAC, MultiplePaths};
 
@@ -67,8 +67,8 @@ int main(int argc, char **argv)
             ROS_INFO("Task 1 Selected");
         }
         // could be done directly in pose callback, doing it here for clarity...
-        rc.buzz_task->SetCurrentToolPose(rc.pose_current_tool[0], 0);
-        rc.buzz_task->SetCurrentToolPose(rc.pose_current_tool[1], 1);
+//        rc.buzz_task->SetCurrentToolPose(rc.pose_current_tool[0], 0);
+//        rc.buzz_task->SetCurrentToolPose(rc.pose_current_tool[1], 1);
 
         if(rc.GetNewImages(cam_images)) {
 
@@ -97,8 +97,8 @@ int main(int argc, char **argv)
                     cv_bridge::CvImage(std_msgs::Header(),
                                        "bgr8", augmented_stereo_image).toImageMsg());
             // updating the desired pose
-            pose_desired_tool[0] = rc.buzz_task->GetDesiredToolPose(0);
-            pose_desired_tool[1] = rc.buzz_task->GetDesiredToolPose(1);
+//            pose_desired_tool[0] = rc.buzz_task->GetDesiredToolPose(0);
+//            pose_desired_tool[1] = rc.buzz_task->GetDesiredToolPose(1);
 
             // publish the active constraint parameters if needed
             if(rc.buzz_task->IsACParamChanged()) {
@@ -117,10 +117,10 @@ int main(int argc, char **argv)
 
         // the graphics take already about 30 to 40 milliseconds so publishing
         // the pose really doesn't happen faster here
-        rc.PublishDesiredPose(pose_desired_tool);
+//        rc.PublishDesiredPose(pose_desired_tool);
 
 
-        ros::spinOnce();
+//        ros::spinOnce();
         loop_rate.sleep();
     }
 
