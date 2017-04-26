@@ -66,8 +66,9 @@ int main(int argc, char **argv)
         else if (key == '1'){
             ROS_INFO("Task 1 Selected");
         }
-
-        rc.buzz_task->SetCurrentToolPose(rc.pose_current_tool[0]);
+        // could be done directly in pose callback, doing it here for clarity...
+        rc.buzz_task->SetCurrentToolPose(rc.pose_current_tool[0], 0);
+        rc.buzz_task->SetCurrentToolPose(rc.pose_current_tool[1], 1);
 
         if(rc.GetNewImages(cam_images)) {
 
@@ -96,12 +97,16 @@ int main(int argc, char **argv)
                     cv_bridge::CvImage(std_msgs::Header(),
                                        "bgr8", augmented_stereo_image).toImageMsg());
             // updating the desired pose
-            pose_desired_tool[0] = rc.buzz_task->GetDesiredToolPose();
+            pose_desired_tool[0] = rc.buzz_task->GetDesiredToolPose(0);
+            pose_desired_tool[1] = rc.buzz_task->GetDesiredToolPose(1);
 
             // publish the active constraint parameters if needed
-            if(rc.buzz_task->IsACParamChanged())
-                rc.PublishACtiveConstraintParameters(0, rc.buzz_task->GetACParameters());
-
+            if(rc.buzz_task->IsACParamChanged()) {
+                rc.PublishACtiveConstraintParameters(0,
+                                                     rc.buzz_task->GetACParameters());
+                rc.PublishACtiveConstraintParameters(1,
+                                                     rc.buzz_task->GetACParameters());
+            }
             // publish the task state
             rc.PublishTaskState(rc.buzz_task->GetTaskStateMsg());
 

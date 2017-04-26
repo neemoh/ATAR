@@ -24,7 +24,7 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
 
     // create the task
     double ring_radius = 0.004;
-    buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames);
+    buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames, true);
 
 
 }
@@ -466,7 +466,7 @@ void OverlayROSConfig::LockAndGetImages(ros::Duration timeout, cv::Mat images[])
         loop_rate.sleep();
 
         if (ros::Time::now() > timeout_time)
-            ROS_WARN("Timeout: No new left Image.");
+            ROS_WARN("Timeout: No new left Image. Trying again...");
     }
     image_from_ros[0].copyTo(images[0]);
 
@@ -477,7 +477,7 @@ void OverlayROSConfig::LockAndGetImages(ros::Duration timeout, cv::Mat images[])
         loop_rate.sleep();
 
         if (ros::Time::now() > timeout_time) {
-            ROS_WARN("Timeout: No new right Image.");
+            ROS_WARN("Timeout: No new right Image. Trying again...");
         }
     }
     image_from_ros[1].copyTo(images[1]);

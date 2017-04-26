@@ -1,17 +1,18 @@
-  # Always needed and always constant
-  task_frame_to_PSM1_frame : [0.100305, -0.0545737, -0.0834832, -0.0135711,-0.0052687, 0.00346268, 0.999888]
-
-  # Always needed and always constant
-  task_frame_to_PSM2_frame : [0.13678867095780245, -0.09760652436207456, -0.12195819112718825, -0.013212021327430061,
-  0.0071419551302133255, -0.02122165210091492, 0.9996619810973454]
-
-  # Used only if right cam pose is not provided online
-  task_frame_to_right_cam_frame: [0.028093878579, -0.0358875736824, 0.310657898455, -0.0116346156184, 0.973332366667, -0.228774471412, -0.0122874304463]
-
-  # Used only if left cam pose is not provided online
-  task_frame_to_left_cam_frame: [ 0.0367768611965,-0.0345819156796, 0.316999675617, -0.00365980314303, 0.972960438895, -0.230128196038, 0.0193804947057]
-
-  # Used when one of the cam poses are is available online
+  # task_frame_to_PSM1_frame Always needed and always constant
+  # task_frame_to_PSM2_frame Always needed and always constant
+  # task_frame_to_right_cam_frame Used only if right cam pose is not provided online
+  # task_frame_to_left_cam_frameUsed only if left cam pose is not provided online
+  # left_cam_frame_to_right_cam_frameUsed when one of the cam poses are is available online
   left_cam_frame_to_right_cam_frame: [-0.0303521, -0.00234023, -0.00311738, -0.00308049, 0.0455042, -0.000920183,   0.998959]
 
 
+  left_cam_frame_to_right_cam_frame: [-0.0303521, -0.00234023, -0.00311738, -0.00308049,
+    0.0455042, -0.000920183, 0.998959]
+  task_frame_to_PSM1_frame: [-0.15782748376350464, -0.12957585807259156, -0.12395360594921985,
+    0.02045815595398763, -0.05712206153888393, 0.028007055642285502, 0.9977645708155607]
+  task_frame_to_PSM2_frame: [0.1279103746049791, -0.12816846499411208, -0.11889961621958416,
+    -0.009393826142850904, 0.0046109730096564805, -0.021321607391108506, 0.9997179022187016]
+  task_frame_to_left_cam_frame: [0.020164627074718947, -0.02297374628692959, 0.33867684919032687,
+    -0.009526870528558029, 0.9640004053276392, -0.2645456924193182, 0.025060604311605606]
+  task_frame_to_right_cam_frame: [0.0135392588928383, -0.024128205242612704, 0.3332013961899077,
+    -0.018665465008283838, 0.9645710226070976, -0.26305381426382035, -0.007552056936901723]

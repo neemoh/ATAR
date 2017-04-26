@@ -144,10 +144,6 @@ private:
     ros::Publisher * publisher_ac_params;
     ros::Publisher publisher_task_state;
 
-    //    // Current twists Not used for now
-    //    ros::Subscriber *subscriber_twist_current_tool;
-    //    ros::Publisher *publisher_twist_current_tool;
-
     // two function pointers for slave pose callbacks
     void (OverlayROSConfig::*pose_current_tool_callbacks[2])
             (const geometry_msgs::PoseStamped::ConstPtr &msg);

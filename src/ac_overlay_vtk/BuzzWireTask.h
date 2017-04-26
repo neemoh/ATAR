@@ -39,13 +39,15 @@ enum TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint, RepetitionComplete};
 class BuzzWireTask {
 public:
 
-    BuzzWireTask(const double ring_radius, const bool show_ref_frames);
+    BuzzWireTask(const double ring_radius,
+                 const bool show_ref_frames,
+                 const bool num_tools);
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors();
 
     // sets the pose of the tools
-    void SetCurrentToolPose(const KDL::Frame & tool_pose);
+    void SetCurrentToolPose(const KDL::Frame &tool_pose, const int tool_id);
 
     // updates the task logic and the actors
     void UpdateActors();
@@ -55,7 +57,7 @@ public:
 
     // calculates and returns the desired pose.
     // It called faster than the graphic loop rate
-    KDL::Frame GetDesiredToolPose();
+    KDL::Frame GetDesiredToolPose(const uint tool_id);
 
     // returns the status of the change of the ac_param
     bool IsACParamChanged();
@@ -85,6 +87,7 @@ private:
 
     // -------------------------------------------------------------------------
     // task logic
+    bool bimanual;
     TaskState task_state;
 
     KDL::Vector idle_point;
@@ -96,44 +99,45 @@ private:
 
     // -------------------------------------------------------------------------
     // graphics
-    double ring_radius_;
-    KDL::Vector ring_center;
-    KDL::Vector closest_point_to_ring_center;
-    KDL::Vector closest_point_to_radial_point;
-    KDL::Vector closest_point_to_grip_point;
+    double ring_radius;
+    KDL::Vector ring_center[2];
+    KDL::Vector closest_point_to_ring_center[2];
+    KDL::Vector closest_point_to_radial_point[2];
+    KDL::Vector closest_point_to_grip_point[2];
 
     // the distance between the center of the ring and the closest point on
     // the wire. This is could be slightly different from the error
     // calculated from the difference of the desired pose and the current
     // pose, though not significantly.
-    double position_error_norm;
+    double position_error_norm[2];
 
     bool show_ref_frames;
 
+    // for not we use the same type of active constraint for both arms
     bool ac_params_changed;
     active_constraints::ActiveConstraintParameters ac_parameters;
 
-    KDL::Frame tool_desired_pose_kdl;
-    KDL::Frame tool_current_pose_kdl;
+    KDL::Frame tool_desired_pose_kdl[2];
+    KDL::Frame tool_current_pose_kdl[2];
 
     uint destination_cone_counter;
-    vtkSmartPointer<vtkMatrix4x4> tool_current_pose;
+    vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
 
     std::vector<vtkSmartPointer<vtkProp>>           actors;
 
     // actors that are updated during the task
-    vtkSmartPointer<vtkActor>                       ring_actor;
+    vtkSmartPointer<vtkActor>                       ring_actor[2];
     vtkSmartPointer<vtkActor>                       error_sphere_actor;
 
-    vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes;
-    vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes;
+    vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes[2];
+    vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes[2];
 
     vtkSmartPointer<vtkCellLocator>                 cellLocator;
 
     vtkSmartPointer<vtkLineSource>                  line1_source;
     vtkSmartPointer<vtkLineSource>                  line2_source;
 
-    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
+//    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
     vtkSmartPointer<vtkActor>                       destination_cone_actor;
 
     vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;

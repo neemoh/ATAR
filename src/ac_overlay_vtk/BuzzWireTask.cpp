@@ -19,18 +19,20 @@ namespace Colors {
 };
 
 BuzzWireTask::BuzzWireTask(const double ring_radius,
-                           const bool show_ref_frames)
+                           const bool show_ref_frames,
+                           const bool biman)
         :
-        ring_radius_(ring_radius),
+        ring_radius(ring_radius),
         show_ref_frames(show_ref_frames),
+        bimanual(biman),
         destination_cone_counter(0),
         ac_params_changed(true),
         task_state(TaskState::Idle),
-        position_error_norm(0.0),
         number_of_repetition(0),
         idle_point(KDL::Vector(0.010, 0.011, 0.033)),
         start_point(KDL::Vector(0.017, 0.015, 0.033)),
         end_point(KDL::Vector(0.049, 0.028, 0.056)) {
+
 
 
     // -------------------------------------------------------------------------
@@ -53,12 +55,21 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     // -------------------------------------------------------------------------
     //  INITIALIZING GRAPHICS ACTORS
     // -------------------------------------------------------------------------
-    ring_actor = vtkSmartPointer<vtkActor>::New();
+
+    ring_actor[0] = vtkSmartPointer<vtkActor>::New();
+    tool_current_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
+    tool_desired_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
+    tool_current_pose[0] = vtkSmartPointer<vtkMatrix4x4>::New();
+
+    if(bimanual){
+        ring_actor[1] = vtkSmartPointer<vtkActor>::New();
+        tool_current_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
+        tool_desired_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
+        tool_current_pose[1] = vtkSmartPointer<vtkMatrix4x4>::New();
+
+    }
+
     error_sphere_actor = vtkSmartPointer<vtkActor>::New();
-
-    tool_current_frame_axes = vtkSmartPointer<vtkAxesActor>::New();
-
-    tool_desired_frame_axes = vtkSmartPointer<vtkAxesActor>::New();
 
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 
@@ -66,10 +77,9 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
 
     line2_source = vtkSmartPointer<vtkLineSource>::New();
 
-    tool_current_pose = vtkSmartPointer<vtkMatrix4x4>::New();
 
     // -------------------------------------------------------------------------
-    // RING
+    // RINGS
     double ring_cross_section_radius = 0.0005;
     double source_scales = 0.006;
 
@@ -77,7 +87,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
             vtkSmartPointer<vtkParametricTorus>::New();
     parametricObject->SetCrossSectionRadius(
             ring_cross_section_radius / source_scales);
-    parametricObject->SetRingRadius(ring_radius_ / source_scales);
+    parametricObject->SetRingRadius(ring_radius / source_scales);
 
     vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource =
             vtkSmartPointer<vtkParametricFunctionSource>::New();
@@ -85,28 +95,45 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     parametricFunctionSource->Update();
 
     // to transform the data
-    vtkSmartPointer<vtkTransformPolyDataFilter> ring_local_transform_filter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    ring_local_transform_filter->SetInputConnection(
-            parametricFunctionSource->GetOutputPort());
+    vtkSmartPointer<vtkTransformPolyDataFilter>
+            ring_local_transform_filter[2];
+    vtkSmartPointer<vtkTransform> ring_local_transform[2];
+    vtkSmartPointer<vtkPolyDataMapper> ring_mapper[2];
 
-    vtkSmartPointer<vtkTransform> ring_local_transform =
-            vtkSmartPointer<vtkTransform>::New();
-    ring_local_transform->RotateX(90);
-    ring_local_transform->Translate(0.0, ring_radius_ / source_scales, 0.0);
 
-    ring_local_transform_filter->SetTransform(ring_local_transform);
-    ring_local_transform_filter->Update();
+    for (int k = 0; k < 1 + (int)bimanual; ++k) {
 
-    vtkSmartPointer<vtkPolyDataMapper> ring_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    ring_mapper->SetInputConnection(
-            ring_local_transform_filter->GetOutputPort());
+        ring_local_transform_filter[k] =
+                vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        ring_local_transform_filter[k]->SetInputConnection(
+                parametricFunctionSource->GetOutputPort());
 
-    ring_actor->SetMapper(ring_mapper);
-    ring_actor->SetScale(source_scales);
-    ring_actor->GetProperty()->SetColor(Colors::Turquoise);
-    ring_actor->GetProperty()->SetSpecular(0.7);
+        ring_local_transform[k] = vtkSmartPointer<vtkTransform>::New();
+
+        if(k == 0){
+            ring_local_transform[k]->RotateX(90);
+            ring_local_transform[k]->Translate(0.0, ring_radius /
+                                                    source_scales, 0.0);
+        }
+        else{
+//            ring_local_transform[k]->RotateX(0);
+            ring_local_transform[k]->Translate(0.0, ring_radius /
+                                                    source_scales, 0.0);
+        }
+
+        ring_local_transform_filter[k]->SetTransform(ring_local_transform[k]);
+        ring_local_transform_filter[k]->Update();
+
+        ring_mapper[k] = vtkSmartPointer<vtkPolyDataMapper>::New();
+        ring_mapper[k]->SetInputConnection(
+                ring_local_transform_filter[k]->GetOutputPort());
+
+        ring_actor[k]->SetMapper(ring_mapper[k]);
+        ring_actor[k]->SetScale(source_scales);
+        ring_actor[k]->GetProperty()->SetColor(Colors::Turquoise);
+        ring_actor[k]->GetProperty()->SetSpecular(0.7);
+    }
+
 
     // -------------------------------------------------------------------------
     // FRAMES
@@ -119,19 +146,21 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
-    tool_current_frame_axes->SetXAxisLabelText("");
-    tool_current_frame_axes->SetYAxisLabelText("");
-    tool_current_frame_axes->SetZAxisLabelText("");
-    tool_current_frame_axes->SetTotalLength(0.007, 0.007, 0.007);
-    tool_current_frame_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
+    for (int k = 0; k < 1 + (int)bimanual; ++k) {
 
-    tool_desired_frame_axes->SetXAxisLabelText("");
-    tool_desired_frame_axes->SetYAxisLabelText("");
-    tool_desired_frame_axes->SetZAxisLabelText("");
-    tool_desired_frame_axes->SetTotalLength(0.007, 0.007, 0.007);
-    tool_desired_frame_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
+        tool_current_frame_axes[k]->SetXAxisLabelText("");
+        tool_current_frame_axes[k]->SetYAxisLabelText("");
+        tool_current_frame_axes[k]->SetZAxisLabelText("");
+        tool_current_frame_axes[k]->SetTotalLength(0.007, 0.007, 0.007);
+        tool_current_frame_axes[k]->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
+        tool_desired_frame_axes[k]->SetXAxisLabelText("");
+        tool_desired_frame_axes[k]->SetYAxisLabelText("");
+        tool_desired_frame_axes[k]->SetZAxisLabelText("");
+        tool_desired_frame_axes[k]->SetTotalLength(0.007, 0.007, 0.007);
+        tool_desired_frame_axes[k]->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
+    }
     // -------------------------------------------------------------------------
     // Stand MESH hq
     std::string inputFilename = "/home/charm/Desktop/cads/task1_4_stand.STL";
@@ -202,39 +231,38 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     //    hq_mesh_actor->GetProperty()->SetOpacity(0.5);
 
 
-    // -------------------------------------------------------------------------
-    // MESH hq is for rendering and lq is for finding generating
-    // active constraints
-    inputFilename = "/home/charm/Desktop/cads/super_ring_lq.STL";
-    vtkSmartPointer<vtkSTLReader> ring_guides_mesh_reader =
-            vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << inputFilename << std::endl;
-    ring_guides_mesh_reader->SetFileName(inputFilename.c_str());
-    ring_guides_mesh_reader->Update();
-
-    // transform
-    vtkSmartPointer<vtkTransform> ring_transform =
-            vtkSmartPointer<vtkTransform>::New();
-    ring_transform->Translate(0.0, 0.0, 0.0035);
-    ring_transform->RotateX(90);
-
-    vtkSmartPointer<vtkTransformPolyDataFilter> ring_guides_mesh_transformFilter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    ring_guides_mesh_transformFilter->SetInputConnection(
-            ring_guides_mesh_reader->GetOutputPort());
-    ring_guides_mesh_transformFilter->SetTransform(ring_transform);
-    ring_guides_mesh_transformFilter->Update();
-
-    vtkSmartPointer<vtkPolyDataMapper> ring_guides_mesh_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    ring_guides_mesh_mapper->SetInputConnection(
-            ring_guides_mesh_transformFilter->GetOutputPort());
-
-    ring_guides_mesh_actor = vtkSmartPointer<vtkActor>::New();
-    ring_guides_mesh_actor->SetMapper(ring_guides_mesh_mapper);
-    ring_guides_mesh_actor->GetProperty()->SetColor(1.0, 1.0, 1.0);
-    ring_guides_mesh_actor->GetProperty()->SetOpacity(0.5);
-    //    hq_mesh_actor->GetProperty()->SetOpacity(0.5);
+//    // -------------------------------------------------------------------------
+//    // MESH hq is for rendering and lq is for finding generating
+//    // active constraints
+//    inputFilename = "/home/charm/Desktop/cads/super_ring_lq.STL";
+//    vtkSmartPointer<vtkSTLReader> ring_guides_mesh_reader =
+//            vtkSmartPointer<vtkSTLReader>::New();
+//    std::cout << "Loading stl file from: " << inputFilename << std::endl;
+//    ring_guides_mesh_reader->SetFileName(inputFilename.c_str());
+//    ring_guides_mesh_reader->Update();
+//
+//    // transform
+//    vtkSmartPointer<vtkTransform> ring_transform =
+//            vtkSmartPointer<vtkTransform>::New();
+//    ring_transform->Translate(0.0, 0.0, 0.0035);
+//    ring_transform->RotateX(90);
+//
+//    vtkSmartPointer<vtkTransformPolyDataFilter> ring_guides_mesh_transformFilter =
+//            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+//    ring_guides_mesh_transformFilter->SetInputConnection(
+//            ring_guides_mesh_reader->GetOutputPort());
+//    ring_guides_mesh_transformFilter->SetTransform(ring_transform);
+//    ring_guides_mesh_transformFilter->Update();
+//
+//    vtkSmartPointer<vtkPolyDataMapper> ring_guides_mesh_mapper =
+//            vtkSmartPointer<vtkPolyDataMapper>::New();
+//    ring_guides_mesh_mapper->SetInputConnection(
+//            ring_guides_mesh_transformFilter->GetOutputPort());
+//
+//    ring_guides_mesh_actor = vtkSmartPointer<vtkActor>::New();
+//    ring_guides_mesh_actor->SetMapper(ring_guides_mesh_mapper);
+//    ring_guides_mesh_actor->GetProperty()->SetColor(1.0, 1.0, 1.0);
+//    ring_guides_mesh_actor->GetProperty()->SetOpacity(0.5);
 
     // -------------------------------------------------------------------------
     // MESH lq
@@ -357,20 +385,25 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     // -------------------------------------------------------------------------
     // Add all actors to a vector
     if (show_ref_frames) {
-        actors.push_back(task_coordinate_axes);
-        actors.push_back(tool_current_frame_axes);
-        actors.push_back(tool_desired_frame_axes);
+//        actors.push_back(task_coordinate_axes);
+
+        for (int k = 0; k < 1 + (int)bimanual; ++k) {
+            actors.push_back(tool_current_frame_axes[k]);
+            actors.push_back(tool_desired_frame_axes[k]);
+        }
     }
 
     actors.push_back(hq_mesh_actor);
     actors.push_back(stand_mesh_actor);
     actors.push_back(lq_mesh_actor);
     //    actors.push_back(floor_actor);
-    actors.push_back(ring_actor);
+    actors.push_back(ring_actor[0]);
+    if(bimanual)
+        actors.push_back(ring_actor[1]);
     actors.push_back(destination_cone_actor);
     //    actors.push_back(line1_actor);
     //    actors.push_back(line2_actor);
-    actors.push_back(ring_guides_mesh_actor);
+//    actors.push_back(ring_guides_mesh_actor);
     actors.push_back(error_sphere_actor);
     // add the annotation as the last actor
     //    actors.push_back(cornerAnnotation);
@@ -384,14 +417,18 @@ std::vector<vtkSmartPointer<vtkProp> > BuzzWireTask::GetActors() {
 }
 
 //------------------------------------------------------------------------------
-void BuzzWireTask::SetCurrentToolPose(const KDL::Frame &tool_pose) {
+void BuzzWireTask::SetCurrentToolPose(const KDL::Frame &tool_pose, const int tool_id) {
 
-    tool_current_pose_kdl = tool_pose;
-    VTKConversions::KDLFrameToVTKMatrix(tool_pose, tool_current_pose);
+    tool_current_pose_kdl[tool_id] = tool_pose;
+    VTKConversions::KDLFrameToVTKMatrix(tool_pose, tool_current_pose[tool_id]);
 
     // find the center of the ring
-    ring_center = tool_current_pose_kdl * KDL::Vector(0.0, 0.0, ring_radius_);
-
+    if(tool_id==0)
+        ring_center[tool_id] = tool_current_pose_kdl[tool_id] *
+                KDL::Vector(0.0, 0.0,ring_radius);
+    else
+        ring_center[tool_id] = tool_current_pose_kdl[tool_id] *
+            KDL::Vector(0.0, ring_radius, 0.0);
 
 }
 
@@ -400,19 +437,25 @@ void BuzzWireTask::UpdateActors() {
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
-    tool_current_frame_axes->SetUserMatrix(tool_current_pose);
+    for (int k = 0; k < 1 + (int)bimanual; ++k) {
+        tool_current_frame_axes[k]->SetUserMatrix(tool_current_pose[k]);
+        ring_actor[k]->SetUserMatrix(tool_current_pose[k]);
+    }
 
-    ring_actor->SetUserMatrix(tool_current_pose);
-    ring_guides_mesh_actor->SetUserMatrix(tool_current_pose);
+//    ring_guides_mesh_actor->SetUserMatrix(tool_current_pose[0]);
 
     FindClosestPoints();
 
-    vtkSmartPointer<vtkMatrix4x4> tool_desired_pose =
-            vtkSmartPointer<vtkMatrix4x4>::New();
-    VTKConversions::KDLFrameToVTKMatrix(tool_desired_pose_kdl,
-                                        tool_desired_pose);
-    tool_desired_frame_axes->SetUserMatrix(tool_desired_pose);
 
+    vtkSmartPointer<vtkMatrix4x4> tool_desired_pose[2];
+
+    for (int k = 0; k < 1 + (int)bimanual; ++k) {
+        tool_desired_pose[k] =
+                vtkSmartPointer<vtkMatrix4x4>::New();
+        VTKConversions::KDLFrameToVTKMatrix(tool_desired_pose_kdl[k],
+                                            tool_desired_pose[k]);
+        tool_desired_frame_axes[k]->SetUserMatrix(tool_desired_pose[k]);
+    }
     // -------------------------------------------------------------------------
     // Task logic
     // -------------------------------------------------------------------------
@@ -422,7 +465,7 @@ void BuzzWireTask::UpdateActors() {
     // if the tool is placed close to the starting point while being idle
     //  we can start the task. but we first enable the active constraint.
     if (task_state == TaskState::Idle &&
-        (ring_center - start_point).Norm() <
+        (ring_center[0] - start_point).Norm() <
         positioning_tolerance) {
         // Make sure the active constraint is inactive
         if (ac_parameters.active == 0) {
@@ -436,7 +479,7 @@ void BuzzWireTask::UpdateActors() {
     // beginning of the task data we start the task when the tool is
     // positioned well
     if (task_state == TaskState::Idle &&
-        position_error_norm < 0.002 && ac_parameters.active == 1)
+        position_error_norm[0] < 0.002 && ac_parameters.active == 1)
     {
         task_state = TaskState::ToEndPoint;
         //increment the repetition number
@@ -448,7 +491,7 @@ void BuzzWireTask::UpdateActors() {
         // If the tool reaches the end point the user needs to go back to
         // the starting point. This counts as a separate repetition of the task
     else if (task_state == TaskState::ToEndPoint &&
-             (ring_center - end_point).Norm() <
+             (ring_center[0] - end_point).Norm() <
              positioning_tolerance) {
         task_state = TaskState::ToStartPoint;
         //increment the repetition number
@@ -459,7 +502,7 @@ void BuzzWireTask::UpdateActors() {
         // If the tool reaches the start point while in ToStartPoint state,
         // we can mark the task complete
     else if (task_state == TaskState::ToStartPoint &&
-             (ring_center - start_point).Norm() <
+             (ring_center[0] - start_point).Norm() <
              positioning_tolerance) {
         task_state = TaskState::RepetitionComplete;
         ac_parameters.active = 0;
@@ -470,7 +513,7 @@ void BuzzWireTask::UpdateActors() {
         // and in case another repetition is to be performed, the user can
         // flag that by going to the starting position again
     else if (task_state == TaskState::RepetitionComplete &&
-             (ring_center - idle_point).Norm() <
+             (ring_center[0] - idle_point).Norm() <
              positioning_tolerance) {
         task_state = TaskState::Idle;
     }
@@ -514,7 +557,7 @@ void BuzzWireTask::UpdateActors() {
         || task_state == TaskState::ToEndPoint) {
 
         task_state_msg.time_stamp = (ros::Time::now() - start_time).toSec();
-        task_state_msg.position_error_norm = position_error_norm;
+        task_state_msg.position_error_norm = position_error_norm[0];
     } else {
         task_state_msg.time_stamp = 0.0;
         task_state_msg.position_error_norm = 0.0;
@@ -527,80 +570,93 @@ void BuzzWireTask::UpdateActors() {
 //------------------------------------------------------------------------------
 void BuzzWireTask::FindClosestPoints() {
 
-    //Find the closest cell to the grip point
-    double grip_point[3] = {tool_current_pose_kdl.p[0],
-                            tool_current_pose_kdl.p[1],
-                            tool_current_pose_kdl.p[2]};
+    KDL::Vector ring_axis[2];
+//    ring_axis[0] =
+    for (int k = 0; k < 1 + (int)bimanual; ++k) {
 
-    double closest_point[3] = {0.0, 0.0, 0.0};
-    double closestPointDist2; //the squared distance to the closest point
-    vtkIdType cell_id; //the cell id of the cell containing the closest point
-    int subId;
+        //Find the closest cell to the grip point
+        double grip_point[3] = {tool_current_pose_kdl[k].p[0],
+                                tool_current_pose_kdl[k].p[1],
+                                tool_current_pose_kdl[k].p[2]};
 
-    cellLocator->Update();
-    cellLocator->FindClosestPoint(grip_point, closest_point, cell_id, subId,
-                                  closestPointDist2);
-    closest_point_to_grip_point = KDL::Vector(closest_point[0],
-                                              closest_point[1],
-                                              closest_point[2]);
+        double closest_point[3] = {0.0, 0.0, 0.0};
+        double closestPointDist2; //the squared distance to the closest point
+        vtkIdType cell_id; //the cell id of the cell containing the closest point
+        int subId;
+
+        cellLocator->Update();
+        cellLocator->FindClosestPoint(grip_point, closest_point, cell_id, subId,
+                                      closestPointDist2);
+        closest_point_to_grip_point[k] = KDL::Vector(closest_point[0],
+                                                  closest_point[1],
+                                                  closest_point[2]);
 
 
-    //Find the closest cell to the the central point
-    double ring_central_point[3] = {ring_center[0],
-                                    ring_center[1],
-                                    ring_center[2]};
-    cellLocator->Update();
-    cellLocator->FindClosestPoint(ring_central_point, closest_point, cell_id,
-                                  subId, closestPointDist2);
-    closest_point_to_ring_center = KDL::Vector(closest_point[0],
-                                               closest_point[1],
-                                               closest_point[2]);
+        //Find the closest cell to the the central point
+        double ring_central_point[3] = {ring_center[k][0],
+                                        ring_center[k][1],
+                                        ring_center[k][2]};
+        cellLocator->Update();
+        cellLocator->FindClosestPoint(ring_central_point, closest_point,
+                                      cell_id,
+                                      subId, closestPointDist2);
+        closest_point_to_ring_center[k] = KDL::Vector(closest_point[0],
+                                                   closest_point[1],
+                                                   closest_point[2]);
 
-    //Find the closest cell to the radial tool point
-    KDL::Vector radial_tool_point_kdl = tool_current_pose_kdl *
-                                        KDL::Vector(ring_radius_, 0.0,
-                                                    ring_radius_);
-    double radial_tool_point[3] = {radial_tool_point_kdl[0],
-                                   radial_tool_point_kdl[1],
-                                   radial_tool_point_kdl[2]};
-    cellLocator->Update();
-    cellLocator->FindClosestPoint(radial_tool_point, closest_point, cell_id,
-                                  subId, closestPointDist2);
-    closest_point_to_radial_point = KDL::Vector(closest_point[0],
-                                                closest_point[1],
-                                                closest_point[2]);
+        //Find the closest cell to the radial tool point
+        KDL::Vector radial_tool_point_kdl;
+        if(k==0)
+            radial_tool_point_kdl =
+                    tool_current_pose_kdl[k] *
+                            KDL::Vector(ring_radius, 0.0, ring_radius);
+        else
+            radial_tool_point_kdl =
+                    tool_current_pose_kdl[k] *
+                            KDL::Vector(ring_radius, ring_radius, 0.0);
+
+        double radial_tool_point[3] = {radial_tool_point_kdl[0],
+                                       radial_tool_point_kdl[1],
+                                       radial_tool_point_kdl[2]};
+        cellLocator->Update();
+        cellLocator->FindClosestPoint(radial_tool_point, closest_point, cell_id,
+                                      subId, closestPointDist2);
+        closest_point_to_radial_point[k] = KDL::Vector(closest_point[0],
+                                                    closest_point[1],
+                                                    closest_point[2]);
 //    // debug using a line
 //    line1_source->SetPoint1(ring_central_point);
 //    line1_source->SetPoint2(tool_desired_pose_kdl.p[0],
 //                            tool_desired_pose_kdl.p[1],
 //                            tool_desired_pose_kdl.p[2]);
 //    line1_source->Update();
+    }
 }
 
 
 //------------------------------------------------------------------------------
-KDL::Frame BuzzWireTask::GetDesiredToolPose() {
+KDL::Frame BuzzWireTask::GetDesiredToolPose(const uint tool_id) {
 
     CalculatedDesiredToolPose();
 
-    return tool_desired_pose_kdl;
+    return tool_desired_pose_kdl[tool_id];
 }
 
 
 //------------------------------------------------------------------------------
 void BuzzWireTask::CalculatedDesiredToolPose() {
     // NOTE: All the closest points are on the wire mesh
+    for (int k = 0; k < 1 + (int)bimanual; ++k) {
 
-    // locate the center of the ring
-    KDL::Vector ring_center =
-            tool_current_pose_kdl * KDL::Vector(0.0, 0.0, ring_radius_);
-    // Find the vector from ring center to the corresponding closest point on
-    // the wire
-    KDL::Vector ring_center_to_cp = closest_point_to_ring_center - ring_center;
 
-    // desired pose only when the ring is close to the wire.if it is too
-    // far we don't want fixtures
-    if (ring_center_to_cp.Norm() < 3 * ring_radius_) {
+        // Find the vector from ring center to the corresponding closest point on
+        // the wire
+        KDL::Vector ring_center_to_cp =
+                closest_point_to_ring_center[k] - ring_center[k];
+
+        // desired pose only when the ring is close to the wire.if it is too
+        // far we don't want fixtures
+        if (ring_center_to_cp.Norm() < 3 * ring_radius) {
 
 //        // activate the guidance if it is not already active
 //        if (ac_parameters.active == 0) {
@@ -608,69 +664,93 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
 //            ac_parameters.active = 1;
 //        }
 
-        // Desired position is one that puts the center of the wire on the
-        // center of the ring.
+            // Desired position is one that puts the center of the wire on the
+            // center of the ring.
 
-        //---------------------------------------------------------------------
-        // Find the desired position
-        KDL::Vector wire_center = ring_center + ring_center_to_cp;
-        // Turns out trying to estimate the center of the wire makes things
-        // worse so I removed the following term that was used in finding
-        // wire_center:
-        // wire_radius_ * (ring_center_to_cp/ring_center_to_cp.Norm());
+            //---------------------------------------------------------------------
+            // Find the desired position
+            KDL::Vector wire_center = ring_center[k] + ring_center_to_cp;
+            // Turns out trying to estimate the center of the wire makes things
+            // worse so I removed the following term that was used in finding
+            // wire_center:
+            // wire_radius_ * (ring_center_to_cp/ring_center_to_cp.Norm());
 
-        position_error_norm = (wire_center - ring_center).Norm();
-        tool_desired_pose_kdl.p =
-                tool_current_pose_kdl.p + wire_center - ring_center;
+            position_error_norm[k] = (wire_center - ring_center[k]).Norm();
+            tool_desired_pose_kdl[k].p =
+                    tool_current_pose_kdl[k].p + wire_center - ring_center[k];
 
-        //---------------------------------------------------------------------
-        // Find the desired orientation
-        // We use two vectors to estimate the tangent of the direction of the
-        // wire. One is from the grip point (current tool tip) to its closest
-        // point on the wire and the other is from a point on the side of the
-        // ring (90 deg from the grip point). The estimated tangent is the
-        // cross product of these two (after normalization). This is just a
-        // quick the non-ideal approximation.
-        // Note that we could have used the central point instead of the tool
-        // point but that vector gets pretty small and unstable when we're
-        // close to the desired pose.
-        KDL::Vector radial_point_kdl =
-                tool_current_pose_kdl * KDL::Vector(ring_radius_, 0.0,
-                                                    ring_radius_);
-        KDL::Vector radial_to_cp =
-                closest_point_to_radial_point - radial_point_kdl;
+            //---------------------------------------------------------------------
+            // Find the desired orientation
+            // We use two vectors to estimate the tangent of the direction of the
+            // wire. One is from the grip point (current tool tip) to its closest
+            // point on the wire and the other is from a point on the side of the
+            // ring (90 deg from the grip point). The estimated tangent is the
+            // cross product of these two (after normalization). This is just a
+            // quick the non-ideal approximation.
+            // Note that we could have used the central point instead of the tool
+            // point but that vector gets pretty small and unstable when we're
+            // close to the desired pose.
+            // WHen I added the second tool things got a little bit messy!
+            // Since I had to rotate the sing for 90 degrees the diserd axes
+            // were different for each ring and it ended up with too many
+            // hardcoded transforms, I will hopefully clean this out later. TODO
+            KDL::Vector radial_tool_point_kdl;
+            if(k==0)
+                radial_tool_point_kdl =
+                        tool_current_pose_kdl[k] *
+                        KDL::Vector(ring_radius, 0.0, ring_radius);
+            else
+                radial_tool_point_kdl =
+                        tool_current_pose_kdl[k] *
+                        KDL::Vector(ring_radius, ring_radius, 0.0);
 
-        KDL::Vector desired_z, desired_y, desired_x;
+            KDL::Vector radial_to_cp =
+                    closest_point_to_radial_point[k] - radial_tool_point_kdl;
 
-        KDL::Vector grip_to_cp =
-                closest_point_to_grip_point - tool_current_pose_kdl.p;
+            KDL::Vector desired_z, desired_y, desired_x;
 
-        desired_z = grip_to_cp / grip_to_cp.Norm();
-        desired_x = -radial_to_cp / radial_to_cp.Norm();
-        desired_y = desired_z * desired_x;
+            KDL::Vector grip_to_cp =
+                    closest_point_to_grip_point[k] - tool_current_pose_kdl[k].p;
+            if(k==0) {
+                desired_z = grip_to_cp / grip_to_cp.Norm();
+                desired_x = -radial_to_cp / radial_to_cp.Norm();
+                desired_y = desired_z * desired_x;
 
-        // make sure axes are perpendicular and normal
-        desired_y = desired_y / desired_y.Norm();
-        desired_x = desired_y * desired_z;
-        desired_x = desired_x / desired_x.Norm();
-        desired_z = desired_x * desired_y;
-        desired_z = desired_z / desired_z.Norm();
+                // make sure axes are perpendicular and normal
+                desired_y = desired_y / desired_y.Norm();
+                desired_x = desired_y * desired_z;
+                desired_x = desired_x / desired_x.Norm();
+                desired_z = desired_x * desired_y;
+                desired_z = desired_z / desired_z.Norm();
+            }
+            else {
+                desired_y = grip_to_cp / grip_to_cp.Norm();
+                desired_x = -radial_to_cp / radial_to_cp.Norm();
+                desired_z = desired_x * desired_y;
 
-        tool_desired_pose_kdl.M = KDL::Rotation(desired_x, desired_y,
-                                                desired_z);
-        //        tool_desired_pose_kdl.M = tool_current_pose_kdl.M;
-    } else {
+                // make sure axes are perpendicular and normal
+                desired_z = desired_z / desired_z.Norm();
+                desired_x = desired_y * desired_z;
+                desired_x = desired_x / desired_x.Norm();
+                desired_y = desired_z * desired_x;
+                desired_y = desired_y / desired_y.Norm();
+            }
+            tool_desired_pose_kdl[k].M = KDL::Rotation(desired_x, desired_y,
+                                                       desired_z);
+            //        tool_desired_pose_kdl.M = tool_current_pose_kdl.M;
+        } else {
 //        // deactivate the guidance if not already inactive
 //        if (ac_parameters.active == 1) {
 //            ac_params_changed = true;
 //            ac_parameters.active = 0;
 //        }
 
-        tool_desired_pose_kdl = tool_current_pose_kdl;
-        // due to the delay in teleop loop this will some create forces if the
-        // guidance is still active
-    }
+            tool_desired_pose_kdl[k] = tool_current_pose_kdl[k];
+            // due to the delay in teleop loop this will some create forces if the
+            // guidance is still active
+        }
 
+    }
 }
 
 
@@ -693,7 +773,7 @@ active_constraints::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
 void BuzzWireTask::UpdatePositionErrorActor() {
 
     double max_error = 0.004;
-    double error_ratio = position_error_norm / max_error;
+    double error_ratio = position_error_norm[0] / max_error;
     if (error_ratio > 1.0)
         error_ratio = 1.0;
 

@@ -47,10 +47,11 @@
             // (for the moment the code generates active constraints for 1 arm only. this will be changed
             // to support the second arm soon.)
         -->
-        <param name="number_of_arms" value="1"/>
+        <param name="number_of_arms" value="2"/>
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
 
         <!-- About desired_pose_update_frequency:
             //The overlayed images will be published only when new images are received.
@@ -63,7 +64,7 @@
         <!-- show_reference_frames:
             //Use for debug. it reduces frame rate
         -->
-        <param name= "show_reference_frames" value= "false" />
+        <param name= "show_reference_frames" value= "true" />
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
@@ -74,6 +75,7 @@
 	desired pose topic. The sampling_frequency param is for filtering.
     -->
     <node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">
+        <param name="number_of_arms" value="2"/>
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
