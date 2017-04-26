@@ -134,19 +134,19 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
 
 
 //------------------------------------------------------------------------------
-void Rendering::SetCameraIntrinsics(const cv::Matx33d intrinsics[])
+void Rendering::SetCameraIntrinsics(const cv::Mat intrinsics[])
 {
     for (int i = 0; i < 2; ++i) {
 //    m_Intrinsics = intrinsics;
-        background_camera_[i]->SetIntrinsicParameters(intrinsics[i](0, 0),
-                                                      intrinsics[i](1, 1),
-                                                      intrinsics[i](0, 2),
-                                                      intrinsics[i](1, 2));
+        background_camera_[i]->SetIntrinsicParameters(intrinsics[i].at<double>(0, 0),
+                                                      intrinsics[i].at<double>(1, 1),
+                                                      intrinsics[i].at<double>(0, 2),
+                                                      intrinsics[i].at<double>(1, 2));
 //    background_camera_->SetUseCalibratedCamera(true);
-        scene_camera_[i]->SetIntrinsicParameters(intrinsics[i](0, 0),
-                                                 intrinsics[i](1, 1),
-                                                 intrinsics[i](0, 2),
-                                                 intrinsics[i](1, 2));
+        scene_camera_[i]->SetIntrinsicParameters(intrinsics[i].at<double>(0, 0),
+                                                 intrinsics[i].at<double>(1, 1),
+                                                 intrinsics[i].at<double>(0, 2),
+                                                 intrinsics[i].at<double>(1, 2));
 //    scene_camera_->SetUseCalibratedCamera(true);
     }
 }

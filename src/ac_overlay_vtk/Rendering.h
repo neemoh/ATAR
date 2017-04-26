@@ -39,7 +39,7 @@ public:
 
     void UpdateViewAngleForActualWindowSize();
 
-    void SetCameraIntrinsics(const cv::Matx33d intrinsics[]);
+    void SetCameraIntrinsics(const cv::Mat intrinsics[]);
 
     void AddActorToScene(vtkSmartPointer<vtkProp> actor);
 

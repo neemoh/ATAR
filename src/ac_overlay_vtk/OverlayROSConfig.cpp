@@ -27,8 +27,8 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
     buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames, true);
 
     ros::spinOnce();
-    buzz_task->SetCurrentToolPose(pose_current_tool[0], 0);
-    buzz_task->SetCurrentToolPose(pose_current_tool[1], 1);
+    buzz_task->SetCurrentToolPosePointer(pose_current_tool[0], 0);
+    buzz_task->SetCurrentToolPosePointer(pose_current_tool[1], 1);
 
     boost::thread thread_b(boost::bind(
             &BuzzWireTask::FindAndPublishDesiredToolPose, buzz_task));
