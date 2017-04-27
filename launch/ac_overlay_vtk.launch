@@ -16,6 +16,10 @@
     <!-- Node publishing the camera images -->
     <node pkg="teleop_vision" type="camera_capture_flea3" name="camera" output="screen"> </node>
 
+    <!-- Node recording the data-->
+    <node pkg="teleop_vision" type="reporter" name="reporter" output="screen">
+    </node>
+
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="teleop_vision" type="ac_overlay_vtk" name="ac_overlay" output="screen">
         <!-- About num_cam_pose_publishers:
@@ -47,7 +51,7 @@
             // (for the moment the code generates active constraints for 1 arm only. this will be changed
             // to support the second arm soon.)
         -->
-        <param name="number_of_arms" value="2"/>
+        <param name="number_of_arms" value="1"/>
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
@@ -64,7 +68,7 @@
         <!-- show_reference_frames:
             //Use for debug. it reduces frame rate
         -->
-        <param name= "show_reference_frames" value= "true" />
+        <param name= "show_reference_frames" value= "false" />
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
@@ -75,7 +79,7 @@
 	desired pose topic. The sampling_frequency param is for filtering.
     -->
     <node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">
-        <param name="number_of_arms" value="2"/>
+        <param name="number_of_arms" value="1"/>
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
