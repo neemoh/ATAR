@@ -43,8 +43,7 @@ public:
 
     // publishes the active constraint parameters
     void PublishACtiveConstraintParameters(
-            const int arm_number,
-            const active_constraints::ActiveConstraintParameters &);
+        const active_constraints::ActiveConstraintParameters &);
 
     // publishes the active constraint parameters
     void PublishTaskState(teleop_vision::TaskState msg);

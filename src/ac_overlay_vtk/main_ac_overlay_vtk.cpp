@@ -83,10 +83,8 @@ int main(int argc, char **argv)
 
             // publish the active constraint parameters if needed
             if(rc.buzz_task->IsACParamChanged()) {
-                rc.PublishACtiveConstraintParameters(0,
-                                                     rc.buzz_task->GetACParameters());
-                rc.PublishACtiveConstraintParameters(1,
-                                                     rc.buzz_task->GetACParameters());
+                rc.PublishACtiveConstraintParameters(
+                        rc.buzz_task->GetACParameters());
             }
             // publish the task state
             rc.PublishTaskState(rc.buzz_task->GetTaskStateMsg());

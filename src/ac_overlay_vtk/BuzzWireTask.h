@@ -83,7 +83,6 @@ private:
 
     // Calculates the closest points of the wire mesh to three points of
     // interest on the ring used for calculating the desired pose of the ring
-    void FindClosestPoints();
 
 private:
 
@@ -137,7 +136,8 @@ private:
 
     vtkSmartPointer<vtkLineSource>                  line1_source;
     vtkSmartPointer<vtkLineSource>                  line2_source;
-
+    vtkSmartPointer<vtkActor>                       line1_actor;
+    vtkSmartPointer<vtkActor>                       line2_actor;
 //    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
     vtkSmartPointer<vtkActor>                       destination_cone_actor;
 

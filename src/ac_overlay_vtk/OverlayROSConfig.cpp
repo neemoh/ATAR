@@ -24,7 +24,8 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
 
     // create the task
     double ring_radius = 0.004;
-    buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames, true);
+    buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames,
+                                   (bool)(n_arms-1));
 
     ros::spinOnce();
     buzz_task->SetCurrentToolPosePointer(pose_current_tool[0], 0);
@@ -489,10 +490,12 @@ void OverlayROSConfig::LockAndGetImages(ros::Duration timeout, cv::Mat images[])
 }
 
 
-void OverlayROSConfig::PublishACtiveConstraintParameters(const int arm_number,
-                                                         const active_constraints::ActiveConstraintParameters & ac_params) {
+void OverlayROSConfig::PublishACtiveConstraintParameters(
+        const active_constraints::ActiveConstraintParameters &ac_params) {
 
-    publisher_ac_params[arm_number].publish(ac_params);
+    publisher_ac_params[0].publish(ac_params);
+    if(n_arms==2)
+        publisher_ac_params[0].publish(ac_params);
 
 }
 
