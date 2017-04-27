@@ -10,6 +10,8 @@
 
 namespace Colors {
     double Red[3] {1.0, 0.1, 0.03};
+    double OrangeRed[3] {1.0, 0.27, 0.03};
+    double Gold[3] {1.0, 0.84, 0.0};
     double Green[3] {0.0, 0.9, 0.03};
     double Pink[3] {1.0, 0.0, 1.0};
     double Orange[3] {0.9, 0.4, 0.1};
@@ -29,9 +31,10 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
         ac_params_changed(true),
         task_state(TaskState::Idle),
         number_of_repetition(0),
-        idle_point(KDL::Vector(0.010, 0.011, 0.033)),
-        start_point(KDL::Vector(0.017, 0.015, 0.033)),
-        end_point(KDL::Vector(0.049, 0.028, 0.056)) {
+        num_score_spheres(10),
+        idle_point(KDL::Vector(-0.006, 0.011, 0.033)),
+        start_point(KDL::Vector(0.002, 0.015, 0.033)),
+        end_point(KDL::Vector(0.034, 0.028, 0.056)) {
 
 
 
@@ -71,7 +74,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
 
     tube_mesh_actor = vtkSmartPointer<vtkActor>::New();
 
-    error_sphere_actor = vtkSmartPointer<vtkActor>::New();
+//    score_sphere_actors = vtkSmartPointer<vtkActor>::New();
 
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 
@@ -178,7 +181,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     // transform
     vtkSmartPointer<vtkTransform> stand_transform =
             vtkSmartPointer<vtkTransform>::New();
-    stand_transform->Translate(0.065, 0.045, 0.025);
+    stand_transform->Translate(0.050, 0.045, 0.025);
     stand_transform->RotateX(180);
     stand_transform->RotateZ(150);
 
@@ -203,7 +206,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
 
 
     // -------------------------------------------------------------------------
-    // MESH hq is for rendering and lq is for finding generating
+    // MESH hq is for rendering and lq is for generating
     // active constraints
     inputFilename = "/home/charm/Desktop/cads/task1_4_tube.STL";
     vtkSmartPointer<vtkSTLReader> hq_mesh_reader =
@@ -272,7 +275,6 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     floor_source->SetXLength(floor_dimensions[0]);
     floor_source->SetYLength(floor_dimensions[1]);
     floor_source->SetZLength(floor_dimensions[2]);
-    // Create a sphere_mapper and actor.
     vtkSmartPointer<vtkPolyDataMapper> floor_mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
     floor_mapper->SetInputConnection(floor_source->GetOutputPort());
@@ -326,37 +328,42 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
                                         idle_point[2]);
 
 
-    //    cornerAnnotation =
-    //            vtkSmartPointer<vtkCornerAnnotation>::New();
-    //    cornerAnnotation->SetLinearFontScaleFactor( 2 );
-    //    cornerAnnotation->SetNonlinearFontScaleFactor( 1 );
-    //    cornerAnnotation->SetMaximumFontSize( 20 );
-    //    cornerAnnotation->SetText( 0, "lower left" );
-    //    cornerAnnotation->SetText( 1, "lower right" );
-    //    cornerAnnotation->SetText( 2, "upper left" );
-    //    cornerAnnotation->SetText( 3, "upper right" );
-    ////    cornerAnnotation->GetTextProperty()->SetColor( 1, 0, 0 );
+    cornerAnnotation =
+            vtkSmartPointer<vtkCornerAnnotation>::New();
+    cornerAnnotation->SetLinearFontScaleFactor( 2 );
+    cornerAnnotation->SetNonlinearFontScaleFactor( 1 );
+    cornerAnnotation->SetMaximumFontSize( 30 );
+    //        cornerAnnotation->SetText( 0, "lower left" );
+    cornerAnnotation->SetText( 1, "Scores: " );
+    //        cornerAnnotation->SetText( 2, "upper left" );
+    //    cornerAnnotation->GetTextProperty()->SetColor( 1, 0, 0 );
 
 
 
     // -------------------------------------------------------------------------
     // Error sphere
-    vtkSmartPointer<vtkSphereSource> sphereSource =
-            vtkSmartPointer<vtkSphereSource>::New();
-    sphereSource->SetCenter(-0.02, 0.08, 0.01);
-    sphereSource->SetRadius(0.005);
-    sphereSource->SetPhiResolution(15);
-    sphereSource->SetThetaResolution(15);
-    vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    sphere_mapper->SetInputConnection(sphereSource->GetOutputPort());
-    error_sphere_actor->SetMapper(sphere_mapper);
-    error_sphere_actor->GetProperty()->SetColor(0.0, 0.7, 0.1);
+
+    for (int i = 0; i < num_score_spheres; ++i) {
+        vtkSmartPointer<vtkSphereSource>  source =
+                vtkSmartPointer<vtkSphereSource>::New();
+        source->SetCenter(0.02 - (double)i * 0.006, 0.08, 0.01);
+        source->SetRadius(0.002);
+        source->SetPhiResolution(15);
+        source->SetThetaResolution(15);
+        vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
+                vtkSmartPointer<vtkPolyDataMapper>::New();
+        sphere_mapper->SetInputConnection(source->GetOutputPort());
+        vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+
+        actor->SetMapper(sphere_mapper);
+        score_sphere_actors.push_back(actor);
+    }
+
 
     // -------------------------------------------------------------------------
     // Add all actors to a vector
     if (show_ref_frames) {
-//        actors.push_back(task_coordinate_axes);
+        actors.push_back(task_coordinate_axes);
 
         for (int k = 0; k < 1 + (int)bimanual; ++k) {
             actors.push_back(tool_current_frame_axes[k]);
@@ -375,10 +382,12 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
         actors.push_back(line2_actor);
     }
     actors.push_back(destination_cone_actor);
-    actors.push_back(error_sphere_actor);
+    for (int j = 0; j < score_sphere_actors.size(); ++j) {
+        actors.push_back(score_sphere_actors[j]);
+    }
     //    actors.push_back(ring_guides_mesh_actor);
     // add the annotation as the last actor
-    //    actors.push_back(cornerAnnotation);
+    actors.push_back(cornerAnnotation);
 
 
 }
@@ -721,7 +730,7 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
         }
 
         // draw the connection lines
-                KDL::Vector distal_tool_point_kdl;
+        KDL::Vector distal_tool_point_kdl;
         if(k==0)
             distal_tool_point_kdl =
                     *tool_current_pose_kdl[k] *
@@ -777,13 +786,13 @@ void BuzzWireTask::UpdatePositionErrorActor() {
     else if(error_ratio < 0.3)
         error_ratio = 0.3;
 
-    error_sphere_actor->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
-                                                0.1);
+//    score_sphere_actors->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
+//                                                0.1);
     if(task_state== TaskState::ToEndPoint
-            || task_state== TaskState::ToStartPoint)
+       || task_state== TaskState::ToStartPoint)
         tube_mesh_actor->GetProperty()->SetColor(0.9,
-                                             0.4- 0.3*(error_ratio-0.3),
-                                             0.1);
+                                                 0.4- 0.3*(error_ratio-0.3),
+                                                 0.1);
 
 }
 
@@ -866,15 +875,50 @@ void BuzzWireTask::CalculateAndSaveError() {
         error_max = 0.001;
 
     if (duration < 5.0)
-        error_max = 5.0;
+        duration = 5.0;
 
     double score = (0.0005/error_avg  +  0.001/error_max + 5.0/duration) *
-            100 / 3;
+                   100 / 3;
+
+    if (score_history.size() == num_score_spheres) {
+
+        score_history.clear();
+        score_sphere_colors.clear();
+
+        // reset colors to gray
+        for (int i = 0; i < num_score_spheres; ++i) {
+            score_sphere_actors[i]->GetProperty()->SetColor(Colors::Gray);
+
+        }
+    }
 
     score_history.push_back(score);
+    score_sphere_colors.push_back(GetScoreColor(score));
+
+    // update spheres' color
+    for (int i = 0; i < score_history.size(); ++i) {
+        score_sphere_actors[i]->GetProperty()->SetColor(score_sphere_colors[i]);
+
+    }
+
     ROS_INFO("error_max: %f", error_max);
     ROS_INFO("duration: %f", duration);
     ROS_INFO("error_avg: %f", error_avg);
     ROS_INFO("Score: %f", score);
     ROS_INFO("  ");
+}
+
+double * BuzzWireTask::GetScoreColor(const double score) {
+
+    //decide the color
+    if(score > 90){
+        return Colors::Green;
+    }
+    else if (score > 70)
+        return Colors::Gold;
+    else if(score > 50)
+        return Colors::Orange;
+    else
+        return Colors::Red;
+
 }

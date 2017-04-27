@@ -76,6 +76,11 @@ public:
     // error is not considered.
     void CalculateAndSaveError();
 
+    // returns the color associated to the score range
+    double* GetScoreColor(const double score);
+
+
+
     void FindAndPublishDesiredToolPose();
 
 private:
@@ -102,6 +107,7 @@ private:
     double error_sum;
     double error_max;
     uint sample_count;
+    uint num_score_spheres;
     std::vector<double> score_history;
     // -------------------------------------------------------------------------
     // graphics
@@ -132,7 +138,8 @@ private:
 
     // actors that are updated during the task
     vtkSmartPointer<vtkActor>                       ring_actor[2];
-    vtkSmartPointer<vtkActor>                       error_sphere_actor;
+    std::vector< vtkSmartPointer<vtkActor>>         score_sphere_actors;
+    std::vector<double*>                           score_sphere_colors;
 
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes[2];
     vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes[2];

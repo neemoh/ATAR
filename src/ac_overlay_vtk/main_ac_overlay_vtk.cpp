@@ -59,10 +59,10 @@ int main(int argc, char **argv)
             // Time performance debug
             //ros::Time start =ros::Time::now();
 
-            // print instructions
-            for (int i = 0; i < 2; ++i)
-                cv::putText(cam_images[i], ui_instructions.str(),
-                            cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
+            //            // print instructions
+            //            for (int i = 0; i < 2; ++i)
+            //                cv::putText(cam_images[i], ui_instructions.str(),
+            //                            cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
 
             // update the moving actors
             rc.buzz_task->UpdateActors();
