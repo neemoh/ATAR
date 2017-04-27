@@ -69,6 +69,8 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
 
     }
 
+    tube_mesh_actor = vtkSmartPointer<vtkActor>::New();
+
     error_sphere_actor = vtkSmartPointer<vtkActor>::New();
 
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
@@ -226,12 +228,11 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     hq_mesh_mapper->SetInputConnection(
             hq_mesh_transformFilter->GetOutputPort());
 
-    vtkSmartPointer<vtkActor> hq_mesh_actor = vtkSmartPointer<vtkActor>::New();
-    hq_mesh_actor->SetMapper(hq_mesh_mapper);
-    hq_mesh_actor->GetProperty()->SetColor(Colors::Orange);
-    hq_mesh_actor->GetProperty()->SetSpecular(0.8);
-    hq_mesh_actor->GetProperty()->SetSpecularPower(80);
-    //    hq_mesh_actor->GetProperty()->SetOpacity(0.5);
+    tube_mesh_actor->SetMapper(hq_mesh_mapper);
+    tube_mesh_actor->GetProperty()->SetColor(Colors::Orange);
+    tube_mesh_actor->GetProperty()->SetSpecular(0.8);
+    tube_mesh_actor->GetProperty()->SetSpecularPower(80);
+    //    tube_mesh_actor->GetProperty()->SetOpacity(0.5);
 
 
     // -------------------------------------------------------------------------
@@ -363,7 +364,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
         }
     }
 
-    actors.push_back(hq_mesh_actor);
+    actors.push_back(tube_mesh_actor);
     actors.push_back(stand_mesh_actor);
     actors.push_back(lq_mesh_actor);
     //    actors.push_back(floor_actor);
@@ -441,13 +442,17 @@ void BuzzWireTask::UpdateActors() {
     // beginning of the task data we start the task when the tool is
     // positioned well
     if (task_state == TaskState::Idle &&
-        position_error_norm[0] < 0.002 && ac_parameters.active == 1)
+        position_error_norm[0] < 0.001 && ac_parameters.active == 1)
     {
         task_state = TaskState::ToEndPoint;
         //increment the repetition number
         number_of_repetition++;
         // save starting time
         start_time = ros::Time::now();
+        // reset score related vars
+        error_sum = 0.0;
+        error_max = 0.0;
+        sample_count = 0;
     }
 
         // If the tool reaches the end point the user needs to go back to
@@ -458,8 +463,16 @@ void BuzzWireTask::UpdateActors() {
         task_state = TaskState::ToStartPoint;
         //increment the repetition number
         number_of_repetition++;
+
+        // calculate and save the score of this repetition
+        CalculateAndSaveError();
+
         // save starting time
         start_time = ros::Time::now();
+        // reset score related vars
+        error_sum = 0.0;
+        error_max = 0.0;
+        sample_count = 0;
     }
         // If the tool reaches the start point while in ToStartPoint state,
         // we can mark the task complete
@@ -467,6 +480,9 @@ void BuzzWireTask::UpdateActors() {
              (ring_center[0] - start_point).Norm() <
              positioning_tolerance) {
         task_state = TaskState::RepetitionComplete;
+        // calculate and save the score of this repetition
+        CalculateAndSaveError();
+
         ac_parameters.active = 0;
         ac_params_changed = true;
     }
@@ -507,6 +523,8 @@ void BuzzWireTask::UpdateActors() {
                                         destination_cone_position[1],
                                         destination_cone_position[2] + dz);
 
+
+
     // -------------------------------------------------------------------------
     // Performance Metrics
     UpdatePositionErrorActor();
@@ -522,25 +540,35 @@ void BuzzWireTask::UpdateActors() {
         task_state_msg.error_field_1 = position_error_norm[0];
         if(bimanual)
             task_state_msg.error_field_2 = position_error_norm[1];
+
+        // calculate score to show to user
+        if (bimanual)
+            error_sum +=
+                    0.5 * (position_error_norm[0] + position_error_norm[1]);
+        else
+            error_sum += position_error_norm[0];
+
+        if(error_max < position_error_norm[0])
+            error_max = position_error_norm[0];
+
+        sample_count++;
+
     } else {
         task_state_msg.time_stamp = 0.0;
         task_state_msg.error_field_1 = 0.0;
         task_state_msg.error_field_2 = 0.0;
-
     }
 
-    double rings_distance = (ring_center[1] - ring_center[0]).Norm();
 
+    // change connection lines collors according to ring1 to ring2's distance
+    double rings_distance = (ring_center[1] - ring_center[0]).Norm();
     double ideal_distance = 0.007;
     double error_ratio = 3 * fabs(rings_distance - ideal_distance)
                          /ideal_distance;
-
     if (error_ratio > 1.0)
         error_ratio = 1.0;
-
     line1_actor->GetProperty()->SetColor(0.9 , 0.9 - 0.7*error_ratio, 0.9 - 0.7*error_ratio);
     line2_actor->GetProperty()->SetColor(0.9 , 0.9 - 0.7*error_ratio, 0.9 - 0.7*error_ratio);
-
     line1_source->Update();
     line2_source->Update();
 }
@@ -631,7 +659,7 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
 
         // desired pose only when the ring is close to the wire.if it is too
         // far we don't want fixtures
-        if (ring_center_to_cp.Norm() < 3 * ring_radius) {
+        if (ring_center_to_cp.Norm() < 5 * ring_radius) {
 
 
             // Desired position is one that puts the center of the wire on the
@@ -742,13 +770,20 @@ active_constraints::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
 //------------------------------------------------------------------------------
 void BuzzWireTask::UpdatePositionErrorActor() {
 
-    double max_error = 0.004;
+    double max_error = 0.002;
     double error_ratio = position_error_norm[0] / max_error;
-    if (error_ratio > 1.0)
-        error_ratio = 1.0;
+    if (error_ratio > 1.3)
+        error_ratio = 1.3;
+    else if(error_ratio < 0.3)
+        error_ratio = 0.3;
 
     error_sphere_actor->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
                                                 0.1);
+    if(task_state== TaskState::ToEndPoint
+            || task_state== TaskState::ToStartPoint)
+        tube_mesh_actor->GetProperty()->SetColor(0.9,
+                                             0.4- 0.3*(error_ratio-0.3),
+                                             0.1);
 
 }
 
@@ -816,4 +851,30 @@ void BuzzWireTask::FindAndPublishDesiredToolPose() {
         loop_rate.sleep();
 
     }
+}
+
+void BuzzWireTask::CalculateAndSaveError() {
+
+    double duration = (ros::Time::now() - start_time).toSec();
+    double error_avg = error_sum/(double)sample_count;
+
+    // put a threshold the values
+    if (error_avg < 0.0005)
+        error_avg = 0.0005;
+
+    if (error_max < 0.001)
+        error_max = 0.001;
+
+    if (duration < 5.0)
+        error_max = 5.0;
+
+    double score = (0.0005/error_avg  +  0.001/error_max + 5.0/duration) *
+            100 / 3;
+
+    score_history.push_back(score);
+    ROS_INFO("error_max: %f", error_max);
+    ROS_INFO("duration: %f", duration);
+    ROS_INFO("error_avg: %f", error_avg);
+    ROS_INFO("Score: %f", score);
+    ROS_INFO("  ");
 }

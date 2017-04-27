@@ -72,7 +72,9 @@ public:
     // wrong during that repetition.
     void RepeatLastAcquisition();
 
-
+    // this error is just used to provide feedback to the user. Orientation
+    // error is not considered.
+    void CalculateAndSaveError();
 
     void FindAndPublishDesiredToolPose();
 
@@ -97,7 +99,10 @@ private:
     teleop_vision::TaskState task_state_msg;
     uint8_t number_of_repetition;
     ros::Time start_time;
-
+    double error_sum;
+    double error_max;
+    uint sample_count;
+    std::vector<double> score_history;
     // -------------------------------------------------------------------------
     // graphics
     double ring_radius;
@@ -140,6 +145,7 @@ private:
     vtkSmartPointer<vtkActor>                       line2_actor;
 //    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
     vtkSmartPointer<vtkActor>                       destination_cone_actor;
+    vtkSmartPointer<vtkActor>                       tube_mesh_actor ;
 
     vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
 };

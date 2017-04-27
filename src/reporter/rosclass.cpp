@@ -321,7 +321,8 @@ void RosObj::TaskSTateCallback(const teleop_vision::TaskStateConstPtr &msg){
     task_state.number_of_repetition = msg->number_of_repetition;
     task_state.task_state = msg->task_state;
     task_state.time_stamp = msg->time_stamp;
-    task_state.position_error_norm = msg->position_error_norm;
+    task_state.error_field_1 = msg->error_field_1;
+    task_state.error_field_2 = msg->error_field_2;
     new_task_state_msg = true;
 }
 
@@ -381,7 +382,8 @@ void RosObj::run(){
             data.push_back(double(task_state.number_of_repetition));
             data.push_back(double(task_state.task_state));
             data.push_back(task_state.time_stamp);
-            data.push_back(task_state.position_error_norm);
+            data.push_back(task_state.error_field_1);
+            data.push_back(task_state.error_field_2);
             data.push_back(double(clutch_pedal_pressed));
             data.push_back(double(coag_pedal_pressed));
 
@@ -461,7 +463,8 @@ void RosObj::OpenRecordingFile(std::string filename){
             << "number_of_repetition"
             << ", task_state"
             << ", time_stamp"
-            << ", position_error_norm"
+            << ", error_field_1"
+            << ", error_field_2"
             << ", clutch_pedal_pressed"
             << ", coag_pedal_pressed"
 
