@@ -27,9 +27,9 @@
 					   value="file://$(env HOME)/.ros/camera_info/$(arg right_camera_serial).yaml" />
 			</node>
 
-			<node pkg="nodelet" type="nodelet" name="image_proc_debayer" output="screen"
-				  args="load image_proc/debayer camera_nodelet_manager">
-			</node>
+			<!--<node pkg="nodelet" type="nodelet" name="image_proc_debayer" output="screen"-->
+				  <!--args="load image_proc/debayer camera_nodelet_manager">-->
+			<!--</node>-->
 
 			<!--			<node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
                             <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board_4_4.yaml" />
@@ -61,18 +61,18 @@
 					   value="file://$(env HOME)/.ros/camera_info/$(arg left_camera_serial).yaml" />
 			</node>
 
-			<node pkg="nodelet" type="nodelet" name="image_proc_debayer"  output="screen"
-				  args="load image_proc/debayer camera_nodelet_manager">
-			</node>
+			<!--<node pkg="nodelet" type="nodelet" name="image_proc_debayer"  output="screen"-->
+				  <!--args="load image_proc/debayer camera_nodelet_manager">-->
+			<!--</node>-->
 
 
 		</group>
 
 
 
-		<node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc">
-			<param name="approximate_sync" value="true"/>
-		</node>
+		<!--<node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc">-->
+			<!--<param name="approximate_sync" value="true"/>-->
+		<!--</node>-->
 
 	</group>
 </launch>
