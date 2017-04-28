@@ -296,8 +296,8 @@ target_link_libraries (reporter_utils
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
 
-add_executable(labelling_node src/reporter/labelling_node.cpp)
-target_link_libraries (labelling_node
+add_executable(reporter src/reporter/labelling_node.cpp)
+target_link_libraries (reporter
         ${catkin_LIBRARIES}
         reporter_utils
         )

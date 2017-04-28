@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>245</width>
-    <height>453</height>
+    <width>266</width>
+    <height>492</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <rect>
       <x>10</x>
       <y>270</y>
-      <width>221</width>
-      <height>161</height>
+      <width>241</width>
+      <height>191</height>
      </rect>
     </property>
     <property name="title">
@@ -75,7 +75,7 @@
      <rect>
       <x>10</x>
       <y>130</y>
-      <width>221</width>
+      <width>241</width>
       <height>131</height>
      </rect>
     </property>
@@ -87,7 +87,7 @@
       <rect>
        <x>10</x>
        <y>90</y>
-       <width>201</width>
+       <width>221</width>
        <height>31</height>
       </rect>
      </property>
@@ -122,9 +122,9 @@ background-color: red;
     <widget class="QWidget" name="">
      <property name="geometry">
       <rect>
-       <x>11</x>
-       <y>31</y>
-       <width>201</width>
+       <x>12</x>
+       <y>32</y>
+       <width>221</width>
        <height>52</height>
       </rect>
      </property>
@@ -159,7 +159,7 @@ background-color: red
      <rect>
       <x>10</x>
       <y>30</y>
-      <width>221</width>
+      <width>241</width>
       <height>91</height>
      </rect>
     </property>
@@ -169,9 +169,9 @@ background-color: red
     <widget class="QPushButton" name="button_repeat">
      <property name="geometry">
       <rect>
-       <x>90</x>
+       <x>80</x>
        <y>30</y>
-       <width>121</width>
+       <width>151</width>
        <height>23</height>
       </rect>
      </property>
@@ -182,14 +182,14 @@ background-color: red
     <widget class="QPushButton" name="button_reset">
      <property name="geometry">
       <rect>
-       <x>91</x>
+       <x>81</x>
        <y>60</y>
-       <width>121</width>
+       <width>151</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string>Reset Task</string>
+      <string>ResetTask Task</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="line_edit_num_repetitions">

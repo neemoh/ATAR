@@ -58,14 +58,18 @@ void MainWindow::on_state_2_clicked()
   ros_obj.SetStateLabel(2);
 }
 
+
 void MainWindow::on_state_3_clicked()
 {
   ros_obj.SetStateLabel(3);
 }
+
 void MainWindow::on_state_4_clicked()
 {
   ros_obj.SetStateLabel(4);
 }
+
+
 void MainWindow::on_state_5_clicked()
 {
   ros_obj.SetStateLabel(5);
