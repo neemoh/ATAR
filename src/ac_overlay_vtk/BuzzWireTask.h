@@ -41,9 +41,8 @@ enum TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint, RepetitionComplete};
 class BuzzWireTask {
 public:
 
-    BuzzWireTask(const double ring_radius,
-                 const bool show_ref_frames,
-                 const bool num_tools);
+    BuzzWireTask(const double ring_radius, const bool show_ref_frames,
+                     const bool num_tools, const bool with_guidance);
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors();
@@ -66,11 +65,14 @@ public:
     teleop_vision::TaskState GetTaskStateMsg();
 
     // resets the number of repetitions and task state;
-    void Reset();
+    void ResetTask();
+
+    // resets the history of the scores and changes the colors to gray
+    void ResetScoreHistory();
 
     // decrements the number of repetitions. Used in case something goes
     // wrong during that repetition.
-    void RepeatLastAcquisition();
+    void ResetCurrentAcquisition();
 
     // this error is just used to provide feedback to the user. Orientation
     // error is not considered.
@@ -79,14 +81,14 @@ public:
     // returns the color associated to the score range
     double* GetScoreColor(const double score);
 
-
+    void ResetOnGoingEvaluation();
 
     void FindAndPublishDesiredToolPose();
 
 private:
 
     // updates the error actor
-    void UpdatePositionErrorActor();
+    void UpdateTubeColor();
 
     // Calculates the closest points of the wire mesh to three points of
     // interest on the ring used for calculating the desired pose of the ring
@@ -96,6 +98,7 @@ private:
     // -------------------------------------------------------------------------
     // task logic
     bool bimanual;
+    bool with_guidance;
     TaskState task_state;
 
     KDL::Vector idle_point;
@@ -104,10 +107,12 @@ private:
     teleop_vision::TaskState task_state_msg;
     uint8_t number_of_repetition;
     ros::Time start_time;
-    double error_sum;
-    double error_max;
+    double posit_error_sum;
+    double orient_error_sum;
+
+    double posit_error_max;
     uint sample_count;
-    uint num_score_spheres;
+    uint n_score_history;
     std::vector<double> score_history;
     // -------------------------------------------------------------------------
     // graphics
@@ -122,6 +127,7 @@ private:
     // calculated from the difference of the desired pose and the current
     // pose, though not significantly.
     double position_error_norm[2];
+    double orientation_error_norm[2];
 
     bool show_ref_frames;
 
@@ -131,15 +137,17 @@ private:
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-    uint destination_cone_counter;
+
+    uint destination_ring_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
 
     std::vector<vtkSmartPointer<vtkProp>>           actors;
 
     // actors that are updated during the task
     vtkSmartPointer<vtkActor>                       ring_actor[2];
+    vtkSmartPointer<vtkActor>                       destination_ring_actor;
     std::vector< vtkSmartPointer<vtkActor>>         score_sphere_actors;
-    std::vector<double*>                           score_sphere_colors;
+    std::vector<double*>                           score_history_colors;
 
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes[2];
     vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes[2];
@@ -151,10 +159,11 @@ private:
     vtkSmartPointer<vtkActor>                       line1_actor;
     vtkSmartPointer<vtkActor>                       line2_actor;
 //    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
-    vtkSmartPointer<vtkActor>                       destination_cone_actor;
+//    vtkSmartPointer<vtkActor>                       destination_cone_actor;
     vtkSmartPointer<vtkActor>                       tube_mesh_actor ;
 
     vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
+
 };
 
 

@@ -20,21 +20,21 @@ namespace Colors {
     double DeepPink[3] {1.0, 0.08, 0.58};
 };
 
-BuzzWireTask::BuzzWireTask(const double ring_radius,
-                           const bool show_ref_frames,
-                           const bool biman)
+BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
+                           const bool biman, const bool with_guidance)
         :
         ring_radius(ring_radius),
         show_ref_frames(show_ref_frames),
         bimanual(biman),
-        destination_cone_counter(0),
+        with_guidance(with_guidance),
+        destination_ring_counter(0),
         ac_params_changed(true),
         task_state(TaskState::Idle),
         number_of_repetition(0),
-        num_score_spheres(10),
-        idle_point(KDL::Vector(-0.006, 0.011, 0.033)),
-        start_point(KDL::Vector(0.002, 0.015, 0.033)),
-        end_point(KDL::Vector(0.034, 0.028, 0.056)) {
+        n_score_history(10),
+        idle_point(KDL::Vector(-0.006, 0.026, 0.029)),
+        start_point(KDL::Vector(0.0019, 0.031, 0.030)),
+        end_point(KDL::Vector(0.034, 0.043, 0.053)) {
 
 
 
@@ -74,7 +74,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
 
     tube_mesh_actor = vtkSmartPointer<vtkActor>::New();
 
-//    score_sphere_actors = vtkSmartPointer<vtkActor>::New();
+    destination_ring_actor= vtkSmartPointer<vtkActor>::New();
 
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 
@@ -87,7 +87,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     line2_actor = vtkSmartPointer<vtkActor>::New();
 
     // -------------------------------------------------------------------------
-    // RINGS
+    // TOOL RINGS
     double ring_cross_section_radius = 0.0005;
     double source_scales = 0.006;
 
@@ -142,6 +142,19 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
         ring_actor[k]->GetProperty()->SetSpecular(0.7);
     }
 
+    // -------------------------------------------------------------------------
+    // Destination ring
+
+    vtkSmartPointer<vtkPolyDataMapper> destination_ring_mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    destination_ring_mapper->SetInputConnection(
+            parametricFunctionSource->GetOutputPort());
+    destination_ring_actor->SetMapper(destination_ring_mapper);
+    destination_ring_actor->SetScale(0.004);
+    destination_ring_actor->RotateX(90);
+    destination_ring_actor->RotateY(-60);
+    destination_ring_actor->GetProperty()->SetColor(Colors::Green);
+    destination_ring_actor->GetProperty()->SetOpacity(0.5);
 
     // -------------------------------------------------------------------------
     // FRAMES
@@ -181,7 +194,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
     // transform
     vtkSmartPointer<vtkTransform> stand_transform =
             vtkSmartPointer<vtkTransform>::New();
-    stand_transform->Translate(0.050, 0.045, 0.025);
+    stand_transform->Translate(0.050, 0.060, 0.025);
     stand_transform->RotateX(180);
     stand_transform->RotateZ(150);
 
@@ -304,30 +317,31 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
 //    line2_actor->GetProperty()->SetColor(Colors::DeepPink);
     line2_actor->GetProperty()->SetOpacity(0.8);
 
+//    // -------------------------------------------------------------------------
+//    // destination cone
+//    vtkSmartPointer<vtkConeSource> destination_cone_source =
+//            vtkSmartPointer<vtkConeSource>::New();
+//    destination_cone_source->SetRadius(0.002 / source_scales);
+//    destination_cone_source->SetHeight(0.006 / source_scales);
+//    destination_cone_source->SetResolution(12);
+//
+//    vtkSmartPointer<vtkPolyDataMapper> destination_cone_mapper =
+//            vtkSmartPointer<vtkPolyDataMapper>::New();
+//    destination_cone_mapper->SetInputConnection(
+//            destination_cone_source->GetOutputPort());
+//    destination_cone_actor = vtkSmartPointer<vtkActor>::New();
+//    destination_cone_actor->SetMapper(destination_cone_mapper);
+//    destination_cone_actor->SetScale(source_scales);
+//    destination_cone_actor->GetProperty()->SetColor(Colors::Green);
+//    destination_cone_actor->GetProperty()->SetOpacity(0.5);
+//    destination_cone_actor->RotateY(90);
+//    destination_cone_actor->RotateZ(30);
+//
+//    destination_cone_actor->SetPosition(idle_point[0], idle_point[1],
+//                                        idle_point[2]);
+
     // -------------------------------------------------------------------------
-    // destination cone
-    vtkSmartPointer<vtkConeSource> destination_cone_source =
-            vtkSmartPointer<vtkConeSource>::New();
-    destination_cone_source->SetRadius(0.002 / source_scales);
-    destination_cone_source->SetHeight(0.006 / source_scales);
-    destination_cone_source->SetResolution(12);
-
-    vtkSmartPointer<vtkPolyDataMapper> destination_cone_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    destination_cone_mapper->SetInputConnection(
-            destination_cone_source->GetOutputPort());
-    destination_cone_actor = vtkSmartPointer<vtkActor>::New();
-    destination_cone_actor->SetMapper(destination_cone_mapper);
-    destination_cone_actor->SetScale(source_scales);
-    destination_cone_actor->GetProperty()->SetColor(Colors::Green);
-    destination_cone_actor->GetProperty()->SetOpacity(0.5);
-    destination_cone_actor->RotateY(90);
-    destination_cone_actor->RotateZ(30);
-
-    destination_cone_actor->SetPosition(idle_point[0], idle_point[1],
-                                        idle_point[2]);
-
-
+    // TEXTS
     cornerAnnotation =
             vtkSmartPointer<vtkCornerAnnotation>::New();
     cornerAnnotation->SetLinearFontScaleFactor( 2 );
@@ -341,21 +355,25 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
 
 
     // -------------------------------------------------------------------------
-    // Error sphere
+    // Error history spheres
 
-    for (int i = 0; i < num_score_spheres; ++i) {
-        vtkSmartPointer<vtkSphereSource>  source =
-                vtkSmartPointer<vtkSphereSource>::New();
-        source->SetCenter(0.02 - (double)i * 0.006, 0.08, 0.01);
-        source->SetRadius(0.002);
-        source->SetPhiResolution(15);
-        source->SetThetaResolution(15);
-        vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
-                vtkSmartPointer<vtkPolyDataMapper>::New();
-        sphere_mapper->SetInputConnection(source->GetOutputPort());
+    vtkSmartPointer<vtkSphereSource>  source =
+            vtkSmartPointer<vtkSphereSource>::New();
+
+    source->SetRadius(0.002);
+    source->SetPhiResolution(15);
+    source->SetThetaResolution(15);
+    vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    sphere_mapper->SetInputConnection(source->GetOutputPort());
+
+    for (int i = 0; i < n_score_history; ++i) {
+
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-
         actor->SetMapper(sphere_mapper);
+        actor->GetProperty()->SetColor(Colors::Gray);
+        actor->SetPosition(0.02 - (double)i * 0.006, 0.1 - (double)i * 0.0003,
+                           0.01);
         score_sphere_actors.push_back(actor);
     }
 
@@ -381,13 +399,13 @@ BuzzWireTask::BuzzWireTask(const double ring_radius,
         actors.push_back(line1_actor);
         actors.push_back(line2_actor);
     }
-    actors.push_back(destination_cone_actor);
+//    actors.push_back(destination_cone_actor);
+    actors.push_back(destination_ring_actor);
     for (int j = 0; j < score_sphere_actors.size(); ++j) {
         actors.push_back(score_sphere_actors[j]);
     }
     //    actors.push_back(ring_guides_mesh_actor);
-    // add the annotation as the last actor
-    actors.push_back(cornerAnnotation);
+    //    actors.push_back(cornerAnnotation);
 
 
 }
@@ -431,12 +449,18 @@ void BuzzWireTask::UpdateActors() {
     // -------------------------------------------------------------------------
     // Task logic
     // -------------------------------------------------------------------------
-    double positioning_tolerance = 0.005;
+    double positioning_tolerance = 0.003;
     KDL::Vector destination_cone_position;
 
-    // if the tool is placed close to the starting point while being idle
-    //  we can start the task. but we first enable the active constraint.
-    if (task_state == TaskState::Idle &&
+
+    // when the active constraints is suddenly enabled the tool makes some
+    // initial large movements. To prevent always having a peak at the
+    // beginning of the error, data we first activate the active constraint
+    // and wait till the error is small before we start the task.
+    //
+    // First: if the tool is placed close to the starting point while being idle
+    // we enable the active constraint.
+    if (task_state == TaskState::Idle && with_guidance &&
         (ring_center[0] - start_point).Norm() <
         positioning_tolerance) {
         // Make sure the active constraint is inactive
@@ -446,22 +470,22 @@ void BuzzWireTask::UpdateActors() {
         }
     }
 
-    // when the active constraints is suddenly enabled the tool moves
-    // significantly. to prevent having a peak in the error always at the
-    // beginning of the task data we start the task when the tool is
-    // positioned well
-    if (task_state == TaskState::Idle &&
-        position_error_norm[0] < 0.001 && ac_parameters.active == 1)
+    // then when the error is small we start the task.
+    // if guidance is off, then we don't need a restriction on the error
+    // sorry it is totally unreadable!
+    if (task_state == TaskState::Idle
+        && ( (position_error_norm[0] < 0.001 && ac_parameters.active == 1)
+             ||
+             (!with_guidance && (ring_center[0] - start_point).Norm() <
+                                positioning_tolerance)  ))
     {
         task_state = TaskState::ToEndPoint;
         //increment the repetition number
-        number_of_repetition++;
+        number_of_repetition ++;
         // save starting time
         start_time = ros::Time::now();
         // reset score related vars
-        error_sum = 0.0;
-        error_max = 0.0;
-        sample_count = 0;
+        ResetOnGoingEvaluation();
     }
 
         // If the tool reaches the end point the user needs to go back to
@@ -479,9 +503,7 @@ void BuzzWireTask::UpdateActors() {
         // save starting time
         start_time = ros::Time::now();
         // reset score related vars
-        error_sum = 0.0;
-        error_max = 0.0;
-        sample_count = 0;
+        ResetOnGoingEvaluation();
     }
         // If the tool reaches the start point while in ToStartPoint state,
         // we can mark the task complete
@@ -508,35 +530,32 @@ void BuzzWireTask::UpdateActors() {
     // update the position of the cone according to the state we're in.
     if (task_state == TaskState::Idle) {
         destination_cone_position = start_point;
-        destination_cone_actor->GetProperty()->SetColor(Colors::Green);
+        destination_ring_actor->GetProperty()->SetColor(Colors::Green);
 
     } else if (task_state == TaskState::ToStartPoint) {
         destination_cone_position = start_point;
-        destination_cone_actor->GetProperty()->SetColor(Colors::DeepPink);
+        destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
 
     } else if (task_state == TaskState::ToEndPoint) {
         destination_cone_position = end_point;
-        destination_cone_actor->GetProperty()->SetColor(Colors::DeepPink);
+        destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
     } else if (task_state == TaskState::RepetitionComplete) {
         destination_cone_position = idle_point;
-        destination_cone_actor->GetProperty()->SetColor(Colors::Green);
+        destination_ring_actor->GetProperty()->SetColor(Colors::Green);
 
     }
 
     // show the destination to the user
-    double dz = 0.005 +
-                0.003 * sin(2 * M_PI * double(destination_cone_counter) / 90);
+    double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
+    destination_ring_counter++;
+    destination_ring_actor->SetScale(0.006 + 0.001*dt);
 
-    destination_cone_counter++;
-    destination_cone_actor->SetPosition(destination_cone_position[0],
+    destination_ring_actor->SetPosition(destination_cone_position[0],
                                         destination_cone_position[1],
-                                        destination_cone_position[2] + dz);
-
-
-
+                                        destination_cone_position[2]);
     // -------------------------------------------------------------------------
     // Performance Metrics
-    UpdatePositionErrorActor();
+    UpdateTubeColor();
 
     // Populate the task state message
     task_state_msg.task_name = "BuzzWire";
@@ -547,18 +566,26 @@ void BuzzWireTask::UpdateActors() {
 
         task_state_msg.time_stamp = (ros::Time::now() - start_time).toSec();
         task_state_msg.error_field_1 = position_error_norm[0];
-        if(bimanual)
-            task_state_msg.error_field_2 = position_error_norm[1];
+        task_state_msg.error_field_1 = orientation_error_norm[0];
+//        if(bimanual)
+//            task_state_msg.error_field_2 = position_error_norm[1];
 
         // calculate score to show to user
-        if (bimanual)
-            error_sum +=
-                    0.5 * (position_error_norm[0] + position_error_norm[1]);
-        else
-            error_sum += position_error_norm[0];
+        if (bimanual) {
+            posit_error_sum +=
+                    0.5 * (position_error_norm[0] +
+                           position_error_norm[1]);
+            orient_error_sum +=
+                    0.5 *(orientation_error_norm[0] +
+                          orientation_error_norm[1]);
+        }
+        else {
+            posit_error_sum += position_error_norm[0];
+            orient_error_sum += orientation_error_norm[0];
+        }
 
-        if(error_max < position_error_norm[0])
-            error_max = position_error_norm[0];
+        if(posit_error_max < position_error_norm[0])
+            posit_error_max = position_error_norm[0];
 
         sample_count++;
 
@@ -569,17 +596,21 @@ void BuzzWireTask::UpdateActors() {
     }
 
 
-    // change connection lines collors according to ring1 to ring2's distance
-    double rings_distance = (ring_center[1] - ring_center[0]).Norm();
-    double ideal_distance = 0.007;
-    double error_ratio = 3 * fabs(rings_distance - ideal_distance)
-                         /ideal_distance;
-    if (error_ratio > 1.0)
-        error_ratio = 1.0;
-    line1_actor->GetProperty()->SetColor(0.9 , 0.9 - 0.7*error_ratio, 0.9 - 0.7*error_ratio);
-    line2_actor->GetProperty()->SetColor(0.9 , 0.9 - 0.7*error_ratio, 0.9 - 0.7*error_ratio);
-    line1_source->Update();
-    line2_source->Update();
+    if(bimanual) {
+        // change connection lines colors according to ring1 to ring2's distance
+        double rings_distance = (ring_center[1] - ring_center[0]).Norm();
+        double ideal_distance = 0.007;
+        double error_ratio = 3 * fabs(rings_distance - ideal_distance)
+                             / ideal_distance;
+        if (error_ratio > 1.0)
+            error_ratio = 1.0;
+        line1_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
+                                             0.9 - 0.7 * error_ratio);
+        line2_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
+                                             0.9 - 0.7 * error_ratio);
+        line1_source->Update();
+        line2_source->Update();
+    }
 }
 
 
@@ -608,10 +639,13 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
 
     for (int k = 0; k < 1 + (int)bimanual; ++k) {
 
+        // make a copy of the current pose
+        KDL::Frame tool_current_pose= *tool_current_pose_kdl[k];
+
         //Find the closest cell to the grip point
-        double grip_point[3] = {(*tool_current_pose_kdl[k]).p[0],
-                                (*tool_current_pose_kdl[k]).p[1],
-                                (*tool_current_pose_kdl[k]).p[2]};
+        double grip_point[3] = {(tool_current_pose).p[0],
+                                (tool_current_pose).p[1],
+                                (tool_current_pose).p[2]};
 
         double closest_point[3] = {0.0, 0.0, 0.0};
         double closestPointDist2; //the squared distance to the closest point
@@ -642,11 +676,11 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
         KDL::Vector radial_tool_point_kdl;
         if(k==0)
             radial_tool_point_kdl =
-                    *tool_current_pose_kdl[k] *
+                    tool_current_pose *
                     KDL::Vector(ring_radius, 0.0, ring_radius);
         else
             radial_tool_point_kdl =
-                    *tool_current_pose_kdl[k] *
+                    tool_current_pose *
                     KDL::Vector(ring_radius, ring_radius, 0.0);
 
         double radial_tool_point[3] = {radial_tool_point_kdl[0],
@@ -682,9 +716,8 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
             // wire_center:
             // wire_radius_ * (ring_center_to_cp/ring_center_to_cp.Norm());
 
-            position_error_norm[k] = (wire_center - ring_center[k]).Norm();
             tool_desired_pose_kdl[k].p =
-                    (*tool_current_pose_kdl[k]).p + wire_center -
+                    (tool_current_pose).p + wire_center -
                     ring_center[k];
 
 
@@ -696,7 +729,7 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
 
             KDL::Vector grip_to_cp =
                     closest_point_to_grip_point[k] -
-                    (*tool_current_pose_kdl[k]).p;
+                    (tool_current_pose).p;
             if(k==0) {
                 desired_z = grip_to_cp / grip_to_cp.Norm();
                 desired_x = -radial_to_cp / radial_to_cp.Norm();
@@ -723,34 +756,49 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
             }
             tool_desired_pose_kdl[k].M = KDL::Rotation(desired_x, desired_y,
                                                        desired_z);
+
+            //------------------------------------------------------------------
+            // Calculate errors
+            position_error_norm[k] = (wire_center - ring_center[k]).Norm();
+            KDL::Vector rpy;
+            (tool_desired_pose_kdl[k].M *
+             (tool_current_pose).M.Inverse() ).GetRPY(rpy[0],
+                                                      rpy[1],
+                                                      rpy[2]);
+            orientation_error_norm[k] = rpy.Norm();
+
+
         } else {
-            tool_desired_pose_kdl[k] = *tool_current_pose_kdl[k];
+            tool_desired_pose_kdl[k] = tool_current_pose;
             // due to the delay in teleop loop this will create some wrneches if
             // the guidance is still active
         }
 
-        // draw the connection lines
-        KDL::Vector distal_tool_point_kdl;
-        if(k==0)
-            distal_tool_point_kdl =
-                    *tool_current_pose_kdl[k] *
-                    KDL::Vector(0.0, 0.0, 2* ring_radius);
-        else
-            distal_tool_point_kdl =
-                    *tool_current_pose_kdl[k] *
-                    KDL::Vector(0.0, 2*ring_radius, 0.0);
 
-        if(k==0){
-            line1_source->SetPoint1(grip_point);
-            line2_source->SetPoint1(distal_tool_point_kdl[0],
-                                    distal_tool_point_kdl[1],
-                                    distal_tool_point_kdl[2]);
+        // draw the connection lines in bimanual case
+        if(bimanual) {
+            KDL::Vector distal_tool_point_kdl;
+            if (k == 0)
+                distal_tool_point_kdl =
+                        tool_current_pose *
+                        KDL::Vector(0.0, 0.0, 2 * ring_radius);
+            else
+                distal_tool_point_kdl =
+                        tool_current_pose *
+                        KDL::Vector(0.0, 2 * ring_radius, 0.0);
 
-        } else{
-            line1_source->SetPoint2(grip_point);
-            line2_source->SetPoint2(distal_tool_point_kdl[0],
-                                    distal_tool_point_kdl[1],
-                                    distal_tool_point_kdl[2]);
+            if (k == 0) {
+                line1_source->SetPoint1(grip_point);
+                line2_source->SetPoint1(distal_tool_point_kdl[0],
+                                        distal_tool_point_kdl[1],
+                                        distal_tool_point_kdl[2]);
+
+            } else {
+                line1_source->SetPoint2(grip_point);
+                line2_source->SetPoint2(distal_tool_point_kdl[0],
+                                        distal_tool_point_kdl[1],
+                                        distal_tool_point_kdl[2]);
+            }
         }
 
     }
@@ -777,10 +825,15 @@ active_constraints::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
 
 
 //------------------------------------------------------------------------------
-void BuzzWireTask::UpdatePositionErrorActor() {
+void BuzzWireTask::UpdateTubeColor() {
 
-    double max_error = 0.002;
-    double error_ratio = position_error_norm[0] / max_error;
+    double max_pos_error = 0.002;
+    double max_orient_error = 0.3;
+    // orientation error is tricky to perceive, so we weigh it half the
+    // position error
+    double error_ratio = ( (orientation_error_norm[0] / max_orient_error)
+                           + 2* (position_error_norm[0] / max_pos_error)) /3;
+
     if (error_ratio > 1.3)
         error_ratio = 1.3;
     else if(error_ratio < 0.3)
@@ -791,7 +844,7 @@ void BuzzWireTask::UpdatePositionErrorActor() {
     if(task_state== TaskState::ToEndPoint
        || task_state== TaskState::ToStartPoint)
         tube_mesh_actor->GetProperty()->SetColor(0.9,
-                                                 0.4- 0.3*(error_ratio-0.3),
+                                                 0.5- 0.4*(error_ratio-0.3),
                                                  0.1);
 
 }
@@ -800,14 +853,25 @@ teleop_vision::TaskState BuzzWireTask::GetTaskStateMsg() {
     return task_state_msg;
 }
 
-void BuzzWireTask::Reset() {
+void BuzzWireTask::ResetTask() {
+    ROS_INFO("Resetting the task.");
     number_of_repetition = 0;
     task_state = TaskState::RepetitionComplete;
+    ResetOnGoingEvaluation();
+    ResetScoreHistory();
 }
 
-void BuzzWireTask::RepeatLastAcquisition() {
-    number_of_repetition--;
-    task_state = TaskState::RepetitionComplete;
+void BuzzWireTask::ResetCurrentAcquisition() {
+    ROS_INFO("Resetting current acquisition.");
+    if(task_state== TaskState::ToEndPoint ||
+       task_state == TaskState::ToStartPoint){
+
+        ResetOnGoingEvaluation();
+        if(number_of_repetition>0)
+            number_of_repetition--;
+        task_state = TaskState::RepetitionComplete;
+
+    }
 }
 
 
@@ -865,45 +929,50 @@ void BuzzWireTask::FindAndPublishDesiredToolPose() {
 void BuzzWireTask::CalculateAndSaveError() {
 
     double duration = (ros::Time::now() - start_time).toSec();
-    double error_avg = error_sum/(double)sample_count;
+    double posit_error_avg = posit_error_sum/(double)sample_count;
+    double orient_error_avg = orient_error_sum/(double)sample_count;
 
-    // put a threshold the values
-    if (error_avg < 0.0005)
-        error_avg = 0.0005;
+    double posit_error_avg_ideal = 0.0005;
+    double orient_error_avg_ideal = 0.35;
+    double posit_error_max_ideal = 0.0015;
+    double duration_ideal = 9.0;
 
-    if (error_max < 0.001)
-        error_max = 0.001;
+    // put a threshold on the values
+    if (posit_error_avg < posit_error_avg_ideal)
+        posit_error_avg = posit_error_avg_ideal;
 
-    if (duration < 5.0)
-        duration = 5.0;
+    if (orient_error_avg < orient_error_avg_ideal)
+        orient_error_avg = orient_error_avg_ideal;
 
-    double score = (0.0005/error_avg  +  0.001/error_max + 5.0/duration) *
-                   100 / 3;
+    if (posit_error_max < posit_error_max_ideal)
+        posit_error_max = posit_error_max_ideal;
 
-    if (score_history.size() == num_score_spheres) {
+    if (duration < duration_ideal)
+        duration = duration_ideal;
 
-        score_history.clear();
-        score_sphere_colors.clear();
+    double score = ( posit_error_avg_ideal/posit_error_avg
+                     + posit_error_max_ideal/posit_error_max
+                     + duration_ideal/duration
+                     + orient_error_avg_ideal/orient_error_avg)
+                   * 100 / 4;
 
-        // reset colors to gray
-        for (int i = 0; i < num_score_spheres; ++i) {
-            score_sphere_actors[i]->GetProperty()->SetColor(Colors::Gray);
-
-        }
-    }
+    // when the history gets full we start a new set
+    if (score_history.size() == n_score_history)
+        ResetScoreHistory();
 
     score_history.push_back(score);
-    score_sphere_colors.push_back(GetScoreColor(score));
+    score_history_colors.push_back(GetScoreColor(score));
 
     // update spheres' color
     for (int i = 0; i < score_history.size(); ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(score_sphere_colors[i]);
+        score_sphere_actors[i]->GetProperty()->SetColor(score_history_colors[i]);
 
     }
 
-    ROS_INFO("error_max: %f", error_max);
+    ROS_INFO("posit_error_max: %f", posit_error_max);
     ROS_INFO("duration: %f", duration);
-    ROS_INFO("error_avg: %f", error_avg);
+    ROS_INFO("posit_error_avg: %f", posit_error_avg);
+    ROS_INFO("orient_error_avg: %f", orient_error_avg);
     ROS_INFO("Score: %f", score);
     ROS_INFO("  ");
 }
@@ -914,11 +983,30 @@ double * BuzzWireTask::GetScoreColor(const double score) {
     if(score > 90){
         return Colors::Green;
     }
-    else if (score > 70)
+    else if (score > 80)
         return Colors::Gold;
-    else if(score > 50)
+    else if(score > 60)
         return Colors::Orange;
     else
         return Colors::Red;
+
+}
+
+void BuzzWireTask::ResetOnGoingEvaluation() {
+    posit_error_sum = 0.0;
+    posit_error_max = 0.0;
+    orient_error_sum = 0.0;
+    sample_count = 0;
+}
+
+void BuzzWireTask::ResetScoreHistory() {
+    score_history.clear();
+    score_history_colors.clear();
+
+    // reset colors to gray
+    for (int i = 0; i < n_score_history; ++i) {
+        score_sphere_actors[i]->GetProperty()->SetColor(Colors::Gray);
+
+    }
 
 }
