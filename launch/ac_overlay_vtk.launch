@@ -69,6 +69,9 @@
             //Use for debug. it reduces frame rate
         -->
         <param name= "show_reference_frames" value= "false" />
+
+        <!--Activate or deactivate haptic guidance -->
+        <param name= "enable_guidance" value= "false" />
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 

@@ -19,13 +19,14 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
     //    twist_current_tool_callbacks[1] = &OverlayROSConfig::Tool2TwistCallback;
 
     it = new image_transport::ImageTransport(n);
+
     SetupROS();
 
 
     // create the task
     double ring_radius = 0.004;
     buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames,
-                                   (bool)(n_arms-1));
+                                   (bool) (n_arms - 1), with_guidance);
 
     ros::spinOnce();
     buzz_task->SetCurrentToolPosePointer(pose_current_tool[0], 0);
@@ -79,6 +80,10 @@ void OverlayROSConfig::SetupROS() {
     // Loop frequency
     n.param<double>("desired_pose_update_frequency", desired_pose_update_freq, 100);
     ROS_INFO("The desired pose will be updated at '%f'", desired_pose_update_freq);
+
+    n.param<bool>("enable_guidance", with_guidance, true);
+    ROS_INFO("Starting the BuzzWire task with guidance: %s",
+             with_guidance ? "true" : "false");
 
     // ------------------------------------- IMAGES -----------------------------------------
 
@@ -512,11 +517,14 @@ void OverlayROSConfig::RecordingEventsCallback(const std_msgs::CharConstPtr
 
     switch(msg->data){
         case 'r':
-            buzz_task->Reset();
+            buzz_task->ResetTask();
             break;
 
         case 'd':
-            buzz_task->RepeatLastAcquisition();
+            buzz_task->ResetCurrentAcquisition();
+            break;
+
+        default:
             break;
     }
 

@@ -43,7 +43,7 @@ public:
 
     // publishes the active constraint parameters
     void PublishACtiveConstraintParameters(
-        const active_constraints::ActiveConstraintParameters &);
+            const active_constraints::ActiveConstraintParameters &);
 
     // publishes the active constraint parameters
     void PublishTaskState(teleop_vision::TaskState msg);
@@ -89,9 +89,9 @@ public:
     double desired_pose_update_freq;
     std::vector<cv::Point3d> ac_path;
     bool foot_switch_pressed = false;
-
-        cv::Mat camera_matrix[2];
-        cv::Mat camera_distortion[2];
+    bool with_guidance;
+    cv::Mat camera_matrix[2];
+    cv::Mat camera_distortion[2];
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
 
