@@ -189,7 +189,7 @@ endforeach ()
 
 
 add_executable(
-        ac_overlay
+        ac_overlay_cv
         src/ac_overlay_cv/main_ac_overlay.cpp
         src/ac_overlay_cv/ACOverlay.cpp
         src/ac_overlay_cv/ACOverlay.h
@@ -198,7 +198,7 @@ add_executable(
 )
 
 target_link_libraries(
-        ac_overlay
+        ac_overlay_cv
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES}
         arucoUtils)
