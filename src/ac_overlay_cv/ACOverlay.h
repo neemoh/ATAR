@@ -20,7 +20,7 @@
 #include <sensor_msgs/Joy.h>
 
 // service
-#include "teleop_vision/CalculateStereoCamsTransfromFromTopics.h"
+#include "atar/CalculateStereoCamsTransfromFromTopics.h"
 #include "utils/Drawings.h"
 
 
@@ -111,7 +111,7 @@ public:
     bool new_right_image = false;
     bool new_left_image = false;
     ros::ServiceClient stereo_tr_calc_client;
-    teleop_vision::CalculateStereoCamsTransfromFromTopics stereo_tr_srv;
+    atar::CalculateStereoCamsTransfromFromTopics stereo_tr_srv;
 
 private:
 

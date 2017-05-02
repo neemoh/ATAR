@@ -849,7 +849,7 @@ void BuzzWireTask::UpdateTubeColor() {
 
 }
 
-teleop_vision::TaskState BuzzWireTask::GetTaskStateMsg() {
+atar::TaskState BuzzWireTask::GetTaskStateMsg() {
     return task_state_msg;
 }
 

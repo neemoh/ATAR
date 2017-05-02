@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(teleop_vision)
+project(atar)
 
 #set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 11)
@@ -160,18 +160,6 @@ target_link_libraries(create_aruco_board
         ${OpenCV_LIBRARIES}
         )
 
-add_executable(overlay
-        src/overlay/main_overlay.cpp
-        src/overlay/Overlay.cpp
-        src/overlay/Overlay.h
-        src/utils/Drawings.cpp
-        include/utils/Drawings.h
-        )
-target_link_libraries(overlay
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES}
-        arucoUtils
-        )
 
 add_executable(
         stereo_image_view
@@ -202,9 +190,9 @@ endforeach ()
 
 add_executable(
         ac_overlay
-        src/ac_overlay/main_ac_overlay.cpp
-        src/ac_overlay/ACOverlay.cpp
-        src/ac_overlay/ACOverlay.h
+        src/ac_overlay_cv/main_ac_overlay.cpp
+        src/ac_overlay_cv/ACOverlay.cpp
+        src/ac_overlay_cv/ACOverlay.h
         src/utils/Drawings.cpp
         include/utils/Drawings.h
 )

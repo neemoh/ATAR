@@ -235,7 +235,7 @@ void ACOverlay::SetupROS() {
             //----------
             // to find the transformation between the cameras we defined a simple service.
             stereo_tr_calc_client =
-                    n.serviceClient<teleop_vision::CalculateStereoCamsTransfromFromTopics>
+                    n.serviceClient<atar::CalculateStereoCamsTransfromFromTopics>
                             ("/calculate_stereo_cams_transform_from_topics");
             stereo_tr_srv.request.cam_1_pose_topic_name = left_cam_pose_topic_name;
             stereo_tr_srv.request.cam_2_pose_topic_name = right_cam_pose_topic_name;

@@ -13,7 +13,7 @@
 #include <memory>
 #include <cv_bridge/cv_bridge.h>
 
-namespace teleop_vision {
+namespace atar {
 
     class ExtrinsicArucoNodelet : public nodelet::Nodelet {
 
@@ -205,9 +205,9 @@ namespace teleop_vision {
     }
 
 
-} //namespace teleop_vision
+} //namespace atar
 
 #include <pluginlib/class_list_macros.h>
-//PLUGINLIB_EXPORT_CLASS(teleop_vision::ExtrinsicArucoNodelet, nodelet::Nodelet);
-PLUGINLIB_DECLARE_CLASS(teleop_vision, ExtrinsicArucoNodelet,
-                        teleop_vision::ExtrinsicArucoNodelet, nodelet::Nodelet);
+//PLUGINLIB_EXPORT_CLASS(atar::ExtrinsicArucoNodelet, nodelet::Nodelet);
+PLUGINLIB_DECLARE_CLASS(atar, ExtrinsicArucoNodelet,
+                        atar::ExtrinsicArucoNodelet, nodelet::Nodelet);

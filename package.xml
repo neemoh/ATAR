@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-    <name>teleop_vision</name>
+    <name>atar</name>
     <version>0.0.0</version>
-    <description>The teleop_vision package</description>
+    <description>Assisted Teleoperation with Augmented Reality (ATAR) with da Vinci reasearch kit, including stereo rendering and camera calibration ros nodes.</description>
     <maintainer email="nima@todo.todo">Nima</maintainer>
 
     <!-- One license tag required, multiple allowed, one license per tag -->

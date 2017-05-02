@@ -20,7 +20,7 @@
 #include <iostream>
 
 #include <active_constraints/ActiveConstraintParameters.h>
-#include "teleop_vision/TaskState.h"
+#include "atar/TaskState.h"
 
 class RosObj : public QThread
 {
@@ -52,7 +52,7 @@ public:
     void Master0ACParamsCallback(
             const active_constraints::ActiveConstraintParametersConstPtr & msg);
 
-    void TaskSTateCallback(const teleop_vision::TaskStateConstPtr  &msg);
+    void TaskSTateCallback(const atar::TaskStateConstPtr  &msg);
 
     void CoagFootSwitchCallback(const sensor_msgs::Joy &msg);
 
@@ -145,7 +145,7 @@ public:
     geometry_msgs::Wrench master_wrench[2];
 
     // task state
-    teleop_vision::TaskState task_state;
+    atar::TaskState task_state;
 
     // left and right master active constraints parameters
     active_constraints::ActiveConstraintParameters ac_params[2];

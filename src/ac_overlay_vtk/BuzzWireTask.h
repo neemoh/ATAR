@@ -28,7 +28,7 @@
 #include <vtkCornerAnnotation.h>
 
 #include "active_constraints/ActiveConstraintParameters.h"
-#include "teleop_vision/TaskState.h"
+#include "atar/TaskState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
@@ -84,7 +84,7 @@ public:
     // returns the ac parameters
     active_constraints::ActiveConstraintParameters GetACParameters();
 
-    teleop_vision::TaskState GetTaskStateMsg();
+    atar::TaskState GetTaskStateMsg();
 
     // resets the number of repetitions and task state;
     void ResetTask();
@@ -131,7 +131,7 @@ private:
     KDL::Vector idle_point;
     KDL::Vector start_point;
     KDL::Vector end_point;
-    teleop_vision::TaskState task_state_msg;
+    atar::TaskState task_state_msg;
     uint8_t number_of_repetition;
     ros::Time start_time;
     double posit_error_sum;

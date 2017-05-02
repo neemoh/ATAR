@@ -12,7 +12,7 @@ enum class Tasks {None, CricleAC, MultiplePaths};
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "ac_overlay");
+    ros::init(argc, argv, "ac_overlay_cv");
     ACOverlay ao (ros::this_node::getName(),720, 576);
 
     // frequency of the generated images is based on the received images

@@ -20,7 +20,7 @@
 
 //#include "utils/Drawings.h"
 #include "active_constraints/ActiveConstraintParameters.h"
-#include "teleop_vision/TaskState.h"
+#include "atar/TaskState.h"
 #include "BuzzWireTask.h"
 
 
@@ -46,7 +46,7 @@ public:
             const active_constraints::ActiveConstraintParameters &);
 
     // publishes the active constraint parameters
-    void PublishTaskState(teleop_vision::TaskState msg);
+    void PublishTaskState(atar::TaskState msg);
 
     // CALLBACKS
     void ImageLeftCallback(const sensor_msgs::ImageConstPtr &msg);

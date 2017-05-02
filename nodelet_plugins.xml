@@ -1,6 +1,6 @@
 <library path="lib/libExtrinsicCalibArucoNodelet">
-    <class name="teleop_vision/ExtrinsicArucoNodelet"
-           type="teleop_vision::ExtrinsicArucoNodelet"
+    <class name="atar/ExtrinsicArucoNodelet"
+           type="atar::ExtrinsicArucoNodelet"
            base_class_type="nodelet::Nodelet">
         <description>This is a plugin.</description>
     </class>
