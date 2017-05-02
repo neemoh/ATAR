@@ -3,7 +3,7 @@
     <arg name= "left_cam_name" value= "flea14150439" />
     <arg name= "right_cam_name" value= "flea14150441" />
 
-    <node pkg="teleop_vision"
+    <node pkg="atar"
           type="robot_to_camera_aruco"
           name="robot_to_camera_aruco"
           output="screen">
@@ -22,13 +22,13 @@
         <param name= "visual_axis_length" value= "0.0436" />
     </node>
 
-    <node pkg="teleop_vision" type="camera_capture_flea3" name="camera" output="screen">  </node>
+    <node pkg="atar" type="camera_capture_flea3" name="camera" output="screen">  </node>
 
     <group ns="$(arg camera_name)">
 
         <group ns="left">
-            <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco_left" output="screen" >
-                <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
+            <node pkg="atar" type="extrinsic_calib_aruco" name="extrinsic_aruco_left" output="screen" >
+                <rosparam command="load" file="$(find atar)/launch/params_aruco_board_stanford.yaml" />
                 <param name="cam_name" value= "$(arg left_cam_name)" />
                 <param name="image_transport_namespace" value="/$(arg camera_name)/left/image_color"/>
                 <param name="board_to_cam_pose_topic_name"
@@ -39,8 +39,8 @@
         </group>
 
         <group ns="right" >
-            <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco_right" output="screen" >
-                <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
+            <node pkg="atar" type="extrinsic_calib_aruco" name="extrinsic_aruco_right" output="screen" >
+                <rosparam command="load" file="$(find atar)/launch/params_aruco_board_stanford.yaml" />
                 <param name= "cam_name" value= "$(arg right_cam_name)" />
                 <param name="image_transport_namespace" value="/$(arg camera_name)/right/image_color"/>
                 <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/right/task_frame_to_camera_frame"/>

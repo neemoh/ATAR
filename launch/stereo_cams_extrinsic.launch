@@ -31,9 +31,9 @@
 				  <!--args="load image_proc/debayer camera_nodelet_manager">-->
 			<!--</node>-->
 
-			<!--			<node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
-                            <rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board_4_4.yaml" />
-                            <param name="cam_intrinsic_calibration_file_path" value="$(find teleop_vision)/resources/flea_right_intrinsic.xml" />
+			<!--			<node pkg="atar" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
+                            <rosparam command="load" file="$(find atar)/launch/params_aruco_board_4_4.yaml" />
+                            <param name="cam_intrinsic_calibration_file_path" value="$(find atar)/resources/flea_right_intrinsic.xml" />
                             <param name="image_transport_namespace" value="/$(arg camera_name)/right/image_color/"/>
                             <param name="board_to_cam_pose_topic_name" value="board_to_camera"/>
                             <param name="draw_axes" value="true"/>

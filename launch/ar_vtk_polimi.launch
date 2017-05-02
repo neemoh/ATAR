@@ -5,23 +5,23 @@
     <arg name="master_2_name" value="MTML"/>
     <arg name="camera_namespace" value="camera"/>
     <arg name= "left_cam_name" value= "flea14150439" />
-    <arg name= "right_cam_name" value= "flea14150441" />    
+    <arg name= "right_cam_name" value= "flea14150441" />
     <arg name= "haptic_referesh_rate" value= "200" />
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
-        <rosparam command="load" file="$(find teleop_vision)/launch/params_overlay.yaml" />
+        <rosparam command="load" file="$(find atar)/launch/params_overlay.yaml" />
     </group>
-    
+
     <!-- Node publishing the camera images -->
-    <node pkg="teleop_vision" type="camera_capture_flea3" name="camera" output="screen"> </node>
+    <node pkg="atar" type="camera_capture_flea3" name="camera" output="screen"> </node>
 
     <!-- Node recording the data-->
-    <node pkg="teleop_vision" type="reporter" name="reporter" output="screen">
+    <node pkg="atar" type="reporter" name="reporter" output="screen">
     </node>
 
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
-    <node pkg="teleop_vision" type="ac_overlay_vtk" name="ac_overlay" output="screen">
+    <node pkg="atar" type="ac_overlay_vtk" name="ac_overlay" output="screen">
         <!-- About num_cam_pose_publishers:
             // We need to know the pose of the cameras with respect to the task-space coordinates.
             // If the camera or the markers move, the pose should be estimated by a node and here we
@@ -87,13 +87,13 @@
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
         <param name="master_2_name" value="$(arg master_2_name)"/>
-          <param name="max_force" value="4"/>
-          <param name="max_torque" value="0.03"/><!-- 0.03 -->
-          <param name="linear_elastic_coeff" value="1000"/>
-          <param name="linear_damping_coeff" value="10"/>
-          <param name="angular_elastic_coeff" value="0.04"/>
-          <param name="angular_damping_coeff" value="0.002"/>
-          <param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>
+        <param name="max_force" value="4"/>
+        <param name="max_torque" value="0.03"/><!-- 0.03 -->
+        <param name="linear_elastic_coeff" value="1000"/>
+        <param name="linear_damping_coeff" value="10"/>
+        <param name="angular_elastic_coeff" value="0.04"/>
+        <param name="angular_damping_coeff" value="0.002"/>
+        <param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>
     </node>
 
 
