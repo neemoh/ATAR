@@ -32,9 +32,31 @@
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
-// P1 is the point where the ring enters the wire
-// P2 is the destination point shown to the user.
-// The user goes from the start point to the end point and back.
+
+/**
+ * \class BuzzWireTask
+ * \brief This is a class that generates graphics and logic for a simple ring
+ * and wire task, where the user is supposed to move a ring without around a
+ * tube without touching it. 10 spheres in the bottom of the image show the
+ * score of the last 10 repetitions of the user. The score is based on
+ * position error, orientation error and the duration.
+ * The error is found from the desired pose of the ring that is calculated from
+ * a simple geometric estimation of the closest point on the tube path (for
+ * position) and the path tangent on the closest point. This is far from
+ * ideal but the goal was to not limit ourselves to parametric curves and be
+ * able to use any aribitrary tube.
+ * The task has two modes: a simple 1 ring mode, and a bimanual mode where
+ * two robot arms are used and each have a ring. TODO: I still have to test
+ * this mode.
+ *
+ * An important point here is that there is a thread in this class that doeas
+ * the spinning for ros and updates the desired pose at a much higher
+ * frequency with respect to the 25Hz for graphics which would lead to
+ * unstable guidance forces. This is totally not thread-safe! Hopefully in
+ * future I learn more about multi-threaded applications and improve this.
+ */
+
+
 enum TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint, RepetitionComplete};
 
 
@@ -42,7 +64,7 @@ class BuzzWireTask {
 public:
 
     BuzzWireTask(const double ring_radius, const bool show_ref_frames,
-                     const bool num_tools, const bool with_guidance);
+                 const bool num_tools, const bool with_guidance);
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors();
@@ -83,6 +105,11 @@ public:
 
     void ResetOnGoingEvaluation();
 
+    /**
+    * \brief This is the function that is handled by the desired pose thread.
+     * It first reads the current poses of the tools and then finds the
+     * desired pose from the mesh.
+  *  **/
     void FindAndPublishDesiredToolPose();
 
 private:
