@@ -184,7 +184,9 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
     }
     // -------------------------------------------------------------------------
     // Stand MESH hq
-    std::string inputFilename = "/home/charm/Desktop/cads/task1_4_stand.STL";
+    std::string inputFilename =
+            "/home/charm/development/ros_ws/src/ATAR/resources/cads/task1_4_stand"
+            ".STL";
     vtkSmartPointer<vtkSTLReader> stand_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
     std::cout << "Loading stl file from: " << inputFilename << std::endl;
@@ -221,7 +223,8 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for generating
     // active constraints
-    inputFilename = "/home/charm/Desktop/cads/task1_4_tube.STL";
+    inputFilename = "/home/charm/development/ros_ws/src/ATAR/resources/cads"
+            "/task1_4_tube.STL";
     vtkSmartPointer<vtkSTLReader> hq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
     std::cout << "Loading stl file from: " << inputFilename << std::endl;
@@ -253,7 +256,8 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
 
     // -------------------------------------------------------------------------
     // MESH lq
-    inputFilename = "/home/charm/Desktop/cads/task1_4_wire.STL";
+    inputFilename = "/home/charm/development/ros_ws/src/ATAR/resources/cads"
+            "/task1_4_wire.STL";
     vtkSmartPointer<vtkSTLReader> lq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
     std::cout << "Loading stl file from: " << inputFilename << std::endl;
