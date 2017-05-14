@@ -57,7 +57,7 @@ void RobotToCameraAruco::SetupROS() {
     else if (cam_id == 0)
         ROS_INFO("Using Left camera.");
     else
-        ROS_ERROR("cam_is param can be set as either 0 (for left) or 1 (for "
+        ROS_ERROR("cam_id param can be set as either 0 (for left) or 1 (for "
                           "right)");
 
     if (n.getParam("visual_axis_length", visual_axis_length))
@@ -112,16 +112,19 @@ void RobotToCameraAruco::SetupROS() {
 
 
     // a topic name is required for the images
-    std::string image_topic_name;
-    if(cam_id)
-        image_topic_name = "/camera/right/image_color";
-    else
-        image_topic_name = "/camera/left/image_color";
+    std::stringstream image_topic_name;
+    std::string cam_name_space;
+    n.param<std::string>("cam_name_space", cam_name_space, "camera");
 
-    ROS_INFO("Camera images will be read from topic '%s'", image_topic_name
+    if(cam_id)
+        image_topic_name << std::string("/") << cam_name_space <<"/right/image_color";
+    else
+        image_topic_name << std::string("/") << cam_name_space <<"/left/image_color";
+
+    ROS_INFO("Camera images will be read from topic '%s'", image_topic_name.str()
             .c_str());
     camera_image_subscriber = it->subscribe(
-            image_topic_name, 1, &RobotToCameraAruco::CameraImageCallback,
+            image_topic_name.str(), 1, &RobotToCameraAruco::CameraImageCallback,
             this);
 
 
