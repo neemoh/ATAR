@@ -45,9 +45,8 @@ void ArucoExtrinsic::GetROSParameterValues() {
         ReadCameraParameters(path.str(), cam_intrinsics);
     } else {
         ROS_ERROR(
-                "%s Parameter '%s' is required. Place the intrinsic calibration "
+                "Parameter '%s' is required. Place the intrinsic calibration "
                         "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
-                ros::this_node::getName().c_str(),
                 n.resolveName("cam_name").c_str());
         all_required_params_found = false;
     }
@@ -59,13 +58,13 @@ void ArucoExtrinsic::GetROSParameterValues() {
 
         // if the topic name is found, check if something is being published on it
         if (!ros::topic::waitForMessage<sensor_msgs::Image>( image_transport_namespace, ros::Duration(5))) {
-            ROS_ERROR("%s Topic '%s' is not publishing.",
-                      ros::this_node::getName().c_str(), image_transport_namespace.c_str());
+            ROS_ERROR("Topic '%s' is not publishing.",
+                      image_transport_namespace.c_str());
             all_required_params_found = false;
         }
         else
-            ROS_INFO("%s [SUBSCRIBERS] Images will be read from topic %s",
-                     ros::this_node::getName().c_str(), image_transport_namespace.c_str());
+            ROS_INFO("[SUBSCRIBERS] Images will be read from topic %s",
+                     image_transport_namespace.c_str());
 
 
     } else {
@@ -102,11 +101,8 @@ void ArucoExtrinsic::GetROSParameterValues() {
     	all_required_params_found = false;
     }
 
-
     if (!all_required_params_found)
     	throw std::runtime_error("ERROR: some required topics are not set");
-
-
 
     // advertise publishers
     std::string board_to_cam_pose_topic_name;
@@ -114,8 +110,8 @@ void ArucoExtrinsic::GetROSParameterValues() {
 		board_to_cam_pose_topic_name = "board_to_camera";
 
     pub_board_to_cam_pose = n.advertise<geometry_msgs::PoseStamped>(board_to_cam_pose_topic_name, 1, 0);
-	ROS_INFO("%s Publishing board to camera pose on '%s'",
-     ros::this_node::getName().c_str(), n.resolveName(board_to_cam_pose_topic_name).c_str());
+	ROS_INFO("Publishing board to camera pose on '%s'",
+     n.resolveName(board_to_cam_pose_topic_name).c_str());
 
 }
 
