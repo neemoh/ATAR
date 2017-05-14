@@ -29,7 +29,7 @@ class OverlayROSConfig {
 
 public:
 
-    OverlayROSConfig(std::string node_name, int width, int height);
+    OverlayROSConfig(std::string node_name);
 
     // Locking call to retrieve the images
     void LockAndGetImages(ros::Duration timeout, cv::Mat images[]);

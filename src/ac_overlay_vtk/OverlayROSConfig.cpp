@@ -8,8 +8,8 @@
 #include <pwd.h>
 #include <boost/thread/thread.hpp>
 
-OverlayROSConfig::OverlayROSConfig(std::string node_name, int width, int height)
-        : n(node_name), image_width(width), image_height(height)
+OverlayROSConfig::OverlayROSConfig(std::string node_name)
+        : n(node_name)
 {
 
     // assign the callback functions
