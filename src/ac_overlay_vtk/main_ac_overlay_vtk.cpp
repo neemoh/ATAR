@@ -13,7 +13,7 @@
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "ac_overlay");
-    OverlayROSConfig rc (ros::this_node::getName(),720, 576);
+    OverlayROSConfig rc (ros::this_node::getName());
 
     //    ros::Rate loop_rate(rc.desired_pose_update_freq);
 
