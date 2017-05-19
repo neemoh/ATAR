@@ -25,9 +25,9 @@ find_package(catkin REQUIRED COMPONENTS
         active_constraints
         )
 
-add_service_files(
-        FILES
-        CalculateStereoCamsTransfromFromTopics.srv)
+#add_service_files(
+ #       FILES
+  #      CalculateStereoCamsTransfromFromTopics.srv)
 
 add_message_files(
         FILES
@@ -76,15 +76,15 @@ target_link_libraries(arucoUtils
 ##########################################################################
 
 # %Tag(SRVCLIENT)%
-add_executable(calculate_stereo_cams_transform_from_topics
-        src/utils/CalculateStereoCamsTransfromFromTopicsServer.cpp
-        )
-target_link_libraries(calculate_stereo_cams_transform_from_topics
-        ${catkin_LIBRARIES}
-        )
-add_dependencies(calculate_stereo_cams_transform_from_topics
-        teleop_vision_gencpp
-        )
+#add_executable(calculate_stereo_cams_transform_from_topics
+#        src/utils/CalculateStereoCamsTransfromFromTopicsServer.cpp
+#        )
+#target_link_libraries(calculate_stereo_cams_transform_from_topics
+#        ${catkin_LIBRARIES}
+ #       )
+#add_dependencies(calculate_stereo_cams_transform_from_topics
+#        teleop_vision_gencpp
+ #       )
 
 add_executable(intrinsic_calib
         src/intrinsic_calib/intrinsic_calibration.cpp
