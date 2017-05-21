@@ -44,6 +44,9 @@ the use of this software, even if advised of the possibility of such damage.
 #include <vector>
 #include <iostream>
 #include <ctime>
+#include <ros/ros.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
 
 using namespace std;
 using namespace cv;
@@ -103,8 +106,36 @@ static bool readDetectorParameters(string filename, Ptr<aruco::DetectorParameter
     return true;
 }
 
+cv::Mat image_msg;
+bool new_image = false;
 
+void CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) {
+    try
+    {
+        image_msg = cv_bridge::toCvCopy(msg, "bgr8")->image;
+        new_image = true;
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
+    }
+}
 
+cv::Mat &Image(ros::Duration timeout) {
+    ros::Rate loop_rate(1);
+    ros::Time timeout_time = ros::Time::now() + timeout;
+
+    while (image_msg.empty()) {
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        if (ros::Time::now() > timeout_time) {
+            ROS_WARN("Timeout: No new Image received.");
+        }
+    }
+
+    return image_msg;
+}
 /**
  */
 static bool saveCameraParams(const string &filename, Size imageSize, float aspectRatio, int flags,
@@ -221,45 +252,71 @@ int main(int argc, char *argv[]) {
     vector< Mat > allImgs;
     Size imgSize;
 
-    while(inputVideo.grab()) {
-        Mat image, imageCopy;
-        inputVideo.retrieve(image);
+    ros::init(argc, argv, "extrinsic_aruco");
+    std::string ros_node_name = ros::this_node::getName();
+////////////////////////////////////////////////
+    ros::NodeHandle n(ros_node_name);
+    ros::Rate loop_rate = ros::Rate(200);
+    image_transport::ImageTransport it = image_transport::ImageTransport(n);
+    // register image transport subscriber
+    image_transport::Subscriber sub = it.subscribe(
+        "/endoscope/left/image_raw", 1, &CameraImageCallback);
 
-        vector< int > ids;
-        vector< vector< Point2f > > corners, rejected;
+    //while(inputVideo.grab()) {
+        while(ros::ok() ){
+            if(new_image) {
+                new_image = false;
+                Mat image, imageCopy;
+                //inputVideo.retrieve(image);
+                image = Image(ros::Duration(1));
 
-        // detect markers
-        aruco::detectMarkers(image, dictionary, corners, ids, detectorParams, rejected);
+                vector<int> ids;
+                vector<vector<Point2f> > corners, rejected;
 
-        // refind strategy to detect more markers
-        if(refindStrategy) aruco::refineDetectedMarkers(image, board, corners, ids, rejected);
+                // detect markers
+                aruco::detectMarkers(image, dictionary, corners, ids, detectorParams, rejected);
 
-        // interpolate charuco corners
-        Mat currentCharucoCorners, currentCharucoIds;
-        if(ids.size() > 0)
-            aruco::interpolateCornersCharuco(corners, ids, image, charucoboard, currentCharucoCorners,
-                                             currentCharucoIds);
+                // refind strategy to detect more markers
+                if (refindStrategy)
+                    aruco::refineDetectedMarkers(image, board, corners, ids, rejected);
 
-        // draw results
-        image.copyTo(imageCopy);
-        if(ids.size() > 0) aruco::drawDetectedMarkers(imageCopy, corners);
+                // interpolate charuco corners
+                Mat currentCharucoCorners, currentCharucoIds;
+                if (ids.size() > 0)
+                    aruco::interpolateCornersCharuco(
+                        corners, ids, image, charucoboard, currentCharucoCorners,
+                        currentCharucoIds
+                    );
 
-        if(currentCharucoCorners.total() > 0)
-            aruco::drawDetectedCornersCharuco(imageCopy, currentCharucoCorners, currentCharucoIds);
+                // draw results
+                image.copyTo(imageCopy);
+                if (ids.size() > 0)
+                    aruco::drawDetectedMarkers(imageCopy, corners);
 
-        putText(imageCopy, "Press 'c' to add current frame. 'ESC' to finish and calibrate",
-                Point(10, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0), 2);
+                if (currentCharucoCorners.total() > 0)
+                    aruco::drawDetectedCornersCharuco(
+                        imageCopy, currentCharucoCorners, currentCharucoIds
+                    );
 
-        imshow("out", imageCopy);
-        char key = (char)waitKey(waitTime);
-        if(key == 27) break;
-        if(key == 'c' && ids.size() > 0) {
-            cout << "Frame captured" << endl;
-            allCorners.push_back(corners);
-            allIds.push_back(ids);
-            allImgs.push_back(image);
-            imgSize = image.size();
-        }
+                putText(
+                    imageCopy, "Press 'c' to add current frame. 'ESC' to finish and calibrate",
+                    Point(10, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 0, 0), 2
+                );
+
+                imshow("out", imageCopy);
+                char key = (char) waitKey(waitTime);
+                if (key == 27)
+                    break;
+                if (key == 'c' && ids.size() > 0) {
+                    cout << "Frame captured" << endl;
+                    allCorners.push_back(corners);
+                    allIds.push_back(ids);
+                    allImgs.push_back(image);
+                    imgSize = image.size();
+                }
+            }
+        ros::spinOnce();
+        loop_rate.sleep();
     }
 
     if(allIds.size() < 1) {

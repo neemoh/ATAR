@@ -128,6 +128,13 @@ target_link_libraries(extrinsic_calib_charuco
         ${catkin_LIBRARIES} arucoUtils
         )
 
+add_executable(calibrate_camera_charuco
+        src/utils/calibrate_camera_charuco.cpp
+        )
+
+target_link_libraries(calibrate_camera_charuco
+        ${catkin_LIBRARIES} arucoUtils
+        )
 ##########################################################################
 #                           FlyCapture SDK
 ##########################################################################
