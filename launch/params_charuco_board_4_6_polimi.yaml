@@ -1,0 +1,8 @@
+  
+  board_w: 6
+  board_h: 4
+  square_length_in_meters: 0.023
+  marker_length_in_meters: 0.0175
+  dictionary_id: 0
+  cam_id: 2
+  cam_intrinsic_file: "/home/nima/development/ros_workspace/catkin_ws/src/ATAR/resources/minoru_right_intrinsic.yaml"

@@ -25,9 +25,10 @@ find_package(catkin REQUIRED COMPONENTS
         active_constraints
         )
 
-add_service_files(
-        FILES
-        CalculateStereoCamsTransfromFromTopics.srv)
+#find_package(OpenCV 3 REQUIRED)
+#add_service_files(
+ #       FILES
+  #      CalculateStereoCamsTransfromFromTopics.srv)
 
 add_message_files(
         FILES
@@ -76,15 +77,16 @@ target_link_libraries(arucoUtils
 ##########################################################################
 
 # %Tag(SRVCLIENT)%
-add_executable(calculate_stereo_cams_transform_from_topics
-        src/utils/CalculateStereoCamsTransfromFromTopicsServer.cpp
-        )
-target_link_libraries(calculate_stereo_cams_transform_from_topics
-        ${catkin_LIBRARIES}
-        )
-add_dependencies(calculate_stereo_cams_transform_from_topics
-        atar_gencpp
-        )
+#add_executable(calculate_stereo_cams_transform_from_topics
+#        src/utils/CalculateStereoCamsTransfromFromTopicsServer.cpp
+#        )
+#target_link_libraries(calculate_stereo_cams_transform_from_topics
+#        ${catkin_LIBRARIES}
+ #       )
+#add_dependencies(calculate_stereo_cams_transform_from_topics
+#        teleop_vision_gencpp
+ #       )
+
 
 add_executable(intrinsic_calib
         src/intrinsic_calib/intrinsic_calibration.cpp
@@ -114,6 +116,15 @@ add_library(ExtrinsicCalibArucoNodelet
         )
 
 target_link_libraries(ExtrinsicCalibArucoNodelet
+        ${catkin_LIBRARIES} arucoUtils
+        )
+
+
+add_executable(extrinsic_calib_charuco
+        src/extrinsic_calib_aruco/main_extrinsic_charuco.cpp
+        )
+
+target_link_libraries(extrinsic_calib_charuco
         ${catkin_LIBRARIES} arucoUtils
         )
 
@@ -160,6 +171,19 @@ target_link_libraries(create_aruco_board
         ${OpenCV_LIBRARIES}
         )
 
+add_executable(create_charuco_board
+        src/utils/create_charuco_board.cpp
+        )
+target_link_libraries(create_charuco_board
+        ${OpenCV_LIBRARIES}
+        )
+
+add_executable(detect_board_charuco
+        src/utils/detect_board_charuco.cpp
+        )
+target_link_libraries(detect_board_charuco
+        ${OpenCV_LIBRARIES}
+        )
 
 add_executable(
         stereo_image_view

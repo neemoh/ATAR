@@ -1,0 +1,12 @@
+<launch>
+
+	<node pkg="atar" type="extrinsic_calib_charuco" name="extrinsic_charuco_left" output="screen" >
+		<rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi.yaml" />
+		<param name="cam_name" value= "minoru_left" />
+		<param name="image_transport_namespace" value="/image_raw"/>
+		<param name="board_to_cam_pose_topic_name"
+			   value="/task_frame_to_camera_frame"/>
+		<param name="show_image" value="true"/>
+	</node>
+
+</launch>

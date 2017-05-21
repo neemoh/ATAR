@@ -71,19 +71,19 @@ int main(int argc, char **argv)
         else if (key == 'f')  //full screen
             VisualUtils::SwitchFullScreen(window_name[0]);
         else if(key == 't'){
-            if (ao.stereo_tr_calc_client.call(ao.stereo_tr_srv)) {
+            //if (ao.stereo_tr_calc_client.call(ao.stereo_tr_srv)) {
                 //
-                std::vector<double> pose_vec_out(7, 0.0);
-                conversions::PoseMsgToVector(
-                        ao.stereo_tr_srv.response.cam_1_to_cam_2_pose, pose_vec_out);
-                ao.n.setParam("left_cam_to_right_cam_transform", pose_vec_out);
-                ROS_INFO_STREAM(
-                        std::string("Set parameter ") << ao.n.resolveName("left_cam_to_right_cam_transform")
-                                                      << " as\n"
-                                                      << ao.stereo_tr_srv.response.cam_1_to_cam_2_pose);
-            }
-            else
-                ROS_ERROR("Failed to call service stereo_tr_calc_client");
+            //    std::vector<double> pose_vec_out(7, 0.0);
+             //   conversions::PoseMsgToVector(
+            //            ao.stereo_tr_srv.response.cam_1_to_cam_2_pose, pose_vec_out);
+             //   ao.n.setParam("left_cam_to_right_cam_transform", pose_vec_out);
+             //   ROS_INFO_STREAM(
+              //          std::string("Set parameter ") << ao.n.resolveName("left_cam_to_right_cam_transform")
+              //                                        << " as\n"
+              //                                        << ao.stereo_tr_srv.response.cam_1_to_cam_2_pose);
+            //}
+           // else
+            //    ROS_ERROR("Failed to call service stereo_tr_calc_client");
         }
         else if (key == '1'){
             ROS_INFO("Task 1 Selected");
