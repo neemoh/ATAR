@@ -83,7 +83,7 @@ target_link_libraries(calculate_stereo_cams_transform_from_topics
         ${catkin_LIBRARIES}
         )
 add_dependencies(calculate_stereo_cams_transform_from_topics
-        teleop_vision_gencpp
+        atar_gencpp
         )
 
 add_executable(intrinsic_calib
@@ -121,31 +121,31 @@ target_link_libraries(ExtrinsicCalibArucoNodelet
 #                           FlyCapture SDK
 ##########################################################################
 
-option(WITH_FlyCapture "Enable support for the FlyCapture SDK" ON)
-
+option(WITH_FlyCapture "Enable support for the FlyCapture SDK" OFF)
+#
 #if (WITH_FlyCapture)
-    # Find the Flycapture include files and libraries
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
-
-    find_package(Flycapture2)
-    if (FLYCAPTURE2_FOUND)
-        MESSAGE("FLYCAPTURE2 found.")
-        include_directories(${FLYCAPTURE2_INCLUDE_DIR})
-
-        add_executable(camera_capture_flea3
-                src/camera_capture_flea3/main_camera_capture_flea3.cpp
-                src/camera_capture_flea3/Fla3Camera.cpp
-                src/camera_capture_flea3/Fla3Camera.h
-                )
-        target_link_libraries(camera_capture_flea3
-                ${FLYCAPTURE2_LIBRARIES}
-                )
-        target_link_libraries(camera_capture_flea3
-                ${OpenCV_LIBRARIES}
-                ${catkin_LIBRARIES}
-                arucoUtils
-                )
-    endif (FLYCAPTURE2_FOUND)
+#    # Find the Flycapture include files and libraries
+#    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/src/flycapture)
+#
+#    find_package(Flycapture2)
+#    if (FLYCAPTURE2_FOUND)
+#        MESSAGE("FLYCAPTURE2 found.")
+#        include_directories(${FLYCAPTURE2_INCLUDE_DIR})
+#
+#        add_executable(camera_capture_flea3
+#                src/camera_capture_flea3/main_camera_capture_flea3.cpp
+#                src/camera_capture_flea3/Fla3Camera.cpp
+#                src/camera_capture_flea3/Fla3Camera.h
+#                )
+#        target_link_libraries(camera_capture_flea3
+#                ${FLYCAPTURE2_LIBRARIES}
+#                )
+#        target_link_libraries(camera_capture_flea3
+#                ${OpenCV_LIBRARIES}
+#                ${catkin_LIBRARIES}
+#                arucoUtils
+#                )
+#    endif (FLYCAPTURE2_FOUND)
 #endif (WITH_FlyCapture)
 
 ##########################################################################
@@ -171,6 +171,16 @@ target_link_libraries(
         ${catkin_LIBRARIES}
 )
 
+
+add_executable(
+        stereo_image_split
+        src/stereo_image_view/main_stereo_image_split_TEMPORARY.cpp
+)
+target_link_libraries(
+        stereo_image_split
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES}
+)
 
 
 
