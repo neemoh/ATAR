@@ -25,6 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
         active_constraints
         )
 
+#find_package(OpenCV 3 REQUIRED)
 #add_service_files(
  #       FILES
   #      CalculateStereoCamsTransfromFromTopics.srv)
@@ -117,6 +118,15 @@ target_link_libraries(ExtrinsicCalibArucoNodelet
         ${catkin_LIBRARIES} arucoUtils
         )
 
+
+add_executable(extrinsic_calib_charuco
+        src/extrinsic_calib_aruco/main_extrinsic_charuco.cpp
+        )
+
+target_link_libraries(extrinsic_calib_charuco
+        ${catkin_LIBRARIES} arucoUtils
+        )
+
 ##########################################################################
 #                           FlyCapture SDK
 ##########################################################################
@@ -160,6 +170,19 @@ target_link_libraries(create_aruco_board
         ${OpenCV_LIBRARIES}
         )
 
+add_executable(create_charuco_board
+        src/utils/create_charuco_board.cpp
+        )
+target_link_libraries(create_charuco_board
+        ${OpenCV_LIBRARIES}
+        )
+
+add_executable(detect_board_charuco
+        src/utils/detect_board_charuco.cpp
+        )
+target_link_libraries(detect_board_charuco
+        ${OpenCV_LIBRARIES}
+        )
 
 add_executable(
         stereo_image_view
