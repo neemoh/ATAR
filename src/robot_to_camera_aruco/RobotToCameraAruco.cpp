@@ -117,9 +117,9 @@ void RobotToCameraAruco::SetupROS() {
     n.param<std::string>("cam_name_space", cam_name_space, "camera");
 
     if(cam_id)
-        image_topic_name << std::string("/") << cam_name_space <<"/right/image_color";
+        image_topic_name << std::string("/") << cam_name_space <<"/right/image_raw";
     else
-        image_topic_name << std::string("/") << cam_name_space <<"/left/image_color";
+        image_topic_name << std::string("/") << cam_name_space <<"/left/image_raw";
 
     ROS_INFO("Camera images will be read from topic '%s'", image_topic_name.str()
             .c_str());

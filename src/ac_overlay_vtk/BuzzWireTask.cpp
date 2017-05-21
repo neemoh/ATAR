@@ -185,7 +185,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
     // -------------------------------------------------------------------------
     // Stand MESH hq
     std::string inputFilename =
-            "/home/charm/development/ros_ws/src/ATAR/resources/cads/task1_4_stand"
+            "/home/nearlab/development/ros_ws/src/ATAR/resources/cads/task1_4_stand"
             ".STL";
     vtkSmartPointer<vtkSTLReader> stand_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
@@ -223,7 +223,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for generating
     // active constraints
-    inputFilename = "/home/charm/development/ros_ws/src/ATAR/resources/cads"
+    inputFilename = "/home/nearlab/development/ros_ws/src/ATAR/resources/cads"
             "/task1_4_tube.STL";
     vtkSmartPointer<vtkSTLReader> hq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
@@ -256,7 +256,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
 
     // -------------------------------------------------------------------------
     // MESH lq
-    inputFilename = "/home/charm/development/ros_ws/src/ATAR/resources/cads"
+    inputFilename = "/home/nearlab/development/ros_ws/src/ATAR/resources/cads"
             "/task1_4_wire.STL";
     vtkSmartPointer<vtkSTLReader> lq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
@@ -885,10 +885,10 @@ void BuzzWireTask::FindAndPublishDesiredToolPose() {
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-            ("/PSM2/tool_pose_desired", 10);
+            ("/PSM1/tool_pose_desired", 10);
     if(bimanual)
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                ("/PSM1/tool_pose_desired", 10);
+                ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(200);
 
