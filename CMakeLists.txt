@@ -124,7 +124,8 @@ add_executable(extrinsic_calib_charuco
         )
 
 target_link_libraries(extrinsic_calib_charuco
-        ${catkin_LIBRARIES} arucoUtils
+        arucoUtils
+        ${catkin_LIBRARIES}
         )
 
 ##########################################################################
