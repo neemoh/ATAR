@@ -1,13 +1,12 @@
 <launch>
 
-	<arg name="camera_name" default="/camera/left"/>    
-	<arg name= "left_cam_name" value= "flea14150439" />
-        <node pkg="teleop_vision" type="extrinsic_calib_aruco" name="extrinsic_aruco" output="screen" >
- 		<rosparam command="load" file="$(find teleop_vision)/launch/params_aruco_board.yaml" />
-        	<param name="cam_name" value="$(arg left_cam_name)" />
-		<param name="image_transport_namespace" value="$(arg camera_name)/image_color/"/>
-		<param name="board_to_cam_pose_topic_name" value="board_to_camera"/>
-		<param name="show_image" value="true"/>		
-        </node>
+	<node pkg="atar" type="extrinsic_calib_aruco" name="extrinsic_aruco_left" output="screen" >
+		<rosparam command="load" file="$(find atar)/launch/params_aruco_board_6_4_polimi.yaml" />
+		<param name="cam_name" value= "minoru_left" />
+		<param name="image_transport_namespace" value="/image_raw"/>
+		<param name="board_to_cam_pose_topic_name"
+			   value="/task_frame_to_camera_frame"/>
+		<param name="show_image" value="true"/>
+	</node>
 
 </launch>
