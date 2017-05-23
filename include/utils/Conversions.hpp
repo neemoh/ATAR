@@ -20,11 +20,11 @@ namespace conversions {
     void RvecTvecToKDLFrame(const cv::Vec3d _rvec, const cv::Vec3d _tvec,
                             KDL::Frame &_kdl);
 
-    void RvecTvecToPoseMsg(const cv::Vec3d _rvec, const cv::Vec3d _tvec,
-                           geometry_msgs::Pose & msg);
-
     void KDLFrameToRvectvec(const KDL::Frame _kdl, cv::Vec3d &_rvec,
                             cv::Vec3d &_tvec);
+
+    void RvecTvecToPoseMsg(const cv::Vec3d _rvec, const cv::Vec3d _tvec,
+                           geometry_msgs::Pose &_msg);
 
     void Matx33dToKdlRot(const cv::Matx33d _mat, KDL::Rotation &_kdl);
 

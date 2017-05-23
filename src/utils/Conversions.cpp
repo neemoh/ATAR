@@ -39,8 +39,8 @@ void conversions::KDLFrameToRvectvec(
 
 }
 
-void RvecTvecToPoseMsg(const cv::Vec3d rvec, const cv::Vec3d tvec,
-                       geometry_msgs::Pose & msg){
+void conversions::RvecTvecToPoseMsg(const cv::Vec3d rvec, const cv::Vec3d tvec,
+                       geometry_msgs::Pose &msg){
 
     KDL::Frame temp_frame;
     conversions::RvecTvecToKDLFrame(rvec,
