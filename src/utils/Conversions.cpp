@@ -39,6 +39,18 @@ void conversions::KDLFrameToRvectvec(
 
 }
 
+void RvecTvecToPoseMsg(const cv::Vec3d rvec, const cv::Vec3d tvec,
+                       geometry_msgs::Pose & msg){
+
+    KDL::Frame temp_frame;
+    conversions::RvecTvecToKDLFrame(rvec,
+                                    tvec,
+                                    temp_frame);
+    tf::poseKDLToMsg(temp_frame, msg);
+
+}
+
+
 void conversions::Matx33dToKdlRot(const cv::Matx33d _mat, KDL::Rotation &_kdl) {
     _kdl = KDL::Rotation(_mat(0, 0), _mat(0, 1), _mat(0, 2), _mat(1, 0), _mat(1, 1), _mat(1, 2),
         _mat(2, 0), _mat(2, 1), _mat(2, 2));
