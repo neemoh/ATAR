@@ -130,7 +130,7 @@ target_link_libraries(extrinsic_calib_charuco
         )
 
 add_executable(calibrate_camera_charuco
-        src/utils/calibrate_camera_charuco.cpp
+        src/intrinsic_calib/intrinsic_calibration_charuco.cpp
         )
 
 target_link_libraries(calibrate_camera_charuco

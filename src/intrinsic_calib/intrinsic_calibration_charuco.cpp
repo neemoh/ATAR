@@ -136,44 +136,10 @@ cv::Mat &Image(ros::Duration timeout) {
 
     return image_msg;
 }
-/**
- */
+
 static bool saveCameraParams(const string &filename, Size imageSize, float aspectRatio, int flags,
-                             const Mat &cameraMatrix, const Mat &distCoeffs, double totalAvgErr) {
-    FileStorage fs(filename, FileStorage::WRITE);
-    if(!fs.isOpened())
-        return false;
+                             const Mat &cameraMatrix, const Mat &distCoeffs, double totalAvgErr)
 
-    time_t tt;
-    time(&tt);
-    struct tm *t2 = localtime(&tt);
-    char buf[1024];
-    strftime(buf, sizeof(buf) - 1, "%c", t2);
-
-    fs << "calibration_time" << buf;
-
-    fs << "image_width" << imageSize.width;
-    fs << "image_height" << imageSize.height;
-
-    if(flags & CALIB_FIX_ASPECT_RATIO) fs << "aspectRatio" << aspectRatio;
-
-    if(flags != 0) {
-        sprintf(buf, "flags: %s%s%s%s",
-                flags & CALIB_USE_INTRINSIC_GUESS ? "+use_intrinsic_guess" : "",
-                flags & CALIB_FIX_ASPECT_RATIO ? "+fix_aspectRatio" : "",
-                flags & CALIB_FIX_PRINCIPAL_POINT ? "+fix_principal_point" : "",
-                flags & CALIB_ZERO_TANGENT_DIST ? "+zero_tangent_dist" : "");
-    }
-
-    fs << "flags" << flags;
-
-    fs << "camera_matrix" << cameraMatrix;
-    fs << "distortion_coefficients" << distCoeffs;
-
-    fs << "avg_reprojection_error" << totalAvgErr;
-
-    return true;
-}
 
 
 
@@ -412,4 +378,44 @@ int main(int argc, char *argv[]) {
     }
 
     return 0;
+}
+
+
+
+
+static bool saveCameraParams(const string &filename, Size imageSize, float aspectRatio, int flags,
+                             const Mat &cameraMatrix, const Mat &distCoeffs, double totalAvgErr) {
+    FileStorage fs(filename, FileStorage::WRITE);
+    if(!fs.isOpened())
+        return false;
+
+    time_t tt;
+    time(&tt);
+    struct tm *t2 = localtime(&tt);
+    char buf[1024];
+    strftime(buf, sizeof(buf) - 1, "%c", t2);
+
+    fs << "calibration_time" << buf;
+
+    fs << "image_width" << imageSize.width;
+    fs << "image_height" << imageSize.height;
+
+    if(flags & CALIB_FIX_ASPECT_RATIO) fs << "aspectRatio" << aspectRatio;
+
+    if(flags != 0) {
+        sprintf(buf, "flags: %s%s%s%s",
+                flags & CALIB_USE_INTRINSIC_GUESS ? "+use_intrinsic_guess" : "",
+                flags & CALIB_FIX_ASPECT_RATIO ? "+fix_aspectRatio" : "",
+                flags & CALIB_FIX_PRINCIPAL_POINT ? "+fix_principal_point" : "",
+                flags & CALIB_ZERO_TANGENT_DIST ? "+zero_tangent_dist" : "");
+    }
+
+    fs << "flags" << flags;
+
+    fs << "camera_matrix" << cameraMatrix;
+    fs << "distortion_coefficients" << distCoeffs;
+
+    fs << "avg_reprojection_error" << totalAvgErr;
+
+    return true;
 }
