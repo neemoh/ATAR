@@ -1,5 +1,5 @@
 <launch>
-    <arg name="camera_name" default="usb_cam" />
+    <arg name="camera_name" default="ecml" />
     <arg name= "left_cam_name" value= "minoru0" />
     <arg name= "right_cam_name" value= "minoru0" />
 
@@ -7,17 +7,17 @@
           type="robot_to_camera_aruco"
           name="robot_to_camera_aruco"
           output="screen">
-        <param name="cam_name" value= "$(arg left_cam_name)" />
+        <param name="cam_name" value= "$(arg camera_name)" />
         <!-- cam_id says which cam pose to use (0 for left and 1 for right.
          We are assuming that cam images are published on
          /camera/left/image_color or /camera/right/image_color-->
         <param name="cam_id" value= "0" />
-        <param name="cam_name_space" value= "$(arg camera_name)" />
+        <param name="cam_name_space" value= "/endoscope" />
         <param name= "left_cam_pose_topic_name"      value=
-                "/$(arg camera_name)/left/task_frame_to_camera_frame "/>
+                "/$(arg camera_name)/left/extrinsic_charuco/world_to_camera"/>
         <param name= "right_cam_pose_topic_name"      value=
-                "/$(arg camera_name)/right/task_frame_to_camera_frame "/>
-        <param name= "robot_arm_name"    value= "PSM2"/>
+                "/$(arg camera_name)/right/extrinsic_charuco/world_to_camera"/>
+        <param name= "robot_arm_name"    value= "PSM1"/>
         <param name= "frequency" value= "30" />
         <param name= "number_of_calibration_points" value= "6" />
         <param name= "visual_axis_length" value= "0.0436" />
@@ -26,25 +26,24 @@
     <group ns="$(arg camera_name)">
 
         <group ns="left">
-            <node pkg="atar" type="extrinsic_calib_aruco" name="extrinsic_aruco_left" output="screen" >
-                <rosparam command="load" file="$(find atar)/launch/params_aruco_board_6_4_polimi.yaml" />
-                <param name="cam_name" value= "$(arg left_cam_name)" />
-                <param name="image_transport_namespace" value="/$(arg camera_name)/left/image_raw"/>
+            <node pkg="atar" type="extrinsic_calib_charuco" name="extrinsic_charuco" output="screen" >
+                <rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi.yaml" />
+                <param name="cam_intrinsic_file" value="/home/nearlab/.ros/camera_info/ecml_intrinsics.yaml"/>
+                <param name="image_transport_namespace" value="/endoscope/left/image_raw"/>
                 <param name="board_to_cam_pose_topic_name"
-                       value="/$(arg camera_name)/left/task_frame_to_camera_frame"/>
+                       value="task_frame_to_camera_frame"/>
                 <param name="show_image" value="true"/>
-                <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
             </node>
         </group>
 
         <group ns="right" >
-            <node pkg="atar" type="extrinsic_calib_aruco" name="extrinsic_aruco_right" output="screen" >
-                <rosparam command="load" file="$(find atar)/launch/params_aruco_board_6_4_polimi.yaml" />
-                <param name= "cam_name" value= "$(arg right_cam_name)" />
-                <param name="image_transport_namespace" value="/$(arg camera_name)/right/image_raw"/>
-                <param name="board_to_cam_pose_topic_name" value="/$(arg camera_name)/right/task_frame_to_camera_frame"/>
+            <node pkg="atar" type="extrinsic_calib_charuco" name="extrinsic_charuco" output="screen" >
+                <rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi.yaml" />
+                <param name="cam_intrinsic_file" value="/home/nearlab/.ros/camera_info/ecml_intrinsics.yaml"/>
+                <param name="image_transport_namespace" value="/endoscope/right/image_raw"/>
+                <param name="board_to_cam_pose_topic_name"
+                       value="task_frame_to_camera_frame"/>
                 <param name="show_image" value="true"/>
-                <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
             </node>
         </group>
     </group>

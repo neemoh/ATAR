@@ -97,26 +97,26 @@ void OverlayROSConfig::SetupROS() {
 
         std::stringstream path;
         path << std::string(home_dir) << std::string("/.ros/camera_info/")
-             << left_cam_name << "_intrinsics.xml";
+             << left_cam_name << "_intrinsics.yaml";
         ReadCameraParameters(path.str(), camera_matrix[0],
                 camera_distortion[0]);
     } else
         ROS_ERROR(
                 "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
+                        "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.yaml",
                 n.resolveName("left_cam_name").c_str());
 
     std::string right_cam_name;
     if (n.getParam("right_cam_name", right_cam_name)) {
         std::stringstream path;
         path << std::string(home_dir) << std::string("/.ros/camera_info/")
-             << right_cam_name << "_intrinsics.xml";
+             << right_cam_name << "_intrinsics.yaml";
         ReadCameraParameters(path.str(), camera_matrix[1],
                              camera_distortion[1]);
     } else
         ROS_ERROR(
                 "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml",
+                        "file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.yaml",
                 n.resolveName("right_cam_name").c_str());
 
 

@@ -30,15 +30,13 @@ RobotToCameraAruco::RobotToCameraAruco(std::string node_name)
 
     // declaration of target markers for calib2
     for (uint i=0; i<num_calib_points; i++){
-        if(i<num_calib_points/2)
-            target.push_back(cv::Point3d((1+i)*(aruco_marker_length_in_meters+aruco_marker_separation_in_meters), aruco_marker_length_in_meters, 0.0));
-        else
-            target.push_back(cv::Point3d((1+i)*(aruco_marker_length_in_meters+aruco_marker_separation_in_meters), 2*aruco_marker_length_in_meters+aruco_marker_separation_in_meters, 0.0));
+        if(i<num_calib_points/3)
+            target.push_back(cv::Point3d((1+i)*(aruco_marker_length_in_meters), aruco_marker_length_in_meters, 0.0));
+        if(i>num_calib_points/3-1 && i<2*num_calib_points/3)
+            target.push_back(cv::Point3d((i+1-num_calib_points/3)*(aruco_marker_length_in_meters), 2*aruco_marker_length_in_meters, 0.0));
+        if(i>-1+2*num_calib_points/3)
+            target.push_back(cv::Point3d((i+1-2*num_calib_points/3)*(aruco_marker_length_in_meters), 3*aruco_marker_length_in_meters, 0.0));
     }
-
-    cv::projectPoints(target, task_frame_to_cam_rvec[cam_id],
-                      task_frame_to_cam_tvec[cam_id], camera_intrinsics.camMatrix,
-                      camera_intrinsics.distCoeffs, calib_points_screen);
 };
 
 
@@ -102,8 +100,7 @@ void RobotToCameraAruco::SetupROS() {
     if (n.getParam("cam_name", cam_name)) {
 
         std::stringstream path;
-        path << std::string(home_dir) << std::string("/.ros/camera_info/")
-             << cam_name << "_intrinsics.xml";
+        path << std::string(home_dir) << "/.ros/camera_info/" << cam_name << "_intrinsics.yaml";
         ReadCameraParameters(path.str(), camera_intrinsics);
     } else
         ROS_ERROR("%s Parameter '%s' is required. Place the intrinsic calibration "
@@ -377,6 +374,10 @@ void RobotToCameraAruco::Calib1CalculateTransformation(
 
 
 void RobotToCameraAruco::Calib2DrawTarget(cv::String &instructions, cv::Mat img) {
+
+    cv::projectPoints(target, task_frame_to_cam_rvec[cam_id],
+                      task_frame_to_cam_tvec[cam_id], camera_intrinsics.camMatrix,
+                      camera_intrinsics.distCoeffs, calib_points_screen);
 
     std::ostringstream oss;
     oss << "Take the tool tip to the target point then press s";
