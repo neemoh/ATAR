@@ -136,6 +136,17 @@ add_executable(calibrate_camera_charuco
 target_link_libraries(calibrate_camera_charuco
         ${catkin_LIBRARIES} arucoUtils
         )
+
+
+add_executable(stereo_usb_cam_publisher
+        src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp
+        )
+
+target_link_libraries(stereo_usb_cam_publisher
+        ${catkin_LIBRARIES}
+        )
+
+
 ##########################################################################
 #                           FlyCapture SDK
 ##########################################################################
