@@ -4,8 +4,8 @@
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
     <arg name="camera_namespace" value="endoscope"/>
-    <arg name= "left_cam_name" value= "ecml" />
-    <arg name= "right_cam_name" value= "ecmr" />
+    <arg name= "left_cam_name" value= "minoru_left" />
+    <arg name= "right_cam_name" value= "minoru_right" />
     <arg name= "haptic_referesh_rate" value= "200" />
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
@@ -39,8 +39,8 @@ ca        -->
              file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml -->
         <param name= "left_cam_name" value= "$(arg left_cam_name)" />
         <param name= "right_cam_name" value= "$(arg left_cam_name)" /> <!-- ATTENTION!!!! Using the same file for right due to a problem with my right camera-->
-        <param name= "left_image_topic_name" value= "/$(arg camera_namespace)/left/image_color" />
-        <param name= "right_image_topic_name" value= "/$(arg camera_namespace)/right/image_color"/>
+        <param name= "left_image_topic_name" value= "/left/image_raw" />
+        <param name= "right_image_topic_name" value= "/right/image_raw"/>
         <param name= "left_cam_pose_topic_name" value= "/$(arg camera_namespace)/left/board_to_camera "/>
         <param name= "right_cam_pose_topic_name" value= "/$(arg camera_namespace)/right/board_to_camera "/>
         <!-- About number_of_arms:
@@ -48,7 +48,7 @@ ca        -->
             // (for the moment the code generates active constraints for 1 arm only. this will be changed
             // to support the second arm soon.)
         -->
-        <param name="number_of_arms" value="1"/>
+        <param name="number_of_arms" value="2"/>
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
@@ -84,7 +84,7 @@ ca        -->
         <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
         <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
         <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
-        <!--<param name="max_force" value="4"/>-->
+        <!--<param name="max_force" value="3"/>-->
         <!--<param name="max_torque" value="0.03"/>&lt;!&ndash; 0.03 &ndash;&gt;-->
         <!--<param name="linear_elastic_coeff" value="1000"/>-->
         <!--<param name="linear_damping_coeff" value="10"/>-->

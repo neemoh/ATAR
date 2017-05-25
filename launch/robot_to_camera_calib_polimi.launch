@@ -1,5 +1,5 @@
 <launch>
-    <arg name="camera_name" default="ecml" />
+    <arg name="camera_name" default="camera" />
     <arg name= "left_cam_name" value= "minoru0" />
     <arg name= "right_cam_name" value= "minoru0" />
 
@@ -7,17 +7,17 @@
           type="robot_to_camera_aruco"
           name="robot_to_camera_aruco"
           output="screen">
-        <param name="cam_name" value= "$(arg camera_name)" />
+        <param name="cam_name" value= "minoru_left" />
         <!-- cam_id says which cam pose to use (0 for left and 1 for right.
          We are assuming that cam images are published on
          /camera/left/image_color or /camera/right/image_color-->
         <param name="cam_id" value= "0" />
-        <param name="cam_name_space" value= "/endoscope" />
+        <param name="cam_name_space" value= "" />
         <param name= "left_cam_pose_topic_name"      value=
                 "/$(arg camera_name)/left/extrinsic_charuco/world_to_camera"/>
         <param name= "right_cam_pose_topic_name"      value=
                 "/$(arg camera_name)/right/extrinsic_charuco/world_to_camera"/>
-        <param name= "robot_arm_name"    value= "PSM1"/>
+        <param name= "robot_arm_name"    value= "PSM2"/>
         <param name= "frequency" value= "30" />
         <param name= "number_of_calibration_points" value= "6" />
         <param name= "visual_axis_length" value= "0.0436" />
@@ -28,8 +28,8 @@
         <group ns="left">
             <node pkg="atar" type="extrinsic_calib_charuco" name="extrinsic_charuco" output="screen" >
                 <rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi.yaml" />
-                <param name="cam_intrinsic_file" value="/home/nearlab/.ros/camera_info/ecml_intrinsics.yaml"/>
-                <param name="image_transport_namespace" value="/endoscope/left/image_raw"/>
+                <param name="cam_intrinsic_file" value="/home/nearlab/.ros/camera_info/minoru_left_intrinsics.yaml"/>
+                <param name="image_transport_namespace" value="/left/image_raw"/>
                 <param name="board_to_cam_pose_topic_name"
                        value="task_frame_to_camera_frame"/>
                 <param name="show_image" value="true"/>
@@ -39,8 +39,8 @@
         <group ns="right" >
             <node pkg="atar" type="extrinsic_calib_charuco" name="extrinsic_charuco" output="screen" >
                 <rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi.yaml" />
-                <param name="cam_intrinsic_file" value="/home/nearlab/.ros/camera_info/ecml_intrinsics.yaml"/>
-                <param name="image_transport_namespace" value="/endoscope/right/image_raw"/>
+                <param name="cam_intrinsic_file" value="/home/nearlab/.ros/camera_info/minoru_right_intrinsics.yaml"/>
+                <param name="image_transport_namespace" value="/right/image_raw"/>
                 <param name="board_to_cam_pose_topic_name"
                        value="task_frame_to_camera_frame"/>
                 <param name="show_image" value="true"/>
