@@ -7,7 +7,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/aruco/charuco.hpp>
 #include <iostream>
-#include <opencv-3.2.0-dev/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>

@@ -41,7 +41,7 @@ the use of this software, even if advised of the possibility of such damage.
 #include <opencv2/aruco/charuco.hpp>
 #include <vector>
 #include <iostream>
-#include <opencv-3.2.0-dev/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 using namespace cv;

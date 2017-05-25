@@ -5,14 +5,14 @@
 
 #include <vtkCamera.h>
 #include <vtkImageData.h>
-#include <opencv-3.2.0-dev/opencv2/calib3d.hpp>
+#include <opencv2/calib3d.hpp>
 #include <vtkImageActor.h>
 #include <vtkObjectFactory.h>
-#include <opencv-3.2.0-dev/opencv2/imgproc.hpp>
-#include <opencv-3.2.0-dev/opencv2/highgui.hpp>
-#include <vtkFrameBufferObject.h>
-#include <vtkOpenGLRenderer.h>
-#include <vtkFrameBufferObject2.h>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <vtk-6.2/vtkFrameBufferObject.h>
+#include <vtk-6.2/vtkOpenGLRenderer.h>
+#include <vtk-6.2/vtkFrameBufferObject2.h>
 
 Rendering::Rendering()
 //        : background_renderer_(NULL)
