@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
         image_transport
         message_generation
         geometry_msgs
+        custom_msgs
         active_constraints
         )
 
@@ -30,15 +31,15 @@ find_package(catkin REQUIRED COMPONENTS
  #       FILES
   #      CalculateStereoCamsTransfromFromTopics.srv)
 
-add_message_files(
-        FILES
-        TaskState.msg
-)
+#add_message_files(
+#        FILES
+#        TaskState.msg
+#)
 
-generate_messages(
-        DEPENDENCIES
-        geometry_msgs
-)
+#generate_messages(
+#        DEPENDENCIES
+#        geometry_msgs
+#)
 
 catkin_package(CATKIN_DEPENDS
         message_runtime

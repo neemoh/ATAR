@@ -20,7 +20,7 @@
 
 //#include "utils/Drawings.h"
 #include "active_constraints/ActiveConstraintParameters.h"
-#include "atar/TaskState.h"
+#include "custom_msgs/TaskState.h"
 #include "BuzzWireTask.h"
 
 
@@ -46,7 +46,7 @@ public:
             const active_constraints::ActiveConstraintParameters &);
 
     // publishes the active constraint parameters
-    void PublishTaskState(atar::TaskState msg);
+    void PublishTaskState(custom_msgs::TaskState msg);
 
     // CALLBACKS
     void ImageLeftCallback(const sensor_msgs::ImageConstPtr &msg);

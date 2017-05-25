@@ -350,7 +350,7 @@ void OverlayROSConfig::SetupROS() {
 
     // Publisher for the task state
     std::string task_state_topic_name = "/task_state";
-    publisher_task_state = n.advertise<atar::TaskState>(
+    publisher_task_state = n.advertise<custom_msgs::TaskState>(
             task_state_topic_name.c_str(), 1);
     ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
 
@@ -504,7 +504,7 @@ void OverlayROSConfig::PublishACtiveConstraintParameters(
 
 }
 
-void OverlayROSConfig::PublishTaskState(atar::TaskState msg) {
+void OverlayROSConfig::PublishTaskState(custom_msgs::TaskState msg) {
     publisher_task_state.publish(msg);
 
 }

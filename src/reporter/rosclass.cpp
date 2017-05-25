@@ -9,7 +9,7 @@
 #include "rosclass.hpp"
 
 #include <active_constraints/ActiveConstraintParameters.h>
-#include "atar/TaskState.h"
+#include "custom_msgs/TaskState.h"
 
 
 RosObj::RosObj(QObject *parent, std::string node_name)
@@ -316,7 +316,7 @@ void RosObj::Master1ACParamsCallback(
 }
 
 // task state
-void RosObj::TaskSTateCallback(const atar::TaskStateConstPtr &msg){
+void RosObj::TaskSTateCallback(const custom_msgs::TaskStateConstPtr &msg){
     task_state.task_name = msg->task_name;
     task_state.number_of_repetition = msg->number_of_repetition;
     task_state.task_state = msg->task_state;

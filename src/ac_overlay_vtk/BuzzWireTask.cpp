@@ -853,7 +853,7 @@ void BuzzWireTask::UpdateTubeColor() {
 
 }
 
-atar::TaskState BuzzWireTask::GetTaskStateMsg() {
+custom_msgs::TaskState BuzzWireTask::GetTaskStateMsg() {
     return task_state_msg;
 }
 
