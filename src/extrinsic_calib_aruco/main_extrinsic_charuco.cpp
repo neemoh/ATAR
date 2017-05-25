@@ -7,7 +7,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/aruco/charuco.hpp>
 #include <iostream>
-#include <opencv-3.2.0-dev/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
         world_to_cam_pose_topic_name = "world_to_camera";
 
     ros::Publisher pub_board_to_cam_pose =
-            n.advertise<geometry_msgs::Pose>(world_to_cam_pose_topic_name, 1, 0);
+            n.advertise<geometry_msgs::PoseStamped>(world_to_cam_pose_topic_name, 1, 0);
     ROS_INFO("Publishing board to camera pose on '%s'",
              n.resolveName(world_to_cam_pose_topic_name).c_str());
 
@@ -127,13 +127,16 @@ int main(int argc, char *argv[]) {
                                 axisLength);
 
                 // publish the pose
-                geometry_msgs::Pose board_to_cam_msg;
-                conversions::RvecTvecToPoseMsg(rvec, tvec, board_to_cam_msg);
+                geometry_msgs::PoseStamped board_to_cam_msg;
+                conversions::RvecTvecToPoseMsg(rvec, tvec, board_to_cam_msg.pose);
                 pub_board_to_cam_pose.publish(board_to_cam_msg);
 
             }
 
+
             imshow("out", imageCopy);
+
+
             char key = (char) waitKey(1);
             if (key == 27) break;
         }

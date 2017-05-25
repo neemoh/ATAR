@@ -63,7 +63,7 @@ public:
 
     // Eddy Andre addition
     const double length_x = 0.0782, length_y = 0.0514;
-    const double  aruco_marker_length_in_meters = 0.0129, aruco_marker_separation_in_meters = 0.0027;
+    const double  aruco_marker_length_in_meters = 0.023, aruco_marker_separation_in_meters = 0.0;
     std::vector< Eigen::Vector3d> meas_points;
     //std::vector< Eigen::Vector3d> points_on_camera;
     Eigen::Matrix<double, 3, 6> target_mat;

@@ -182,27 +182,27 @@ int main(int argc, char *argv[]) {
     }
 
     bool refindStrategy = parser.get<bool>("rs");
-    int camId = parser.get<int>("ci");
-    String video;
+//    int camId = parser.get<int>("ci");
+//    String video;
 
-    if(parser.has("v")) {
-        video = parser.get<String>("v");
-    }
+//    if(parser.has("v")) {
+//        video = parser.get<String>("v");
+//    }
 
     if(!parser.check()) {
         parser.printErrors();
         return 0;
     }
 
-    VideoCapture inputVideo;
-    int waitTime;
-    if(!video.empty()) {
-        inputVideo.open(video);
-        waitTime = 0;
-    } else {
-        inputVideo.open(camId);
-        waitTime = 10;
-    }
+//    VideoCapture inputVideo;
+//    int waitTime;
+//    if(!video.empty()) {
+//        inputVideo.open(video);
+//        waitTime = 0;
+//    } else {
+//        inputVideo.open(camId);
+//        waitTime = 10;
+//    }
 
     Ptr<aruco::Dictionary> dictionary =
         aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
     image_transport::ImageTransport it = image_transport::ImageTransport(n);
     // register image transport subscriber
     image_transport::Subscriber sub = it.subscribe(
-        "/endoscope/left/image_raw", 1, &CameraImageCallback);
+        "/right/image_raw", 1, &CameraImageCallback);
 
     //while(inputVideo.grab()) {
         while(ros::ok() ){
@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
                 );
 
                 imshow("out", imageCopy);
-                char key = (char) waitKey(waitTime);
+                char key = (char) waitKey(1);
                 if (key == 27)
                     break;
                 if (key == 'c' && ids.size() > 0) {
