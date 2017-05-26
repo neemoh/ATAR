@@ -21,9 +21,8 @@
 //#include "utils/Drawings.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
-#include "BuzzWireTask.h"
 #include <boost/thread/thread.hpp>
-
+#include "VTKTask.h"
 
 class OverlayROSConfig {
 

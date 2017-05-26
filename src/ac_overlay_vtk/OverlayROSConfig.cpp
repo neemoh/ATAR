@@ -6,6 +6,8 @@
 
 #include <utils/Conversions.hpp>
 #include <pwd.h>
+#include "BuzzWireTask.h"
+#include "KidneyTask.h"
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
         : n(node_name)
@@ -548,7 +550,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     else if(task_id ==2){
 
         std::cout << "Starting new task. "<< std::endl;
-        task_ptr   = new BuzzWireTask(stl_files_dir, false,
+        task_ptr   = new KidneyTask(stl_files_dir, false,
                                       (bool) (n_arms - 1), with_guidance);
         // assign the tool pose pointers
         ros::spinOnce();
@@ -567,6 +569,8 @@ void OverlayROSConfig::StopTask() {
 
     std::cout << "interrupting haptics thread. "<< std::endl;
     haptics_thread.interrupt();
+    ros::Rate sleep(50);
+    sleep.sleep();
     delete task_ptr;
 }
 

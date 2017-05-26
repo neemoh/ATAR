@@ -58,7 +58,8 @@
  */
 
 
-enum TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint, RepetitionComplete};
+enum class TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
+    RepetitionComplete};
 
 
 class BuzzWireTask : public VTKTask{

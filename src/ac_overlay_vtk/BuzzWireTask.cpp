@@ -569,7 +569,7 @@ void BuzzWireTask::UpdateActors() {
 
     // Populate the task state message
     task_state_msg.task_name = "BuzzWire";
-    task_state_msg.task_state = task_state;
+    task_state_msg.task_state = (uint8_t)task_state;
     task_state_msg.number_of_repetition = number_of_repetition;
     if (task_state == TaskState::ToStartPoint
         || task_state == TaskState::ToEndPoint) {
