@@ -19,7 +19,7 @@
 #include <std_msgs/Char.h>
 
 //#include "utils/Drawings.h"
-#include "active_constraints/ActiveConstraintParameters.h"
+#include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include "BuzzWireTask.h"
 #include <boost/thread/thread.hpp>
@@ -44,7 +44,7 @@ public:
 
     // publishes the active constraint parameters
     void PublishACtiveConstraintParameters(
-            const active_constraints::ActiveConstraintParameters &);
+            const custom_msgs::ActiveConstraintParameters &);
 
     // publishes the active constraint parameters
     void PublishTaskState(custom_msgs::TaskState msg);

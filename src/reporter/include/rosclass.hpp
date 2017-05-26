@@ -19,8 +19,8 @@
 #include <fstream>
 #include <iostream>
 
-#include <active_constraints/ActiveConstraintParameters.h>
-#include "custom_msgs/TaskState.h"
+#include <custom_msgs/ActiveConstraintParameters.h>
+#include <custom_msgs/TaskState.h>
 
 class RosObj : public QThread
 {
@@ -48,9 +48,9 @@ public:
     void Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg);
 
     void Master1ACParamsCallback(
-            const active_constraints::ActiveConstraintParametersConstPtr & msg);
+            const custom_msgs::ActiveConstraintParametersConstPtr & msg);
     void Master0ACParamsCallback(
-            const active_constraints::ActiveConstraintParametersConstPtr & msg);
+            const custom_msgs::ActiveConstraintParametersConstPtr & msg);
 
     void TaskSTateCallback(const custom_msgs::TaskStateConstPtr  &msg);
 
@@ -113,7 +113,7 @@ private:
             (const geometry_msgs::Wrench::ConstPtr &msg);
 
     void (RosObj::*master_ac_params_callbacks[2])
-            (const active_constraints::ActiveConstraintParametersConstPtr &msg);
+            (const custom_msgs::ActiveConstraintParametersConstPtr &msg);
 
 
 
@@ -148,7 +148,7 @@ public:
     custom_msgs::TaskState task_state;
 
     // left and right master active constraints parameters
-    active_constraints::ActiveConstraintParameters ac_params[2];
+    custom_msgs::ActiveConstraintParameters ac_params[2];
 
     // foot pedals;
     bool clutch_pedal_pressed;

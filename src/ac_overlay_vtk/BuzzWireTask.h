@@ -28,7 +28,7 @@
 #include <vtkCornerAnnotation.h>
 
 #include "Rendering.h"
-#include "active_constraints/ActiveConstraintParameters.h"
+#include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
@@ -85,7 +85,7 @@ public:
     bool IsACParamChanged();
 
     // returns the ac parameters
-    active_constraints::ActiveConstraintParameters GetACParameters();
+    custom_msgs::ActiveConstraintParameters GetACParameters();
 
     custom_msgs::TaskState GetTaskStateMsg();
 
@@ -164,7 +164,7 @@ private:
 
     // for not we use the same type of active constraint for both arms
     bool ac_params_changed;
-    active_constraints::ActiveConstraintParameters ac_parameters;
+    custom_msgs::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];

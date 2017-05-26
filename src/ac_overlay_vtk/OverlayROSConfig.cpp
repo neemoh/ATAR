@@ -311,7 +311,7 @@ void OverlayROSConfig::SetupROS() {
         // Publishing the active constraint parameters that may change during the task
         param_name.str("");
         param_name << std::string("/")<< master_names[n_arm] << "/active_constraint_param";
-        publisher_ac_params[n_arm] = n.advertise<active_constraints::ActiveConstraintParameters>(
+        publisher_ac_params[n_arm] = n.advertise<custom_msgs::ActiveConstraintParameters>(
                 param_name.str().c_str(), 1 );
         ROS_INFO("Will publish on %s", param_name.str().c_str());
 
@@ -492,7 +492,7 @@ void OverlayROSConfig::LockAndGetImages(ros::Duration timeout, cv::Mat images[])
 
 
 void OverlayROSConfig::PublishACtiveConstraintParameters(
-        const active_constraints::ActiveConstraintParameters &ac_params) {
+        const custom_msgs::ActiveConstraintParameters &ac_params) {
 
     publisher_ac_params[0].publish(ac_params);
     if(n_arms==2)

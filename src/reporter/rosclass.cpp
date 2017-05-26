@@ -8,7 +8,7 @@
 
 #include "rosclass.hpp"
 
-#include <active_constraints/ActiveConstraintParameters.h>
+#include <custom_msgs/ActiveConstraintParameters.h>
 #include "custom_msgs/TaskState.h"
 
 
@@ -291,7 +291,7 @@ void RosObj::Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) {
 
 // MTMs AC params
 void RosObj::Master0ACParamsCallback(
-        const active_constraints::ActiveConstraintParametersConstPtr & msg){
+        const custom_msgs::ActiveConstraintParametersConstPtr & msg){
     ac_params[0].active = msg->active;
     ac_params[0].method = msg->method;
     ac_params[0].angular_damping_coeff = msg->angular_damping_coeff;
@@ -304,7 +304,7 @@ void RosObj::Master0ACParamsCallback(
 
 
 void RosObj::Master1ACParamsCallback(
-        const active_constraints::ActiveConstraintParametersConstPtr & msg){
+        const custom_msgs::ActiveConstraintParametersConstPtr & msg){
     ac_params[1].active = msg->active;
     ac_params[1].method = msg->method;
     ac_params[1].angular_damping_coeff = msg->angular_damping_coeff;

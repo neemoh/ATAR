@@ -11,7 +11,7 @@
 #include <vector>
 #include <custom_msgs/TaskState.h>
 #include <kdl/frames.hpp>
-#include <active_constraints/ActiveConstraintParameters.h>
+#include <custom_msgs/ActiveConstraintParameters.h>
 
 
 class VTKTask{
@@ -50,7 +50,7 @@ public:
 
 
     // returns the ac parameters
-    virtual active_constraints::ActiveConstraintParameters GetACParameters(){};
+    virtual custom_msgs::ActiveConstraintParameters GetACParameters(){};
 
     virtual void FindAndPublishDesiredToolPose() = 0;
 

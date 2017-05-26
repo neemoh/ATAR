@@ -826,7 +826,7 @@ bool BuzzWireTask::IsACParamChanged() {
 
 
 //------------------------------------------------------------------------------
-active_constraints::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
+custom_msgs::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
 
     ac_params_changed = false;
     // assuming once we read it we can consider it unchanged
