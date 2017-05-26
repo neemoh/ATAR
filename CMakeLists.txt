@@ -295,7 +295,10 @@ add_executable(
         src/ac_overlay_vtk/OverlayROSConfig.h
         src/ac_overlay_vtk/VTKTask.h
         src/ac_overlay_vtk/BuzzWireTask.cpp
-        src/ac_overlay_vtk/BuzzWireTask.h)
+        src/ac_overlay_vtk/BuzzWireTask.h
+        src/ac_overlay_vtk/KidneyTask.cpp
+        src/ac_overlay_vtk/KidneyTask.h
+)
 
 target_link_libraries(
         ac_overlay_vtk

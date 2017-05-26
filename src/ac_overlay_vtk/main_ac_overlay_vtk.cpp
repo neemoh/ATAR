@@ -7,8 +7,7 @@
 #include "utils/Conversions.hpp"
 #include "OverlayROSConfig.h"
 #include <std_msgs/Float32.h>
-
-#include <boost/thread/thread.hpp>
+#include "Rendering.h"
 
 int main(int argc, char **argv)
 {
@@ -61,9 +60,6 @@ int main(int argc, char **argv)
             // Add the task actors to the graphics
             graphics.AddActorsToScene(rc.task_ptr->GetActors());
             task_is_running = true;
-
-
-
         }
 
 
