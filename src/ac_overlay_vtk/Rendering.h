@@ -45,8 +45,9 @@ public:
 
     void AddActorsToScene(std::vector< vtkSmartPointer<vtkProp> > actors);
 
-    void Render();
+    void RemoveAllActorsFromScene();
 
+    void Render();
     void GetRenderedImage(cv::Mat & img);
 
 

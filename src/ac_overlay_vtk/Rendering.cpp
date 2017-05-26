@@ -340,6 +340,12 @@ void Rendering::GetRenderedImage(cv::Mat &img) {
     }
 }
 
+void Rendering::RemoveAllActorsFromScene() {
+
+        scene_renderer_[0]->RemoveAllViewProps();
+        scene_renderer_[1]->RemoveAllViewProps();
+}
+
 
 //------------------------------------------------------------------------------
 void VTKConversions::AxisAngleToVTKMatrix(const cv::Vec3d cam_rvec,
