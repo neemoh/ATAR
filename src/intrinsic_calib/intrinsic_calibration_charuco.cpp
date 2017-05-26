@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
     image_transport::ImageTransport it = image_transport::ImageTransport(n);
     // register image transport subscriber
     image_transport::Subscriber sub = it.subscribe(
-        "/right/image_raw", 1, &CameraImageCallback);
+        "/image_raw", 1, &CameraImageCallback);
 
     //while(inputVideo.grab()) {
         while(ros::ok() ){

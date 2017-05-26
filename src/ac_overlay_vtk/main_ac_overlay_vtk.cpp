@@ -39,6 +39,7 @@ int main(int argc, char **argv)
     bool task_is_running = 0;
     while (ros::ok())
     {
+        graphics.SetWorldToCameraTransform(rc.cam_rvec, rc.cam_tvec);
 
         // --------------------------------------------------------------------------------------
         // keyboard commands

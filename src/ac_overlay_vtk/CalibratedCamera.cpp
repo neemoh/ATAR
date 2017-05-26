@@ -78,7 +78,7 @@ void CalibratedCamera::SetExtrinsicParameters(vtkSmartPointer<vtkMatrix4x4> matr
     this->SetViewUp(viewUp[0], viewUp[1], viewUp[2]);
 //  this->SetClippingRange(1, 5000);
 
-    std::cout << "Camera position = " << origin[0] << ", " << origin[1] << ", " << origin[2] << std::endl;
+//    std::cout << "Camera position = " << origin[0] << ", " << origin[1] << ", " << origin[2] << std::endl;
     this->Modified();
 }
 
