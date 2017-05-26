@@ -6,7 +6,6 @@
 
 #include <utils/Conversions.hpp>
 #include <pwd.h>
-#include <boost/thread/thread.hpp>
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
         : n(node_name)
@@ -23,17 +22,6 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name)
     SetupROS();
 
 
-    // create the task
-    double ring_radius = 0.004;
-    buzz_task   = new BuzzWireTask(ring_radius, show_reference_frames,
-                                   (bool) (n_arms - 1), with_guidance);
-
-    ros::spinOnce();
-    buzz_task->SetCurrentToolPosePointer(pose_current_tool[0], 0);
-    buzz_task->SetCurrentToolPosePointer(pose_current_tool[1], 1);
-
-    boost::thread thread_b(boost::bind(
-            &BuzzWireTask::FindAndPublishDesiredToolPose, buzz_task));
 
 }
 
@@ -84,6 +72,14 @@ void OverlayROSConfig::SetupROS() {
     n.param<bool>("enable_guidance", with_guidance, true);
     ROS_INFO("Starting the BuzzWire task with guidance: %s",
              with_guidance ? "true" : "false");
+
+
+    if (n.getParam("stl_files_dir", stl_files_dir)) {
+        ROS_INFO("stl files will be loaded from: %s", stl_files_dir.c_str());
+    } else
+        ROS_ERROR(
+                "Parameter '%s' is required. ",
+                n.resolveName("stl_files_dir").c_str());
 
     // ------------------------------------- IMAGES -----------------------------------------
 
@@ -517,17 +513,61 @@ void OverlayROSConfig::RecordingEventsCallback(const std_msgs::CharConstPtr
 
     switch(msg->data){
         case 'r':
-            buzz_task->ResetTask();
+            task_ptr->ResetTask();
             break;
 
         case 'd':
-            buzz_task->ResetCurrentAcquisition();
+            task_ptr->ResetCurrentAcquisition();
             break;
 
         default:
             break;
     }
 
+}
+
+void OverlayROSConfig::StartTask(const uint task_id) {
+
+    // create the task
+    if(task_id ==1){
+
+        // allocate anew dynamic task
+        std::cout << "Starting new task. "<< std::endl;
+        task_ptr   = new BuzzWireTask(stl_files_dir, show_reference_frames,
+                                       (bool) (n_arms - 1), with_guidance);
+        // assign the tool pose pointers
+        ros::spinOnce();
+        task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
+        task_ptr->SetCurrentToolPosePointer(pose_current_tool[1], 1);
+
+        // bind the haptics thread
+        haptics_thread = boost::thread(boost::bind(
+                &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
+
+    }
+    else if(task_id ==2){
+
+        std::cout << "Starting new task. "<< std::endl;
+        task_ptr   = new BuzzWireTask(stl_files_dir, false,
+                                      (bool) (n_arms - 1), with_guidance);
+        // assign the tool pose pointers
+        ros::spinOnce();
+        task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
+        task_ptr->SetCurrentToolPosePointer(pose_current_tool[1], 1);
+
+        // bind the haptics thread
+        haptics_thread = boost::thread(boost::bind(
+                &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
+
+    }
+
+}
+
+void OverlayROSConfig::StopTask() {
+
+    std::cout << "interrupting haptics thread. "<< std::endl;
+    haptics_thread.interrupt();
+    delete task_ptr;
 }
 
 

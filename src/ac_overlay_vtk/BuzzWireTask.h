@@ -4,6 +4,7 @@
 
 #ifndef TELEOP_VISION_BUZZWIRETASK_H
 #define TELEOP_VISION_BUZZWIRETASK_H
+#include "VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -20,13 +21,13 @@
 #include <vtkParametricFunctionSource.h>
 #include <vtkCellLocator.h>
 #include <vtkTransformPolyDataFilter.h>
-#include "Rendering.h"
 #include <vtkCellData.h>
 #include <vtkDoubleArray.h>
 #include <vtkFloatArray.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkCornerAnnotation.h>
 
+#include "Rendering.h"
 #include "active_constraints/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include <ros/ros.h>
@@ -60,15 +61,17 @@
 enum TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint, RepetitionComplete};
 
 
-class BuzzWireTask {
+class BuzzWireTask : public VTKTask{
 public:
 
-    BuzzWireTask(const double ring_radius, const bool show_ref_frames,
-                 const bool num_tools, const bool with_guidance);
+    BuzzWireTask(const std::string stl_files_dir,
+                     const bool show_ref_frames, const bool num_tools,
+                     const bool with_guidance);
 
     // returns all the task actors to be sent to the rendering part
-    std::vector< vtkSmartPointer <vtkProp> > GetActors();
-
+    std::vector< vtkSmartPointer <vtkProp> > GetActors() {
+        return actors;
+    }
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
 
@@ -124,9 +127,10 @@ private:
 
     // -------------------------------------------------------------------------
     // task logic
-    bool bimanual;
-    bool with_guidance;
+//    bool bimanual;
+//    bool with_guidance;
     TaskState task_state;
+    std::string stl_files_dir;
 
     KDL::Vector idle_point;
     KDL::Vector start_point;
@@ -156,7 +160,7 @@ private:
     double position_error_norm[2];
     double orientation_error_norm[2];
 
-    bool show_ref_frames;
+//    bool show_ref_frames;
 
     // for not we use the same type of active constraint for both arms
     bool ac_params_changed;
@@ -168,7 +172,7 @@ private:
     uint destination_ring_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
 
-    std::vector<vtkSmartPointer<vtkProp>>           actors;
+//    std::vector<vtkSmartPointer<vtkProp>>           actors;
 
     // actors that are updated during the task
     vtkSmartPointer<vtkActor>                       ring_actor[2];

@@ -36,9 +36,8 @@ int main(int argc, char **argv)
     graphics.SetEnableBackgroundImage(true);
     graphics.Render();
 
-    // Add the task actors to the graphics
-    graphics.AddActorsToScene(rc.buzz_task->GetActors());
 
+    bool task_is_running = 0;
     while (ros::ok())
     {
 
@@ -50,9 +49,23 @@ int main(int argc, char **argv)
             ros::shutdown();
         else if (key == 'f')  //full screen
             VisualUtils::SwitchFullScreen(cv_window_name);
-        else if (key == '1'){
-            ROS_INFO("Task 1 Selected");
+        else if (key == '1' || key == '2'){
+            int task_id = key - '0';
+            ROS_INFO("Task %d Selected", task_id);
+            if(task_is_running) {
+                graphics.RemoveAllActorsFromScene();
+                rc.StopTask();
+            }
+
+            rc.StartTask((uint)task_id);
+            // Add the task actors to the graphics
+            graphics.AddActorsToScene(rc.task_ptr->GetActors());
+            task_is_running = true;
+
+
+
         }
+
 
         if(rc.GetNewImages(cam_images)) {
 
@@ -65,7 +78,8 @@ int main(int argc, char **argv)
             //                            cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
 
             // update the moving actors
-            rc.buzz_task->UpdateActors();
+            if(task_is_running)
+                rc.task_ptr->UpdateActors();
 
             // update the camera images and view angle (in case window changes size)
             graphics.UpdateBackgroundImage(cam_images);
@@ -82,13 +96,14 @@ int main(int argc, char **argv)
                                        "bgr8", augmented_stereo_image).toImageMsg());
 
             // publish the active constraint parameters if needed
-            if(rc.buzz_task->IsACParamChanged()) {
-                rc.PublishACtiveConstraintParameters(
-                        rc.buzz_task->GetACParameters());
+            if(task_is_running) {
+                if (rc.task_ptr->IsACParamChanged()) {
+                    rc.PublishACtiveConstraintParameters(
+                            rc.task_ptr->GetACParameters());
+                }
+                // publish the task state
+                rc.PublishTaskState(rc.task_ptr->GetTaskStateMsg());
             }
-            // publish the task state
-            rc.PublishTaskState(rc.buzz_task->GetTaskStateMsg());
-
             // check time performance
             // std::cout <<  "it took: " << (ros::Time::now() - start).toNSec() /1000000 << std::endl;
 

@@ -5,6 +5,7 @@
 #include <utils/Conversions.hpp>
 #include <vtkCubeSource.h>
 #include <vtkConeSource.h>
+#include <boost/thread/thread.hpp>
 #include "BuzzWireTask.h"
 
 
@@ -20,13 +21,15 @@ namespace Colors {
     double DeepPink[3] {1.0, 0.08, 0.58};
 };
 
-BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
-                           const bool biman, const bool with_guidance)
+BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
+                           const bool show_ref_frames, const bool biman,
+                           const bool with_guidance)
         :
-        ring_radius(ring_radius),
-        show_ref_frames(show_ref_frames),
-        bimanual(biman),
-        with_guidance(with_guidance),
+        VTKTask(show_ref_frames, biman, with_guidance),
+        stl_files_dir(stl_file_dir),
+//        show_ref_frames(show_ref_frames),
+//        bimanual(biman),
+//        with_guidance(with_guidance),
         destination_ring_counter(0),
         ac_params_changed(true),
         task_state(TaskState::Idle),
@@ -88,6 +91,7 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
 
     // -------------------------------------------------------------------------
     // TOOL RINGS
+    ring_radius = 0.004;
     double ring_cross_section_radius = 0.0005;
     double source_scales = 0.006;
 
@@ -184,13 +188,13 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
     }
     // -------------------------------------------------------------------------
     // Stand MESH hq
-    std::string inputFilename =
-            "/home/nearlab/development/ros_ws/src/ATAR/resources/cads/task1_4_stand"
-            ".STL";
+    std::stringstream input_file_dir;
+    input_file_dir << stl_files_dir << std::string("task1_4_stand.STL");
+
     vtkSmartPointer<vtkSTLReader> stand_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << inputFilename << std::endl;
-    stand_mesh_reader->SetFileName(inputFilename.c_str());
+    std::cout << "Loading stl file from: " << input_file_dir.str() << std::endl;
+    stand_mesh_reader->SetFileName(input_file_dir.str().c_str());
     stand_mesh_reader->Update();
 
     // transform
@@ -223,12 +227,13 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for generating
     // active constraints
-    inputFilename = "/home/nearlab/development/ros_ws/src/ATAR/resources/cads"
-            "/task1_4_tube.STL";
+    input_file_dir.str("");
+    input_file_dir << stl_files_dir << std::string("task1_4_tube.STL");
+
     vtkSmartPointer<vtkSTLReader> hq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << inputFilename << std::endl;
-    hq_mesh_reader->SetFileName(inputFilename.c_str());
+    std::cout << "Loading stl file from: " << input_file_dir.str() << std::endl;
+    hq_mesh_reader->SetFileName(input_file_dir.str().c_str());
     hq_mesh_reader->Update();
     vtkSmartPointer<vtkTransform> tube_transform =
             vtkSmartPointer<vtkTransform>::New();
@@ -256,12 +261,13 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
 
     // -------------------------------------------------------------------------
     // MESH lq
-    inputFilename = "/home/nearlab/development/ros_ws/src/ATAR/resources/cads"
-            "/task1_4_wire.STL";
+    input_file_dir.str("");
+    input_file_dir << stl_files_dir << std::string("task1_4_wire.STL");
+
     vtkSmartPointer<vtkSTLReader> lq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << inputFilename << std::endl;
-    lq_mesh_reader->SetFileName(inputFilename.c_str());
+    std::cout << "Loading stl file from: " << input_file_dir.str() << std::endl;
+    lq_mesh_reader->SetFileName(input_file_dir.str().c_str());
     lq_mesh_reader->Update();
 
 
@@ -415,9 +421,9 @@ BuzzWireTask::BuzzWireTask(const double ring_radius, const bool show_ref_frames,
 }
 
 //------------------------------------------------------------------------------
-std::vector<vtkSmartPointer<vtkProp> > BuzzWireTask::GetActors() {
-    return actors;
-}
+//std::vector<vtkSmartPointer<vtkProp> > BuzzWireTask::GetActors() {
+//    return actors;
+//}
 
 //------------------------------------------------------------------------------
 void BuzzWireTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
@@ -894,7 +900,6 @@ void BuzzWireTask::FindAndPublishDesiredToolPose() {
 
     while (ros::ok())
     {
-
         VTKConversions::KDLFrameToVTKMatrix(*tool_current_pose_kdl[0],
                                             tool_current_pose[0]);
         // find the center of the ring
@@ -926,7 +931,7 @@ void BuzzWireTask::FindAndPublishDesiredToolPose() {
 
         ros::spinOnce();
         loop_rate.sleep();
-
+        boost::this_thread::interruption_point();
     }
 }
 

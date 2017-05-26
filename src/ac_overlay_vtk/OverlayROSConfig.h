@@ -22,6 +22,7 @@
 #include "active_constraints/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include "BuzzWireTask.h"
+#include <boost/thread/thread.hpp>
 
 
 class OverlayROSConfig {
@@ -70,6 +71,12 @@ public:
     // during the acquisitions.
     void RecordingEventsCallback(const std_msgs::CharConstPtr &msg);
 
+    // stop the running haptic thread (if any), destruct the previous task
+    // (if any) and start a new task and thread.
+    void StartTask(const uint task_id);
+
+    // stop the running haptic thread and destruct the  task object
+    void StopTask();
 
 private:
 
@@ -80,6 +87,8 @@ private:
     void ReadCameraParameters(const std::string file_path,
                               cv::Mat &camera_matrix,
                               cv::Mat &camera_distortion);
+
+    boost::thread haptics_thread;
 
 public:
     // IN ALL CODE 0 is Left Cam, 1 is Right cam
@@ -105,7 +114,7 @@ public:
     bool new_right_image = false;
     bool new_left_image = false;
 
-    BuzzWireTask *buzz_task;
+    VTKTask *task_ptr;
 
 private:
 
@@ -120,6 +129,7 @@ private:
     int image_height;
     int num_cam_pose_publishers;
 
+    std::string stl_files_dir;
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscribers[2];
 
