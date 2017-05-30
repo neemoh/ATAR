@@ -123,6 +123,8 @@ target_link_libraries(ExtrinsicCalibArucoNodelet
 
 add_executable(extrinsic_calib_charuco
         src/extrinsic_calib_aruco/main_extrinsic_charuco.cpp
+        src/intrinsic_calib/IntrinsicCalibrationCharuco.cpp
+        src/intrinsic_calib/IntrinsicCalibrationCharuco.h
         )
 
 target_link_libraries(extrinsic_calib_charuco

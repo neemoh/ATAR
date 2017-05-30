@@ -15,6 +15,8 @@
 #include <image_transport/image_transport.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <include/utils/Conversions.hpp>
+#include <pwd.h>
+#include "src/intrinsic_calib/IntrinsicCalibrationCharuco.h"
 
 using namespace std;
 using namespace cv;
@@ -57,14 +59,23 @@ int main(int argc, char *argv[]) {
     ros::Rate loop_rate = ros::Rate(200);
 
 
-    //----------- Read camera parameters
-    std::string cam_intrinsic_file;
-    if (!n.getParam("cam_intrinsic_file", cam_intrinsic_file))
-        ROS_ERROR("Parameter '%s' is required.",
-                  n.resolveName("cam_intrinsic_file").c_str());
+    std::stringstream instruction_msg;
 
-    Mat camMatrix, distCoeffs;
-    readCameraParameters(cam_intrinsic_file, camMatrix, distCoeffs);
+    //----------- Read camera parameters
+    struct passwd *pw = getpwuid(getuid());
+    const char *home_dir = pw->pw_dir;
+
+    std::stringstream cam_intrinsics_path;
+    std::string cam_name;
+    n.param<std::string>("camera_name", cam_name, "camera");
+    cam_intrinsics_path << std::string(home_dir) << std::string("/.ros/camera_info/")
+                        << cam_name << "_intrinsics.yaml";
+    Mat cam_matrix, dist_coeffs;
+    if(!readCameraParameters(cam_intrinsics_path.str(), cam_matrix, dist_coeffs))
+        instruction_msg << std::string(
+                "Did not find the intrinsic calibration data in ") <<
+                        cam_intrinsics_path.str() <<
+                        " Press C to perform intrinsic calibration.";
     //-----------
 
     //----------- Read boardparameters
@@ -89,25 +100,29 @@ int main(int argc, char *argv[]) {
 
     //----------- ROS pub and sub
     // advertise publishers
-    std::string world_to_cam_pose_topic_name;
-    if (!n.getParam("world_to_cam_pose_topic_name", world_to_cam_pose_topic_name))
-        world_to_cam_pose_topic_name = "world_to_camera";
+    std::stringstream pose_topic_name;
+    pose_topic_name << std::string("/")
+                                 << cam_name << "/world_to_camera_transform";
 
-    ros::Publisher pub_board_to_cam_pose =
-            n.advertise<geometry_msgs::PoseStamped>(world_to_cam_pose_topic_name, 1, 0);
+    ros::Publisher publisher_pose =n.advertise<geometry_msgs::PoseStamped>
+            (pose_topic_name.str(), 1, 0);
     ROS_INFO("Publishing board to camera pose on '%s'",
-             n.resolveName(world_to_cam_pose_topic_name).c_str());
+             pose_topic_name.str().c_str());
 
-    std::string image_transport_namespace =
-            GetCameraTopicName(n);
+    std::string image_transport_namespace = GetCameraTopicName(n);
     image_transport::ImageTransport it = image_transport::ImageTransport(n);
     // register image transport subscriber
     image_transport::Subscriber sub = it.subscribe(
             image_transport_namespace, 1, &CameraImageCallback);
     //-----------
 
+    bool show_image;
+    n.param<bool>("show_image", show_image, true);
 
-    //while(inputVideo.grab()) {
+    //----------- Intrinsic Calibration
+    IntrinsicCalibrationCharuco IC(image_transport_namespace, board_params);
+    //-----------
+
     while(ros::ok() ){
         if(new_image) {
 
@@ -118,27 +133,49 @@ int main(int argc, char *argv[]) {
 
             Vec3d rvec, tvec;
             bool valid_pose = DetectCharucoBoardPose(image, charucoboard,
-                                                     dictionary, camMatrix,
-                                                     distCoeffs, rvec, tvec);
+                                                     dictionary, cam_matrix,
+                                                     dist_coeffs, rvec, tvec);
 
             if (valid_pose) {
                 // draw the axes
-                aruco::drawAxis(imageCopy, camMatrix, distCoeffs, rvec, tvec,
+                aruco::drawAxis(imageCopy, cam_matrix, dist_coeffs, rvec, tvec,
                                 axisLength);
 
                 // publish the pose
                 geometry_msgs::PoseStamped board_to_cam_msg;
                 conversions::RvecTvecToPoseMsg(rvec, tvec, board_to_cam_msg.pose);
-                pub_board_to_cam_pose.publish(board_to_cam_msg);
+                publisher_pose.publish(board_to_cam_msg);
 
             }
 
-
-            imshow("out", imageCopy);
-
+            if(show_image) {
+                cv::putText(
+                        imageCopy, instruction_msg.str(),
+                        cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5,
+                        cv::Scalar(255, 0, 0), 2
+                );
+                imshow(("extrinsic charuco " + cam_name).c_str(), imageCopy);
+            }
 
             char key = (char) waitKey(1);
             if (key == 27) break;
+
+            else if(key == 'c'){
+
+                // get home directory
+
+
+                double intrinsic_calib_err;
+                if(IC.DoCalibration(cam_intrinsics_path.str(),
+                                 intrinsic_calib_err,
+                                 cam_matrix,
+                                 dist_coeffs))
+                    instruction_msg.str("");
+                else
+                    instruction_msg.str("Intrinsic Calibration failed. Please"
+                                                " repeat.");
+            }
+
         }
         ros::spinOnce();
         loop_rate.sleep();
@@ -187,6 +224,8 @@ static bool readCameraParameters(string filename,
         return false;
     fs["camera_matrix"] >> camMatrix;
     fs["distortion_coefficients"] >> distCoeffs;
+    if(camMatrix.empty() || distCoeffs.empty())
+        return false;
     return true;
 }
 
@@ -233,11 +272,11 @@ bool DetectCharucoBoardPose(cv::Mat &image,
     bool validPose = false;
     if (camMatrix.total() != 0)
         validPose = EstimatePoseCharucoBoard(charucoCorners,
-                                                    charucoIds,
-                                                    charucoboard,
-                                                    camMatrix,
-                                                    distCoeffs, rvec,
-                                                    tvec);
+                                             charucoIds,
+                                             charucoboard,
+                                             camMatrix,
+                                             distCoeffs, rvec,
+                                             tvec);
 
 
 //    double currentTime =
