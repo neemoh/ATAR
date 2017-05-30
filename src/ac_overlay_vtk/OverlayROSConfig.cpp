@@ -261,6 +261,8 @@ void OverlayROSConfig::SetupROS() {
 
     // ------------------------------------- TOOLS -----------------------------------------
     n.param<int>("number_of_arms", n_arms, 1);
+    if(n_arms<1 || n_arms>2)
+        throw std::runtime_error("number_of_arms must be 1 or 2");
     ROS_INFO("Expecting '%d' arm(s)", n_arms);
 
 //    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
