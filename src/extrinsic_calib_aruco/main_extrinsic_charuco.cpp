@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     n.param<bool>("show_image", show_image, true);
 
     //----------- Intrinsic Calibration
-    IntrinsicCalibrationCharuco IC(image_transport_namespace, board_params);
+    IntrinsicCalibrationCharuco * IC_ptr;
     //-----------
 
     while(ros::ok() ){
@@ -164,9 +164,10 @@ int main(int argc, char *argv[]) {
 
                 // get home directory
 
-
+                IC_ptr = new IntrinsicCalibrationCharuco(
+                        image_transport_namespace, board_params);
                 double intrinsic_calib_err;
-                if(IC.DoCalibration(cam_intrinsics_path.str(),
+                if(IC_ptr->DoCalibration(cam_intrinsics_path.str(),
                                  intrinsic_calib_err,
                                  cam_matrix,
                                  dist_coeffs))
@@ -174,6 +175,7 @@ int main(int argc, char *argv[]) {
                 else
                     instruction_msg.str("Intrinsic Calibration failed. Please"
                                                 " repeat.");
+                delete IC_ptr;
             }
 
         }
