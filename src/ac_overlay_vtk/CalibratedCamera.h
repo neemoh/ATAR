@@ -49,6 +49,7 @@ public:
 
     /**
     * \brief Update the view angle of the virtual Camera according to window size
+     * Note that the windows is the opengl window here,
     */
     void UpdateViewAngle(const int& width, const int& height);
 

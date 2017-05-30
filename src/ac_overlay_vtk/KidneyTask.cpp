@@ -197,7 +197,7 @@ KidneyTask::KidneyTask(const std::string stl_file_dir,
     // transform
     vtkSmartPointer<vtkTransform> kidney_mesh_transform =
             vtkSmartPointer<vtkTransform>::New();
-    kidney_mesh_transform->Translate(0.050, 0.060, 0.025);
+    kidney_mesh_transform->Translate(0.050, 0.020, 0.0);
 //    kidney_mesh_transform->RotateX(180);
 //    kidney_mesh_transform->RotateZ(150);
     kidney_mesh_transform->Scale(0.01, 0.01, 0.01);

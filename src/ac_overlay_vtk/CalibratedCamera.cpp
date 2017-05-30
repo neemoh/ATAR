@@ -54,7 +54,9 @@ void CalibratedCamera::SetIntrinsicParameters(const double& fx, const double& fy
     fy_ = fy;
     cx_ = cx;
     cy_ = cy;
-    this->Modified();
+
+    std::cout << "fx_: " <<  fx_ << " fy_: " <<  fy_
+              << " cx_: " <<  cx_ << " cy_: " <<  cy_ << std::endl;
 }
 
 
@@ -62,9 +64,9 @@ void CalibratedCamera::SetIntrinsicParameters(const double& fx, const double& fy
 void CalibratedCamera::SetExtrinsicParameters(vtkSmartPointer<vtkMatrix4x4> matrix)
 {
 
-    double origin[4]     = {0, 0,    0,    1};
-    double focalPoint[4] = {0, 0,   1, 1};
-    double viewUp[4]     = {0, -1, 0,    1};
+    double origin[4]     = {0,  0,   0, 1};
+    double focalPoint[4] = {0,  0,   1, 1};
+    double viewUp[4]     = {0, -1,   0, 1};
 
     matrix->MultiplyPoint(origin, origin);
     matrix->MultiplyPoint(focalPoint, focalPoint);
