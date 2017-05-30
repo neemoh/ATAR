@@ -97,7 +97,7 @@ void OverlayROSConfig::SetupROS() {
         path << std::string(home_dir) << std::string("/.ros/camera_info/")
              << left_cam_name << "_intrinsics.yaml";
         ReadCameraParameters(path.str(), camera_matrix[0],
-                camera_distortion[0]);
+                             camera_distortion[0]);
     } else
         ROS_ERROR(
                 "Parameter '%s' is required. Place the intrinsic calibration "
@@ -206,24 +206,22 @@ void OverlayROSConfig::SetupROS() {
     else if (num_cam_pose_publishers == 1 || num_cam_pose_publishers == 2){
         // If a parameter is set, use that
         // Left image pose subscriber. Get the topic name parameter and make sure it is being published
-        std::string left_cam_pose_topic_name;
-        if (n.getParam("left_cam_pose_topic_name", left_cam_pose_topic_name)) {
-            // if the topic name is found, check if something is being published on it
-            if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-                    left_cam_pose_topic_name, ros::Duration(4))) {
-                ROS_WARN("Topic '%s' is not publishing.",
-                         n.resolveName(left_cam_pose_topic_name).c_str());
-            } else
-                ROS_INFO(
-                        "[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
-                        n.resolveName(left_cam_pose_topic_name).c_str());
-        } else {
-            ROS_ERROR("Parameter '%s' is required.",
-                      n.resolveName("left_cam_pose_topic_name").c_str());
-            all_required_params_found = false;
-        }
+        std::stringstream left_cam_pose_topic_name;
+        left_cam_pose_topic_name << std::string("/")
+                                 << left_cam_name << "/world_to_camera_transform";
+        // if the topic name is found, check if something is being published on it
+        if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
+                left_cam_pose_topic_name.str(), ros::Duration(4))) {
+            ROS_WARN("Topic '%s' is not publishing.",
+                     left_cam_pose_topic_name.str().c_str());
+        } else
+            ROS_INFO(
+                    "[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
+                    left_cam_pose_topic_name.str().c_str());
+
         subscriber_camera_pose_left = n.subscribe(
-                left_cam_pose_topic_name, 1, &OverlayROSConfig::LeftCamPoseCallback,
+                left_cam_pose_topic_name.str(), 1,
+                &OverlayROSConfig::LeftCamPoseCallback,
                 this);
 
 
@@ -231,25 +229,21 @@ void OverlayROSConfig::SetupROS() {
             // Right camera pose will be needed only if the fixed transformation between right and
             // left camera is not provided as a parameter.
             // Right image pose subscriber. Get the topic name parameter and make sure it is being published
-            std::string right_cam_pose_topic_name;
-            if (n.getParam("right_cam_pose_topic_name", right_cam_pose_topic_name)) {
-                // if the topic name is found, check if something is being published on it
-                if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-                        right_cam_pose_topic_name, ros::Duration(4)))
-                    ROS_WARN("%s parameter was not provided and topic '%s' is not being published yet.",
-                             n.resolveName("right_cam_pose_topic_name").c_str(),
-                             right_cam_pose_topic_name.c_str());
-                else
-                    ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
+            std::stringstream right_cam_pose_topic_name;
 
-                             n.resolveName(right_cam_pose_topic_name).c_str());
-            } else {
-                ROS_ERROR("Since right_cam_pose_topic_name parameter was not provided"
-                                  "parameter '%s' is required.", n.resolveName("right_cam_pose_topic_name").c_str());
-                all_required_params_found = false;
-            }
+            right_cam_pose_topic_name << std::string("/")
+                                      << left_cam_name << "/world_to_camera_transform";
+            // if the topic name is found, check if something is being published on it
+            if (!ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
+                    right_cam_pose_topic_name.str(), ros::Duration(4)))
+                ROS_WARN("Topic '%s' is not being published yet.",
+                         right_cam_pose_topic_name.str().c_str());
+            else
+                ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
+                         right_cam_pose_topic_name.str().c_str());
+
             subscriber_camera_pose_right = n.subscribe(
-                    right_cam_pose_topic_name, 1, &OverlayROSConfig::RightCamPoseCallback, this);
+                    right_cam_pose_topic_name.str(), 1, &OverlayROSConfig::RightCamPoseCallback, this);
 
 
         }
@@ -354,12 +348,12 @@ void OverlayROSConfig::SetupROS() {
 
     subscriber_recording_events = n.subscribe(
             "/recording_events", 1, &OverlayROSConfig::RecordingEventsCallback,
-                                              this);
+            this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /task_state");
 
     n.param<bool>("show_reference_frames", show_reference_frames, true);
 
-        // advertise publishers
+    // advertise publishers
     //    std::string board_to_cam_pose_topic_name;
     //    if (!n.getParam("board_to_cam_pose_topic_name", board_to_cam_pose_topic_name))
     //        board_to_cam_pose_topic_name = "board_to_camera";
@@ -536,7 +530,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         // allocate anew dynamic task
         std::cout << "Starting new task. "<< std::endl;
         task_ptr   = new BuzzWireTask(stl_files_dir, show_reference_frames,
-                                       (bool) (n_arms - 1), with_guidance);
+                                      (bool) (n_arms - 1), with_guidance);
         // assign the tool pose pointers
         ros::spinOnce();
         task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
@@ -551,7 +545,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
 
         std::cout << "Starting new task. "<< std::endl;
         task_ptr   = new KidneyTask(stl_files_dir, false,
-                                      (bool) (n_arms - 1), with_guidance);
+                                    (bool) (n_arms - 1), with_guidance);
         // assign the tool pose pointers
         ros::spinOnce();
         task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
