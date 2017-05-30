@@ -208,7 +208,7 @@ void Rendering::SetImageCameraToFaceImage(const int id) {
     double widthRatio = imageWidth / (windowSize[0]/2);
     double heightRatio = imageHeight / windowSize[1];
 
-    double scale = 1;
+    double scale;
     if (widthRatio > heightRatio) {
         scale = 0.5 * imageWidth *
                 ((double) windowSize[1] / (double)(windowSize[0]/2));
@@ -329,6 +329,8 @@ void Rendering::GetRenderedImage(cv::Mat &img) {
     int dims[3];
     image->GetDimensions(dims);
 
+    std::cout << " dims[0] " << dims[0] << " dims[1] " << dims[1] << " "
+            "dims[2] " << dims[2] <<std::endl;
     if(dims[0]>0) {
         cv::Mat openCVImage(dims[1], dims[0], CV_8UC3,
                             image->GetScalarPointer()); // Unsigned int, 4 channels
