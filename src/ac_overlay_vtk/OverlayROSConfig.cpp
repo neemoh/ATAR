@@ -537,6 +537,7 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                      left_cam_to_right_cam_tr.p[0],
                      left_cam_to_right_cam_tr.p[1],
                      left_cam_to_right_cam_tr.p[2]);
+            found_left_cam_to_right_cam_tr = true;
         }
     } else if (new_cam_pose[0] && found_left_cam_to_right_cam_tr) {
         pose_cam[1] = left_cam_to_right_cam_tr * pose_cam[0];
