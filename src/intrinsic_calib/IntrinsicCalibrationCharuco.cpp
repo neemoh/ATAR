@@ -12,7 +12,9 @@
 
 IntrinsicCalibrationCharuco::IntrinsicCalibrationCharuco(
         std::string img_topic_namespace,
-        std::vector<float> charuco_board_params) {
+        std::vector<float> charuco_board_params) :
+        image_topic_ns(img_topic_namespace)
+{
 
     if(charuco_board_params.size()!=5)
         throw std::runtime_error("charuco_board_params must have 5 elements");
@@ -43,8 +45,10 @@ bool IntrinsicCalibrationCharuco::DoCalibration(std::string outputFile,
     ros::NodeHandle n("IntrinsicCalibrationCharuco");
     ros::Rate loop_rate = ros::Rate(50);
     image_transport::ImageTransport it = image_transport::ImageTransport(n);
-    image_transport::Subscriber sub = it.subscribe("/image_raw", 1,
+    image_transport::Subscriber sub = it.subscribe(image_topic_ns, 1,
                                                    &IntrinsicCalibrationCharuco::CameraImageCallback, this);
+    ROS_INFO("IntrinsicCalibrationCharuco subscribed to %s", image_topic_ns
+            .c_str());
     std::string window_name = "Intrinsic calibration";
     // -----------------------------------------------------------------------//
 

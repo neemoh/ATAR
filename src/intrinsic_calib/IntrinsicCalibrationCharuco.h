@@ -39,6 +39,7 @@ private:
     std::vector< std::vector< int > > allIds;
     std::vector< cv::Mat > allImgs;
     cv::Size imgSize;
+    std::string image_topic_ns;
 
 
 };
