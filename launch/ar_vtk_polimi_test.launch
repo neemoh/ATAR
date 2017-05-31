@@ -14,10 +14,11 @@
     </group>
 
     <node pkg="atar" type="extrinsic_calib_charuco" name="extrinsic_charuco" output="screen" >
-        <rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi.yaml" />
+        <rosparam command="load"
+                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
         <param name="camera_name" value="$(arg left_cam_name)"/>
         <param name="image_transport_namespace" value="/image_raw"/>
-        <param name="show_image" value="false"/>
+        <param name="show_image" value="true"/>
     </node>
 
     <!-- Node recording the data-->
