@@ -14,8 +14,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "ac_overlay");
     OverlayROSConfig rc (ros::this_node::getName());
 
-    //    ros::Rate loop_rate(rc.desired_pose_update_freq);
-
     // Create the window for the video feed
     std::string cv_window_name = "Augmented Stereo images";
     cvNamedWindow(cv_window_name.c_str() ,CV_WINDOW_NORMAL);
@@ -29,17 +27,25 @@ int main(int argc, char **argv)
 
     Rendering graphics;
 
-    graphics.SetWorldToCameraTransform(rc.cam_rvec, rc.cam_tvec);
+    // in case camera poses are set as parameters
+    cv::Vec3d cam_rvec[2], cam_tvec[2];
+    rc.GetCameraPoses(cam_rvec, cam_tvec);
+    graphics.SetWorldToCameraTransform(cam_rvec, cam_tvec);
+
+    // set the intrinsics and configure the background image
     graphics.SetCameraIntrinsics(rc.camera_matrix);
     graphics.ConfigureBackgroundImage(cam_images);
     graphics.SetEnableBackgroundImage(true);
     graphics.Render();
 
-
     bool task_is_running = 0;
+
     while (ros::ok())
     {
-        graphics.SetWorldToCameraTransform(rc.cam_rvec, rc.cam_tvec);
+        // --------------------------------------------------------------------------------------
+        // Update cam poses if needed
+        if(rc.GetNewCameraPoses(cam_rvec, cam_tvec))
+            graphics.SetWorldToCameraTransform(cam_rvec, cam_tvec);
 
         // --------------------------------------------------------------------------------------
         // keyboard commands
@@ -49,6 +55,7 @@ int main(int argc, char **argv)
             ros::shutdown();
         else if (key == 'f')  //full screen
             VisualUtils::SwitchFullScreen(cv_window_name);
+
         else if (key == '1' || key == '2'){
             int task_id = key - '0';
             ROS_INFO("Task %d Selected", task_id);

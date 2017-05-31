@@ -35,7 +35,19 @@ public:
     void LockAndGetImages(ros::Duration timeout, cv::Mat images[]);
 
     // return true if both images are newly received and copy them in imgs
-    bool GetNewImages(cv::Mat imgs[]) ;
+    bool GetNewImages(cv::Mat imgs[]);
+
+    // returns the poses of the cameras. Intended to be used once at
+    // initializations to load the poses provided as parameters. The poses
+    // can be updated and accessed by the GetNewCameraPoses method in the loop
+    void GetCameraPoses(cv::Vec3d cam_rvec[2], cv::Vec3d cam_tvec[2]);
+
+    // If the poses of the cameras are published, this method will return
+    // true when any of the cam poses are updated. If left or right pose is
+    // missing it will be found transforming the other available pose with the
+    // left_cam_to_right_cam_tr. This transformation is calculated once in a
+    // locking call in this method.
+    bool GetNewCameraPoses(cv::Vec3d cam_rvec[2], cv::Vec3d cam_tvec[2]);
 
     //overlay image publishers
     image_transport::Publisher publisher_overlayed[2];
@@ -102,7 +114,7 @@ public:
     cv::Mat camera_distortion[2];
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
-
+    bool cam_poses_provided_as_params;
     KDL::Frame slave_frame_to_task_frame[2];
 
     KDL::Frame left_cam_to_right_cam_tr;
@@ -110,9 +122,9 @@ public:
     cv::Vec3d cam_rvec[2];
     cv::Vec3d cam_tvec[2];
 
-    bool new_right_image = false;
-    bool new_left_image = false;
-
+    bool new_image[2] = {false, false};
+    bool new_cam_pose[2] = {false, false};;
+    bool found_left_cam_to_right_cam_tr = false;
     VTKTask *task_ptr;
 
 private:
@@ -126,7 +138,6 @@ private:
 
     int image_width;
     int image_height;
-    int num_cam_pose_publishers;
 
     std::string stl_files_dir;
     image_transport::ImageTransport *it;
@@ -134,12 +145,12 @@ private:
 
     image_transport::Subscriber subscriber_image_left;
     image_transport::Subscriber subscriber_image_right;
-    ros::Subscriber subscriber_camera_pose_left;
-    ros::Subscriber subscriber_camera_pose_right;
-    ros::Subscriber subscriber_foot_pedal_clutch;
+    ros::Subscriber sub_cam_pose_left;
+    ros::Subscriber sub_cam_pose_right;
+    ros::Subscriber sub_foot_pedal_clutch;
     ros::Subscriber subscriber_recording_events;
 
-    ros::Subscriber * subscriber_tool_current_pose;
+    ros::Subscriber * subtool_current_pose;
     ros::Publisher * publisher_tool_pose_desired;
     ros::Publisher * publisher_ac_params;
     ros::Publisher publisher_task_state;
