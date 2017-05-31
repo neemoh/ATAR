@@ -3,12 +3,12 @@
   # task_frame_to_right_cam_frame Used only if right cam pose is not provided online
   # task_frame_to_left_cam_frameUsed only if left cam pose is not provided online
   # left_cam_frame_to_right_cam_frameUsed when one of the cam poses are is available online
-  left_cam_frame_to_right_cam_frame: [-0.0, -0.0, -0.0, -0.0, 0.0, -0.0, 0.0]
+  # left_cam_frame_to_right_cam_frame: [-0.0, -0.0, -0.0, -0.0, 0.0, -0.0, 0.0]
 
   task_frame_to_PSM1_frame: [-0.09066794722852849, 0.16788129256060855, -0.1264314344705173,
     0.02128803875056674, -0.012111095038814357, 0.9995703221644653, 0.016103162147293192]
   task_frame_to_PSM2_frame: [-0.0, -0.0, -0.0, 0.0, -0.0, 0.0, 0.0]
-  task_frame_to_left_cam_frame: [0.04451962093879373, -0.059800517836005214, 0.2711003128139292,
-    0.002588056086919294, 0.9525151848417788, -0.30441690354723744, -0.006202696690543112]
-  task_frame_to_right_cam_frame: [0.017320936275890438, -0.06828727266594417, 0.2774773774500186,
-    0.019181974758346876, 0.9565647133440508, -0.28708188015128105, 0.04690410555793286]
+  world_frame_to_left_cam_frame: [0.0792294774569, -0.0625801545724, 0.27141894149,
+    -0.028709680692, 0.985893665499, -0.104818263216, -0.127289301434]
+  world_frame_to_right_cam_frame: [0.0792294774569, -0.0625801545724, 0.27141894149,
+                                       -0.028709680692, 0.985893665499, -0.104818263216, -0.127289301434]
