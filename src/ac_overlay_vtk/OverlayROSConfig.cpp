@@ -6,6 +6,7 @@
 
 #include <utils/Conversions.hpp>
 #include <pwd.h>
+#include <src/robot_to_camera_aruco/ArmToWorldCalibration.h>
 #include "BuzzWireTask.h"
 #include "KidneyTask.h"
 
@@ -245,13 +246,6 @@ void OverlayROSConfig::SetupROS() {
         // we will later check to see if something is publishing on the current slave pose
         check_topic_name = param_name.str();
 
-//        // The desired point according to the active constraint geometry definition
-//        param_name.str("");
-//        param_name << std::string("/")<< slave_names[n_arm] << "/tool_pose_desired";
-//        publisher_tool_pose_desired[n_arm] = n.advertise<geometry_msgs::PoseStamped>(
-//                param_name.str().c_str(), 1 );
-//        ROS_INFO("Will publish on %s", param_name.str().c_str());
-
         // Publishing the active constraint parameters that may change during the task
         param_name.str("");
         param_name << std::string("/")<< master_names[n_arm] << "/active_constraint_param";
@@ -259,33 +253,20 @@ void OverlayROSConfig::SetupROS() {
                 param_name.str().c_str(), 1 );
         ROS_INFO("Will publish on %s", param_name.str().c_str());
 
-        // current twists Not used for now
-        //        param_name.str("");
-        //        param_name << std::string("/") << slave_names[n_arm] << "/twist_tool_current";
-        //        publisher_twist_current_tool[n_arm] = n.advertise<geometry_msgs::TwistStamped>(
-        //                param_name.str().c_str(), 1 );
-        //        ROS_INFO("Will publish on %s", param_name.str().c_str());
-        //
-        //
-        //        param_name.str("");
-        //        param_name << std::string("/dvrk/") <<slave_names[n_arm] << "/twist_body_current";
-        //        subscriber_twist_current_tool[n_arm] = n.subscribe(param_name.str(), 1,
-        //                                                           twist_current_tool_callbacks[n_arm], this);
-        //        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
-
-
         // the transformation from the coordinate frame of the slave (RCM) to the task coordinate
         // frame.
         param_name.str("");
-        param_name << (std::string)"/calibrations/task_frame_to_" << slave_names[n_arm] << "_frame";
+        param_name << (std::string)"/calibrations/world_frame_to_" <<
+                                                               slave_names[n_arm] << "_frame";
         std::vector<double> vect_temp = std::vector<double>(7, 0.0);
         if(n.getParam(param_name.str(), vect_temp)){
-            conversions::VectorToKDLFrame(vect_temp, slave_frame_to_task_frame[n_arm]);
+            conversions::VectorToKDLFrame(vect_temp, slave_frame_to_world_frame[n_arm]);
             // param is from task to RCM, we want the inverse
-            slave_frame_to_task_frame[n_arm] = slave_frame_to_task_frame[n_arm].Inverse();
+            slave_frame_to_world_frame[n_arm] = slave_frame_to_world_frame[n_arm].Inverse();
         }
         else
-            ROS_ERROR("Parameter %s is needed.", param_name.str().c_str());
+            ROS_INFO("Parameter %s was not found. Arm to world calibration "
+                             "must be performed.", param_name.str().c_str());
     }
 
     // Publisher for the task state
@@ -362,7 +343,7 @@ void OverlayROSConfig::Tool1PoseCurrentCallback(
     // take the pose from the arm frame to the task frame
     KDL::Frame frame;
     tf::poseMsgToKDL(msg->pose, frame);
-    pose_current_tool[0] =  slave_frame_to_task_frame[0] * frame;
+    pose_current_tool[0] =  slave_frame_to_world_frame[0] * frame;
 
 }
 
@@ -371,7 +352,7 @@ void OverlayROSConfig::Tool2PoseCurrentCallback(
     // take the pose from the arm frame to the task frame
     KDL::Frame frame;
     tf::poseMsgToKDL(msg->pose, frame);
-    pose_current_tool[1] =  slave_frame_to_task_frame[1] * frame;
+    pose_current_tool[1] =  slave_frame_to_world_frame[1] * frame;
 }
 
 
@@ -572,6 +553,49 @@ void OverlayROSConfig::GetCameraPoses(cv::Vec3d *cam_rvec_out,
     cam_tvec_out[1] = cam_tvec[1];
 }
 
+void OverlayROSConfig::DoArmToWorldFrameCalibration(const uint arm_id) {
+
+
+    //getting the name of the arms
+    std::stringstream param_name;
+    std::string slave_name;
+    param_name << std::string("slave_") << arm_id + 1 << "_name";
+    n.getParam(param_name.str(), slave_name);
+
+    std::stringstream arm_pose_namespace;
+    arm_pose_namespace << std::string("/dvrk/") <<slave_name << "/position_cartesian_current";
+
+    std::stringstream cam_pose_namespace;
+    std::string left_cam_name;
+    n.getParam("left_cam_name", left_cam_name);
+    cam_pose_namespace << std::string("/") << left_cam_name
+                       << "/world_to_camera_transform";
+
+    std::string cam_image_name_space ;
+    n.getParam("left_image_topic_name", cam_image_name_space);
+
+    KDL::Frame arm_to_world_frame;
+    ArmToWorldCalibration AWC;
+    KDL::Frame world_to_arm_frame;
+    if(AWC.DoCalibration(cam_image_name_space,
+                      cam_pose_namespace.str(), arm_pose_namespace.str(),
+                      camera_matrix[0], camera_distortion[0],
+                      6, 0.0247, world_to_arm_frame)){
+
+        // set ros param
+        std::stringstream param_name;
+        param_name << std::string("/calibrations/world_frame_to_") <<
+                                                                   slave_name << "_frame";
+
+        std::vector<double> vec7(7, 0.0);
+        conversions::KDLFrameToVector(world_to_arm_frame, vec7);
+        n.setParam(param_name.str(), vec7);
+
+        // set output
+        slave_frame_to_world_frame[arm_id] = world_to_arm_frame.Inverse();
+    }
+
+}
 
 void VisualUtils::SwitchFullScreen(const std::string window_name) {
 

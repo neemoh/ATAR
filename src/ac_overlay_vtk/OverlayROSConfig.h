@@ -89,6 +89,8 @@ public:
     // stop the running haptic thread and destruct the  task object
     void StopTask();
 
+    void DoArmToWorldFrameCalibration(const uint arm_id);
+
 private:
 
     // Reads parameters and sets up subscribers and publishers
@@ -115,7 +117,7 @@ public:
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
     bool cam_poses_provided_as_params;
-    KDL::Frame slave_frame_to_task_frame[2];
+    KDL::Frame slave_frame_to_world_frame[2];
 
     KDL::Frame left_cam_to_right_cam_tr;
 

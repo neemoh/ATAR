@@ -38,7 +38,8 @@ int main(int argc, char **argv)
     graphics.SetEnableBackgroundImage(true);
     graphics.Render();
 
-    bool task_is_running = 0;
+    // task_id 0 means no running task
+    uint task_id = 0;
 
     while (ros::ok())
     {
@@ -53,13 +54,27 @@ int main(int argc, char **argv)
         char key = (char)cv::waitKey(1);
         if (key == 27) // Esc
             ros::shutdown();
+        else if (key == 'a'){
+            if(task_id>0) {
+                // if a task is running first stop it
+                graphics.RemoveAllActorsFromScene();
+                rc.StopTask();
+                // then do the calibration
+                rc.DoArmToWorldFrameCalibration(0);
+                // run the task again
+                rc.StartTask((uint)task_id);
+                graphics.AddActorsToScene(rc.task_ptr->GetActors());
+            }
+            else // if no task is running just do the calibration
+                rc.DoArmToWorldFrameCalibration(0);
+        }
         else if (key == 'f')  //full screen
             VisualUtils::SwitchFullScreen(cv_window_name);
 
         else if (key == '1' || key == '2'){
-            int task_id = key - '0';
+            task_id = uint(key - '0');
             ROS_INFO("Task %d Selected", task_id);
-            if(task_is_running) {
+            if(task_id) {
                 graphics.RemoveAllActorsFromScene();
                 rc.StopTask();
             }
@@ -67,7 +82,7 @@ int main(int argc, char **argv)
             rc.StartTask((uint)task_id);
             // Add the task actors to the graphics
             graphics.AddActorsToScene(rc.task_ptr->GetActors());
-            task_is_running = true;
+
         }
 
 
@@ -82,7 +97,7 @@ int main(int argc, char **argv)
             //                            cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
 
             // update the moving actors
-            if(task_is_running)
+            if(task_id)
                 rc.task_ptr->UpdateActors();
 
             // update the camera images and view angle (in case window changes size)
@@ -100,7 +115,7 @@ int main(int argc, char **argv)
                                        "bgr8", augmented_stereo_image).toImageMsg());
 
             // publish the active constraint parameters if needed
-            if(task_is_running) {
+            if(task_id) {
                 if (rc.task_ptr->IsACParamChanged()) {
                     rc.PublishACtiveConstraintParameters(
                             rc.task_ptr->GetACParameters());
