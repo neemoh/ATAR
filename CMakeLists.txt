@@ -150,6 +150,21 @@ target_link_libraries(stereo_usb_cam_publisher
         )
 
 
+
+add_executable(arm_to_world_calibration
+        src/robot_to_camera_aruco/main_arm_to_world.cpp
+        src/robot_to_camera_aruco/ArmToWorldCalibration.cpp
+        src/robot_to_camera_aruco/ArmToWorldCalibration.h
+        )
+
+target_link_libraries(arm_to_world_calibration
+        arucoUtils
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+
+        )
+
+
 ##########################################################################
 #                           FlyCapture SDK
 ##########################################################################
@@ -300,6 +315,8 @@ add_executable(
         src/ac_overlay_vtk/BuzzWireTask.h
         src/ac_overlay_vtk/KidneyTask.cpp
         src/ac_overlay_vtk/KidneyTask.h
+        src/robot_to_camera_aruco/ArmToWorldCalibration.cpp
+        src/robot_to_camera_aruco/ArmToWorldCalibration.h
 )
 
 target_link_libraries(
