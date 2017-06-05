@@ -4,14 +4,14 @@
 
 #include <nodelet/nodelet.h>
 #include <ros/ros.h>
-#include "ExtrinsicAruco.hpp"
+//#include "ExtrinsicAruco.hpp"
 #include <opencv2/highgui.hpp>
 #include <tf_conversions/tf_kdl.h>
-#include "utils/Conversions.hpp"
-#include <geometry_msgs/PoseStamped.h>
+#include <custom_conversions/Conversions.h>
 #include <sensor_msgs/Image.h>
-#include <memory>
 #include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+#include <include/utils/BoardDetector.hpp>
 
 namespace atar {
 

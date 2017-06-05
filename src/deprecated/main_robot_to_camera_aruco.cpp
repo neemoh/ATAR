@@ -17,7 +17,7 @@ enum class CalibProgress { Ready, Method1Calibrating, Method2Calibrating, Finish
 
 int main(int argc, char *argv[]) {
 
-    ros::init(argc, argv, "robot_to_camera_aruco");
+    ros::init(argc, argv, "arm_to_world_calibration");
 
 
     // get name in case asigned externally

@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
         message_generation
         geometry_msgs
         custom_msgs
+        custom_conversions
         active_constraints
         )
 
@@ -45,7 +46,8 @@ catkin_package(CATKIN_DEPENDS
         message_runtime
         cv_bridge
         image_transport
-        sensor_msgs)
+        sensor_msgs
+        custom_conversions)
 
 
 find_package(OpenCV REQUIRED)
@@ -57,7 +59,6 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
         include/
 )
-
 ##########################################################################
 #                           ArucoUtils Library
 ##########################################################################
@@ -65,8 +66,6 @@ include_directories(
 
 add_library(arucoUtils
         src/utils/BoardDetector.cpp
-        src/utils/Conversions.cpp
-        include/utils/Conversions.hpp
         )
 target_link_libraries(arucoUtils
         ${OpenCV_LIBRARIES}
@@ -93,24 +92,6 @@ add_executable(intrinsic_calib
         src/intrinsic_calib/intrinsic_calibration.cpp
         )
 
-add_executable(robot_to_camera_aruco
-        src/robot_to_camera_aruco/main_robot_to_camera_aruco.cpp
-        src/robot_to_camera_aruco/RobotToCameraAruco.cpp
-        src/utils/Drawings.cpp
-        include/utils/Drawings.h
-        src/robot_to_camera_aruco/RobotToCameraAruco.hpp
-        )
-
-
-add_executable(extrinsic_calib_aruco
-        src/extrinsic_calib_aruco/main_extrinsic_aruco.cpp
-        src/extrinsic_calib_aruco/ExtrinsicAruco.cpp
-        src/extrinsic_calib_aruco/ExtrinsicAruco.hpp
-        include/utils/BoardDetector.hpp
-        )
-target_link_libraries(extrinsic_calib_aruco
-        ${OpenCV_LIBRARIES}
-        )
 
 add_library(ExtrinsicCalibArucoNodelet
         src/extrinsic_calib_aruco/ExtrinsicArucoNodelet.cpp
@@ -128,7 +109,6 @@ add_executable(extrinsic_calib_charuco
         )
 
 target_link_libraries(extrinsic_calib_charuco
-        arucoUtils
         ${catkin_LIBRARIES}
         )
 
@@ -152,9 +132,9 @@ target_link_libraries(stereo_usb_cam_publisher
 
 
 add_executable(arm_to_world_calibration
-        src/robot_to_camera_aruco/main_arm_to_world.cpp
-        src/robot_to_camera_aruco/ArmToWorldCalibration.cpp
-        src/robot_to_camera_aruco/ArmToWorldCalibration.h
+        src/arm_to_world_calibration/main_arm_to_world.cpp
+        src/arm_to_world_calibration/ArmToWorldCalibration.cpp
+        src/arm_to_world_calibration/ArmToWorldCalibration.h
         )
 
 target_link_libraries(arm_to_world_calibration
@@ -169,7 +149,7 @@ target_link_libraries(arm_to_world_calibration
 #                           FlyCapture SDK
 ##########################################################################
 
-option(WITH_FlyCapture "Enable support for the FlyCapture SDK" OFF)
+#option(WITH_FlyCapture "Enable support for the FlyCapture SDK" OFF)
 #
 #if (WITH_FlyCapture)
 #    # Find the Flycapture include files and libraries
@@ -204,23 +184,20 @@ option(WITH_FlyCapture "Enable support for the FlyCapture SDK" OFF)
 add_executable(create_aruco_board
         src/utils/create_aruco_board.cpp
         )
-target_link_libraries(create_aruco_board
-        ${OpenCV_LIBRARIES}
-        )
+
 
 add_executable(create_charuco_board
         src/utils/create_charuco_board.cpp
         )
-target_link_libraries(create_charuco_board
-        ${OpenCV_LIBRARIES}
-        )
 
-add_executable(detect_board_charuco
-        src/utils/detect_board_charuco.cpp
-        )
-target_link_libraries(detect_board_charuco
-        ${OpenCV_LIBRARIES}
-        )
+
+set(aruco_executables create_aruco_board create_charuco_board  )
+foreach (_executable ${aruco_executables})
+    target_link_libraries(
+            ${_executable}
+            ${OpenCV_LIBRARIES}
+            )
+endforeach ()
 
 add_executable(
         stereo_image_view
@@ -245,7 +222,7 @@ target_link_libraries(
 
 
 
-set(_executables intrinsic_calib extrinsic_calib_aruco robot_to_camera_aruco )
+set(_executables intrinsic_calib )
 foreach (_executable ${_executables})
     target_link_libraries(
             ${_executable}
@@ -256,8 +233,6 @@ endforeach ()
 ##########################################################################
 #                           AC OVERLAY
 ##########################################################################
-
-
 
 add_executable(
         ac_overlay_cv
@@ -315,8 +290,8 @@ add_executable(
         src/ac_overlay_vtk/BuzzWireTask.h
         src/ac_overlay_vtk/KidneyTask.cpp
         src/ac_overlay_vtk/KidneyTask.h
-        src/robot_to_camera_aruco/ArmToWorldCalibration.cpp
-        src/robot_to_camera_aruco/ArmToWorldCalibration.h
+        src/arm_to_world_calibration/ArmToWorldCalibration.cpp
+        src/arm_to_world_calibration/ArmToWorldCalibration.h
 )
 
 target_link_libraries(
@@ -329,7 +304,7 @@ target_link_libraries(
 
 
 ##########################################################################
-#                           AC OVERLAY VTK
+#                           Reporter node
 
 find_package(Qt5Widgets)
 find_package(Qt5Core REQUIRED)
