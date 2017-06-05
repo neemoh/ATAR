@@ -11,7 +11,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <opencv2/core.hpp>
-#include "utils/BoardDetector.hpp"
+#include "src/extrinsic_calib_aruco/BoardDetector.hpp"
 #include <image_transport/image_transport.h>
 
 

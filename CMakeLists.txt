@@ -64,13 +64,6 @@ include_directories(
 ##########################################################################
 
 
-add_library(arucoUtils
-        src/utils/BoardDetector.cpp
-        )
-target_link_libraries(arucoUtils
-        ${OpenCV_LIBRARIES}
-        )
-
 
 ##########################################################################
 #                    Build Client and Service Nodes
@@ -87,18 +80,19 @@ target_link_libraries(arucoUtils
 #        teleop_vision_gencpp
  #       )
 
-
-add_executable(intrinsic_calib
-        src/intrinsic_calib/intrinsic_calibration.cpp
-        )
+#
+#add_executable(intrinsic_calib
+#        src/deprecated/intrinsic_calibration.cpp
+#        )
 
 
 add_library(ExtrinsicCalibArucoNodelet
         src/extrinsic_calib_aruco/ExtrinsicArucoNodelet.cpp
+        src/extrinsic_calib_aruco/BoardDetector.cpp
         )
 
 target_link_libraries(ExtrinsicCalibArucoNodelet
-        ${catkin_LIBRARIES} arucoUtils
+        ${catkin_LIBRARIES}
         )
 
 
@@ -112,22 +106,13 @@ target_link_libraries(extrinsic_calib_charuco
         ${catkin_LIBRARIES}
         )
 
-add_executable(calibrate_camera_charuco
-        src/intrinsic_calib/intrinsic_calibration_charuco.cpp
-        )
-
-target_link_libraries(calibrate_camera_charuco
-        ${catkin_LIBRARIES} arucoUtils
-        )
-
-
-add_executable(stereo_usb_cam_publisher
-        src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp
-        )
-
-target_link_libraries(stereo_usb_cam_publisher
-        ${catkin_LIBRARIES}
-        )
+#add_executable(calibrate_camera_charuco
+#        src/deprecated/intrinsic_calibration_charuco.cpp
+#        )
+#
+#target_link_libraries(calibrate_camera_charuco
+#        ${catkin_LIBRARIES} arucoUtils
+#        )
 
 
 
@@ -138,10 +123,8 @@ add_executable(arm_to_world_calibration
         )
 
 target_link_libraries(arm_to_world_calibration
-        arucoUtils
         ${catkin_LIBRARIES}
         ${OpenCV_LIBRARIES}
-
         )
 
 
@@ -176,6 +159,17 @@ target_link_libraries(arm_to_world_calibration
 #    endif (FLYCAPTURE2_FOUND)
 #endif (WITH_FlyCapture)
 
+
+add_executable(stereo_usb_cam_publisher
+        src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp
+        )
+
+target_link_libraries(stereo_usb_cam_publisher
+        ${catkin_LIBRARIES}
+        )
+
+
+
 ##########################################################################
 #                           Build Common Nodes
 ##########################################################################
@@ -185,13 +179,11 @@ add_executable(create_aruco_board
         src/utils/create_aruco_board.cpp
         )
 
-
 add_executable(create_charuco_board
         src/utils/create_charuco_board.cpp
         )
 
-
-set(aruco_executables create_aruco_board create_charuco_board  )
+set(aruco_executables create_aruco_board create_charuco_board)
 foreach (_executable ${aruco_executables})
     target_link_libraries(
             ${_executable}
@@ -222,14 +214,14 @@ target_link_libraries(
 
 
 
-set(_executables intrinsic_calib )
-foreach (_executable ${_executables})
-    target_link_libraries(
-            ${_executable}
-            ${OpenCV_LIBRARIES}
-            ${catkin_LIBRARIES}
-            arucoUtils)
-endforeach ()
+#set(_executables intrinsic_calib )
+#foreach (_executable ${_executables})
+#    target_link_libraries(
+#            ${_executable}
+#            ${OpenCV_LIBRARIES}
+#            ${catkin_LIBRARIES}
+#            arucoUtils)
+#endforeach ()
 ##########################################################################
 #                           AC OVERLAY
 ##########################################################################
@@ -239,15 +231,15 @@ add_executable(
         src/ac_overlay_cv/main_ac_overlay.cpp
         src/ac_overlay_cv/ACOverlay.cpp
         src/ac_overlay_cv/ACOverlay.h
-        src/utils/Drawings.cpp
-        include/utils/Drawings.h
+        src/ac_overlay_cv/Drawings.cpp
+        src/ac_overlay_cv/Drawings.h
 )
 
 target_link_libraries(
         ac_overlay_cv
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES}
-        arucoUtils)
+        )
 
 ##########################################################################
 #                           AC OVERLAY VTK
@@ -281,8 +273,6 @@ add_executable(
         src/ac_overlay_vtk/CalibratedCamera.h
         src/ac_overlay_vtk/Rendering.cpp
         src/ac_overlay_vtk/Rendering.h
-        src/utils/Drawings.cpp
-        include/utils/Drawings.h
         src/ac_overlay_vtk/OverlayROSConfig.cpp
         src/ac_overlay_vtk/OverlayROSConfig.h
         src/ac_overlay_vtk/VTKTask.h
@@ -299,7 +289,7 @@ target_link_libraries(
         ${OpenCV_LIBRARIES}
         ${VTK_LIBRARIES}
         ${catkin_LIBRARIES}
-        arucoUtils)
+        )
 
 
 

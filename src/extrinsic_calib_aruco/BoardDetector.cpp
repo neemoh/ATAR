@@ -8,9 +8,19 @@
 #include <ros/ros.h>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
-#include <utils/Colors.hpp>
-#include "utils/BoardDetector.hpp"
+#include "src/extrinsic_calib_aruco/BoardDetector.hpp"
 
+namespace Colors {
+
+    const cv::Scalar Red(50, 0, 255);
+    const cv::Scalar Green(30, 220, 10);
+    const cv::Scalar DarkGreen(80, 150, 10);
+    const cv::Scalar Blue(220, 100, 20);
+    const cv::Scalar DarkBlue(200, 130, 20);
+    const cv::Scalar Cyan(255, 255, 0);
+    const cv::Scalar Redish(65, 64, 255);
+
+}
 //-----------------------------------------------------------------------------------
 // BOARD DETECTOR CLASS METHODS
 //-----------------------------------------------------------------------------------

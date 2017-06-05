@@ -11,7 +11,7 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
-#include <include/utils/BoardDetector.hpp>
+#include <src/extrinsic_calib_aruco/BoardDetector.hpp>
 
 namespace atar {
 
