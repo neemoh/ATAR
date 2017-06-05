@@ -4,11 +4,6 @@ project(atar)
 #set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 11)
 
-option(WITH_ROS "Enable support for ROS topics in opencv_cam_calib" OFF)
-if (WITH_ROS)
-    add_definitions(-DWITH_ROS)
-endif ()
-
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -49,20 +44,13 @@ catkin_package(CATKIN_DEPENDS
         sensor_msgs
         custom_conversions)
 
-
 find_package(OpenCV REQUIRED)
-
-## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED)
 
 include_directories(
         ${catkin_INCLUDE_DIRS}
         include/
 )
-##########################################################################
-#                           ArucoUtils Library
-##########################################################################
-
 
 
 ##########################################################################
@@ -95,7 +83,6 @@ target_link_libraries(ExtrinsicCalibArucoNodelet
         ${catkin_LIBRARIES}
         )
 
-
 add_executable(extrinsic_calib_charuco
         src/extrinsic_calib_aruco/main_extrinsic_charuco.cpp
         src/intrinsic_calib/IntrinsicCalibrationCharuco.cpp
@@ -113,8 +100,6 @@ target_link_libraries(extrinsic_calib_charuco
 #target_link_libraries(calibrate_camera_charuco
 #        ${catkin_LIBRARIES} arucoUtils
 #        )
-
-
 
 add_executable(arm_to_world_calibration
         src/arm_to_world_calibration/main_arm_to_world.cpp
@@ -160,13 +145,6 @@ target_link_libraries(arm_to_world_calibration
 #endif (WITH_FlyCapture)
 
 
-add_executable(stereo_usb_cam_publisher
-        src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp
-        )
-
-target_link_libraries(stereo_usb_cam_publisher
-        ${catkin_LIBRARIES}
-        )
 
 
 
@@ -184,47 +162,27 @@ add_executable(create_charuco_board
         )
 
 set(aruco_executables create_aruco_board create_charuco_board)
-foreach (_executable ${aruco_executables})
+foreach (_ex ${aruco_executables})
     target_link_libraries(
-            ${_executable}
+            ${_ex}
             ${OpenCV_LIBRARIES}
             )
 endforeach ()
+
 
 add_executable(
         stereo_image_view
         src/stereo_image_view/main_stereo_image_view.cpp
 )
-target_link_libraries(
-        stereo_image_view
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES}
-)
-
 
 add_executable(
         stereo_image_split
         src/stereo_image_view/main_stereo_image_split_TEMPORARY.cpp
 )
-target_link_libraries(
-        stereo_image_split
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES}
-)
 
-
-
-#set(_executables intrinsic_calib )
-#foreach (_executable ${_executables})
-#    target_link_libraries(
-#            ${_executable}
-#            ${OpenCV_LIBRARIES}
-#            ${catkin_LIBRARIES}
-#            arucoUtils)
-#endforeach ()
-##########################################################################
-#                           AC OVERLAY
-##########################################################################
+add_executable(stereo_usb_cam_publisher
+        src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp
+        )
 
 add_executable(
         ac_overlay_cv
@@ -235,14 +193,23 @@ add_executable(
         src/ac_overlay_cv/Drawings.h
 )
 
-target_link_libraries(
-        ac_overlay_cv
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES}
-        )
+set(executables
+        stereo_image_view
+        stereo_image_split
+        stereo_usb_cam_publisher
+        ac_overlay_cv)
+
+foreach (_ex ${executables})
+    target_link_libraries(
+            ${_ex}
+            ${OpenCV_LIBRARIES}
+            ${catkin_LIBRARIES})
+endforeach ()
+
 
 ##########################################################################
 #                           AC OVERLAY VTK
+##########################################################################
 
 if(POLICY CMP0025)
     cmake_policy(SET CMP0025 NEW) # CMake 3.0
@@ -295,6 +262,7 @@ target_link_libraries(
 
 ##########################################################################
 #                           Reporter node
+##########################################################################
 
 find_package(Qt5Widgets)
 find_package(Qt5Core REQUIRED)
