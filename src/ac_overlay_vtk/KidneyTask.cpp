@@ -5,6 +5,8 @@
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
+#include <geometry_msgs/PoseStamped.h>
+#include <kdl_conversions/kdl_msg.h>
 #include "KidneyTask.h"
 
 
