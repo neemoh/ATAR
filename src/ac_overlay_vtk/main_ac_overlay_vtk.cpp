@@ -7,11 +7,18 @@
 #include "custom_conversions/Conversions.h"
 #include "OverlayROSConfig.h"
 #include <std_msgs/Float32.h>
+#include <ode/ode.h>
 #include "Rendering.h"
 
+dWorldID World;
+
+dJointGroupID contactgroup;
 
 int main(int argc, char **argv)
 {
+    World = dWorldCreate();
+    contactgroup = dJointGroupCreate(0);
+
     ros::init(argc, argv, "ac_overlay");
     OverlayROSConfig rc (ros::this_node::getName());
 
@@ -73,12 +80,12 @@ int main(int argc, char **argv)
             VisualUtils::SwitchFullScreen(cv_window_name);
 
         else if (key == '1' || key == '2'){
-            task_id = uint(key - '0');
             ROS_INFO("Task %d Selected", task_id);
             if(task_id) {
                 graphics.RemoveAllActorsFromScene();
                 rc.StopTask();
             }
+            task_id = uint(key - '0');
 
             rc.StartTask((uint)task_id);
             // Add the task actors to the graphics

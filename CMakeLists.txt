@@ -46,6 +46,7 @@ catkin_package(CATKIN_DEPENDS
 
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED)
+#find_package(ODE REQUIRED)
 
 include_directories(
         ${catkin_INCLUDE_DIRS}
@@ -256,8 +257,9 @@ target_link_libraries(
         ${OpenCV_LIBRARIES}
         ${VTK_LIBRARIES}
         ${catkin_LIBRARIES}
+        libode.a
         )
-
+set(ODE_PRECISION dSINGLE)
 
 
 ##########################################################################

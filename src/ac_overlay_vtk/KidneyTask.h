@@ -33,6 +33,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
+#include <ode/ode.h>
 
 /**
  * \class KidneyTask
@@ -62,12 +63,32 @@ enum class KidneyTaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
     RepetitionComplete};
 
 
+// -------------------------------------------------------------------------
+
+#define GEOMSPERBODY 1
+#define MAX_CONTACTS 4
+extern  dWorldID World;
+
+extern dJointGroupID contactgroup;
+
+struct MyObject {
+    dBodyID Body;  // the dynamics body
+    dGeomID Geom[GEOMSPERBODY];  // geometries representing this body
+};
+
+
+
+// -------------------------------------------------------------------------
+
+
 class KidneyTask : public VTKTask{
 public:
 
     KidneyTask(const std::string stl_files_dir,
                      const bool show_ref_frames, const bool num_tools,
                      const bool with_guidance);
+
+//    ~KidneyTask();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -116,6 +137,15 @@ public:
   *  **/
     void FindAndPublishDesiredToolPose();
 
+    void InitODE();
+
+    void CloseODE();
+
+    void SimLoopODE();
+
+
+    void DrawGeom (dGeomID g, const dReal *pos, const dReal *R, int show_aabb);
+
 private:
 
     // updates the error actor
@@ -124,7 +154,13 @@ private:
     // Calculates the closest points of the wire mesh to three points of
     // interest on the ring used for calculating the desired pose of the ring
 
+public:
+
 private:
+    MyObject Objct;
+
+
+    dSpaceID Space;
 
     // -------------------------------------------------------------------------
     // task logic
@@ -146,6 +182,8 @@ private:
     uint sample_count;
     uint n_score_history;
     std::vector<double> score_history;
+
+
     // -------------------------------------------------------------------------
     // graphics
     double ring_radius;
@@ -193,10 +231,11 @@ private:
 //    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
 //    vtkSmartPointer<vtkActor>                       destination_cone_actor;
 //    vtkSmartPointer<vtkActor>                       kidney_mesh_actor ;
-
+    vtkSmartPointer<vtkActor>                       d_cube_actor;
     vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
 
 };
+static void nearCallback (void *data, dGeomID o1, dGeomID o2);
 
 
 #endif //TELEOP_VISION_KidneyTask_H
