@@ -73,17 +73,10 @@ KidneyTask::KidneyTask(const std::string stl_file_dir,
 
     }
 
-    destination_ring_actor= vtkSmartPointer<vtkActor>::New();
-
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 
-    line1_source = vtkSmartPointer<vtkLineSource>::New();
+    mesh_actor = vtkSmartPointer<vtkActor>::New();
 
-    line2_source = vtkSmartPointer<vtkLineSource>::New();
-
-    line1_actor = vtkSmartPointer<vtkActor>::New();
-
-    line2_actor = vtkSmartPointer<vtkActor>::New();
 
     // -------------------------------------------------------------------------
     // TOOL RINGS
@@ -143,20 +136,6 @@ KidneyTask::KidneyTask(const std::string stl_file_dir,
     }
 
     // -------------------------------------------------------------------------
-    // Destination ring
-
-    vtkSmartPointer<vtkPolyDataMapper> destination_ring_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    destination_ring_mapper->SetInputConnection(
-            parametricFunctionSource->GetOutputPort());
-    destination_ring_actor->SetMapper(destination_ring_mapper);
-    destination_ring_actor->SetScale(0.004);
-    destination_ring_actor->RotateX(90);
-    destination_ring_actor->RotateY(-60);
-    destination_ring_actor->GetProperty()->SetColor(COLORS::Green);
-    destination_ring_actor->GetProperty()->SetOpacity(0.5);
-
-    // -------------------------------------------------------------------------
     // FRAMES
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
             vtkSmartPointer<vtkAxesActor>::New();
@@ -214,11 +193,10 @@ KidneyTask::KidneyTask(const std::string stl_file_dir,
     kidney_mesh_mapper->SetInputConnection(
             kidney_mesh_transformFilter->GetOutputPort());
 
-    vtkSmartPointer<vtkActor> kidney_mesh_actor =
-            vtkSmartPointer<vtkActor>::New();
-    kidney_mesh_actor->SetMapper(kidney_mesh_mapper);
-    kidney_mesh_actor->GetProperty()->SetColor(COLORS::Red);
-    kidney_mesh_actor->GetProperty()->SetOpacity(1.0);
+
+    mesh_actor->SetMapper(kidney_mesh_mapper);
+    mesh_actor->GetProperty()->SetColor(COLORS::Red);
+    mesh_actor->GetProperty()->SetOpacity(1.0);
     //    stand_mesh_actor->GetProperty()->SetSpecular(0.8);
 
 
@@ -244,85 +222,6 @@ KidneyTask::KidneyTask(const std::string stl_file_dir,
     floor_actor->GetProperty()->SetOpacity(0.3);
     floor_actor->GetProperty()->SetColor(COLORS::Pink);
 
-    // -------------------------------------------------------------------------
-    // Lines
-    vtkSmartPointer<vtkPolyDataMapper> line1_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    line1_mapper->SetInputConnection(line1_source->GetOutputPort());
-    line1_actor->SetMapper(line1_mapper);
-    line1_actor->GetProperty()->SetLineWidth(3);
-//    line1_actor->GetProperty()->SetColor(COLORS::DeepPink);
-    line1_actor->GetProperty()->SetOpacity(0.8);
-
-    vtkSmartPointer<vtkPolyDataMapper> line2_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    line2_mapper->SetInputConnection(line2_source->GetOutputPort());
-
-    line2_actor->SetMapper(line2_mapper);
-    line2_actor->GetProperty()->SetLineWidth(3);
-//    line2_actor->GetProperty()->SetColor(COLORS::DeepPink);
-    line2_actor->GetProperty()->SetOpacity(0.8);
-
-//    // -------------------------------------------------------------------------
-//    // destination cone
-//    vtkSmartPointer<vtkConeSource> destination_cone_source =
-//            vtkSmartPointer<vtkConeSource>::New();
-//    destination_cone_source->SetRadius(0.002 / source_scales);
-//    destination_cone_source->SetHeight(0.006 / source_scales);
-//    destination_cone_source->SetResolution(12);
-//
-//    vtkSmartPointer<vtkPolyDataMapper> destination_cone_mapper =
-//            vtkSmartPointer<vtkPolyDataMapper>::New();
-//    destination_cone_mapper->SetInputConnection(
-//            destination_cone_source->GetOutputPort());
-//    destination_cone_actor = vtkSmartPointer<vtkActor>::New();
-//    destination_cone_actor->SetMapper(destination_cone_mapper);
-//    destination_cone_actor->SetScale(source_scales);
-//    destination_cone_actor->GetProperty()->SetColor(COLORS::Green);
-//    destination_cone_actor->GetProperty()->SetOpacity(0.5);
-//    destination_cone_actor->RotateY(90);
-//    destination_cone_actor->RotateZ(30);
-//
-//    destination_cone_actor->SetPosition(idle_point[0], idle_point[1],
-//                                        idle_point[2]);
-
-    // -------------------------------------------------------------------------
-    // TEXTS
-    cornerAnnotation =
-            vtkSmartPointer<vtkCornerAnnotation>::New();
-    cornerAnnotation->SetLinearFontScaleFactor( 2 );
-    cornerAnnotation->SetNonlinearFontScaleFactor( 1 );
-    cornerAnnotation->SetMaximumFontSize( 30 );
-    //        cornerAnnotation->SetText( 0, "lower left" );
-    cornerAnnotation->SetText( 1, "Scores: " );
-    //        cornerAnnotation->SetText( 2, "upper left" );
-    //    cornerAnnotation->GetTextProperty()->SetColor( 1, 0, 0 );
-
-
-
-    // -------------------------------------------------------------------------
-    // Error history spheres
-
-    vtkSmartPointer<vtkSphereSource>  source =
-            vtkSmartPointer<vtkSphereSource>::New();
-
-    source->SetRadius(0.002);
-    source->SetPhiResolution(15);
-    source->SetThetaResolution(15);
-    vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    sphere_mapper->SetInputConnection(source->GetOutputPort());
-
-    for (int i = 0; i < n_score_history; ++i) {
-
-        vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-        actor->SetMapper(sphere_mapper);
-        actor->GetProperty()->SetColor(COLORS::Gray);
-        actor->SetPosition(0.02 - (double)i * 0.006, 0.1 - (double)i * 0.0003,
-                           0.01);
-        score_sphere_actors.push_back(actor);
-    }
-
 
     // -------------------------------------------------------------------------
     // Add all actors to a vector
@@ -336,19 +235,19 @@ KidneyTask::KidneyTask(const std::string stl_file_dir,
     }
 
 
-    actors.push_back(kidney_mesh_actor);
+    actors.push_back(mesh_actor);
 //    actors.push_back(floor_actor);
-    actors.push_back(ring_actor[0]);
-    if(bimanual){
-        actors.push_back(ring_actor[1]);
-        actors.push_back(line1_actor);
-        actors.push_back(line2_actor);
-    }
+//    actors.push_back(ring_actor[0]);
+//    if(bimanual){
+//        actors.push_back(ring_actor[1]);
+//        actors.push_back(line1_actor);
+//        actors.push_back(line2_actor);
+//    }
 //    actors.push_back(destination_cone_actor);
-    actors.push_back(destination_ring_actor);
-    for (int j = 0; j < score_sphere_actors.size(); ++j) {
-        actors.push_back(score_sphere_actors[j]);
-    }
+//    actors.push_back(destination_ring_actor);
+//    for (int j = 0; j < score_sphere_actors.size(); ++j) {
+//        actors.push_back(score_sphere_actors[j]);
+//    }
 
     //    actors.push_back(ring_guides_mesh_actor);
     //    actors.push_back(cornerAnnotation);
@@ -474,32 +373,12 @@ void KidneyTask::UpdateActors() {
         task_state = KidneyTaskState::Idle;
     }
 
-    // update the position of the cone according to the state we're in.
-    if (task_state == KidneyTaskState::Idle) {
-        destination_cone_position = start_point;
-        destination_ring_actor->GetProperty()->SetColor(COLORS::Green);
-
-    } else if (task_state == KidneyTaskState::ToStartPoint) {
-        destination_cone_position = start_point;
-        destination_ring_actor->GetProperty()->SetColor(COLORS::DeepPink);
-
-    } else if (task_state == KidneyTaskState::ToEndPoint) {
-        destination_cone_position = end_point;
-        destination_ring_actor->GetProperty()->SetColor(COLORS::DeepPink);
-    } else if (task_state == KidneyTaskState::RepetitionComplete) {
-        destination_cone_position = idle_point;
-        destination_ring_actor->GetProperty()->SetColor(COLORS::Green);
-
-    }
 
     // show the destination to the user
-    double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
+    double dt = sin(2 * M_PI * double(destination_ring_counter) / 120);
     destination_ring_counter++;
-    destination_ring_actor->SetScale(0.006 + 0.001*dt);
+    mesh_actor->SetScale(1+ 0.03*dt);
 
-    destination_ring_actor->SetPosition(destination_cone_position[0],
-                                        destination_cone_position[1],
-                                        destination_cone_position[2]);
     // -------------------------------------------------------------------------
     // Performance Metrics
     UpdateTubeColor();
@@ -543,21 +422,6 @@ void KidneyTask::UpdateActors() {
     }
 
 
-    if(bimanual) {
-        // change connection lines colors according to ring1 to ring2's distance
-        double rings_distance = (ring_center[1] - ring_center[0]).Norm();
-        double ideal_distance = 0.007;
-        double error_ratio = 3 * fabs(rings_distance - ideal_distance)
-                             / ideal_distance;
-        if (error_ratio > 1.0)
-            error_ratio = 1.0;
-        line1_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
-                                             0.9 - 0.7 * error_ratio);
-        line2_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
-                                             0.9 - 0.7 * error_ratio);
-        line1_source->Update();
-        line2_source->Update();
-    }
 }
 
 
@@ -720,31 +584,6 @@ void KidneyTask::CalculatedDesiredToolPose() {
         }
 
 
-        // draw the connection lines in bimanual case
-        if(bimanual) {
-            KDL::Vector distal_tool_point_kdl;
-            if (k == 0)
-                distal_tool_point_kdl =
-                        tool_current_pose *
-                        KDL::Vector(0.0, 0.0, 2 * ring_radius);
-            else
-                distal_tool_point_kdl =
-                        tool_current_pose *
-                        KDL::Vector(0.0, 2 * ring_radius, 0.0);
-
-            if (k == 0) {
-                line1_source->SetPoint1(grip_point);
-                line2_source->SetPoint1(distal_tool_point_kdl[0],
-                                        distal_tool_point_kdl[1],
-                                        distal_tool_point_kdl[2]);
-
-            } else {
-                line1_source->SetPoint2(grip_point);
-                line2_source->SetPoint2(distal_tool_point_kdl[0],
-                                        distal_tool_point_kdl[1],
-                                        distal_tool_point_kdl[2]);
-            }
-        }
 
     }
 
@@ -902,13 +741,6 @@ void KidneyTask::CalculateAndSaveError() {
         ResetScoreHistory();
 
     score_history.push_back(score);
-    score_history_colors.push_back(GetScoreColor(score));
-
-    // update spheres' color
-    for (int i = 0; i < score_history.size(); ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(score_history_colors[i]);
-
-    }
 
     ROS_INFO("posit_error_max: %f", posit_error_max);
     ROS_INFO("duration: %f", duration);
@@ -942,13 +774,8 @@ void KidneyTask::ResetOnGoingEvaluation() {
 
 void KidneyTask::ResetScoreHistory() {
     score_history.clear();
-    score_history_colors.clear();
 
-    // reset colors to gray
-    for (int i = 0; i < n_score_history; ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(COLORS::Gray);
 
-    }
 
 }
 //KidneyTask::~KidneyTask() {

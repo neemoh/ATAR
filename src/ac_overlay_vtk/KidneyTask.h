@@ -187,19 +187,13 @@ private:
 
     // actors that are updated during the task
     vtkSmartPointer<vtkActor>                       ring_actor[2];
-    vtkSmartPointer<vtkActor>                       destination_ring_actor;
-    std::vector< vtkSmartPointer<vtkActor>>         score_sphere_actors;
-    std::vector<double*>                           score_history_colors;
 
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes[2];
     vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes[2];
 
     vtkSmartPointer<vtkCellLocator>                 cellLocator;
 
-    vtkSmartPointer<vtkLineSource>                  line1_source;
-    vtkSmartPointer<vtkLineSource>                  line2_source;
-    vtkSmartPointer<vtkActor>                       line1_actor;
-    vtkSmartPointer<vtkActor>                       line2_actor;
+    vtkSmartPointer<vtkActor>                       mesh_actor;
 //    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
 //    vtkSmartPointer<vtkActor>                       destination_cone_actor;
 //    vtkSmartPointer<vtkActor>                       kidney_mesh_actor ;
