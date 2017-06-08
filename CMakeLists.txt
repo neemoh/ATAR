@@ -250,7 +250,7 @@ add_executable(
         src/ac_overlay_vtk/KidneyTask.h
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.h
-)
+        src/ac_overlay_vtk/ODETask.cpp src/ac_overlay_vtk/ODETask.h)
 
 target_link_libraries(
         ac_overlay_vtk

@@ -79,7 +79,7 @@ int main(int argc, char **argv)
         else if (key == 'f')  //full screen
             VisualUtils::SwitchFullScreen(cv_window_name);
 
-        else if (key == '1' || key == '2'){
+        else if (key == '1' || key == '2'|| key == '3'){
             ROS_INFO("Task %d Selected", task_id);
             if(task_id) {
                 graphics.RemoveAllActorsFromScene();

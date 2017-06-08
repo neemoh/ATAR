@@ -9,6 +9,7 @@
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
 #include "BuzzWireTask.h"
 #include "KidneyTask.h"
+#include "ODETask.h"
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
         : n(node_name), cam_poses_provided_as_params(false)
@@ -462,6 +463,21 @@ void OverlayROSConfig::StartTask(const uint task_id) {
 
         std::cout << "Starting new task. "<< std::endl;
         task_ptr   = new KidneyTask(stl_files_dir, false,
+                                    (bool) (n_arms - 1), with_guidance);
+        // assign the tool pose pointers
+        ros::spinOnce();
+        task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
+        task_ptr->SetCurrentToolPosePointer(pose_current_tool[1], 1);
+
+        // bind the haptics thread
+        haptics_thread = boost::thread(boost::bind(
+                &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
+
+    }
+    else if(task_id ==3){
+
+        std::cout << "Starting new task. "<< std::endl;
+        task_ptr   = new ODETask(stl_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
         // assign the tool pose pointers
         ros::spinOnce();
