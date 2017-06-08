@@ -34,11 +34,14 @@
 #include <std_msgs/Empty.h>
 
 #include <ode/ode.h>
+#include <vtkMinimalStandardRandomSequence.h>
 
 
 
 #define GEOMSPERBODY 1
-#define MAX_CONTACTS 4
+#define MAX_CONTACTS 8
+#define NUM_SPHERES 15
+#define RAD_SPHERES 0.008
 extern  dWorldID World;
 
 extern dJointGroupID contactgroup;
@@ -98,15 +101,17 @@ public:
     void SimLoopODE();
 
 
-    void DrawGeom (dGeomID g, const dReal *pos, const dReal *R, int show_aabb);
+    void DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb,
+                      size_t obj_idx);
 
 private:
-    MyObject Objct;
+    MyObject Objct[NUM_SPHERES+1];
 
     dSpaceID Space;
+    std::vector<std::array<double, 3> > sphere_positions;
 
     std::string stl_files_dir;
-
+    double board_dimensions[3];
     // -------------------------------------------------------------------------
     // graphics
 
@@ -116,7 +121,9 @@ private:
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
 
-    vtkSmartPointer<vtkActor>                       d_cube_actor;
+    vtkSmartPointer<vtkActor>                       d_board_actor;
+    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
+
 };
 static void nearCallback (void *data, dGeomID o1, dGeomID o2);
 
