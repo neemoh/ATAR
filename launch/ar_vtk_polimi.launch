@@ -3,16 +3,24 @@
     <arg name="slave_2_name" value="PSM2"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
-    <arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>
-    <arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>
-    <arg name= "left_cam_name" value= "ecml" />
-    <arg name= "right_cam_name" value= "ecmr" />
+    <!--<arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>-->
+    <!--<arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>-->
+    <!--<arg name= "left_cam_name" value= "ecml" />-->
+    <!--<arg name= "right_cam_name" value= "ecmr" />    -->
+    <arg name="left_camera_img_topic" value="/image_raw"/>
+    <arg name="right_camera_img_topic" value="/image_raw"/>
+    <arg name= "left_cam_name" value= "asus_webcam" />
+    <arg name= "right_cam_name" value= "asus_webcam" />
     <arg name= "haptic_referesh_rate" value= "200" />
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_overlay_polimi.yaml" />
     </group>
+
+    <node pkg="uvc_camera" type="uvc_camera_node" name="webcam">
+    </node>
+
 
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_charuco_left" output="screen" >
@@ -21,7 +29,7 @@
         <param name="camera_name" value="$(arg left_cam_name)"/>
         <param name="image_transport_namespace"
                value="$(arg left_camera_img_topic)"/>
-        <param name="show_image" value="true"/>
+        <param name="show_image" value="false"/>
     </node>
 
     <node pkg="atar" type="extrinsic_calib_charuco"
@@ -31,7 +39,7 @@
         <param name="camera_name" value="$(arg right_cam_name)"/>
         <param name="image_transport_namespace"
                value="$(arg right_camera_img_topic)"/>
-        <param name="show_image" value="true"/>
+        <param name="show_image" value="false"/>
     </node>
     <!-- Node recording the data-->
     <!--<node pkg="atar" type="reporter" name="reporter" output="screen">-->
@@ -92,6 +100,9 @@ ca        -->
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "enable_guidance" value= "false" />
+
+        <!--Activate or deactivate haptic guidance -->
+        <param name= "publish_overlayed_images" value= "false" />
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
