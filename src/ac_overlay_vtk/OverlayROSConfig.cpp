@@ -79,6 +79,11 @@ void OverlayROSConfig::SetupROS() {
              with_guidance ? "true" : "false");
 
 
+    n.param<bool>("publish_overlayed_images", publish_overlayed_images, true);
+    ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
+             publish_overlayed_images ? "true" : "false");
+
+
     if (n.getParam("stl_files_dir", stl_files_dir)) {
         ROS_INFO("stl files will be loaded from: %s", stl_files_dir.c_str());
     } else

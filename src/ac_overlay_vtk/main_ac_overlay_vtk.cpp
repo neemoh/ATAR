@@ -48,6 +48,7 @@ int main(int argc, char **argv)
 
     // task_id 0 means no running task
     uint task_id = 0;
+    ros::Rate loop_rate(30);
 
     while (ros::ok())
     {
@@ -116,12 +117,14 @@ int main(int argc, char **argv)
             graphics.Render();
 
             // Copy the rendered image to memory, show it and/or publish it.
-            graphics.GetRenderedImage(augmented_stereo_image);
-            cv::imshow(cv_window_name, augmented_stereo_image);
-            rc.publisher_stereo_overlayed.publish(
-                    cv_bridge::CvImage(std_msgs::Header(),
-                                       "bgr8", augmented_stereo_image).toImageMsg());
-
+            if(rc.publish_overlayed_images) {
+                graphics.GetRenderedImage(augmented_stereo_image);
+                cv::imshow(cv_window_name, augmented_stereo_image);
+                rc.publisher_stereo_overlayed.publish(
+                        cv_bridge::CvImage(std_msgs::Header(),
+                                           "bgr8",
+                                           augmented_stereo_image).toImageMsg());
+            }
             // publish the active constraint parameters if needed
             if(task_id) {
                 if (rc.task_ptr->IsACParamChanged()) {
@@ -139,7 +142,7 @@ int main(int argc, char **argv)
         // copying the render buffer back from gpu takes a very long time,
         // creating a bottle neck that reduced the update rate to 25 Hz
         // already. So no sleep is needed foe now.
-        //        loop_rate.sleep();
+                loop_rate.sleep();
     }
 
     return 0;
