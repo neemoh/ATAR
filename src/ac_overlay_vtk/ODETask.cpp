@@ -88,7 +88,7 @@ ODETask::ODETask(const std::string stl_file_dir,
     d_board_actor->SetPosition(board_dimensions[0] / 2,
                                board_dimensions[1] / 2,
                                -board_dimensions[2]);
-    d_board_actor->GetProperty()->SetOpacity(0.01);
+    d_board_actor->GetProperty()->SetOpacity(1.00);
     double colr[3] {1.0, 1.0, 1.0};
     d_board_actor->GetProperty()->SetColor(colr);
 
@@ -492,7 +492,7 @@ void ODETask::SimLoopODE() {
 
     dSpaceCollide( Space, 0, &nearCallback );
 
-    dWorldQuickStep( World, 0.004 );
+    dWorldQuickStep( World, 0.0025 );
 
     for ( int j = 0; j < dSpaceGetNumGeoms( Space ); j++ )
     {
@@ -739,8 +739,8 @@ void ODETask::DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aab
 
 }
 
-//ODETask::~ODETask() {
-//    CloseODE();
-//}
+ODETask::~ODETask() {
+    CloseODE();
+}
 
 

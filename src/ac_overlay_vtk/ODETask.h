@@ -59,7 +59,7 @@ public:
                const bool show_ref_frames, const bool num_tools,
                const bool with_guidance);
 
-//    ~ODETask();
+    ~ODETask();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
