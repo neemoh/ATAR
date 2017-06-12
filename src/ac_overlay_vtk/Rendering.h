@@ -37,7 +37,7 @@ public:
 
     void UpdateBackgroundImage(cv::Mat []);
 
-    void UpdateViewAngleForActualWindowSize();
+    void UpdateCameraViewForActualWindowSize();
 
     void SetCameraIntrinsics(const cv::Mat intrinsics[]);
 

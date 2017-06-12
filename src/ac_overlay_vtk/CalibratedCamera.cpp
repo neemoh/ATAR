@@ -78,28 +78,32 @@ void CalibratedCamera::SetExtrinsicParameters(vtkSmartPointer<vtkMatrix4x4> matr
     this->SetPosition(origin[0], origin[1], origin[2]);
     this->SetFocalPoint(focalPoint[0], focalPoint[1], focalPoint[2]);
     this->SetViewUp(viewUp[0], viewUp[1], viewUp[2]);
-//  this->SetClippingRange(1, 5000);
+    //  this->SetClippingRange(1, 5000);
 
-//    std::cout << "Camera position = " << origin[0] << ", " << origin[1] << ", " << origin[2] << std::endl;
+    //    std::cout << "Camera position = " << origin[0] << ", " << origin[1] << ", " << origin[2] << std::endl;
     this->Modified();
 }
 
 
 
-void CalibratedCamera::UpdateViewAngle(const int& window_width, const int& window_height) {
+void CalibratedCamera::UpdateView(const int &window_width,
+                                  const int &window_height) {
 
-    double focalLengthY = fy_;
-    if( window_height != image_height_ )
-    {
-        double factor = static_cast<double>(window_height)/static_cast<double>(image_height_);
-        focalLengthY = fy_ * factor;
-    }
+    // calculate the view angle and set it.
+    double window_factor = window_height/image_height_;
 
-    double view_angle = 2 * atan( ( window_height / 2 ) / focalLengthY ) * 180 / M_PI;
+    double view_angle = 2*atan((window_height/2) / (window_factor*fy_))
+                        * 180/M_PI;
     this->SetViewAngle(view_angle);
-    this->Modified();
-    //Todo take into account window width
 
+    // convert the principal point to window center
+    double wc_x = -2 * (window_factor*cx_ - double(window_width)/2)
+                  / window_width;
+    double wc_y =  2 * (window_factor*cy_ - double(window_height)/2)
+                  / window_height;
+    this->SetWindowCenter(wc_x, wc_y);
+
+    this->Modified();
 }
 
 

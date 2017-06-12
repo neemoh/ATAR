@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 
             // update the camera images and view angle (in case window changes size)
             graphics.UpdateBackgroundImage(cam_images);
-            graphics.UpdateViewAngleForActualWindowSize();
+            graphics.UpdateCameraViewForActualWindowSize();
 
             // Render!
             graphics.Render();

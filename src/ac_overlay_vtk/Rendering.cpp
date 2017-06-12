@@ -62,7 +62,7 @@ Rendering::Rendering()
     }
     // important for getting high update rate (If needed, images can be shown
     // with opencv)
-    render_window_->SetOffScreenRendering(1);
+//    render_window_->SetOffScreenRendering(1);
 
     window_to_image_filter_ = vtkSmartPointer<vtkWindowToImageFilter>::New();
     window_to_image_filter_->SetInput(render_window_);
@@ -240,11 +240,11 @@ void Rendering::UpdateBackgroundImage(cv::Mat  img[]) {
 
 
 //------------------------------------------------------------------------------
-void Rendering::UpdateViewAngleForActualWindowSize() {
+void Rendering::UpdateCameraViewForActualWindowSize() {
     for (int i = 0; i < 2; ++i) {
         SetImageCameraToFaceImage(i);
         int *window_size = render_window_->GetActualSize();
-        scene_camera_[i]->UpdateViewAngle(window_size[0]/2, window_size[1]);
+        scene_camera_[i]->UpdateView(window_size[0] / 2, window_size[1]);
     }
 }
 
