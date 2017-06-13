@@ -9,8 +9,8 @@
 #include <boost/thread/thread.hpp>
 
 BulletTask::BulletTask(const std::string stl_file_dir,
-                 const bool show_ref_frames, const bool biman,
-                 const bool with_guidance)
+                       const bool show_ref_frames, const bool biman,
+                       const bool with_guidance)
         :
         VTKTask(show_ref_frames, biman, with_guidance),
         stl_files_dir(stl_file_dir)
@@ -51,24 +51,6 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
 
-//    // -------------------------------------------------------------------------
-//    // Create a cube for the floor
-//    vtkSmartPointer<vtkCubeSource> floor_source =
-//            vtkSmartPointer<vtkCubeSource>::New();
-//    double floor_dimensions[3] = {0.1, 0.09, 0.001};
-//    floor_source->SetXLength(floor_dimensions[0]);
-//    floor_source->SetYLength(floor_dimensions[1]);
-//    floor_source->SetZLength(floor_dimensions[2]);
-//    vtkSmartPointer<vtkPolyDataMapper> floor_mapper =
-//            vtkSmartPointer<vtkPolyDataMapper>::New();
-//    floor_mapper->SetInputConnection(floor_source->GetOutputPort());
-//    vtkSmartPointer<vtkActor> floor_actor = vtkSmartPointer<vtkActor>::New();
-//    floor_actor->SetMapper(floor_mapper);
-//    floor_actor->SetPosition(floor_dimensions[0] / 2, floor_dimensions[1] / 2,
-//                             -floor_dimensions[2]);
-//    floor_actor->GetProperty()->SetOpacity(0.3);
-//    double DeepPink[3] {1.0, 0.08, 0.58};
-//    floor_actor->GetProperty()->SetColor(DeepPink);
 
     // -------------------------------------------------------------------------
     // Create a cube for the board
@@ -76,7 +58,7 @@ BulletTask::BulletTask(const std::string stl_file_dir,
             vtkSmartPointer<vtkCubeSource>::New();
     board_dimensions[0]  = 0.18;
     board_dimensions[1]  = 0.14;
-    board_dimensions[2]  = 0.5;
+    board_dimensions[2]  = 0.01;
 
     board_source->SetXLength(board_dimensions[0]);
     board_source->SetYLength(board_dimensions[1]);
@@ -113,7 +95,7 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     // initialize the sequence
     sequence->SetSeed(1);
 
-    for (int i = 0; i < NUM_SPHERES; ++i) {
+    for (int i = 0; i < NUM_BULLET_SPHERES; ++i) {
 
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
@@ -154,17 +136,14 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     actors.push_back(d_board_actor);
 
 
-
-    dInitODE ();
-
-    InitODE();
+    InitBullet();
 
 }
 
 
 //------------------------------------------------------------------------------
 void BulletTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                        const int tool_id) {
+                                           const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
 
@@ -173,9 +152,9 @@ void BulletTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 //------------------------------------------------------------------------------
 void BulletTask::UpdateActors() {
 
-    for (int i = 0; i < 5; ++i) {
-        SimLoopODE();
-    }
+//    for (int i = 0; i < 5; ++i) {
+    SimLoopODE();
+//    }
 
 
 }
@@ -265,35 +244,178 @@ void BulletTask::FindAndPublishDesiredToolPose() {
 
 
 
-void BulletTask::InitODE() {
+void BulletTask::InitBullet() {
+    int i;
+    ///-----initialization_start-----
+
+    ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
+    collisionConfiguration = new btDefaultCollisionConfiguration();
+
+    ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
+    dispatcher = new btCollisionDispatcher(collisionConfiguration);
+
+    ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
+    overlappingPairCache = new btDbvtBroadphase();
+
+    ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
+    solver = new btSequentialImpulseConstraintSolver;
+
+    dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+
+    dynamicsWorld->setGravity(btVector3(0, 0, -10));
+
+    ///-----initialization_end-----
+
+
+
+    ///create a few basic rigid bodies
+
+    //the ground is a cube of side 100 at position y = -56.
+    //the sphere will hit it at y = -6, with center at -5
+    {
+        btCollisionShape* groundShape = new btBoxShape(
+                btVector3(btScalar(board_dimensions[0])
+                        , btScalar(board_dimensions[1]),
+                          btScalar(board_dimensions[2])));
+
+        collisionShapes.push_back(groundShape);
+
+        btTransform groundTransform;
+        groundTransform.setIdentity();
+        groundTransform.setOrigin(btVector3((float) (board_dimensions[0] / 2.45),
+                                            (float) (board_dimensions[1] / 2.78),
+                                            (float) -board_dimensions[2]/2));
+
+        btScalar mass(0.f);
+
+        //rigidbody is dynamic if and only if mass is non zero, otherwise static
+        bool isDynamic = (mass != 0.f);
+
+        btVector3 localInertia(0, 0, 0);
+        if (isDynamic)
+            groundShape->calculateLocalInertia(mass, localInertia);
+
+        //using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
+        btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
+        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
+        btRigidBody* body = new btRigidBody(rbInfo);
+
+        //add the body to the dynamics world
+        dynamicsWorld->addRigidBody(body);
+    }
+
+    {
+        //create a dynamic rigidbody
+        for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
+
+
+            //btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
+            btCollisionShape* colShape = new btSphereShape(btScalar(RAD_SPHERES));
+            collisionShapes.push_back(colShape);
+
+            /// Create Dynamic Objects
+            btTransform startTransform;
+            startTransform.setIdentity();
+
+            btScalar mass(1.f);
+
+            //rigidbody is dynamic if and only if mass is non zero, otherwise static
+            bool isDynamic = (mass != 0.f);
+
+            btVector3 localInertia(0, 0, 0);
+            if (isDynamic)
+                colShape->calculateLocalInertia(mass, localInertia);
+
+            startTransform.setOrigin(btVector3((float) sphere_positions[j][0],
+                                               (float) sphere_positions[j][1],
+                                               (float) sphere_positions[j][2]));
+
+            //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+            btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+
+            dynamicsWorld->addRigidBody(body);
+        }
+    }
 
 
 }
 
-void BulletTask::CloseODE() {
-
-}
 
 void BulletTask::SimLoopODE() {
+    ///-----stepsimulation_start-----
+
+    dynamicsWorld->stepSimulation(1.f / 60.f, 10);
+
+    //print positions of all objects
+    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+    {
+        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+        btRigidBody* body = btRigidBody::upcast(obj);
+        btTransform trans;
+        if (body && body->getMotionState())
+        {
+            body->getMotionState()->getWorldTransform(trans);
+        }
+        else
+        {
+            trans = obj->getWorldTransform();
+        }
+//        printf("world pos object %d = %f,%f,%f\n", j, float(trans.getOrigin().getX()), float(trans.getOrigin().getY()), float(trans.getOrigin().getZ()));
+
+        if (j==0)
+            d_board_actor->SetPosition(trans.getOrigin().getX(),
+                                       trans.getOrigin().getY(),
+                                       trans.getOrigin().getZ());
+        else
+            d_sphere_actors[j-1]->SetPosition(trans.getOrigin().getX(),
+                                              trans.getOrigin().getY(),
+                                              trans.getOrigin().getZ());
+    }
+
 
 }
 
-
-void nearCallback(void *data, dGeomID o1, dGeomID o2) {
-
-
-}
-
-
-
-void BulletTask::DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb,
-                       size_t obj_idx) {
-
-
-}
 
 BulletTask::~BulletTask() {
-//    CloseODE();
+    //remove the rigidbodies from the dynamics world and delete them
+    for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+    {
+        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+        btRigidBody* body = btRigidBody::upcast(obj);
+        if (body && body->getMotionState())
+        {
+            delete body->getMotionState();
+        }
+        dynamicsWorld->removeCollisionObject(obj);
+        delete obj;
+    }
+
+    //delete collision shapes
+    for (int j = 0; j < collisionShapes.size(); j++)
+    {
+        btCollisionShape* shape = collisionShapes[j];
+        collisionShapes[j] = 0;
+        delete shape;
+    }
+
+    //delete dynamics world
+    delete dynamicsWorld;
+
+    //delete solver
+    delete solver;
+
+    //delete broadphase
+    delete overlappingPairCache;
+
+    //delete dispatcher
+    delete dispatcher;
+
+    delete collisionConfiguration;
+
+    //next line is optional: it will be cleared by the destructor when the array goes out of scope
+    collisionShapes.clear();
 }
 
 

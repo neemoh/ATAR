@@ -35,18 +35,16 @@
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
-#include <ode/ode.h>
+#include <btBulletDynamicsCommon.h>
 #include <vtkMinimalStandardRandomSequence.h>
 
 
 
 #define GEOMSPERBODY 1
 #define MAX_CONTACTS 8
-#define NUM_SPHERES 15
+#define NUM_BULLET_SPHERES 10
 #define RAD_SPHERES 0.008
-extern  dWorldID World;
 
-extern dJointGroupID contactgroup;
 
 
 class BulletTask : public VTKTask{
@@ -91,23 +89,26 @@ public:
   *  **/
     void FindAndPublishDesiredToolPose();
 
-    void InitODE();
-
-    void CloseODE();
+    void InitBullet();
 
     void SimLoopODE();
 
 
-    void DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb,
-                  size_t obj_idx);
-
 private:
 
-    dSpaceID Space;
     std::vector<std::array<double, 3> > sphere_positions;
 
     std::string stl_files_dir;
     double board_dimensions[3];
+
+    btDiscreteDynamicsWorld* dynamicsWorld;
+    //keep track of the shapes, we release memory at exit.
+    //make sure to re-use collision shapes among rigid bodies whenever possible!
+    btAlignedObjectArray<btCollisionShape*> collisionShapes;
+    btSequentialImpulseConstraintSolver* solver;
+    btBroadphaseInterface* overlappingPairCache;
+    btCollisionDispatcher* dispatcher;
+    btDefaultCollisionConfiguration* collisionConfiguration;
     // -------------------------------------------------------------------------
     // graphics
 
@@ -121,6 +122,5 @@ private:
     std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
 
 };
-static void nearCallback (void *data, dGeomID o1, dGeomID o2);
 
 #endif //ATAR_BULLETTASK_H

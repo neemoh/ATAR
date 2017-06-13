@@ -263,6 +263,9 @@ target_link_libraries(
         ${OpenCV_LIBRARIES}
         ${VTK_LIBRARIES}
         ${catkin_LIBRARIES}
+        BulletDynamics
+        BulletCollision
+        LinearMath
         libode.a
         )
 set(ODE_PRECISION dSINGLE)
