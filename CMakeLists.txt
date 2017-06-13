@@ -47,12 +47,14 @@ catkin_package(CATKIN_DEPENDS
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED)
 #find_package(ODE REQUIRED)
+find_package(Bullet REQUIRED)
 
 include_directories(
-        ${catkin_INCLUDE_DIRS}
         include/
+        ${catkin_INCLUDE_DIRS}
+        ${BULLET_INCLUDE_DIR}
+#        /usr/local/include/bullet/BulletCollision/CollisionShapes/
 )
-
 
 ##########################################################################
 #                    Build Client and Service Nodes
@@ -208,6 +210,10 @@ foreach (_ex ${executables})
 endforeach ()
 
 
+add_executable(bullet_test src/bullet_test.cpp )
+target_link_libraries(bullet_test  BulletDynamics BulletCollision LinearMath
+        )
+
 ##########################################################################
 #                           AC OVERLAY VTK
 ##########################################################################
@@ -219,7 +225,7 @@ if(POLICY CMP0053)
     cmake_policy(SET CMP0053 NEW) # CMake 3.1
 endif()
 
-find_package(VTK REQUIRED)
+find_package(VTK 8 REQUIRED)
 vtk_module_config(VTK
         vtkCommonCore
         vtkCommonDataModel
@@ -250,7 +256,7 @@ add_executable(
         src/ac_overlay_vtk/KidneyTask.h
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.h
-        src/ac_overlay_vtk/ODETask.cpp src/ac_overlay_vtk/ODETask.h)
+        src/ac_overlay_vtk/ODETask.cpp src/ac_overlay_vtk/ODETask.h src/ac_overlay_vtk/BulletTask.cpp src/ac_overlay_vtk/BulletTask.h)
 
 target_link_libraries(
         ac_overlay_vtk
@@ -261,7 +267,15 @@ target_link_libraries(
         )
 set(ODE_PRECISION dSINGLE)
 
+add_executable(
+        vtk_shadow_test src/vtkshadowtest.cpp
+)
 
+target_link_libraries(
+        vtk_shadow_test
+        ${OpenCV_LIBRARIES}
+        ${VTK_LIBRARIES}
+)
 ##########################################################################
 #                           Reporter node
 ##########################################################################

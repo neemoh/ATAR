@@ -10,6 +10,7 @@
 #include "BuzzWireTask.h"
 #include "KidneyTask.h"
 #include "ODETask.h"
+#include "BulletTask.h"
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
         : n(node_name), cam_poses_provided_as_params(false)
@@ -449,41 +450,28 @@ void OverlayROSConfig::StartTask(const uint task_id) {
 
     // create the task
     if(task_id ==1){
-
         // allocate anew dynamic task
-        std::cout << "Starting new task. "<< std::endl;
+        std::cout << "Starting new BuzzWireTask task. "<< std::endl;
         task_ptr   = new BuzzWireTask(stl_files_dir, show_reference_frames,
                                       (bool) (n_arms - 1), with_guidance);
-        // assign the tool pose pointers
-        ros::spinOnce();
-        task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
-        task_ptr->SetCurrentToolPosePointer(pose_current_tool[1], 1);
-
-        // bind the haptics thread
-        haptics_thread = boost::thread(boost::bind(
-                &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
-
     }
     else if(task_id ==2){
-
-        std::cout << "Starting new task. "<< std::endl;
+        std::cout << "Starting new KidneyTask task. "<< std::endl;
         task_ptr   = new KidneyTask(stl_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
-        // assign the tool pose pointers
-        ros::spinOnce();
-        task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
-        task_ptr->SetCurrentToolPosePointer(pose_current_tool[1], 1);
-
-        // bind the haptics thread
-        haptics_thread = boost::thread(boost::bind(
-                &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
-
     }
     else if(task_id ==3){
-
-        std::cout << "Starting new task. "<< std::endl;
+        std::cout << "Starting new ODETask task. "<< std::endl;
         task_ptr   = new ODETask(stl_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
+    }
+    else if(task_id ==4){
+        std::cout << "Starting BulletTask task. "<< std::endl;
+        task_ptr   = new BulletTask(stl_files_dir, false,
+                                    (bool) (n_arms - 1), with_guidance);
+    }
+
+    if(task_id >0 && task_id <5) {
         // assign the tool pose pointers
         ros::spinOnce();
         task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
@@ -492,9 +480,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         // bind the haptics thread
         haptics_thread = boost::thread(boost::bind(
                 &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
-
     }
-
 }
 
 void OverlayROSConfig::StopTask() {
