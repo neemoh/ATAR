@@ -61,13 +61,17 @@ int main(int argc, char **argv)
         // keyboard commands
 
         char key = (char)cv::waitKey(1);
-        if (key == 27) // Esc
-            ros::shutdown();
+        if (key == 27) {// Esc
+            graphics.RemoveAllActorsFromScene();
+            rc.Cleanup();
+            break;
+
+        }
         else if (key == 'a'){
             if(task_id>0) {
                 // if a task is running first stop it
                 graphics.RemoveAllActorsFromScene();
-                rc.StopTask();
+                rc.DeleteTask();
                 // then do the calibration
                 rc.DoArmToWorldFrameCalibration(0);
                 // run the task again
@@ -84,7 +88,7 @@ int main(int argc, char **argv)
             ROS_INFO("Task %d Selected", task_id);
             if(task_id) {
                 graphics.RemoveAllActorsFromScene();
-                rc.StopTask();
+                rc.DeleteTask();
             }
             task_id = uint(key - '0');
 
@@ -142,9 +146,10 @@ int main(int argc, char **argv)
         // copying the render buffer back from gpu takes a very long time,
         // creating a bottle neck that reduced the update rate to 25 Hz
         // already. So no sleep is needed foe now.
-                loop_rate.sleep();
+        loop_rate.sleep();
     }
 
+    ros::shutdown();
     return 0;
 }
 
