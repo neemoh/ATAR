@@ -273,10 +273,11 @@ void BulletTask::InitBullet() {
     //the ground is a cube of side 100 at position y = -56.
     //the sphere will hit it at y = -6, with center at -5
     {
+        // note that the box arguments are half extents
         btCollisionShape* groundShape = new btBoxShape(
-                btVector3(btScalar(board_dimensions[0])
-                        , btScalar(board_dimensions[1]),
-                          btScalar(board_dimensions[2])));
+                btVector3(btScalar(board_dimensions[0]/2)
+                        , btScalar(board_dimensions[1]/2),
+                          btScalar(board_dimensions[2]/2)));
 
         collisionShapes.push_back(groundShape);
 
@@ -295,9 +296,12 @@ void BulletTask::InitBullet() {
         if (isDynamic)
             groundShape->calculateLocalInertia(mass, localInertia);
 
-        //using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-        btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
+        //using motionstate is optional, it provides interpolation
+        // capabilities, and only synchronizes 'active' objects
+        btDefaultMotionState* myMotionState = new
+                btDefaultMotionState(groundTransform);
+        btRigidBody::btRigidBodyConstructionInfo rbInfo(
+                mass,myMotionState, groundShape, localInertia);
         btRigidBody* body = new btRigidBody(rbInfo);
 
         //add the body to the dynamics world
@@ -317,7 +321,7 @@ void BulletTask::InitBullet() {
             btTransform startTransform;
             startTransform.setIdentity();
 
-            btScalar mass(1.f);
+            btScalar mass(0.1f);
 
             //rigidbody is dynamic if and only if mass is non zero, otherwise static
             bool isDynamic = (mass != 0.f);
@@ -331,8 +335,10 @@ void BulletTask::InitBullet() {
                                                (float) sphere_positions[j][2]));
 
             //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
+            btDefaultMotionState* myMotionState = new
+                    btDefaultMotionState(startTransform);
+            btRigidBody::btRigidBodyConstructionInfo rbInfo(
+                    mass, myMotionState, colShape, localInertia);
             btRigidBody* body = new btRigidBody(rbInfo);
 
             dynamicsWorld->addRigidBody(body);
@@ -379,6 +385,8 @@ void BulletTask::SimLoopODE() {
 
 
 BulletTask::~BulletTask() {
+
+    ROS_INFO("Destructing Bullet task");
     //remove the rigidbodies from the dynamics world and delete them
     for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
     {
