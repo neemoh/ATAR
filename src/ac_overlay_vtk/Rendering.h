@@ -26,7 +26,7 @@ public:
     //    vtkTypeMacro(Rendering, vtkRenderWindow);
     //    static Rendering *New();
 
-    Rendering();
+    Rendering(uint num_windows);
     ~Rendering();
 
     void SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::Vec3d cam_tvec[]);
@@ -56,7 +56,7 @@ private:
 
     // Set up the background scene_camera to fill the renderer with the image
     void SetImageCameraToFaceImage(const int id);
-
+    int num_render_windows;
     //cameras
     vtkSmartPointer<CalibratedCamera>       background_camera_[2];
     vtkSmartPointer<CalibratedCamera>       scene_camera_[2];
@@ -70,10 +70,10 @@ private:
     // transforms
     vtkSmartPointer<vtkMatrix4x4>           camera_to_world_transform_[2];
     // windows
-    vtkSmartPointer<vtkRenderWindow>        render_window_;
+    vtkSmartPointer<vtkRenderWindow>        render_window_[2];
     //    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
     // reading images back
-    vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter_ ;
+    vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter_[2] ;
 
 };
 

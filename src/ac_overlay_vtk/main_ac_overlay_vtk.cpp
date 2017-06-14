@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     cv::Mat cam_images[2];
     rc.LockAndGetImages(ros::Duration(1), cam_images);
 
-    Rendering graphics;
+    Rendering graphics(1);
 
     // in case camera poses are set as parameters
     cv::Vec3d cam_rvec[2], cam_tvec[2];

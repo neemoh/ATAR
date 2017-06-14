@@ -14,19 +14,19 @@
 #include <vtk-6.2/vtkOpenGLRenderer.h>
 #include <vtk-6.2/vtkFrameBufferObject2.h>
 
-Rendering::Rendering()
+Rendering::Rendering(uint num_windows)
+        : num_render_windows(num_windows)
 //        : background_renderer_(NULL)
 //        , scene_renderer_(NULL)
 //        , background_renderer_(NULL)
 //        , scene_renderer_(NULL)
 //        , camera_to_world_transform_(NULL)
 {
-
-    render_window_ = vtkSmartPointer<vtkRenderWindow>::New();
-    render_window_->SetNumberOfLayers(2);
+    // make sure the number of windows are alright
+    if(num_render_windows <1) num_render_windows =1;
+    else if(num_render_windows >2) num_render_windows = 2;
 
     double view_port[2][4] = {{0.0, 0.0, 0.5, 1.0}, {0.5, 0.0, 1.0, 1.0}};
-
 
     for (int i = 0; i < 2; ++i) {
 
@@ -40,12 +40,15 @@ Rendering::Rendering()
 
         background_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
         background_renderer_[i]->SetActiveCamera(background_camera_[i]);
-        background_renderer_[i]->SetViewport(view_port[i]);
 
         scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
         scene_renderer_[i]->InteractiveOff();
         scene_renderer_[i]->SetLayer(1);
-        scene_renderer_[i]->SetViewport(view_port[i]);
+
+        if(num_render_windows==1){
+            background_renderer_[i]->SetViewport(view_port[i]);
+            scene_renderer_[i]->SetViewport(view_port[i]);
+        }
 
         scene_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
         scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
@@ -53,22 +56,26 @@ Rendering::Rendering()
         camera_to_world_transform_[i] = vtkSmartPointer<vtkMatrix4x4>::New();
         camera_to_world_transform_[i]->Identity();
 
+        int j=0;
+        if(num_render_windows==2)
+            j=i;
+        render_window_[j] = vtkSmartPointer<vtkRenderWindow>::New();
+        render_window_[j]->SetNumberOfLayers(2);
+        render_window_[j]->AddRenderer(background_renderer_[i]);
+        render_window_[j]->AddRenderer(scene_renderer_[i]);
 
-        render_window_->AddRenderer(background_renderer_[i]);
-        render_window_->AddRenderer(scene_renderer_[i]);
-
-
+        window_to_image_filter_[i] =
+                vtkSmartPointer<vtkWindowToImageFilter>::New();
+        window_to_image_filter_[i]->SetInput(render_window_[i]);
+        //    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record  he
+        // alpha (transparency) channel for future use
+        window_to_image_filter_[i]->ReadFrontBufferOff(); // read from the back buffer
 
     }
     // important for getting high update rate (If needed, images can be shown
     // with opencv)
-//    render_window_->SetOffScreenRendering(1);
+    //    render_window_->SetOffScreenRendering(1);
 
-    window_to_image_filter_ = vtkSmartPointer<vtkWindowToImageFilter>::New();
-    window_to_image_filter_->SetInput(render_window_);
-    //    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record  he
-    // alpha (transparency) channel for future use
-    window_to_image_filter_->ReadFrontBufferOff(); // read from the back buffer
 
 }
 
@@ -77,9 +84,9 @@ Rendering::Rendering()
 Rendering::~Rendering()
 {
 
-    for (int j = 0; j < 2; ++j) {
-        render_window_->RemoveRenderer(background_renderer_[j]);
-        render_window_->RemoveRenderer(scene_renderer_[j]);
+    for (int j = 0; j < num_render_windows; ++j) {
+        render_window_[j]->RemoveRenderer(background_renderer_[j]);
+        render_window_[j]->RemoveRenderer(scene_renderer_[j]);
     }
 
 
@@ -155,7 +162,7 @@ void Rendering::SetCameraIntrinsics(const cv::Mat intrinsics[])
 //------------------------------------------------------------------------------
 void Rendering::SetImageCameraToFaceImage(const int id) {
 
-    int *windowSize = render_window_->GetSize();
+    int *windowSize = render_window_[id]->GetSize();
 
     int imageSize[3];
     image_importer_[id]->GetOutput()->GetDimensions(imageSize);
@@ -205,13 +212,15 @@ void Rendering::SetImageCameraToFaceImage(const int id) {
     double imageWidth = imageSize[0] * spacing[0];
     double imageHeight = imageSize[1] * spacing[1];
 
-    double widthRatio = imageWidth / (windowSize[0]/2);
+    double widthRatio = imageWidth / (windowSize[0]/(1+
+            (num_render_windows==1)));
     double heightRatio = imageHeight / windowSize[1];
 
     double scale;
     if (widthRatio > heightRatio) {
         scale = 0.5 * imageWidth *
-                ((double) windowSize[1] / (double)(windowSize[0]/2));
+                ((double) windowSize[1] / (double)(windowSize[0]/(1+
+                        (num_render_windows==1))));
     } else {
         scale = 0.5 * imageHeight;
     }
@@ -241,10 +250,12 @@ void Rendering::UpdateBackgroundImage(cv::Mat  img[]) {
 
 //------------------------------------------------------------------------------
 void Rendering::UpdateCameraViewForActualWindowSize() {
-    for (int i = 0; i < 2; ++i) {
+
+    for (int i = 0; i < num_render_windows; ++i) {
         SetImageCameraToFaceImage(i);
-        int *window_size = render_window_->GetActualSize();
-        scene_camera_[i]->UpdateView(window_size[0] / 2, window_size[1]);
+        int *window_size = render_window_[i]->GetActualSize();
+        scene_camera_[i]->UpdateView(window_size[0] / (3-num_render_windows),
+                                     window_size[1]);
     }
 }
 
@@ -254,7 +265,13 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
     int image_width = img[0].size().width;
     int image_height = img[0].size().height;
-    render_window_->SetSize(2 * image_width, image_height);
+
+    // if one window the width is double
+    for (int j = 0; j < num_render_windows; ++j) {
+        render_window_[j]->SetSize((3-num_render_windows) * image_width,
+                                   image_height);
+    }
+
 
     for (int i = 0; i < 2; ++i) {
         assert( img[i].data != NULL );
@@ -311,9 +328,9 @@ void Rendering::Render() {
 //    scene_renderer_->Modified();
 //    background_renderer_->Modified();
 //    render_window_->Modified();
-
-//    render_window_[0]->Render();
-    render_window_->Render();
+    for (int i = 0; i < num_render_windows; ++i) {
+        render_window_[i]->Render();
+    }
 
 }
 
@@ -321,31 +338,34 @@ void Rendering::Render() {
 //------------------------------------------------------------------------------
 void Rendering::GetRenderedImage(cv::Mat &img) {
 
-    window_to_image_filter_->Modified();
-    vtkImageData* image = window_to_image_filter_->GetOutput();
-    window_to_image_filter_->Update();
+    for (int i = 0; i < num_render_windows; ++i) {
 
-    // copy to cv Mat
-    int dims[3];
-    image->GetDimensions(dims);
+        window_to_image_filter_[i]->Modified();
+        vtkImageData *image = window_to_image_filter_[i]->GetOutput();
+        window_to_image_filter_[i]->Update();
+
+        // copy to cv Mat
+        int dims[3];
+        image->GetDimensions(dims);
 
 //    std::cout << " dims[0] " << dims[0] << " dims[1] " << dims[1] << " "
 //            "dims[2] " << dims[2] <<std::endl;
-    if(dims[0]>0) {
-        cv::Mat openCVImage(dims[1], dims[0], CV_8UC3,
-                            image->GetScalarPointer()); // Unsigned int, 4 channels
-        // convert to bgr
-        cv::cvtColor(openCVImage, img, cv::COLOR_RGB2BGR);
+        if (dims[0] > 0) {
+            cv::Mat openCVImage(dims[1], dims[0], CV_8UC3,
+                                image->GetScalarPointer()); // Unsigned int, 4 channels
+            // convert to bgr
+            cv::cvtColor(openCVImage, img, cv::COLOR_RGB2BGR);
 
-        // Flip because of different origins between vtk and OpenCV
-        cv::flip(img, img, 0);
+            // Flip because of different origins between vtk and OpenCV
+            cv::flip(img, img, 0);
+        }
     }
 }
 
 void Rendering::RemoveAllActorsFromScene() {
 
-        scene_renderer_[0]->RemoveAllViewProps();
-        scene_renderer_[1]->RemoveAllViewProps();
+    scene_renderer_[0]->RemoveAllViewProps();
+    scene_renderer_[1]->RemoveAllViewProps();
 }
 
 
