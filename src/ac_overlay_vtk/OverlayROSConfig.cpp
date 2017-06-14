@@ -483,9 +483,9 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     }
 }
 
-void OverlayROSConfig::StopTask() {
+void OverlayROSConfig::DeleteTask() {
 
-    std::cout << "interrupting haptics thread. "<< std::endl;
+    std::cout << "Interrupting haptics thread. "<< std::endl;
     haptics_thread.interrupt();
     ros::Rate sleep(50);
     sleep.sleep();
@@ -601,6 +601,12 @@ void OverlayROSConfig::DoArmToWorldFrameCalibration(const uint arm_id) {
         // set output
         slave_frame_to_world_frame[arm_id] = world_to_arm_frame.Inverse();
     }
+
+}
+
+void OverlayROSConfig::Cleanup() {
+
+    DeleteTask();
 
 }
 

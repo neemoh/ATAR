@@ -13,7 +13,9 @@ ODETask::ODETask(const std::string stl_file_dir,
                  const bool with_guidance)
         :
         VTKTask(show_ref_frames, biman, with_guidance),
-        stl_files_dir(stl_file_dir)
+        stl_files_dir(stl_file_dir),
+        d_board_actor(vtkSmartPointer<vtkActor>::New())
+
 {
 
 
@@ -34,7 +36,6 @@ ODETask::ODETask(const std::string stl_file_dir,
     ac_parameters.angular_elastic_coeff = 0.04;
     ac_parameters.angular_damping_coeff = 0.002;
 
-    d_board_actor = vtkSmartPointer<vtkActor>::New();
 
 
 
@@ -740,7 +741,7 @@ void ODETask::DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aab
 }
 
 ODETask::~ODETask() {
-    CloseODE();
+//    CloseODE();
 }
 
 

@@ -87,9 +87,11 @@ public:
     void StartTask(const uint task_id);
 
     // stop the running haptic thread and destruct the  task object
-    void StopTask();
+    void DeleteTask();
 
     void DoArmToWorldFrameCalibration(const uint arm_id);
+
+    void Cleanup();
 
 private:
 

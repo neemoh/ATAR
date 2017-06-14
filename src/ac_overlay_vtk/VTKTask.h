@@ -12,6 +12,18 @@
 #include <custom_msgs/TaskState.h>
 #include <kdl/frames.hpp>
 #include <custom_msgs/ActiveConstraintParameters.h>
+#include <ros/ros.h>
+
+//n ote about vtkSmartPointer:
+// One way to create a VTK object is
+//      vtkObject* MyObject = vtkObject::New();
+// This method, however, can (and likely will) lead to memory management
+// issues at some point or another. You must manually delete the object
+//      MyObject->Delete();
+// Instead if vtkSmartPointer is used the memory will be released when the
+//      object having the pointer goes out of scope:
+// vtkSmartPointer<vtkObject> MyObject = vtkSmartPointer<vtkObject>::New();
+
 
 
 class VTKTask{
@@ -22,6 +34,10 @@ public:
             show_ref_frames(show_ref_frames),
             bimanual(biman),
             with_guidance(with_guidance){};
+
+    virtual ~VTKTask(){
+        ROS_INFO("Task base Destructor called");
+    };
 
     // returns all the task actors to be sent to the rendering part
     virtual std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -55,12 +71,14 @@ public:
     virtual void FindAndPublishDesiredToolPose() = 0;
 
 protected:
+
     bool bimanual;
     bool with_guidance;
     bool show_ref_frames;
     std::vector<vtkSmartPointer<vtkProp>>           actors;
 
 };
+
 
 
 #endif //ATAR_VTKTASK_H
