@@ -21,19 +21,26 @@ int main(int argc, char **argv)
 
     ros::init(argc, argv, "ac_overlay");
     OverlayROSConfig rc (ros::this_node::getName());
+    uint num_windows = 1;
 
     // Create the window for the video feed
-    std::string cv_window_name = "Augmented Stereo images";
-    cvNamedWindow(cv_window_name.c_str() ,CV_WINDOW_NORMAL);
+    std::string cv_window_names[2] = {"Augmented Left", "Augmented Right"};
+
+    if(num_windows==1)
+        cvNamedWindow(cv_window_names[0].c_str() ,CV_WINDOW_NORMAL);
+    else if(num_windows==2){
+        cvNamedWindow(cv_window_names[0].c_str() ,CV_WINDOW_NORMAL);
+        cvNamedWindow(cv_window_names[1].c_str() ,CV_WINDOW_NORMAL);
+    }
 
     std::stringstream ui_instructions;
     ui_instructions <<"Test. " ;
 
-    cv::Mat augmented_stereo_image;
+    cv::Mat augmented_images[2];
     cv::Mat cam_images[2];
     rc.LockAndGetImages(ros::Duration(1), cam_images);
 
-    Rendering graphics(1);
+    Rendering graphics(num_windows);
 
     // in case camera poses are set as parameters
     cv::Vec3d cam_rvec[2], cam_tvec[2];
@@ -82,7 +89,8 @@ int main(int argc, char **argv)
                 rc.DoArmToWorldFrameCalibration(0);
         }
         else if (key == 'f')  //full screen
-            VisualUtils::SwitchFullScreen(cv_window_name);
+            VisualUtils::SwitchFullScreen(cv_window_names[0]);
+
 
         else if (key == '1' || key == '2'|| key == '3' || key == '4'){
             ROS_INFO("Task %d Selected", task_id);
@@ -104,11 +112,6 @@ int main(int argc, char **argv)
             // Time performance debug
             //ros::Time start =ros::Time::now();
 
-            //            // print instructions
-            //            for (int i = 0; i < 2; ++i)
-            //                cv::putText(cam_images[i], ui_instructions.str(),
-            //                            cv::Point(50, 50), 0, 0.8, cv::Scalar(20, 150, 20), 2);
-
             // update the moving actors
             if(task_id)
                 rc.task_ptr->UpdateActors();
@@ -122,12 +125,27 @@ int main(int argc, char **argv)
 
             // Copy the rendered image to memory, show it and/or publish it.
             if(rc.publish_overlayed_images) {
-                graphics.GetRenderedImage(augmented_stereo_image);
-                cv::imshow(cv_window_name, augmented_stereo_image);
-                rc.publisher_stereo_overlayed.publish(
-                        cv_bridge::CvImage(std_msgs::Header(),
-                                           "bgr8",
-                                           augmented_stereo_image).toImageMsg());
+                graphics.GetRenderedImage(augmented_images);
+                if(num_windows ==1){
+                    cv::imshow(cv_window_names[0], augmented_images[0]);
+                    rc.publisher_stereo_overlayed.publish(
+                            cv_bridge::CvImage(std_msgs::Header(),
+                                               "bgr8",
+                                               augmented_images[0])
+                                    .toImageMsg());
+
+                }
+                else if(num_windows ==2){
+                    for (int i = 0; i < 2; ++i) {
+                        cv::imshow(cv_window_names[i], augmented_images[i]);
+                        rc.publisher_overlayed[i].publish(
+                                cv_bridge::CvImage(std_msgs::Header(),
+                                                   "bgr8",
+                                                   augmented_images[i])
+                                        .toImageMsg());
+                    }
+                }
+
             }
             // publish the active constraint parameters if needed
             if(task_id) {

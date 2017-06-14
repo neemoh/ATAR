@@ -48,14 +48,14 @@ public:
     void RemoveAllActorsFromScene();
 
     void Render();
-    void GetRenderedImage(cv::Mat & img);
+    void GetRenderedImage(cv::Mat *images);
 
 
 private:
 
 
     // Set up the background scene_camera to fill the renderer with the image
-    void SetImageCameraToFaceImage(const int id);
+    void SetImageCameraToFaceImage(const int id, const int *window_size);
     int num_render_windows;
     //cameras
     vtkSmartPointer<CalibratedCamera>       background_camera_[2];
