@@ -51,7 +51,7 @@ public:
     * \brief Update the view angle of the virtual Camera according to window size
      * Note that the windows is the opengl window here,
     */
-    void UpdateView(const int &width, const int &height);
+    void UpdateView(const double &width, const double &height);
 
     /**
      * \brief Sets the pose of the camera with respect to world (task frame)
@@ -71,8 +71,8 @@ private:
     vtkSmartPointer<vtkMatrix4x4> intrinsic_matrix;
     //    int m_WindowWidthInPixels;
     //    int m_WindowHeightInPixels;
-    int image_width_;
-    int image_height_;
+    double image_width_;
+    double image_height_;
     double fx_;
     double fy_;
     double cx_;
