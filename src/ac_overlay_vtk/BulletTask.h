@@ -32,10 +32,12 @@
 #include "Rendering.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
+#include "BulletVTKMotionState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
+#include "BulletVTKObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
 
 
@@ -91,7 +93,7 @@ public:
 
     void InitBullet();
 
-    void SimLoopODE();
+    void StepDynamicsWorld();
 
 
 private:
@@ -104,11 +106,13 @@ private:
     btDiscreteDynamicsWorld* dynamicsWorld;
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
-    btAlignedObjectArray<btCollisionShape*> collisionShapes;
+//    btAlignedObjectArray<btCollisionShape*> collisionShapes;
     btSequentialImpulseConstraintSolver* solver;
     btBroadphaseInterface* overlappingPairCache;
     btCollisionDispatcher* dispatcher;
     btDefaultCollisionConfiguration* collisionConfiguration;
+    BulletVTKObject* spheres[NUM_BULLET_SPHERES];
+    BulletVTKObject* board;
     // -------------------------------------------------------------------------
     // graphics
 
@@ -118,8 +122,8 @@ private:
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
 
-    vtkSmartPointer<vtkActor>                       d_board_actor;
-    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
+//    vtkSmartPointer<vtkActor>                       d_board_actor;
+//    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
 
 };
 
