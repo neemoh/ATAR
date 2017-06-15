@@ -122,6 +122,7 @@ public:
     KDL::Frame slave_frame_to_world_frame[2];
 
     bool publish_overlayed_images = false;
+    bool one_window_mode= false;
     KDL::Frame left_cam_to_right_cam_tr;
 
     cv::Vec3d cam_rvec[2];

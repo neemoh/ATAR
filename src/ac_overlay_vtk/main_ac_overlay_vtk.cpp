@@ -10,6 +10,7 @@
 #include <ode/ode.h>
 #include "Rendering.h"
 
+
 dWorldID World;
 
 dJointGroupID contactgroup;
@@ -21,14 +22,13 @@ int main(int argc, char **argv)
 
     ros::init(argc, argv, "ac_overlay");
     OverlayROSConfig rc (ros::this_node::getName());
-    uint num_windows = 1;
 
     // Create the window for the video feed
     std::string cv_window_names[2] = {"Augmented Left", "Augmented Right"};
 
-    if(num_windows==1)
+    if(rc.one_window_mode)
         cvNamedWindow(cv_window_names[0].c_str() ,CV_WINDOW_NORMAL);
-    else if(num_windows==2){
+    else{
         cvNamedWindow(cv_window_names[0].c_str() ,CV_WINDOW_NORMAL);
         cvNamedWindow(cv_window_names[1].c_str() ,CV_WINDOW_NORMAL);
     }
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     cv::Mat cam_images[2];
     rc.LockAndGetImages(ros::Duration(1), cam_images);
 
-    Rendering graphics(num_windows);
+    Rendering graphics(2-(uint)rc.one_window_mode);
 
     // in case camera poses are set as parameters
     cv::Vec3d cam_rvec[2], cam_tvec[2];
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
             // Copy the rendered image to memory, show it and/or publish it.
             if(rc.publish_overlayed_images) {
                 graphics.GetRenderedImage(augmented_images);
-                if(num_windows ==1){
+                if(rc.one_window_mode){
                     cv::imshow(cv_window_names[0], augmented_images[0]);
                     rc.publisher_stereo_overlayed.publish(
                             cv_bridge::CvImage(std_msgs::Header(),
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
                                     .toImageMsg());
 
                 }
-                else if(num_windows ==2){
+                else{
                     for (int i = 0; i < 2; ++i) {
                         cv::imshow(cv_window_names[i], augmented_images[i]);
                         rc.publisher_overlayed[i].publish(

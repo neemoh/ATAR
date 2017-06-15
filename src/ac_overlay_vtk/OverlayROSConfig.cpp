@@ -84,6 +84,10 @@ void OverlayROSConfig::SetupROS() {
     ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
              publish_overlayed_images ? "true" : "false");
 
+    n.param<bool>("one_window_mode", one_window_mode, false);
+    ROS_INFO("Rendered Images will be shown in a single window: %s",
+             one_window_mode ? "true" : "false");
+
 
     if (n.getParam("stl_files_dir", stl_files_dir)) {
         ROS_INFO("stl files will be loaded from: %s", stl_files_dir.c_str());

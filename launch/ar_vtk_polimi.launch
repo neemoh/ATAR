@@ -103,6 +103,10 @@ ca        -->
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />
+
+        <!--Combine left and right images in one window -->
+        <param name= "one_window_mode" value= "true" />
+
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
