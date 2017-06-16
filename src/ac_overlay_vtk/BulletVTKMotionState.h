@@ -61,16 +61,18 @@ public:
     // -------------------------------------------------------------------------
     //! Called by bullet to set the pose of dynamic objects
     virtual void setWorldTransform(const btTransform &worldTrans) {
-
+        bt_pose_ = worldTrans;
         if(actor_ == nullptr)
             return; // silently return
 
         btQuaternion rot = worldTrans.getRotation();
         // TODO
         //        actor_->SetOrientation(rot.w(), rot.x(), rot.y(), rot.z());
-        actor_->SetOrientation(0.0, 0.0, 0.0);
+        //actor_->SetOrientation(0.0, 0.0, 0.0);
         btVector3 pos = worldTrans.getOrigin();
         actor_->SetPosition(pos.x(), pos.y(), pos.z());
+        actor_->SetPosition(pos.x(), pos.y(), pos.z());
+
     }
 
 

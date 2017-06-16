@@ -20,22 +20,6 @@ BulletTask::BulletTask(const std::string stl_file_dir,
 
     InitBullet();
 
-    // -------------------------------------------------------------------------
-    //  ACTIVE CONSTRAINT
-    // -------------------------------------------------------------------------
-    // these parameters could be set as ros parameters too but since
-    // they change during the task I am hard coding them here.
-    ac_parameters.method = 0; // 0 for visco/elastic
-    ac_parameters.active = 0;
-
-    ac_parameters.max_force = 4.0;
-    ac_parameters.linear_elastic_coeff = 1000.0;
-    ac_parameters.linear_damping_coeff = 10.0;
-
-    ac_parameters.max_torque = 0.03;
-    ac_parameters.angular_elastic_coeff = 0.04;
-    ac_parameters.angular_damping_coeff = 0.002;
-
 
     // -------------------------------------------------------------------------
     // Create a cube for the board
@@ -59,21 +43,26 @@ BulletTask::BulletTask(const std::string stl_file_dir,
 
     // -------------------------------------------------------------------------
     // Create spheres
-    int rows = NUM_BULLET_SPHERES/4;
-    for (int i = 0; i < 4; ++i) {
+    int cols = 4;
 
-        for (int j = 0; j < rows; ++j) {
+    int rows = NUM_BULLET_SPHERES/cols;
+    for (int i = 0; i < rows+1; ++i) {
+
+        if(i == rows)
+            cols = NUM_BULLET_SPHERES%cols;
+
+        for (int j = 0; j < cols; ++j) {
 
         double ratio = (double)i/4.0;
 
         double pose[7] = {(double)i * 0.02,
                           0.0,
-                          0.01 + 0.02 * j,
+                          0.04 + 0.02 * j,
                           0, 0, 0, 1};
 
-        std::vector<double> dim = {2*RAD_SPHERES *ratio};
+        std::vector<double> dim = {RAD_SPHERES};
         spheres[i*rows+j] = new BulletVTKObject(ObjectShape::SPHERE,
-                                         ObjectType::DYNAMIC,dim, pose, 0.1);
+                                         ObjectType::DYNAMIC, dim, pose, 0.1);
 
         spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
                 0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
@@ -240,18 +229,18 @@ void BulletTask::StepDynamicsWorld() {
 //        {
 //            trans = obj->getWorldTransform();
 //        }
-//        if(j==0)
-//            std::cout << "trans " << trans.getRotation().getW()  <<
-//                                                                      std::endl;
+//
+//            heights[j] = trans.getOrigin().z();
+//        heights2[j] = actors[j]->GetMatrix()->Element[2][3];
 //    }
-
 
 }
 
 
 BulletTask::~BulletTask() {
 
-    ROS_INFO("Destructing Bullet task");
+    ROS_INFO("Destructing Bullet task: %d",
+             dynamicsWorld->getNumCollisionObjects());
     //remove the rigidbodies from the dynamics world and delete them
     for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
     {
@@ -265,11 +254,11 @@ BulletTask::~BulletTask() {
         delete obj;
     }
 
-    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-        BulletVTKObject* sphere = spheres[j];
-        spheres[j] = 0;
-        delete sphere;
-    }
+//    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
+//        BulletVTKObject* sphere = spheres[j];
+//        spheres[j] = 0;
+//        delete sphere;
+//    }
 //    //delete collision shapes
 ////    for (int j = 0; j < collisionShapes.size(); j++)
 //    for (int j = 0; j < 2; j++) // because we use the same collision shape

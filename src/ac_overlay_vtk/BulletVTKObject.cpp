@@ -19,7 +19,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType type,
 
     num_bulletvtk_objects++;
     std::cout << " num_bulletvtk_objects " << num_bulletvtk_objects <<
-                                                                    std::endl;
+              std::endl;
 
 
     // common objects
@@ -74,8 +74,8 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType type,
 
             // Bullet Shape
             collision_shape = new btBoxShape(
-                    btVector3(btScalar(dimensions[0]/2), btScalar
-                                      (dimensions[1]/2),
+                    btVector3(btScalar(dimensions[0]/2),
+                              btScalar(dimensions[1]/2),
                               btScalar(dimensions[2]/2)));
 
             break;
@@ -97,13 +97,15 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType type,
 
     //------------------------------------------------------------------------------
     // Set initial pose of graphical representation
-    actor->SetUserMatrix(PoseVectorToVTKMatrix(pose));
 
     //------------------------------------------------------------------------------
     // set up dynamics
     // rigid body is dynamic if and only if mass is non zero, otherwise static
     btScalar bt_mass((float)mass);
     bool isDynamic = (bt_mass != 0.f);
+
+    if(!isDynamic)
+        actor->SetUserMatrix(PoseVectorToVTKMatrix(pose));
 
     btVector3 localInertia(0, 0, 0);
     if (isDynamic)
@@ -127,10 +129,10 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType type,
 
 
 BulletVTKObject::~BulletVTKObject() {
-
-    delete collision_shape;
+// deleting from outside
+//    delete collision_shape;
 //    delete motion_state;
-//        delete body;
+//    delete body;
 }
 
 
