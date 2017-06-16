@@ -45,7 +45,7 @@
 #define GEOMSPERBODY 1
 #define MAX_CONTACTS 8
 #define NUM_BULLET_SPHERES 15
-#define RAD_SPHERES 0.008
+#define NUM_BULLET_CUBES 15
 
 
 
@@ -112,6 +112,7 @@ private:
     btCollisionDispatcher* dispatcher;
     btDefaultCollisionConfiguration* collisionConfiguration;
     BulletVTKObject* spheres[NUM_BULLET_SPHERES];
+    BulletVTKObject* cubes[NUM_BULLET_CUBES];
     BulletVTKObject* board;
     // -------------------------------------------------------------------------
     // graphics

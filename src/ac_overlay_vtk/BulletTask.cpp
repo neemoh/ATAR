@@ -26,7 +26,7 @@ BulletTask::BulletTask(const std::string stl_file_dir,
 
     board_dimensions[0]  = 0.18;
     board_dimensions[1]  = 0.14;
-    board_dimensions[2]  = 0.01;
+    board_dimensions[2]  = 0.04;
 
     double pose[7] = {board_dimensions[0] / 2.45,
                       board_dimensions[1] / 2.78,
@@ -56,13 +56,13 @@ BulletTask::BulletTask(const std::string stl_file_dir,
         double ratio = (double)i/4.0;
 
         double pose[7] = {(double)i * 0.02,
-                          0.0,
-                          0.04 + 0.02 * j,
+                          0.03,
+                          0.05 + 0.02 * j,
                           0, 0, 0, 1};
 
-        std::vector<double> dim = {RAD_SPHERES};
+        std::vector<double> dim = {0.008};
         spheres[i*rows+j] = new BulletVTKObject(ObjectShape::SPHERE,
-                                         ObjectType::DYNAMIC, dim, pose, 0.1);
+                                         ObjectType::DYNAMIC, dim, pose, 0.3);
 
         spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
                 0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
@@ -74,6 +74,34 @@ BulletTask::BulletTask(const std::string stl_file_dir,
 
         }
     }
+    rows = NUM_BULLET_CUBES/cols;
+    for (int i = 0; i < rows+1; ++i) {
+
+        if(i == rows)
+            cols = NUM_BULLET_CUBES%cols;
+
+        for (int j = 0; j < cols; ++j) {
+
+            double ratio = (double)i/4.0;
+
+            double pose[7] = {0.02 + 0.02 * j,
+                              (double)i * 0.018,
+                    0.02,
+                    0, 0, 0, 1};
+
+            std::vector<double> dim = {0.015, 0.015,0.015};
+            cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
+                                                    ObjectType::DYNAMIC, dim,
+                                                  pose, 0.2);
+
+            cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
+                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
+            dynamicsWorld->addRigidBody(cubes[i*rows+j]->GetBody());
+            actors.push_back(cubes[i*rows+j]->GetActor());
+
+        }
+    }
+
 
     // -------------------------------------------------------------------------
     // FRAMES

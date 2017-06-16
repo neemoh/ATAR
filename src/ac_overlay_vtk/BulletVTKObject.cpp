@@ -7,6 +7,7 @@
 #include <vtkCubeSource.h>
 #include <vtkTransform.h>
 #include <kdl/frames.hpp>
+#include <vtkConeSource.h>
 #include "BulletVTKObject.h"
 
 uint BulletVTKObject::num_bulletvtk_objects = 0;
@@ -45,7 +46,6 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType type,
             source->SetPhiResolution(30);
             source->SetThetaResolution(30);
             mapper->SetInputConnection(source->GetOutputPort());
-            actor->SetMapper(mapper);
 
             // Bullet Shape
             collision_shape = new btSphereShape(btScalar(dimensions[0]));
@@ -70,7 +70,6 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType type,
             board_source->SetZLength(dimensions[2]);
 
             mapper->SetInputConnection(board_source->GetOutputPort());
-            actor->SetMapper(mapper);
 
             // Bullet Shape
             collision_shape = new btBoxShape(
@@ -87,13 +86,24 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType type,
                 throw std::runtime_error("BulletVTKObject CONE shape requires "
                                                  "a vector of two doubles "
                                                  "as dimensions.");
+
+            // VTK actor
+            vtkSmartPointer<vtkConeSource> cone_source =
+                    vtkSmartPointer<vtkConeSource>::New();
+
+            cone_source->SetRadius(dimensions[0]);
+            cone_source->SetHeight(dimensions[1]);
+
+            mapper->SetInputConnection(cone_source->GetOutputPort());
+
+            // Bullet Shape
             collision_shape = new btConeShape(
                     btScalar(dimensions[0]), btScalar(dimensions[1]));
-
-            // TODO: ADD VTK PART
             break;
         }
     }
+
+    actor->SetMapper(mapper);
 
     //------------------------------------------------------------------------------
     // Set initial pose of graphical representation

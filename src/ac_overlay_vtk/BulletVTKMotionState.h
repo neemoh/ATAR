@@ -65,10 +65,15 @@ public:
         if(actor_ == nullptr)
             return; // silently return
 
+        // Set the orientation
         btQuaternion rot = worldTrans.getRotation();
-        // TODO
-        //        actor_->SetOrientation(rot.w(), rot.x(), rot.y(), rot.z());
-        //actor_->SetOrientation(0.0, 0.0, 0.0);
+        KDL::Rotation rot_kdl =
+                KDL::Rotation::Quaternion(rot.x(), rot.y(), rot.z(), rot.w());
+        double r,p,y;
+        rot_kdl.GetRPY(r, p,y);
+        actor_->SetOrientation(r,p,y);
+
+        // set the position
         btVector3 pos = worldTrans.getOrigin();
         actor_->SetPosition(pos.x(), pos.y(), pos.z());
         actor_->SetPosition(pos.x(), pos.y(), pos.z());
