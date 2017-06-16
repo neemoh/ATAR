@@ -3,11 +3,11 @@
 //
 
 // The scene consists of
-// * 4 actors: a rectangle, a box, a cone and a sphere. The box, the cone and
-// the sphere are above the rectangle.
+// * 4 actors: a rectangle, a box, a cone and a spheres. The box, the cone and
+// the spheres are above the rectangle.
 // * 2 spotlights: one in the direction of the box, another one in the
-// direction of the sphere. Both lights are above the box, the cone and
-// the sphere.
+// direction of the spheres. Both lights are above the box, the cone and
+// the spheres.
 #include <vtkActor.h>
 #include <vtkSmartPointer.h>
 #include <vtkRenderWindowInteractor.h>
@@ -272,7 +272,7 @@ int main(int, char*[])
     renderer->AddLight(l1);
     l1->SetSwitch(1);
 
-    // lighting the sphere
+    // lighting the spheres
     vtkSmartPointer<vtkLight> l2 =
             vtkSmartPointer<vtkLight>::New();
     l2->SetPosition(4.0,5.0,1.0);

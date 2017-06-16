@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     ///create a few basic rigid bodies
 
     //the ground is a cube of side 100 at position y = -56.
-    //the sphere will hit it at y = -6, with center at -5
+    //the spheres will hit it at y = -6, with center at -5
     {
         btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
 
