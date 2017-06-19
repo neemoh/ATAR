@@ -162,18 +162,16 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         // rolling friction
         if (shape == ObjectShape::CONE || shape == ObjectShape::SPHERE)
             body_info.m_rollingFriction = 0.2;
+        body_ = new btRigidBody(body_info);
 
-
-
+        // set appropriate flags if the body is kinematic
         if (object_type_ == ObjectType::KINEMATIC) {
-            body_ = new btRigidBody( 0.0f, motion_state_, collision_shape_ );
+            body_->setCollisionFlags(body_->getCollisionFlags() |
+                                     btCollisionObject::CF_KINEMATIC_OBJECT);
+            body_->setActivationState(DISABLE_DEACTIVATION);
+        }
 
-//            body_->setCollisionFlags(body_->getCollisionFlags() |
-//                                     btCollisionObject::CF_KINEMATIC_OBJECT);
-//            //        body_->setUserIndex( -1 );
-        } else
-            body_ = new btRigidBody(body_info);
-
+        //set contact parameters
         body_->setContactStiffnessAndDamping((float) contact_stiffness,
                                              (float) contact_damping);
 

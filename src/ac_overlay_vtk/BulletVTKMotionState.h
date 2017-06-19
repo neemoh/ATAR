@@ -63,8 +63,6 @@ public:
     //! object it is called at each loop
     virtual void getWorldTransform(btTransform &worldTrans) const {
         worldTrans = bt_pose_;
-        std::cout << "pose[0] " << bt_pose_.getOrigin().getX() << std::endl;
-
     }
 
 
