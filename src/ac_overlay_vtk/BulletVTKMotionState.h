@@ -35,10 +35,17 @@ protected:
     btTransform                 bt_pose_;
 
 public:
-    BulletVTKMotionState(const btTransform &initialPosition,
+    BulletVTKMotionState(const double pose[],
                          vtkSmartPointer<vtkActor> actor){
+
+        btTransform init_transform;
+        init_transform.setIdentity();
+        init_transform.setOrigin(btVector3((float) pose[0], (float) pose[1],
+                                           (float) pose[2]));
+        init_transform.setRotation(btQuaternion((float) pose[3], (float) pose[4],
+                                                (float) pose[5], (float) pose[6]));
         actor_ = actor;
-        bt_pose_ = initialPosition;
+        bt_pose_ = init_transform;
     }
 
 
@@ -55,15 +62,17 @@ public:
     //! called by bullet at initialization for all objects and if kinematic
     //! object it is called at each loop
     virtual void getWorldTransform(btTransform &worldTrans) const {
-        worldTrans = bt_pose_; }
+        worldTrans = bt_pose_;
+        std::cout << "pose[0] " << bt_pose_.getOrigin().getX() << std::endl;
+
+    }
 
 
     // -------------------------------------------------------------------------
     //! Called by bullet to set the pose of dynamic objects
     virtual void setWorldTransform(const btTransform &worldTrans) {
+
         bt_pose_ = worldTrans;
-        if(actor_ == nullptr)
-            return; // silently return
 
         // Set the orientation
         btQuaternion rot = worldTrans.getRotation();
@@ -76,14 +85,28 @@ public:
         // set the position
         btVector3 pos = worldTrans.getOrigin();
         actor_->SetPosition(pos.x(), pos.y(), pos.z());
-        actor_->SetPosition(pos.x(), pos.y(), pos.z());
 
     }
 
 
     // -------------------------------------------------------------------------
     //! Used by the user to set the pose of kinematic object
-    void setKinematicPos(btTransform &currentPos) { bt_pose_ = currentPos; }
+    void setKinematicPos(btTransform &currentPos) {
+
+        bt_pose_ = currentPos;
+        // Set the orientation
+        btQuaternion rot = currentPos.getRotation();
+        KDL::Rotation rot_kdl =
+                KDL::Rotation::Quaternion(rot.x(), rot.y(), rot.z(), rot.w());
+        double r,p,y;
+        rot_kdl.GetRPY(r, p,y);
+        actor_->SetOrientation(r,p,y);
+
+        // set the position
+        btVector3 pos = currentPos.getOrigin();
+        actor_->SetPosition(pos.x(), pos.y(), pos.z());
+
+    }
 
 };
 

@@ -21,22 +21,28 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     InitBullet();
 
 
+    BulletVTKObject* spheres[NUM_BULLET_SPHERES];
+    BulletVTKObject* cubes[36];
+    BulletVTKObject* board;
+    // -----------------------
     // -------------------------------------------------------------------------
     // Create a cube for the board
 
     board_dimensions[0]  = 0.18;
     board_dimensions[1]  = 0.14;
-    board_dimensions[2]  = 0.04;
+    board_dimensions[2]  = 0.1;
+    double *pose;
 
-    double pose[7] = {board_dimensions[0] / 2.45,
-                      board_dimensions[1] / 2.78,
-                      -board_dimensions[2]/2,
-                      0, 0, 0, 1};
+    pose= new double[7] {board_dimensions[0] / 2.45,
+                         board_dimensions[1] / 2.78,
+                         -board_dimensions[2]/2,
+                         0, 0, 0, 1};
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
                                 board_dimensions[2]};
     board = new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::DYNAMIC, dim, pose, 0.0);
+                                ObjectType::DYNAMIC, dim, pose, 0.0, 10000,
+                                0.0, 0.5);
 
     dynamicsWorld->addRigidBody(board->GetBody());
     actors.push_back(board->GetActor());
@@ -44,8 +50,12 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // Create spheres
     int cols = 4;
-
     int rows = NUM_BULLET_SPHERES/cols;
+    double density = 3000; // kg/m3
+    double stiffnes = 5000;
+    double damping = 1;
+    double friction = 2;
+
     for (int i = 0; i < rows+1; ++i) {
 
         if(i == rows)
@@ -53,56 +63,88 @@ BulletTask::BulletTask(const std::string stl_file_dir,
 
         for (int j = 0; j < cols; ++j) {
 
-        double ratio = (double)i/4.0;
-
-        double pose[7] = {(double)i * 0.02,
-                          0.03,
-                          0.05 + 0.02 * j,
-                          0, 0, 0, 1};
-
-        std::vector<double> dim = {0.008};
-        spheres[i*rows+j] = new BulletVTKObject(ObjectShape::SPHERE,
-                                         ObjectType::DYNAMIC, dim, pose, 0.3);
-
-        spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
-        spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-        spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
-
-        dynamicsWorld->addRigidBody(spheres[i*rows+j]->GetBody());
-        actors.push_back(spheres[i*rows+j]->GetActor());
-
-        }
-    }
-    rows = NUM_BULLET_CUBES/cols;
-    for (int i = 0; i < rows+1; ++i) {
-
-        if(i == rows)
-            cols = NUM_BULLET_CUBES%cols;
-
-        for (int j = 0; j < cols; ++j) {
-
             double ratio = (double)i/4.0;
 
-            double pose[7] = {0.02 + 0.02 * j,
-                              (double)i * 0.018,
-                    0.02,
-                    0, 0, 0, 1};
+            pose = new double[7]{(double)i * 0.02,
+                                 0.03,
+                                 0.08 + 0.02 * j,
+                                 0, 0, 0, 1};
 
-            std::vector<double> dim = {0.015, 0.015,0.015};
-            cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
-                                                    ObjectType::DYNAMIC, dim,
-                                                  pose, 0.2);
+            std::vector<double> dim = {0.01};
+            spheres[i*rows+j] =
+                    new BulletVTKObject(ObjectShape::SPHERE,
+                                        ObjectType::DYNAMIC, dim, pose, density,
+                                        stiffnes, damping,
+                                        friction);
+            delete [] pose;
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
+                    0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
 
-            cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
-            dynamicsWorld->addRigidBody(cubes[i*rows+j]->GetBody());
-            actors.push_back(cubes[i*rows+j]->GetActor());
+            dynamicsWorld->addRigidBody(spheres[i*rows+j]->GetBody());
+            actors.push_back(spheres[i*rows+j]->GetActor());
 
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Create cubes
+    rows = 3;
+    cols = 4;
+    int layers = 1;
+    double sides = 0.02;
+    stiffnes = 20000;
+    damping = 2;
+    friction = 0.5;
 
+    for (int k = 0; k < layers; ++k) {
+        for (int i = 0; i < rows+1; ++i) {
+            for (int j = 0; j < cols; ++j) {
+
+                pose = new double[7] {(double)i * (sides + 0.005),
+                                      (double)j * (sides + 0.005),
+                                      (double)k * (sides + 0.005) + 0.3,
+                                      0, 0, 0, 1};
+
+                std::vector<double> dim = {sides, sides, 2*sides};
+                cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
+                                                      ObjectType::DYNAMIC, dim,
+                                                      pose, density,
+                                                      stiffnes, damping,
+                                                      friction);
+                delete [] pose;
+
+                double ratio = (double)i/4.0;
+                cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
+                        0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
+                dynamicsWorld->addRigidBody(cubes[i*rows+j]->GetBody());
+                actors.push_back(cubes[i*rows+j]->GetActor());
+
+            }
+        }
+    }
+
+    {
+//        std::vector<double> dim = {sides, sides, sides};
+//        cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
+//                                              ObjectType::DYNAMIC, dim,
+//                                              pose, 0.2), stiffnes, damping;
+
+    }
+
+    // -------------------------------------------------------------------------
+    // Create kinematic object
+
+    pose = new double[7] {0, 0, sides, 0, 0, 0, 1};
+
+    std::vector<double> kine_dim = {0.1, sides, 2*sides};
+    kine_obj =
+            new BulletVTKObject(ObjectShape::BOX,
+                                ObjectType::KINEMATIC, kine_dim, pose, 0.0);
+    delete [] pose;
+    dynamicsWorld->addRigidBody(kine_obj->GetBody());
+    actors.push_back(kine_obj->GetActor());
     // -------------------------------------------------------------------------
     // FRAMES
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
@@ -133,7 +175,9 @@ void BulletTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 
 //------------------------------------------------------------------------------
 void BulletTask::UpdateActors() {
-
+    count ++;
+    double pose[7] = {double(count)*0.001, double(count)*0.002, 0, 0, 0, 0, 1};
+    kine_obj->SetKinematicPose(pose);
     StepDynamicsWorld();
 
 }
@@ -241,17 +285,17 @@ void BulletTask::InitBullet() {
 void BulletTask::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
 
-    dynamicsWorld->stepSimulation(1.f / 90.f, 20);
+    dynamicsWorld->stepSimulation(1.f / 70.f, 40);
 
 //    //print positions of all objects
 //    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
 //    {
 //        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-//        btRigidBody* body = btRigidBody::upcast(obj);
+//        btRigidBody* body_ = btRigidBody::upcast(obj);
 //        btTransform trans;
-//        if (body && body->getMotionState())
+//        if (body_ && body_->getMotionState())
 //        {
-//            body->getMotionState()->getWorldTransform(trans);
+//            body_->getMotionState()->getWorldTransform(trans);
 //        }
 //        else
 //        {

@@ -45,7 +45,6 @@
 #define GEOMSPERBODY 1
 #define MAX_CONTACTS 8
 #define NUM_BULLET_SPHERES 15
-#define NUM_BULLET_CUBES 15
 
 
 
@@ -97,12 +96,12 @@ public:
 
 
 private:
-
+    int count =0;
     std::vector<std::array<double, 3> > sphere_positions;
 
     std::string stl_files_dir;
     double board_dimensions[3];
-
+    BulletVTKObject* kine_obj;
     btDiscreteDynamicsWorld* dynamicsWorld;
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
@@ -111,9 +110,7 @@ private:
     btBroadphaseInterface* overlappingPairCache;
     btCollisionDispatcher* dispatcher;
     btDefaultCollisionConfiguration* collisionConfiguration;
-    BulletVTKObject* spheres[NUM_BULLET_SPHERES];
-    BulletVTKObject* cubes[NUM_BULLET_CUBES];
-    BulletVTKObject* board;
+
     // -------------------------------------------------------------------------
     // graphics
 
