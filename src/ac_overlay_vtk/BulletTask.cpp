@@ -43,6 +43,7 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     board = new BulletVTKObject(ObjectShape::BOX,
                                 ObjectType::DYNAMIC, dim, pose, 0.0, 10000,
                                 0.0, 0.5);
+    board->GetActor()->GetProperty()->SetOpacity(0);
 
     dynamicsWorld->addRigidBody(board->GetBody());
     actors.push_back(board->GetActor());
@@ -134,17 +135,39 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     }
 
     // -------------------------------------------------------------------------
-    // Create kinematic object
+    // Create kinematic box
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
-    std::vector<double> kine_dim = {0.01, 0.01, 3*sides};
-    kine_obj =
+    std::vector<double> kine_box_dim = {0.005, 0.005, 2*sides};
+    kine_box =
             new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::KINEMATIC, kine_dim, pose, 0.0);
+                                ObjectType::KINEMATIC, kine_box_dim, pose, 0.0);
+    dynamicsWorld->addRigidBody(kine_box->GetBody());
+    actors.push_back(kine_box->GetActor());
+    kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
+
+    // -------------------------------------------------------------------------
+    // Create kinematic sphere
+
+    std::vector<double> kine_sph_dim = {0.005};
+    kine_sphere_0 =
+            new BulletVTKObject(ObjectShape::SPHERE,
+                                ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0);
     delete [] pose;
-    dynamicsWorld->addRigidBody(kine_obj->GetBody());
-    actors.push_back(kine_obj->GetActor());
-    kine_obj->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
+    dynamicsWorld->addRigidBody(kine_sphere_0->GetBody());
+    actors.push_back(kine_sphere_0->GetActor());
+    kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
+
+    // -------------------------------------------------------------------------
+    // Create kinematic sphere
+
+    kine_sphere_1 =
+            new BulletVTKObject(ObjectShape::SPHERE,
+                                ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0);
+    delete [] pose;
+    dynamicsWorld->addRigidBody(kine_sphere_1->GetBody());
+    actors.push_back(kine_sphere_1->GetActor());
+    kine_sphere_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
     // -------------------------------------------------------------------------
     // FRAMES
@@ -174,13 +197,57 @@ void BulletTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 
 }
 
+
+void BulletTask::SetCurrentGripperpositionPointer(double &grip_position, const int
+tool_id) {
+    gripper_position[tool_id] = &grip_position;
+};
+
 //------------------------------------------------------------------------------
 void BulletTask::UpdateActors() {
-    KDL::Frame t_pose = (*tool_current_pose_kdl[0]);
+
+    //--------------------------------
+    //box
+    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
+
+    KDL::Vector box_posit = tool_pose * KDL::Vector( 0.0 , 0.0, -0.03);
+
     double x, y, z, w;
-    t_pose.M.GetQuaternion(x,y,z,w);
-    double pose[7] = {t_pose.p[0], t_pose.p[1], t_pose.p[2],x,y,z,w};
-    kine_obj->SetKinematicPose(pose);
+    tool_pose.M.GetQuaternion(x,y,z,w);
+    double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
+    kine_box->SetKinematicPose(box_pose);
+
+
+    //--------------------------------
+    //sphere 0
+    double grip_posit = (*gripper_position[0]);
+
+    KDL::Vector gripper_pos = KDL::Vector( 0.0, (1+grip_posit)* 0.01, 0.01);
+    gripper_pos = tool_pose * gripper_pos;
+
+    double sphere_0_pose[7] = {
+        gripper_pos[0],
+        gripper_pos[1],
+        gripper_pos[2],
+        0,0,0,1};
+    kine_sphere_0->SetKinematicPose(sphere_0_pose);
+
+
+    //--------------------------------
+    //sphere 1
+    gripper_pos = KDL::Vector( 0.0, -(1+grip_posit)* 0.01, 0.01);
+    gripper_pos = tool_pose.p + tool_pose.M * gripper_pos;
+
+    double sphere_1_pose[7] = {
+        gripper_pos[0],
+        gripper_pos[1],
+        gripper_pos[2],
+        0,0,0,1};
+    kine_sphere_1->SetKinematicPose(sphere_1_pose);
+
+
+    //--------------------------------
+    // step the world
     StepDynamicsWorld();
 
 }

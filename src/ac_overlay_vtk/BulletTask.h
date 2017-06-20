@@ -64,6 +64,10 @@ public:
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
 
+    // sets the position of the gripper
+    void SetCurrentGripperpositionPointer(double &gripper_position, const int
+    tool_id);
+
     // updates the task logic and the actors
     void UpdateActors();
 
@@ -100,7 +104,9 @@ private:
 
     std::string stl_files_dir;
     double board_dimensions[3];
-    BulletVTKObject* kine_obj;
+    BulletVTKObject* kine_box;
+    BulletVTKObject* kine_sphere_0;
+    BulletVTKObject* kine_sphere_1;
     btDiscreteDynamicsWorld* dynamicsWorld;
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
@@ -118,7 +124,7 @@ private:
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-
+    double * gripper_position[2];
 //    vtkSmartPointer<vtkActor>                       d_board_actor;
 //    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
 
