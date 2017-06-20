@@ -123,6 +123,11 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             break;
         }
+
+        case ObjectShape::MESH : {
+
+            break;
+        }
     }
 
     actor_->SetMapper(mapper);

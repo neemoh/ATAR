@@ -13,8 +13,13 @@
 // passing in! {x, y, z, qx, qy, qz, qw}
 // To get statis objects make a dynamic one with sero mass.
 
+// Bullet meshes can only be used as static colliders (terrain for
+// instance), not for dynamic bodies. For that you should either use Convex
+// Hulls and/or basic shapes to create bodies that resemble your mesh to some
+// extent. Please see ConvexDecomposition demo for that.
+
 enum ObjectType {NOPHYSICS, DYNAMIC, KINEMATIC};
-enum ObjectShape {SPHERE, BOX, CONE};
+enum ObjectShape {SPHERE, BOX, CONE, MESH};
 
 class BulletVTKObject {
 
