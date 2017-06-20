@@ -225,7 +225,7 @@ if(POLICY CMP0053)
     cmake_policy(SET CMP0053 NEW) # CMake 3.1
 endif()
 
-find_package(VTK 8 REQUIRED)
+find_package(VTK REQUIRED)
 vtk_module_config(VTK
         vtkCommonCore
         vtkCommonDataModel
