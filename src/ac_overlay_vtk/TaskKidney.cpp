@@ -4,14 +4,11 @@
 
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
-#include <vtkConeSource.h>
 #include <boost/thread/thread.hpp>
-#include <geometry_msgs/PoseStamped.h>
-#include <kdl_conversions/kdl_msg.h>
-#include "BuzzWireTask.h"
+#include "TaskKidney.h"
 
 
-namespace Colors {
+namespace COLORS {
     double Red[3] {1.0, 0.1, 0.03};
     double OrangeRed[3] {1.0, 0.27, 0.03};
     double Gold[3] {1.0, 0.84, 0.0};
@@ -23,9 +20,9 @@ namespace Colors {
     double DeepPink[3] {1.0, 0.08, 0.58};
 };
 
-BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
-                           const bool show_ref_frames, const bool biman,
-                           const bool with_guidance)
+TaskKidney::TaskKidney(const std::string stl_file_dir,
+                       const bool show_ref_frames, const bool biman,
+                       const bool with_guidance)
         :
         VTKTask(show_ref_frames, biman, with_guidance),
         stl_files_dir(stl_file_dir),
@@ -34,13 +31,12 @@ BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
 //        with_guidance(with_guidance),
         destination_ring_counter(0),
         ac_params_changed(true),
-        task_state(TaskState::Idle),
+        task_state(TaskKidneyState::Idle),
         number_of_repetition(0),
         n_score_history(10),
         idle_point(KDL::Vector(-0.006, 0.026, 0.029)),
         start_point(KDL::Vector(0.0019, 0.031, 0.030)),
         end_point(KDL::Vector(0.034, 0.043, 0.053)) {
-
 
 
     // -------------------------------------------------------------------------
@@ -77,19 +73,10 @@ BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
 
     }
 
-    tube_mesh_actor = vtkSmartPointer<vtkActor>::New();
-
-    destination_ring_actor= vtkSmartPointer<vtkActor>::New();
-
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 
-    line1_source = vtkSmartPointer<vtkLineSource>::New();
+    mesh_actor = vtkSmartPointer<vtkActor>::New();
 
-    line2_source = vtkSmartPointer<vtkLineSource>::New();
-
-    line1_actor = vtkSmartPointer<vtkActor>::New();
-
-    line2_actor = vtkSmartPointer<vtkActor>::New();
 
     // -------------------------------------------------------------------------
     // TOOL RINGS
@@ -144,23 +131,9 @@ BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
 
         ring_actor[k]->SetMapper(ring_mapper[k]);
         ring_actor[k]->SetScale(source_scales);
-        ring_actor[k]->GetProperty()->SetColor(Colors::Turquoise);
+        ring_actor[k]->GetProperty()->SetColor(COLORS::Turquoise);
         ring_actor[k]->GetProperty()->SetSpecular(0.7);
     }
-
-    // -------------------------------------------------------------------------
-    // Destination ring
-
-    vtkSmartPointer<vtkPolyDataMapper> destination_ring_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    destination_ring_mapper->SetInputConnection(
-            parametricFunctionSource->GetOutputPort());
-    destination_ring_actor->SetMapper(destination_ring_mapper);
-    destination_ring_actor->SetScale(0.004);
-    destination_ring_actor->RotateX(90);
-    destination_ring_actor->RotateY(-60);
-    destination_ring_actor->GetProperty()->SetColor(Colors::Green);
-    destination_ring_actor->GetProperty()->SetOpacity(0.5);
 
     // -------------------------------------------------------------------------
     // FRAMES
@@ -191,7 +164,7 @@ BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // Stand MESH hq
     std::stringstream input_file_dir;
-    input_file_dir << stl_files_dir << std::string("task1_4_stand.STL");
+    input_file_dir << stl_files_dir << std::string("tumor2.stl");
 
     vtkSmartPointer<vtkSTLReader> stand_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
@@ -200,103 +173,42 @@ BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
     stand_mesh_reader->Update();
 
     // transform
-    vtkSmartPointer<vtkTransform> stand_transform =
+    vtkSmartPointer<vtkTransform> kidney_mesh_transform =
             vtkSmartPointer<vtkTransform>::New();
-    stand_transform->Translate(0.050, 0.060, 0.025);
-    stand_transform->RotateX(180);
-    stand_transform->RotateZ(150);
+    kidney_mesh_transform->Translate(0.050, 0.020, 0.0);
+//    kidney_mesh_transform->RotateX(180);
+//    kidney_mesh_transform->RotateZ(150);
+    kidney_mesh_transform->Scale(0.01, 0.01, 0.01);
 
-    vtkSmartPointer<vtkTransformPolyDataFilter> stand_mesh_transformFilter =
+    vtkSmartPointer<vtkTransformPolyDataFilter> kidney_mesh_transformFilter =
             vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    stand_mesh_transformFilter->SetInputConnection(
+    kidney_mesh_transformFilter->SetInputConnection(
             stand_mesh_reader->GetOutputPort());
-    stand_mesh_transformFilter->SetTransform(stand_transform);
-    stand_mesh_transformFilter->Update();
+    kidney_mesh_transformFilter->SetTransform(kidney_mesh_transform);
+    kidney_mesh_transformFilter->Update();
 
 
-    vtkSmartPointer<vtkPolyDataMapper> stand_mesh_mapper =
+    vtkSmartPointer<vtkPolyDataMapper> kidney_mesh_mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
-    stand_mesh_mapper->SetInputConnection(
-            stand_mesh_transformFilter->GetOutputPort());
+    kidney_mesh_mapper->SetInputConnection(
+            kidney_mesh_transformFilter->GetOutputPort());
 
-    vtkSmartPointer<vtkActor> stand_mesh_actor =
-            vtkSmartPointer<vtkActor>::New();
-    stand_mesh_actor->SetMapper(stand_mesh_mapper);
-    stand_mesh_actor->GetProperty()->SetColor(Colors::Gray);
+
+    mesh_actor->SetMapper(kidney_mesh_mapper);
+    mesh_actor->GetProperty()->SetColor(COLORS::Red);
+    mesh_actor->GetProperty()->SetOpacity(1.0);
     //    stand_mesh_actor->GetProperty()->SetSpecular(0.8);
 
 
-    // -------------------------------------------------------------------------
-    // MESH hq is for rendering and lq is for generating
-    // active constraints
-    input_file_dir.str("");
-    input_file_dir << stl_files_dir << std::string("task1_4_tube.STL");
-
-    vtkSmartPointer<vtkSTLReader> hq_mesh_reader =
-            vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << input_file_dir.str() << std::endl;
-    hq_mesh_reader->SetFileName(input_file_dir.str().c_str());
-    hq_mesh_reader->Update();
-    vtkSmartPointer<vtkTransform> tube_transform =
-            vtkSmartPointer<vtkTransform>::New();
-    tube_transform->DeepCopy(stand_transform);
-    tube_transform->RotateX(-15);
-
-    vtkSmartPointer<vtkTransformPolyDataFilter> hq_mesh_transformFilter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    hq_mesh_transformFilter->SetInputConnection(
-            hq_mesh_reader->GetOutputPort());
-    hq_mesh_transformFilter->SetTransform(tube_transform);
-    hq_mesh_transformFilter->Update();
-
-    vtkSmartPointer<vtkPolyDataMapper> hq_mesh_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    hq_mesh_mapper->SetInputConnection(
-            hq_mesh_transformFilter->GetOutputPort());
-
-    tube_mesh_actor->SetMapper(hq_mesh_mapper);
-    tube_mesh_actor->GetProperty()->SetColor(Colors::Orange);
-    tube_mesh_actor->GetProperty()->SetSpecular(0.8);
-    tube_mesh_actor->GetProperty()->SetSpecularPower(80);
-    //    tube_mesh_actor->GetProperty()->SetOpacity(0.5);
-
-
-    // -------------------------------------------------------------------------
-    // MESH lq
-    input_file_dir.str("");
-    input_file_dir << stl_files_dir << std::string("task1_4_wire.STL");
-
-    vtkSmartPointer<vtkSTLReader> lq_mesh_reader =
-            vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << input_file_dir.str() << std::endl;
-    lq_mesh_reader->SetFileName(input_file_dir.str().c_str());
-    lq_mesh_reader->Update();
-
-
-    vtkSmartPointer<vtkTransformPolyDataFilter> lq_mesh_transformFilter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    lq_mesh_transformFilter->SetInputConnection(
-            lq_mesh_reader->GetOutputPort());
-    lq_mesh_transformFilter->SetTransform(tube_transform);
-    lq_mesh_transformFilter->Update();
-
-    vtkSmartPointer<vtkPolyDataMapper> lq_mesh_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    lq_mesh_mapper->SetInputConnection(
-            lq_mesh_transformFilter->GetOutputPort());
-
-    vtkSmartPointer<vtkActor> lq_mesh_actor = vtkSmartPointer<vtkActor>::New();
-    lq_mesh_actor->SetMapper(lq_mesh_mapper);
-
     // CLOSEST POINT will be found on the low quality mesh
-    cellLocator->SetDataSet(lq_mesh_transformFilter->GetOutput());
+    cellLocator->SetDataSet(kidney_mesh_transformFilter->GetOutput());
     cellLocator->BuildLocator();
 
     // -------------------------------------------------------------------------
     // Create a cube for the floor
     vtkSmartPointer<vtkCubeSource> floor_source =
             vtkSmartPointer<vtkCubeSource>::New();
-    double floor_dimensions[3] = {0.1, 0.07, 0.001};
+    double floor_dimensions[3] = {0.1, 0.09, 0.001};
     floor_source->SetXLength(floor_dimensions[0]);
     floor_source->SetYLength(floor_dimensions[1]);
     floor_source->SetZLength(floor_dimensions[2]);
@@ -308,86 +220,7 @@ BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
     floor_actor->SetPosition(floor_dimensions[0] / 2, floor_dimensions[1] / 2,
                              -floor_dimensions[2]);
     floor_actor->GetProperty()->SetOpacity(0.3);
-    floor_actor->GetProperty()->SetColor(Colors::Pink);
-
-    // -------------------------------------------------------------------------
-    // Lines
-    vtkSmartPointer<vtkPolyDataMapper> line1_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    line1_mapper->SetInputConnection(line1_source->GetOutputPort());
-    line1_actor->SetMapper(line1_mapper);
-    line1_actor->GetProperty()->SetLineWidth(3);
-//    line1_actor->GetProperty()->SetColor(Colors::DeepPink);
-    line1_actor->GetProperty()->SetOpacity(0.8);
-
-    vtkSmartPointer<vtkPolyDataMapper> line2_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    line2_mapper->SetInputConnection(line2_source->GetOutputPort());
-
-    line2_actor->SetMapper(line2_mapper);
-    line2_actor->GetProperty()->SetLineWidth(3);
-//    line2_actor->GetProperty()->SetColor(Colors::DeepPink);
-    line2_actor->GetProperty()->SetOpacity(0.8);
-
-//    // -------------------------------------------------------------------------
-//    // destination cone
-//    vtkSmartPointer<vtkConeSource> destination_cone_source =
-//            vtkSmartPointer<vtkConeSource>::New();
-//    destination_cone_source->SetRadius(0.002 / source_scales);
-//    destination_cone_source->SetHeight(0.006 / source_scales);
-//    destination_cone_source->SetResolution(12);
-//
-//    vtkSmartPointer<vtkPolyDataMapper> destination_cone_mapper =
-//            vtkSmartPointer<vtkPolyDataMapper>::New();
-//    destination_cone_mapper->SetInputConnection(
-//            destination_cone_source->GetOutputPort());
-//    destination_cone_actor = vtkSmartPointer<vtkActor>::New();
-//    destination_cone_actor->SetMapper(destination_cone_mapper);
-//    destination_cone_actor->SetScale(source_scales);
-//    destination_cone_actor->GetProperty()->SetColor(Colors::Green);
-//    destination_cone_actor->GetProperty()->SetOpacity(0.5);
-//    destination_cone_actor->RotateY(90);
-//    destination_cone_actor->RotateZ(30);
-//
-//    destination_cone_actor->SetPosition(idle_point[0], idle_point[1],
-//                                        idle_point[2]);
-
-    // -------------------------------------------------------------------------
-    // TEXTS
-    cornerAnnotation =
-            vtkSmartPointer<vtkCornerAnnotation>::New();
-    cornerAnnotation->SetLinearFontScaleFactor( 2 );
-    cornerAnnotation->SetNonlinearFontScaleFactor( 1 );
-    cornerAnnotation->SetMaximumFontSize( 30 );
-    //        cornerAnnotation->SetText( 0, "lower left" );
-    cornerAnnotation->SetText( 1, "Scores: " );
-    //        cornerAnnotation->SetText( 2, "upper left" );
-    //    cornerAnnotation->GetTextProperty()->SetColor( 1, 0, 0 );
-
-
-
-    // -------------------------------------------------------------------------
-    // Error history spheres
-
-    vtkSmartPointer<vtkSphereSource>  source =
-            vtkSmartPointer<vtkSphereSource>::New();
-
-    source->SetRadius(0.002);
-    source->SetPhiResolution(15);
-    source->SetThetaResolution(15);
-    vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    sphere_mapper->SetInputConnection(source->GetOutputPort());
-
-    for (int i = 0; i < n_score_history; ++i) {
-
-        vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-        actor->SetMapper(sphere_mapper);
-        actor->GetProperty()->SetColor(Colors::Gray);
-        actor->SetPosition(0.02 - (double)i * 0.006, 0.1 - (double)i * 0.0003,
-                           0.01);
-        score_sphere_actors.push_back(actor);
-    }
+    floor_actor->GetProperty()->SetColor(COLORS::Pink);
 
 
     // -------------------------------------------------------------------------
@@ -401,21 +234,21 @@ BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
         }
     }
 
-    actors.push_back(tube_mesh_actor);
-    actors.push_back(stand_mesh_actor);
-    actors.push_back(lq_mesh_actor);
-    //    actors.push_back(floor_actor);
-    actors.push_back(ring_actor[0]);
-    if(bimanual){
-        actors.push_back(ring_actor[1]);
-        actors.push_back(line1_actor);
-        actors.push_back(line2_actor);
-    }
+
+    actors.push_back(mesh_actor);
+//    actors.push_back(floor_actor);
+//    actors.push_back(ring_actor[0]);
+//    if(bimanual){
+//        actors.push_back(ring_actor[1]);
+//        actors.push_back(line1_actor);
+//        actors.push_back(line2_actor);
+//    }
 //    actors.push_back(destination_cone_actor);
-    actors.push_back(destination_ring_actor);
-    for (int j = 0; j < score_sphere_actors.size(); ++j) {
-        actors.push_back(score_sphere_actors[j]);
-    }
+//    actors.push_back(destination_ring_actor);
+//    for (int j = 0; j < score_sphere_actors.size(); ++j) {
+//        actors.push_back(score_sphere_actors[j]);
+//    }
+
     //    actors.push_back(ring_guides_mesh_actor);
     //    actors.push_back(cornerAnnotation);
 
@@ -423,20 +256,21 @@ BuzzWireTask::BuzzWireTask(const std::string stl_file_dir,
 }
 
 //------------------------------------------------------------------------------
-//std::vector<vtkSmartPointer<vtkProp> > BuzzWireTask::GetActors() {
+//std::vector<vtkSmartPointer<vtkProp> > TaskKidney::GetActors() {
 //    return actors;
 //}
 
 //------------------------------------------------------------------------------
-void BuzzWireTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                             const int tool_id) {
+void TaskKidney::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+                                           const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
 
 }
 
 //------------------------------------------------------------------------------
-void BuzzWireTask::UpdateActors() {
+void TaskKidney::UpdateActors() {
+
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
@@ -472,7 +306,7 @@ void BuzzWireTask::UpdateActors() {
     //
     // First: if the tool is placed close to the starting point while being idle
     // we enable the active constraint.
-    if (task_state == TaskState::Idle && with_guidance &&
+    if (task_state == TaskKidneyState::Idle && with_guidance &&
         (ring_center[0] - start_point).Norm() <
         positioning_tolerance) {
         // Make sure the active constraint is inactive
@@ -485,13 +319,13 @@ void BuzzWireTask::UpdateActors() {
     // then when the error is small we start the task.
     // if guidance is off, then we don't need a restriction on the error
     // sorry it is totally unreadable!
-    if (task_state == TaskState::Idle
+    if (task_state == TaskKidneyState::Idle
         && ( (position_error_norm[0] < 0.001 && ac_parameters.active == 1)
              ||
              (!with_guidance && (ring_center[0] - start_point).Norm() <
                                 positioning_tolerance)  ))
     {
-        task_state = TaskState::ToEndPoint;
+        task_state = TaskKidneyState::ToEndPoint;
         //increment the repetition number
         number_of_repetition ++;
         // save starting time
@@ -502,10 +336,10 @@ void BuzzWireTask::UpdateActors() {
 
         // If the tool reaches the end point the user needs to go back to
         // the starting point. This counts as a separate repetition of the task
-    else if (task_state == TaskState::ToEndPoint &&
+    else if (task_state == TaskKidneyState::ToEndPoint &&
              (ring_center[0] - end_point).Norm() <
              positioning_tolerance) {
-        task_state = TaskState::ToStartPoint;
+        task_state = TaskKidneyState::ToStartPoint;
         //increment the repetition number
         number_of_repetition++;
 
@@ -519,10 +353,10 @@ void BuzzWireTask::UpdateActors() {
     }
         // If the tool reaches the start point while in ToStartPoint state,
         // we can mark the task complete
-    else if (task_state == TaskState::ToStartPoint &&
+    else if (task_state == TaskKidneyState::ToStartPoint &&
              (ring_center[0] - start_point).Norm() <
              positioning_tolerance) {
-        task_state = TaskState::RepetitionComplete;
+        task_state = TaskKidneyState::RepetitionComplete;
         // calculate and save the score of this repetition
         CalculateAndSaveError();
 
@@ -533,38 +367,18 @@ void BuzzWireTask::UpdateActors() {
         // User needs to get away from the starting point to switch to idle
         // and in case another repetition is to be performed, the user can
         // flag that by going to the starting position again
-    else if (task_state == TaskState::RepetitionComplete &&
+    else if (task_state == TaskKidneyState::RepetitionComplete &&
              (ring_center[0] - idle_point).Norm() <
              positioning_tolerance) {
-        task_state = TaskState::Idle;
+        task_state = TaskKidneyState::Idle;
     }
 
-    // update the position of the cone according to the state we're in.
-    if (task_state == TaskState::Idle) {
-        destination_cone_position = start_point;
-        destination_ring_actor->GetProperty()->SetColor(Colors::Green);
-
-    } else if (task_state == TaskState::ToStartPoint) {
-        destination_cone_position = start_point;
-        destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
-
-    } else if (task_state == TaskState::ToEndPoint) {
-        destination_cone_position = end_point;
-        destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
-    } else if (task_state == TaskState::RepetitionComplete) {
-        destination_cone_position = idle_point;
-        destination_ring_actor->GetProperty()->SetColor(Colors::Green);
-
-    }
 
     // show the destination to the user
-    double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
+    double dt = sin(2 * M_PI * double(destination_ring_counter) / 120);
     destination_ring_counter++;
-    destination_ring_actor->SetScale(0.006 + 0.001*dt);
+    mesh_actor->SetScale(1+ 0.03*dt);
 
-    destination_ring_actor->SetPosition(destination_cone_position[0],
-                                        destination_cone_position[1],
-                                        destination_cone_position[2]);
     // -------------------------------------------------------------------------
     // Performance Metrics
     UpdateTubeColor();
@@ -573,14 +387,14 @@ void BuzzWireTask::UpdateActors() {
     task_state_msg.task_name = "BuzzWire";
     task_state_msg.task_state = (uint8_t)task_state;
     task_state_msg.number_of_repetition = number_of_repetition;
-    if (task_state == TaskState::ToStartPoint
-        || task_state == TaskState::ToEndPoint) {
+    if (task_state == TaskKidneyState::ToStartPoint
+        || task_state == TaskKidneyState::ToEndPoint) {
 
         task_state_msg.time_stamp = (ros::Time::now() - start_time).toSec();
         task_state_msg.error_field_1 = position_error_norm[0];
         task_state_msg.error_field_1 = orientation_error_norm[0];
-//        if(bimanual)
-//            task_state_msg.error_field_2 = position_error_norm[1];
+        //        if(bimanual)
+        //            task_state_msg.error_field_2 = position_error_norm[1];
 
         // calculate score to show to user
         if (bimanual) {
@@ -608,29 +422,12 @@ void BuzzWireTask::UpdateActors() {
     }
 
 
-    if(bimanual) {
-        // change connection lines colors according to ring1 to ring2's distance
-        double rings_distance = (ring_center[1] - ring_center[0]).Norm();
-        double ideal_distance = 0.007;
-        double error_ratio = 3 * fabs(rings_distance - ideal_distance)
-                             / ideal_distance;
-        if (error_ratio > 1.0)
-            error_ratio = 1.0;
-        line1_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
-                                             0.9 - 0.7 * error_ratio);
-        line2_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
-                                             0.9 - 0.7 * error_ratio);
-        line1_source->Update();
-        line2_source->Update();
-    }
 }
 
 
 
-
-
 //------------------------------------------------------------------------------
-void BuzzWireTask::CalculatedDesiredToolPose() {
+void TaskKidney::CalculatedDesiredToolPose() {
     // NOTE: All the closest points are on the wire mesh
 
     //---------------------------------------------------------------------
@@ -787,48 +584,20 @@ void BuzzWireTask::CalculatedDesiredToolPose() {
         }
 
 
-        // draw the connection lines in bimanual case
-        if(bimanual) {
-            KDL::Vector distal_tool_point_kdl;
-            if (k == 0)
-                distal_tool_point_kdl =
-                        tool_current_pose *
-                        KDL::Vector(0.0, 0.0, 2 * ring_radius);
-            else
-                distal_tool_point_kdl =
-                        tool_current_pose *
-                        KDL::Vector(0.0, 2 * ring_radius, 0.0);
-
-            if (k == 0) {
-                line1_source->SetPoint1(grip_point);
-                line2_source->SetPoint1(distal_tool_point_kdl[0],
-                                        distal_tool_point_kdl[1],
-                                        distal_tool_point_kdl[2]);
-
-            } else {
-                line1_source->SetPoint2(grip_point);
-                line2_source->SetPoint2(distal_tool_point_kdl[0],
-                                        distal_tool_point_kdl[1],
-                                        distal_tool_point_kdl[2]);
-            }
-        }
 
     }
-
-
-
 
 }
 
 
 //------------------------------------------------------------------------------
-bool BuzzWireTask::IsACParamChanged() {
+bool TaskKidney::IsACParamChanged() {
     return ac_params_changed;
 }
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
+custom_msgs::ActiveConstraintParameters TaskKidney::GetACParameters() {
 
     ac_params_changed = false;
     // assuming once we read it we can consider it unchanged
@@ -837,7 +606,7 @@ custom_msgs::ActiveConstraintParameters BuzzWireTask::GetACParameters() {
 
 
 //------------------------------------------------------------------------------
-void BuzzWireTask::UpdateTubeColor() {
+void TaskKidney::UpdateTubeColor() {
 
     double max_pos_error = 0.002;
     double max_orient_error = 0.3;
@@ -853,41 +622,41 @@ void BuzzWireTask::UpdateTubeColor() {
 
 //    score_sphere_actors->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
 //                                                0.1);
-    if(task_state== TaskState::ToEndPoint
-       || task_state== TaskState::ToStartPoint)
-        tube_mesh_actor->GetProperty()->SetColor(0.9,
-                                                 0.5- 0.4*(error_ratio-0.3),
-                                                 0.1);
+//    if(task_state== TaskKidneyState::ToEndPoint
+//       || task_state== TaskKidneyState::ToStartPoint)
+//        tube_mesh_actor->GetProperty()->SetColor(0.9,
+//                                                 0.5- 0.4*(error_ratio-0.3),
+//                                                 0.1);
 
 }
 
-custom_msgs::TaskState BuzzWireTask::GetTaskStateMsg() {
+custom_msgs::TaskState TaskKidney::GetTaskStateMsg() {
     return task_state_msg;
 }
 
-void BuzzWireTask::ResetTask() {
+void TaskKidney::ResetTask() {
     ROS_INFO("Resetting the task.");
     number_of_repetition = 0;
-    task_state = TaskState::RepetitionComplete;
+    task_state = TaskKidneyState::RepetitionComplete;
     ResetOnGoingEvaluation();
     ResetScoreHistory();
 }
 
-void BuzzWireTask::ResetCurrentAcquisition() {
+void TaskKidney::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
-    if(task_state== TaskState::ToEndPoint ||
-       task_state == TaskState::ToStartPoint){
+    if(task_state== TaskKidneyState::ToEndPoint ||
+       task_state == TaskKidneyState::ToStartPoint){
 
         ResetOnGoingEvaluation();
         if(number_of_repetition>0)
             number_of_repetition--;
-        task_state = TaskState::RepetitionComplete;
+        task_state = TaskKidneyState::RepetitionComplete;
 
     }
 }
 
 
-void BuzzWireTask::FindAndPublishDesiredToolPose() {
+void TaskKidney::FindAndPublishDesiredToolPose() {
 
     ros::Publisher pub_desired[2];
 
@@ -937,7 +706,7 @@ void BuzzWireTask::FindAndPublishDesiredToolPose() {
     }
 }
 
-void BuzzWireTask::CalculateAndSaveError() {
+void TaskKidney::CalculateAndSaveError() {
 
     double duration = (ros::Time::now() - start_time).toSec();
     double posit_error_avg = posit_error_sum/(double)sample_count;
@@ -972,13 +741,6 @@ void BuzzWireTask::CalculateAndSaveError() {
         ResetScoreHistory();
 
     score_history.push_back(score);
-    score_history_colors.push_back(GetScoreColor(score));
-
-    // update spheres' color
-    for (int i = 0; i < score_history.size(); ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(score_history_colors[i]);
-
-    }
 
     ROS_INFO("posit_error_max: %f", posit_error_max);
     ROS_INFO("duration: %f", duration);
@@ -988,36 +750,35 @@ void BuzzWireTask::CalculateAndSaveError() {
     ROS_INFO("  ");
 }
 
-double * BuzzWireTask::GetScoreColor(const double score) {
+double * TaskKidney::GetScoreColor(const double score) {
 
     //decide the color
     if(score > 90){
-        return Colors::Green;
+        return COLORS::Green;
     }
     else if (score > 80)
-        return Colors::Gold;
+        return COLORS::Gold;
     else if(score > 60)
-        return Colors::Orange;
+        return COLORS::Orange;
     else
-        return Colors::Red;
+        return COLORS::Red;
 
 }
 
-void BuzzWireTask::ResetOnGoingEvaluation() {
+void TaskKidney::ResetOnGoingEvaluation() {
     posit_error_sum = 0.0;
     posit_error_max = 0.0;
     orient_error_sum = 0.0;
     sample_count = 0;
 }
 
-void BuzzWireTask::ResetScoreHistory() {
+void TaskKidney::ResetScoreHistory() {
     score_history.clear();
-    score_history_colors.clear();
 
-    // reset colors to gray
-    for (int i = 0; i < n_score_history; ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(Colors::Gray);
 
-    }
 
 }
+//TaskKidney::~TaskKidney() {
+//    CloseODE();
+//}
+

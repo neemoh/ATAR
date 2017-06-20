@@ -7,10 +7,10 @@
 #include <custom_conversions/Conversions.h>
 #include <pwd.h>
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
-#include "BuzzWireTask.h"
-#include "KidneyTask.h"
-#include "ODETask.h"
-#include "BulletTask.h"
+#include "TaskBuzzWire.h"
+#include "TaskKidney.h"
+#include "TaskODE.h"
+#include "TaskBullet.h"
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
     : n(node_name), cam_poses_provided_as_params(false)
@@ -481,22 +481,22 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     if(task_id ==1){
         // allocate anew dynamic task
         std::cout << "Starting new BuzzWireTask task. "<< std::endl;
-        task_ptr   = new BuzzWireTask(stl_files_dir, show_reference_frames,
+        task_ptr   = new TaskBuzzWire(stl_files_dir, show_reference_frames,
                                       (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==2){
-        std::cout << "Starting new KidneyTask task. "<< std::endl;
-        task_ptr   = new KidneyTask(stl_files_dir, false,
+        std::cout << "Starting new TaskKidney task. "<< std::endl;
+        task_ptr   = new TaskKidney(stl_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==3){
-        std::cout << "Starting new ODETask task. "<< std::endl;
-        task_ptr   = new ODETask(stl_files_dir, false,
+        std::cout << "Starting new TaskODE task. "<< std::endl;
+        task_ptr   = new TaskODE(stl_files_dir, false,
                                  (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==4){
-        std::cout << "Starting BulletTask task. "<< std::endl;
-        task_ptr   = new BulletTask(stl_files_dir, false,
+        std::cout << "Starting TaskBullet task. "<< std::endl;
+        task_ptr   = new TaskBullet(stl_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
     }
 

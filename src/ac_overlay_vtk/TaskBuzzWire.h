@@ -2,8 +2,8 @@
 // Created by nima on 4/18/17.
 //
 
-#ifndef TELEOP_VISION_BUZZWIRETASK_H
-#define TELEOP_VISION_BUZZWIRETASK_H
+#ifndef TELEOP_VISION_TASKBUZZWIRE_H
+#define TELEOP_VISION_TASKBUZZWIRE_H
 #include "VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
@@ -35,7 +35,7 @@
 
 
 /**
- * \class BuzzWireTask
+ * \class TaskBuzzWire
  * \brief This is a class that generates graphics and logic for a simple ring
  * and wire task, where the user is supposed to move a ring without around a
  * tube without touching it. 10 spheres in the bottom of the image show the
@@ -62,10 +62,10 @@ enum class TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
     RepetitionComplete};
 
 
-class BuzzWireTask : public VTKTask{
+class TaskBuzzWire : public VTKTask{
 public:
 
-    BuzzWireTask(const std::string stl_files_dir,
+    TaskBuzzWire(const std::string stl_files_dir,
                      const bool show_ref_frames, const bool num_tools,
                      const bool with_guidance);
 
@@ -199,4 +199,4 @@ private:
 };
 
 
-#endif //TELEOP_VISION_BUZZWIRETASK_H
+#endif //TELEOP_VISION_TaskBuzzWire_H

@@ -2,13 +2,13 @@
 // Created by nima on 13/06/17.
 //
 
-#include "BulletTask.h"
+#include "TaskBullet.h"
 
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 
-BulletTask::BulletTask(const std::string stl_file_dir,
+TaskBullet::TaskBullet(const std::string stl_file_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
         :
@@ -205,7 +205,7 @@ BulletTask::BulletTask(const std::string stl_file_dir,
 
 
 //------------------------------------------------------------------------------
-void BulletTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+void TaskBullet::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                            const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
@@ -213,13 +213,13 @@ void BulletTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 }
 
 
-void BulletTask::SetCurrentGripperpositionPointer(double &grip_position, const int
+void TaskBullet::SetCurrentGripperpositionPointer(double &grip_position, const int
 tool_id) {
     gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
-void BulletTask::UpdateActors() {
+void TaskBullet::UpdateActors() {
 
     //--------------------------------
     //box
@@ -271,36 +271,36 @@ void BulletTask::UpdateActors() {
 
 
 //------------------------------------------------------------------------------
-bool BulletTask::IsACParamChanged() {
+bool TaskBullet::IsACParamChanged() {
     return false;
 }
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters BulletTask::GetACParameters() {
+custom_msgs::ActiveConstraintParameters TaskBullet::GetACParameters() {
     custom_msgs::ActiveConstraintParameters msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }
 
 
-custom_msgs::TaskState BulletTask::GetTaskStateMsg() {
+custom_msgs::TaskState TaskBullet::GetTaskStateMsg() {
     custom_msgs::TaskState task_state_msg;
     return task_state_msg;
 }
 
-void BulletTask::ResetTask() {
+void TaskBullet::ResetTask() {
     ROS_INFO("Resetting the task.");
 
 }
 
-void BulletTask::ResetCurrentAcquisition() {
+void TaskBullet::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
 
 }
 
 
-void BulletTask::FindAndPublishDesiredToolPose() {
+void TaskBullet::FindAndPublishDesiredToolPose() {
 
     ros::Publisher pub_desired[2];
 
@@ -341,7 +341,7 @@ void BulletTask::FindAndPublishDesiredToolPose() {
 
 
 
-void BulletTask::InitBullet() {
+void TaskBullet::InitBullet() {
 
     ///-----initialization_start-----
 
@@ -367,7 +367,7 @@ void BulletTask::InitBullet() {
 }
 
 
-void BulletTask::StepDynamicsWorld() {
+void TaskBullet::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
 
     dynamicsWorld->stepSimulation(1.f / 70.f, 40);
@@ -394,7 +394,7 @@ void BulletTask::StepDynamicsWorld() {
 }
 
 
-BulletTask::~BulletTask() {
+TaskBullet::~TaskBullet() {
 
     ROS_INFO("Destructing Bullet task: %d",
              dynamicsWorld->getNumCollisionObjects());

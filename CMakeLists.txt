@@ -250,13 +250,13 @@ add_executable(
         src/ac_overlay_vtk/OverlayROSConfig.cpp
         src/ac_overlay_vtk/OverlayROSConfig.h
         src/ac_overlay_vtk/VTKTask.h
-        src/ac_overlay_vtk/BuzzWireTask.cpp
-        src/ac_overlay_vtk/BuzzWireTask.h
-        src/ac_overlay_vtk/KidneyTask.cpp
-        src/ac_overlay_vtk/KidneyTask.h
+        src/ac_overlay_vtk/TaskBuzzWire.cpp
+        src/ac_overlay_vtk/TaskBuzzWire.h
+        src/ac_overlay_vtk/TaskKidney.cpp
+        src/ac_overlay_vtk/TaskKidney.h
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.h
-        src/ac_overlay_vtk/ODETask.cpp src/ac_overlay_vtk/ODETask.h src/ac_overlay_vtk/BulletTask.cpp src/ac_overlay_vtk/BulletTask.h src/ac_overlay_vtk/BulletVTKMotionState.h src/ac_overlay_vtk/BulletVTKObject.cpp src/ac_overlay_vtk/BulletVTKObject.h)
+        src/ac_overlay_vtk/TaskODE.cpp src/ac_overlay_vtk/TaskODE.h src/ac_overlay_vtk/TaskBullet.cpp src/ac_overlay_vtk/TaskBullet.h src/ac_overlay_vtk/BulletVTKMotionState.h src/ac_overlay_vtk/BulletVTKObject.cpp src/ac_overlay_vtk/BulletVTKObject.h)
 
 target_link_libraries(
         ac_overlay_vtk

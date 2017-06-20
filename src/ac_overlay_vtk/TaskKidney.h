@@ -2,8 +2,8 @@
 // Created by nima on 4/18/17.
 //
 
-#ifndef TELEOP_VISION_KidneyTask_H
-#define TELEOP_VISION_KidneyTask_H
+#ifndef TELEOP_VISION_TASKKIDNEY_H
+#define TELEOP_VISION_TASKKIDNEY_H
 #include "VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
@@ -34,7 +34,7 @@
 #include <std_msgs/Empty.h>
 
 /**
- * \class KidneyTask
+ * \class TaskKidney
  * \brief This is a class that generates graphics and logic for a simple ring
  * and wire task, where the user is supposed to move a ring without around a
  * tube without touching it. 10 spheres in the bottom of the image show the
@@ -57,7 +57,7 @@
  */
 
 
-enum class KidneyTaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
+enum class TaskKidneyState: uint8_t {Idle, ToEndPoint, ToStartPoint,
     RepetitionComplete};
 
 
@@ -65,14 +65,14 @@ enum class KidneyTaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
 // -------------------------------------------------------------------------
 
 
-class KidneyTask : public VTKTask{
+class TaskKidney : public VTKTask{
 public:
 
-    KidneyTask(const std::string stl_files_dir,
+    TaskKidney(const std::string stl_files_dir,
                      const bool show_ref_frames, const bool num_tools,
                      const bool with_guidance);
 
-//    ~KidneyTask();
+//    ~TaskKidney();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -138,7 +138,7 @@ private:
     // task logic
 //    bool bimanual;
 //    bool with_guidance;
-    KidneyTaskState task_state;
+    TaskKidneyState task_state;
     std::string stl_files_dir;
 
     KDL::Vector idle_point;
@@ -201,4 +201,4 @@ private:
 
 };
 
-#endif //TELEOP_VISION_KidneyTask_H
+#endif //TELEOP_VISION_TaskKidney_H

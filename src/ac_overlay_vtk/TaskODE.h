@@ -1,11 +1,9 @@
 //
-// Created by nima on 13/06/17.
+// Created by nima on 08/06/17.
 //
 
-#ifndef ATAR_BULLETTASK_H
-#define ATAR_BULLETTASK_H
-
-
+#ifndef ATAR_TASKODE_H
+#define ATAR_TASKODE_H
 #include "VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
@@ -32,30 +30,36 @@
 #include "Rendering.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
-#include "BulletVTKMotionState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
-#include <btBulletDynamicsCommon.h>
-#include "BulletVTKObject.h"
+#include <ode/ode.h>
 #include <vtkMinimalStandardRandomSequence.h>
 
 
 
 #define GEOMSPERBODY 1
 #define MAX_CONTACTS 8
-#define NUM_BULLET_SPHERES 15
+#define NUM_SPHERES 15
+#define RAD_SPHERES 0.008
+extern  dWorldID World;
+
+extern dJointGroupID contactgroup;
+
+struct MyObject {
+    dBodyID Body;  // the dynamics body
+    dGeomID Geom[GEOMSPERBODY];  // geometries representing this body
+};
 
 
-
-class BulletTask : public VTKTask{
+class TaskODE : public VTKTask{
 public:
 
-    BulletTask(const std::string stl_files_dir,
-            const bool show_ref_frames, const bool num_tools,
-            const bool with_guidance);
+    TaskODE(const std::string stl_files_dir,
+               const bool show_ref_frames, const bool num_tools,
+               const bool with_guidance);
 
-    ~BulletTask();
+    ~TaskODE();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -63,10 +67,6 @@ public:
     }
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
-
-    // sets the position of the gripper
-    void SetCurrentGripperpositionPointer(double &gripper_position, const int
-    tool_id);
 
     // updates the task logic and the actors
     void UpdateActors();
@@ -94,28 +94,24 @@ public:
   *  **/
     void FindAndPublishDesiredToolPose();
 
-    void InitBullet();
+    void InitODE();
 
-    void StepDynamicsWorld();
+    void CloseODE();
 
+    void SimLoopODE();
+
+
+    void DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb,
+                      size_t obj_idx);
 
 private:
+    MyObject Objct[NUM_SPHERES+1];
+
+    dSpaceID Space;
     std::vector<std::array<double, 3> > sphere_positions;
 
     std::string stl_files_dir;
     double board_dimensions[3];
-    BulletVTKObject* kine_box;
-    BulletVTKObject* kine_sphere_0;
-    BulletVTKObject* kine_sphere_1;
-    btDiscreteDynamicsWorld* dynamicsWorld;
-    //keep track of the shapes, we release memory at exit.
-    //make sure to re-use collision shapes among rigid bodies whenever possible!
-//    btAlignedObjectArray<btCollisionShape*> collisionShapes;
-    btSequentialImpulseConstraintSolver* solver;
-    btBroadphaseInterface* overlappingPairCache;
-    btCollisionDispatcher* dispatcher;
-    btDefaultCollisionConfiguration* collisionConfiguration;
-
     // -------------------------------------------------------------------------
     // graphics
 
@@ -124,10 +120,13 @@ private:
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-    double * gripper_position[2];
-//    vtkSmartPointer<vtkActor>                       d_board_actor;
-//    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
+
+    vtkSmartPointer<vtkActor>                       d_board_actor;
+    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
 
 };
+static void nearCallback (void *data, dGeomID o1, dGeomID o2);
 
-#endif //ATAR_BULLETTASK_H
+
+
+#endif //ATAR_TaskODE_H

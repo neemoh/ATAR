@@ -2,13 +2,13 @@
 // Created by nima on 08/06/17.
 //
 
-#include "ODETask.h"
+#include "TaskODE.h"
 
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 
-ODETask::ODETask(const std::string stl_file_dir,
+TaskODE::TaskODE(const std::string stl_file_dir,
                  const bool show_ref_frames, const bool biman,
                  const bool with_guidance)
         :
@@ -164,7 +164,7 @@ ODETask::ODETask(const std::string stl_file_dir,
 
 
 //------------------------------------------------------------------------------
-void ODETask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+void TaskODE::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                         const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
@@ -172,7 +172,7 @@ void ODETask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 }
 
 //------------------------------------------------------------------------------
-void ODETask::UpdateActors() {
+void TaskODE::UpdateActors() {
 
     for (int i = 0; i < 5; ++i) {
         SimLoopODE();
@@ -185,47 +185,47 @@ void ODETask::UpdateActors() {
 
 
 //------------------------------------------------------------------------------
-bool ODETask::IsACParamChanged() {
+bool TaskODE::IsACParamChanged() {
     return false;
 }
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters ODETask::GetACParameters() {
+custom_msgs::ActiveConstraintParameters TaskODE::GetACParameters() {
     custom_msgs::ActiveConstraintParameters msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }
 
 
-custom_msgs::TaskState ODETask::GetTaskStateMsg() {
+custom_msgs::TaskState TaskODE::GetTaskStateMsg() {
     custom_msgs::TaskState task_state_msg;
     return task_state_msg;
 }
 
-void ODETask::ResetTask() {
+void TaskODE::ResetTask() {
     ROS_INFO("Resetting the task.");
 //    number_of_repetition = 0;
-//    task_state = ODETaskState::RepetitionComplete;
+//    task_state = TaskODEState::RepetitionComplete;
 //    ResetOnGoingEvaluation();
 //    ResetScoreHistory();
 }
 
-void ODETask::ResetCurrentAcquisition() {
+void TaskODE::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
-//    if(task_state== ODETaskState::ToEndPoint ||
-//       task_state == ODETaskState::ToStartPoint){
+//    if(task_state== TaskODEState::ToEndPoint ||
+//       task_state == TaskODEState::ToStartPoint){
 //
 //        ResetOnGoingEvaluation();
 //        if(number_of_repetition>0)
 //            number_of_repetition--;
-//        task_state = ODETaskState::RepetitionComplete;
+//        task_state = TaskODEState::RepetitionComplete;
 //
 //    }
 }
 
 
-void ODETask::FindAndPublishDesiredToolPose() {
+void TaskODE::FindAndPublishDesiredToolPose() {
 
     ros::Publisher pub_desired[2];
 
@@ -266,7 +266,7 @@ void ODETask::FindAndPublishDesiredToolPose() {
 
 
 
-void ODETask::InitODE() {
+void TaskODE::InitODE() {
 
 
     // Create a new, empty world and assign its ID number to World. Most applications will only need one world.
@@ -441,7 +441,7 @@ void ODETask::InitODE() {
 
 }
 
-void ODETask::CloseODE() {
+void TaskODE::CloseODE() {
 
     // Destroy all joints in our joint group
     dJointGroupDestroy(contactgroup);
@@ -456,7 +456,7 @@ void ODETask::CloseODE() {
 
 }
 
-void ODETask::SimLoopODE() {
+void TaskODE::SimLoopODE() {
 
 //    // dSpaceCollide determines which pairs of geoms in the space we pass to
 //    // it may potentially intersect. We must also pass the address of a
@@ -555,7 +555,7 @@ void nearCallback(void *data, dGeomID o1, dGeomID o2) {
 //    // first dContactGeom from our array of dContact objects and then pass
 //    // the offset to the next dContactGeom as the fifth paramater, which is
 //    // the size of a dContact structure. That made sense didn't it?
-//    ODETask* self = static_cast<ODETask*>(data);
+//    TaskODE* self = static_cast<TaskODE*>(data);
 //
 //    if (int numc = dCollide(o1, o2, MAX_CONTACTS, &contact[0].geom, sizeof
 //            (dContact))) {
@@ -608,7 +608,7 @@ void nearCallback(void *data, dGeomID o1, dGeomID o2) {
 //    // first dContactGeom from our array of dContact objects and then pass
 //    // the offset to the next dContactGeom as the fifth paramater, which is
 //    // the size of a dContact structure. That made sense didn't it?
-//    ODETask* self = static_cast<ODETask*>(data);
+//    TaskODE* self = static_cast<TaskODE*>(data);
 //
 //    if (int numc = dCollide(o1, o2, MAX_CONTACTS, &contact[0].geom, sizeof
 //            (dContact))) {
@@ -666,7 +666,7 @@ void nearCallback(void *data, dGeomID o1, dGeomID o2) {
 
 
 
-void ODETask::DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb,
+void TaskODE::DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb,
                        size_t obj_idx) {
 
     // If the geom ID is missing then return immediately.
@@ -740,7 +740,7 @@ void ODETask::DrawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aab
 
 }
 
-ODETask::~ODETask() {
+TaskODE::~TaskODE() {
 //    CloseODE();
 }
 
