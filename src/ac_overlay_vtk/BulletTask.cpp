@@ -28,10 +28,17 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // Create a cube for the board
 
-    board_dimensions[0]  = 0.18;
-    board_dimensions[1]  = 0.14;
+    //board_dimensions[0]  = 0.18;
+    //board_dimensions[1]  = 0.14;
+    //board_dimensions[2]  = 0.1;
+
+    board_dimensions[0]  = 0.28;
+    board_dimensions[1]  = 0.24;
     board_dimensions[2]  = 0.1;
     double *pose;
+    double stiffnes = 10000;
+    double damping = 3;
+    double friction = 10;
 
     pose= new double[7] {board_dimensions[0] / 2.45,
                          board_dimensions[1] / 2.78,
@@ -41,9 +48,10 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
                                 board_dimensions[2]};
     board = new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::DYNAMIC, dim, pose, 0.0, 10000,
-                                0.0, 0.5);
-    board->GetActor()->GetProperty()->SetOpacity(0);
+                                ObjectType::DYNAMIC, dim, pose, 0.0, stiffnes,
+                                damping, friction);
+    board->GetActor()->GetProperty()->SetOpacity(0.);
+    board->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
 
     dynamicsWorld->addRigidBody(board->GetBody());
     actors.push_back(board->GetActor());
@@ -52,10 +60,10 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     // Create spheres
     int cols = 4;
     int rows = NUM_BULLET_SPHERES/cols;
-    double density = 3000; // kg/m3
-    double stiffnes = 5000;
-    double damping = 1;
-    double friction = 2;
+    double density = 10000; // kg/m3
+    stiffnes = 5000;
+    damping = 50;
+    friction = 0.5;
 
     for (int i = 0; i < rows+1; ++i) {
 
@@ -67,11 +75,11 @@ BulletTask::BulletTask(const std::string stl_file_dir,
             double ratio = (double)i/4.0;
 
             pose = new double[7]{(double)i * 0.02,
-                                 0.03,
+                                 0.05,
                                  0.08 + 0.02 * j,
                                  0, 0, 0, 1};
 
-            std::vector<double> dim = {0.01};
+            std::vector<double> dim = {0.003};
             spheres[i*rows+j] =
                     new BulletVTKObject(ObjectShape::SPHERE,
                                         ObjectType::DYNAMIC, dim, pose, density,
@@ -94,17 +102,17 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     rows = 3;
     cols = 4;
     int layers = 1;
-    double sides = 0.02;
+    double sides = 0.005;
     stiffnes = 20000;
-    damping = 2;
+    damping = 80;
     friction = 0.5;
 
     for (int k = 0; k < layers; ++k) {
         for (int i = 0; i < rows+1; ++i) {
             for (int j = 0; j < cols; ++j) {
 
-                pose = new double[7] {(double)i * (sides + 0.005),
-                                      (double)j * (sides + 0.005),
+                pose = new double[7] {(double)i * (sides + 0.01),
+                                      (double)j * (sides + 0.005) + 0.05,
                                       (double)k * (sides + 0.005) + 0.3,
                                       0, 0, 0, 1};
 
@@ -136,12 +144,17 @@ BulletTask::BulletTask(const std::string stl_file_dir,
 
     // -------------------------------------------------------------------------
     // Create kinematic box
+    stiffnes = 5000;
+    damping= 100;
+    friction = 100;
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
-    std::vector<double> kine_box_dim = {0.005, 0.005, 2*sides};
+    std::vector<double> kine_box_dim = {0.002, 0.002, 0.01};
     kine_box =
             new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::KINEMATIC, kine_box_dim, pose, 0.0);
+                                ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
+                                stiffnes, damping,
+                                friction);
     dynamicsWorld->addRigidBody(kine_box->GetBody());
     actors.push_back(kine_box->GetActor());
     kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
@@ -149,11 +162,12 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // Create kinematic sphere
 
-    std::vector<double> kine_sph_dim = {0.005};
+    std::vector<double> kine_sph_dim = {0.002};
     kine_sphere_0 =
             new BulletVTKObject(ObjectShape::SPHERE,
-                                ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0);
-    delete [] pose;
+                                ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
+                                stiffnes, damping,
+                                friction);
     dynamicsWorld->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
     kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
@@ -163,7 +177,8 @@ BulletTask::BulletTask(const std::string stl_file_dir,
 
     kine_sphere_1 =
             new BulletVTKObject(ObjectShape::SPHERE,
-                                ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0);
+                                ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
+                                stiffnes, damping, friction);
     delete [] pose;
     dynamicsWorld->addRigidBody(kine_sphere_1->GetBody());
     actors.push_back(kine_sphere_1->GetActor());

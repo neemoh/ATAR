@@ -13,7 +13,7 @@
 #include "BulletTask.h"
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
-        : n(node_name), cam_poses_provided_as_params(false)
+    : n(node_name), cam_poses_provided_as_params(false)
 {
 
     // assign the callback functions
@@ -95,8 +95,8 @@ void OverlayROSConfig::SetupROS() {
         ROS_INFO("stl files will be loaded from: %s", stl_files_dir.c_str());
     } else
         ROS_ERROR(
-                "Parameter '%s' is required. ",
-                n.resolveName("stl_files_dir").c_str());
+            "Parameter '%s' is required. ",
+            n.resolveName("stl_files_dir").c_str());
 
     // ---------------------------- CAM INTRINSICS  ----------------------------
     // ------- load the intrinsic calibration files
@@ -114,10 +114,10 @@ void OverlayROSConfig::SetupROS() {
                              camera_distortion[0]);
     } else
         ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n.resolveName("left_cam_name").c_str());
+            "Parameter '%s' is required. Place the intrinsic calibration "
+                "file of each camera in ~/.ros/camera_info/ named as "
+                "<cam_name>_intrinsics.yaml",
+            n.resolveName("left_cam_name").c_str());
 
     std::string right_cam_name;
     if (n.getParam("right_cam_name", right_cam_name)) {
@@ -128,10 +128,10 @@ void OverlayROSConfig::SetupROS() {
                              camera_distortion[1]);
     } else
         ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n.resolveName("right_cam_name").c_str());
+            "Parameter '%s' is required. Place the intrinsic calibration "
+                "file of each camera in ~/.ros/camera_info/ named as "
+                "<cam_name>_intrinsics.yaml",
+            n.resolveName("right_cam_name").c_str());
 
 
     // ------------------------------------- IMAGES ----------------------------
@@ -139,22 +139,22 @@ void OverlayROSConfig::SetupROS() {
     std::string left_image_topic_name = "/camera/left/image_color";;
     if (n.getParam("left_image_topic_name", left_image_topic_name))
         ROS_INFO(
-                "[SUBSCRIBERS] Left camera images will be read from topic '%s'",
-                left_image_topic_name.c_str());
+            "[SUBSCRIBERS] Left camera images will be read from topic '%s'",
+            left_image_topic_name.c_str());
     image_subscribers[0] = it->subscribe(
-            left_image_topic_name, 1, &OverlayROSConfig::ImageLeftCallback,
-            this);
+        left_image_topic_name, 1, &OverlayROSConfig::ImageLeftCallback,
+        this);
 
     //--------
     // Left image subscriber.
     std::string right_image_topic_name = "/camera/right/image_color";
     if (n.getParam("right_image_topic_name", right_image_topic_name))
         ROS_INFO(
-                "[SUBSCRIBERS] Right camera images will be read from topic '%s'",
-                right_image_topic_name.c_str());
+            "[SUBSCRIBERS] Right camera images will be read from topic '%s'",
+            right_image_topic_name.c_str());
     image_subscribers[1] = it->subscribe(
-            right_image_topic_name, 1, &OverlayROSConfig::ImageRightCallback,
-            this);
+        right_image_topic_name, 1, &OverlayROSConfig::ImageRightCallback,
+        this);
 
     // KEPT FOR THE OLD OVERLAY NODE TO WORK THE NEW NODE HAS JUST ONE PUBLISHER
     // publishers for the overlayed images
@@ -200,7 +200,7 @@ void OverlayROSConfig::SetupROS() {
     ROS_INFO("[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
              topic_name.str().c_str());
     sub_cam_pose_left = n.subscribe(
-            topic_name.str(), 1, &OverlayROSConfig::LeftCamPoseCallback, this);
+        topic_name.str(), 1, &OverlayROSConfig::LeftCamPoseCallback, this);
 
     topic_name.str("");
     topic_name << std::string("/") << right_cam_name
@@ -209,7 +209,7 @@ void OverlayROSConfig::SetupROS() {
     ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
              topic_name.str().c_str());
     sub_cam_pose_right = n.subscribe(
-            topic_name.str(), 1, &OverlayROSConfig::RightCamPoseCallback, this);
+        topic_name.str(), 1, &OverlayROSConfig::RightCamPoseCallback, this);
 
 
     // ------------------------------------- Clutches---------------------------
@@ -273,14 +273,14 @@ void OverlayROSConfig::SetupROS() {
         param_name.str("");
         param_name << std::string("/")<< master_names[n_arm] << "/active_constraint_param";
         publisher_ac_params[n_arm] = n.advertise<custom_msgs::ActiveConstraintParameters>(
-                param_name.str().c_str(), 1 );
+            param_name.str().c_str(), 1 );
         ROS_INFO("Will publish on %s", param_name.str().c_str());
 
         // the transformation from the coordinate frame of the slave (RCM) to the task coordinate
         // frame.
         param_name.str("");
         param_name << (std::string)"/calibrations/world_frame_to_" <<
-                                                               slave_names[n_arm] << "_frame";
+                   slave_names[n_arm] << "_frame";
         std::vector<double> vect_temp = std::vector<double>(7, 0.0);
         if(n.getParam(param_name.str(), vect_temp)){
             conversions::VectorToKDLFrame(vect_temp, slave_frame_to_world_frame[n_arm]);
@@ -289,18 +289,18 @@ void OverlayROSConfig::SetupROS() {
         }
         else
             ROS_INFO("Parameter %s was not found. Arm to world calibration "
-                             "must be performed.", param_name.str().c_str());
+                         "must be performed.", param_name.str().c_str());
     }
 
     // Publisher for the task state
     std::string task_state_topic_name = "/task_state";
     publisher_task_state = n.advertise<custom_msgs::TaskState>(
-            task_state_topic_name.c_str(), 1);
+        task_state_topic_name.c_str(), 1);
     ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
 
     subscriber_recording_events = n.subscribe(
-            "/recording_events", 1, &OverlayROSConfig::RecordingEventsCallback,
-            this);
+        "/recording_events", 1, &OverlayROSConfig::RecordingEventsCallback,
+        this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /task_state");
 
     n.param<bool>("show_reference_frames", show_reference_frames, true);
@@ -362,7 +362,7 @@ void OverlayROSConfig::RightCamPoseCallback(const geometry_msgs::PoseStampedCons
 // Reading the pose of the slaves and take them to task space
 
 void OverlayROSConfig::Tool1PoseCurrentCallback(
-        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    const geometry_msgs::PoseStamped::ConstPtr &msg) {
     // take the pose from the arm frame to the task frame
     KDL::Frame frame;
     tf::poseMsgToKDL(msg->pose, frame);
@@ -371,7 +371,7 @@ void OverlayROSConfig::Tool1PoseCurrentCallback(
 }
 
 void OverlayROSConfig::Tool2PoseCurrentCallback(
-        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    const geometry_msgs::PoseStamped::ConstPtr &msg) {
     // take the pose from the arm frame to the task frame
     KDL::Frame frame;
     tf::poseMsgToKDL(msg->pose, frame);
@@ -441,7 +441,7 @@ void OverlayROSConfig::LockAndGetImages(ros::Duration timeout, cv::Mat images[])
 
 
 void OverlayROSConfig::PublishACtiveConstraintParameters(
-        const custom_msgs::ActiveConstraintParameters &ac_params) {
+    const custom_msgs::ActiveConstraintParameters &ac_params) {
 
     publisher_ac_params[0].publish(ac_params);
     if(n_arms==2)
@@ -461,16 +461,16 @@ void OverlayROSConfig::RecordingEventsCallback(const std_msgs::CharConstPtr
     new_recording_event = true;
 
     switch(msg->data){
-        case 'r':
-            task_ptr->ResetTask();
-            break;
+    case 'r':
+        task_ptr->ResetTask();
+        break;
 
-        case 'd':
-            task_ptr->ResetCurrentAcquisition();
-            break;
+    case 'd':
+        task_ptr->ResetCurrentAcquisition();
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
 }
@@ -492,7 +492,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     else if(task_id ==3){
         std::cout << "Starting new ODETask task. "<< std::endl;
         task_ptr   = new ODETask(stl_files_dir, false,
-                                    (bool) (n_arms - 1), with_guidance);
+                                 (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==4){
         std::cout << "Starting BulletTask task. "<< std::endl;
@@ -511,7 +511,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
 
         // bind the haptics thread
         haptics_thread = boost::thread(boost::bind(
-                &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
+            &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
     }
 }
 
@@ -544,7 +544,7 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
             }
             if(count > 100){
                 ROS_ERROR("Giving up. No camera pose parameter was present and "
-                                  "poses of both cams was not being published.");
+                              "poses of both cams was not being published.");
                 break;
             }
         }
@@ -613,18 +613,24 @@ void OverlayROSConfig::DoArmToWorldFrameCalibration(const uint arm_id) {
     std::string cam_image_name_space ;
     n.getParam("left_image_topic_name", cam_image_name_space);
 
+    double calib_points_distance;
+    n.param<double>("calib_points_distance", calib_points_distance, 0.05);
+
+    int num_calib_points;
+    n.param<int>("number_of_calibration_points", num_calib_points, 6);
+
     KDL::Frame arm_to_world_frame;
     ArmToWorldCalibration AWC;
     KDL::Frame world_to_arm_frame;
     if(AWC.DoCalibration(cam_image_name_space,
-                      cam_pose_namespace.str(), arm_pose_namespace.str(),
-                      camera_matrix[0], camera_distortion[0],
-                      6, 0.0247, world_to_arm_frame)){
+                         cam_pose_namespace.str(), arm_pose_namespace.str(),
+                         camera_matrix[0], camera_distortion[0],
+                         num_calib_points, calib_points_distance, world_to_arm_frame)){
 
         // set ros param
         std::stringstream param_name;
         param_name << std::string("/calibrations/world_frame_to_") <<
-                                                                   slave_name << "_frame";
+                   slave_name << "_frame";
 
         std::vector<double> vec7(7, 0.0);
         conversions::KDLFrameToVector(world_to_arm_frame, vec7);
