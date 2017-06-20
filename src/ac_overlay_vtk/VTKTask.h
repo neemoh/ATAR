@@ -61,6 +61,10 @@ public:
     virtual void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int
     tool_id) {};
 
+    // sets the position of the gripper
+    virtual void SetCurrentGripperpositionPointer(double &gripper_position, const int
+    tool_id) {};
+
     // returns the status of the change of the ac_param
     virtual bool IsACParamChanged() = 0;
 

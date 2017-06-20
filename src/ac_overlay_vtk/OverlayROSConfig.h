@@ -22,6 +22,7 @@
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include <boost/thread/thread.hpp>
+#include <std_msgs/Float32.h>
 #include "VTKTask.h"
 
 class OverlayROSConfig {
@@ -75,6 +76,10 @@ public:
     void Tool1PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
     void Tool2PoseCurrentCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
 
+    // Tool gripper callbacks
+    void Tool1GripperCurrentCallback(const std_msgs::Float32::ConstPtr &msg);
+    void Tool2GripperCurrentCallback(const std_msgs::Float32::ConstPtr &msg);
+
     // foot switch used to select the ac path
     void FootSwitchCallback(const sensor_msgs::Joy &msg);
 
@@ -118,6 +123,7 @@ public:
     cv::Mat camera_distortion[2];
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
+    double gripper_current[2];
     bool cam_poses_provided_as_params;
     KDL::Frame slave_frame_to_world_frame[2];
 
@@ -157,6 +163,7 @@ private:
     ros::Subscriber subscriber_recording_events;
 
     ros::Subscriber * subtool_current_pose;
+    ros::Subscriber * subtool_current_gripper;
     ros::Publisher * publisher_tool_pose_desired;
     ros::Publisher * publisher_ac_params;
     ros::Publisher publisher_task_state;
@@ -164,6 +171,10 @@ private:
     // two function pointers for slave pose callbacks
     void (OverlayROSConfig::*pose_current_tool_callbacks[2])
             (const geometry_msgs::PoseStamped::ConstPtr &msg);
+
+    // two function pointers for slave gripper callbacks
+    void (OverlayROSConfig::*gripper_current_tool_callbacks[2])
+            (const std_msgs::Float32::ConstPtr &msg);
 
 
 };

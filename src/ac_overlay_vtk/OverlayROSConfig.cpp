@@ -19,6 +19,8 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name)
     // assign the callback functions
     pose_current_tool_callbacks[0] = &OverlayROSConfig::Tool1PoseCurrentCallback;
     pose_current_tool_callbacks[1] = &OverlayROSConfig::Tool2PoseCurrentCallback;
+    gripper_current_tool_callbacks[0] = &OverlayROSConfig::Tool1GripperCurrentCallback;
+    gripper_current_tool_callbacks[1] = &OverlayROSConfig::Tool2GripperCurrentCallback;
     //    twist_current_tool_callbacks[0] = &OverlayROSConfig::Tool1TwistCallback;
     //    twist_current_tool_callbacks[1] = &OverlayROSConfig::Tool2TwistCallback;
 
@@ -225,6 +227,7 @@ void OverlayROSConfig::SetupROS() {
 
     //    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
     subtool_current_pose = new ros::Subscriber[(uint)n_arms];
+    subtool_current_gripper = new ros::Subscriber[(uint)n_arms];
     publisher_ac_params = new ros::Publisher[(uint)n_arms];
 
     //    // Twists not needed for now
@@ -253,6 +256,15 @@ void OverlayROSConfig::SetupROS() {
         param_name << std::string("/dvrk/") <<slave_names[n_arm] << "/position_cartesian_current";
         subtool_current_pose[n_arm] = n.subscribe(param_name.str(), 1,
                                                   pose_current_tool_callbacks[n_arm], this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
+        // we will later check to see if something is publishing on the current slave pose
+        check_topic_name = param_name.str();
+
+        // the current pose of the tools (slaves)
+        param_name.str("");
+        param_name << std::string("/dvrk/") <<master_names[n_arm] << "/gripper_position_current";
+        subtool_current_gripper[n_arm] = n.subscribe(param_name.str(), 1,
+                                                     gripper_current_tool_callbacks[n_arm], this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
         // we will later check to see if something is publishing on the current slave pose
         check_topic_name = param_name.str();
@@ -364,6 +376,19 @@ void OverlayROSConfig::Tool2PoseCurrentCallback(
     KDL::Frame frame;
     tf::poseMsgToKDL(msg->pose, frame);
     pose_current_tool[1] =  slave_frame_to_world_frame[1] * frame;
+}
+
+
+// Reading the gripper positions
+void OverlayROSConfig::Tool1GripperCurrentCallback(
+    const std_msgs::Float32::ConstPtr &msg) {
+    gripper_current[0] =  msg->data;
+}
+
+void OverlayROSConfig::Tool2GripperCurrentCallback(
+    const std_msgs::Float32::ConstPtr &msg) {
+    gripper_current[1] =  msg->data;
+
 }
 
 
@@ -480,6 +505,9 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         ros::spinOnce();
         task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
         task_ptr->SetCurrentToolPosePointer(pose_current_tool[1], 1);
+
+        task_ptr->SetCurrentGripperpositionPointer(gripper_current[0], 0);
+        task_ptr->SetCurrentGripperpositionPointer(gripper_current[1], 1);
 
         // bind the haptics thread
         haptics_thread = boost::thread(boost::bind(
@@ -613,6 +641,7 @@ void OverlayROSConfig::Cleanup() {
     DeleteTask();
 
 }
+
 
 void VisualUtils::SwitchFullScreen(const std::string window_name) {
 
