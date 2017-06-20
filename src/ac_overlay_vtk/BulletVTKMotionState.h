@@ -26,7 +26,8 @@
 
 */
 //==============================================================================
-
+// TODO FIX THIS DUPLICATED FUNCTION
+//------------------------------------------------------------------------------
 
 class BulletVTKMotionState : public btMotionState{
 
@@ -74,15 +75,33 @@ public:
 
         // Set the orientation
         btQuaternion rot = worldTrans.getRotation();
-        KDL::Rotation rot_kdl =
-                KDL::Rotation::Quaternion(rot.x(), rot.y(), rot.z(), rot.w());
-        double r,p,y;
-        rot_kdl.GetRPY(r, p,y);
-        actor_->SetOrientation(r,p,y);
-
-        // set the position
         btVector3 pos = worldTrans.getOrigin();
-        actor_->SetPosition(pos.x(), pos.y(), pos.z());
+
+        //KDL::Rotation rot_kdl =
+        //        KDL::Rotation::Quaternion(rot.x(), rot.y(), rot.z(), rot.w());
+        //double r,p,y;
+        //rot_kdl.GetRPY(r, p,y);
+        //actor_->SetOrientation(r*180/M_PI, p*180/M_PI, y*180/M_PI);
+        double pose[7] = {pos.x(), pos.y(), pos.z(), rot.x(), rot.y(), rot.z(), rot.w()};
+
+        vtkSmartPointer<vtkMatrix4x4> out =
+            vtkSmartPointer<vtkMatrix4x4>::New();
+
+        KDL::Frame k(KDL::Rotation::Quaternion( pose[3],  pose[4],
+                                                pose[5],  pose[6])
+            , KDL::Vector(pose[0], pose[1], pose[2]) );
+
+        // Convert to VTK matrix.
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                out->SetElement(i, j, k.M(i,j));
+            }
+            out->SetElement(i, 3, k.p[i]);
+        }
+
+        actor_->SetUserMatrix(out);
+        // set the position
+        //actor_->SetPosition(pos.x(), pos.y(), pos.z());
 
     }
 
@@ -92,20 +111,36 @@ public:
     void setKinematicPos(btTransform &currentPos) {
 
         bt_pose_ = currentPos;
-        // Set the orientation
-        btQuaternion rot = currentPos.getRotation();
-        KDL::Rotation rot_kdl =
-                KDL::Rotation::Quaternion(rot.x(), rot.y(), rot.z(), rot.w());
-        double r,p,y;
-        rot_kdl.GetRPY(r, p,y);
-        actor_->SetOrientation(r,p,y);
+        btQuaternion rot = bt_pose_.getRotation();
+        btVector3 pos = bt_pose_.getOrigin();
 
-        // set the position
-        btVector3 pos = currentPos.getOrigin();
-        actor_->SetPosition(pos.x(), pos.y(), pos.z());
+        //KDL::Rotation rot_kdl =
+        //        KDL::Rotation::Quaternion(rot.x(), rot.y(), rot.z(), rot.w());
+        //double r,p,y;
+        //rot_kdl.GetRPY(r, p,y);
+        //actor_->SetOrientation(r*180/M_PI, p*180/M_PI, y*180/M_PI);
+        double pose[7] = {pos.x(), pos.y(), pos.z(), rot.x(), rot.y(), rot.z(), rot.w()};
+
+        vtkSmartPointer<vtkMatrix4x4> out =
+            vtkSmartPointer<vtkMatrix4x4>::New();
+
+        KDL::Frame k(KDL::Rotation::Quaternion( pose[3],  pose[4],
+                                                pose[5],  pose[6])
+            , KDL::Vector(pose[0], pose[1], pose[2]) );
+
+        // Convert to VTK matrix.
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                out->SetElement(i, j, k.M(i,j));
+            }
+            out->SetElement(i, 3, k.p[i]);
+        }
+
+        actor_->SetUserMatrix(out);
 
     }
 
 };
+
 
 #endif //ATAR_BULLETVTKMOTIONSTATE_H

@@ -136,15 +136,16 @@ BulletTask::BulletTask(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // Create kinematic object
 
-    pose = new double[7] {0, 0, sides, 0, 0, 0, 1};
-
-    std::vector<double> kine_dim = {0.1, sides, 2*sides};
+    pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
+    std::vector<double> kine_dim = {0.01, 0.01, 3*sides};
     kine_obj =
             new BulletVTKObject(ObjectShape::BOX,
                                 ObjectType::KINEMATIC, kine_dim, pose, 0.0);
     delete [] pose;
     dynamicsWorld->addRigidBody(kine_obj->GetBody());
     actors.push_back(kine_obj->GetActor());
+    kine_obj->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
+
     // -------------------------------------------------------------------------
     // FRAMES
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
@@ -175,8 +176,10 @@ void BulletTask::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 
 //------------------------------------------------------------------------------
 void BulletTask::UpdateActors() {
-    count ++;
-    double pose[7] = {double(count)*0.001, double(count)*0.002, 0, 0, 0, 0, 1};
+    KDL::Frame t_pose = (*tool_current_pose_kdl[0]);
+    double x, y, z, w;
+    t_pose.M.GetQuaternion(x,y,z,w);
+    double pose[7] = {t_pose.p[0], t_pose.p[1], t_pose.p[2],x,y,z,w};
     kine_obj->SetKinematicPose(pose);
     StepDynamicsWorld();
 

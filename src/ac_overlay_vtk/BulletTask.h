@@ -96,7 +96,6 @@ public:
 
 
 private:
-    int count =0;
     std::vector<std::array<double, 3> > sphere_positions;
 
     std::string stl_files_dir;
