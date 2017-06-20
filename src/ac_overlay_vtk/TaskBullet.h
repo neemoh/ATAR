@@ -42,12 +42,6 @@
 
 
 
-#define GEOMSPERBODY 1
-#define MAX_CONTACTS 8
-#define NUM_BULLET_SPHERES 15
-
-
-
 class TaskBullet : public VTKTask{
 public:
 

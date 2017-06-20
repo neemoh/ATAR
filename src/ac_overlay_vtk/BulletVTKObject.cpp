@@ -8,6 +8,7 @@
 #include <vtkTransform.h>
 #include <kdl/frames.hpp>
 #include <vtkConeSource.h>
+#include <vtkCylinderSource.h>
 #include "BulletVTKObject.h"
 
 uint BulletVTKObject::num_bulletvtk_objects = 0;
@@ -17,10 +18,10 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
                                  std::vector<double> dimensions,
                                  double pose[],
                                  double density,
-                                 double contact_stiffness,
-                                 double contact_damping,
                                  double friction,
-                                 double restitution)
+                                 double contact_stiffness,
+                                 double contact_damping
+)
         : object_type_(o_type)
 {
 
@@ -58,7 +59,39 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
             volume = 4/3*M_PI* pow(dimensions[0], 3);
 
             // set name
-            shape_string = "SPHERE";
+            shape_string = collision_shape_->getName();
+
+            break;
+        }
+
+        case ObjectShape::CYLINDER : {
+            // check if we have all the dimensions
+            if (dimensions.size() != 2)
+                throw std::runtime_error("BulletVTKObject CYLINDER shape requires "
+                                                 "a vector of 1 double "
+                                                 "as dimensions.");
+            // VTK actor_
+            vtkSmartPointer<vtkCylinderSource> source =
+                    vtkSmartPointer<vtkCylinderSource>::New();
+
+            source->SetRadius(dimensions[0]);
+            source->SetHeight(dimensions[1]);
+            source->SetResolution(30);
+            mapper->SetInputConnection(source->GetOutputPort());
+
+            // Bullet Shape
+            // TODO: ATTENTION TO THE DOUBLED RADIUS
+            collision_shape_ =
+                    new btCylinderShape(btVector3(btScalar(2*dimensions[0]),
+                                                  btScalar(dimensions[1]/2),
+                                                  0
+                    ));
+
+            // calculate volume
+            volume = M_PI * pow(dimensions[0], 2) * dimensions[1];
+
+            // set name
+            shape_string = collision_shape_->getName();
 
             break;
         }
@@ -90,7 +123,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
                               btScalar(dimensions[1]/2),
                               btScalar(dimensions[2]/2)));
             // set name
-            shape_string = "BOX";
+            shape_string = collision_shape_->getName();;
 
             break;
         }
@@ -103,23 +136,24 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
                                                  "as dimensions.");
 
             // VTK actor_
-            vtkSmartPointer<vtkConeSource> cone_source =
+            vtkSmartPointer<vtkConeSource> source =
                     vtkSmartPointer<vtkConeSource>::New();
 
-            cone_source->SetRadius(dimensions[0]);
-            cone_source->SetHeight(dimensions[1]);
+            source->SetRadius(dimensions[0]);
+            source->SetHeight(dimensions[1]);
+            source->SetResolution(30);
 
-            mapper->SetInputConnection(cone_source->GetOutputPort());
+            mapper->SetInputConnection(source->GetOutputPort());
 
             // Bullet Shape
             collision_shape_ = new btConeShape(
-                    btScalar(dimensions[0]), btScalar(dimensions[1]));
+                    btScalar(dimensions[0]), btScalar(dimensions[1]/2));
 
             // calculate volume
             volume = float(M_PI* pow(dimensions[0], 2) * dimensions[1]/3);
 
             // set name
-            shape_string = "CONE";
+            shape_string = collision_shape_->getName();;
 
             break;
         }
@@ -149,6 +183,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         if (!isStatic && (object_type_ != ObjectType::KINEMATIC))
             // Set initial pose of graphical representation
             collision_shape_->calculateLocalInertia(bt_mass, local_inertia);
+
         // ensure zero mass when Kinematic
         if (object_type_ == ObjectType::KINEMATIC)
             bt_mass = 0.f;
@@ -157,16 +192,12 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         // representation to that of the dynamic one
         motion_state_ = new BulletVTKMotionState(pose, actor_);
 
-        // construct body_ info f
+        // construct body_ info
         btRigidBody::btRigidBodyConstructionInfo body_info(
                 bt_mass, motion_state_, collision_shape_, local_inertia);
-        body_info.m_restitution = (btScalar) restitution;
-        body_info.m_friction = (btScalar) friction;
+//        body_info.m_restitution = (btScalar) restitution;
+//        body_info.m_friction = (btScalar) friction;
 
-        // to prevent rounded objects from rolling for ever we add a bit of
-        // rolling friction
-        if (shape == ObjectShape::CONE || shape == ObjectShape::SPHERE)
-            body_info.m_rollingFriction = 0.2;
         body_ = new btRigidBody(body_info);
 
         // set appropriate flags if the body is kinematic
@@ -176,15 +207,34 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
             body_->setActivationState(DISABLE_DEACTIVATION);
         }
 
+//
+
+        // to prevent rounded objects from rolling for ever we add a bit of
+        // rolling friction
+        if (shape == ObjectShape::CONE ||
+            shape == ObjectShape::CYLINDER){
+            body_->setRollingFriction(0.02);
+            body_->setSpinningFriction(0.02);
+//            body_->setAnisotropicFriction
+//                    (collision_shape_->getAnisotropicRollingFrictionDirection
+//                            (),btCollisionObject::CF_ANISOTROPIC_ROLLING_FRICTION);
+        }
+        else if(shape == ObjectShape::SPHERE) {
+            body_->setRollingFriction(0.001);
+            body_->setSpinningFriction(0.001);
+        }
+
+        body_->setFriction((btScalar)friction);
+        body_->setSpinningFriction(0.001);
+
         //set contact parameters
-        body_->setContactStiffnessAndDamping((float) contact_stiffness,
-                                             (float) contact_damping);
+//        body_->setContactStiffnessAndDamping((float) contact_stiffness,
+//                                             (float) contact_damping);
 
         std::cout << "Created BulletVTKObject with properties: "
                   << " shape = " << shape_string
                   << ", mass = " << bt_mass
                   << ", volume = " << volume
-                  << ", restitution = " << restitution
                   << ", friction = " << friction
                   << ", contact_stiffness = " << contact_stiffness
                   << ", contact_damping = " << contact_damping

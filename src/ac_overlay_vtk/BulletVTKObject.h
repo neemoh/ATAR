@@ -18,19 +18,30 @@
 // Hulls and/or basic shapes to create bodies that resemble your mesh to some
 // extent. Please see ConvexDecomposition demo for that.
 
-enum ObjectType {NOPHYSICS, DYNAMIC, KINEMATIC};
-enum ObjectShape {SPHERE, BOX, CONE, MESH};
+enum ObjectType {
+    NOPHYSICS,  // Just graphics
+    DYNAMIC,    // If density==0.0 object is STATIC
+    KINEMATIC   // Set the pose of the object externally
+};
+
+enum ObjectShape {
+    SPHERE,     //dims = [radius]
+    CYLINDER,   //dims = [radius, height]
+    BOX,        //dims = [width, length, height]
+    CONE,       //dims = [radius, height]
+    MESH};
 
 class BulletVTKObject {
 
 public:
-    BulletVTKObject(ObjectShape shape, ObjectType type, std::vector<double> dimensions,
+    BulletVTKObject(ObjectShape shape,
+                    ObjectType type,
+                    std::vector<double> dimensions,
                     double pose[],
                     double density,
+                    double friction = 0.5,
                     double contact_stiffness = 10000.0,
-                    double contact_damping = 0.0,
-                    double friction = 0.0,
-                    double restitution = 0.0
+                    double contact_damping = 0.0
                     );
 
     ~BulletVTKObject();

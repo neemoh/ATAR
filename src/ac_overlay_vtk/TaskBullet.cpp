@@ -21,8 +21,7 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     InitBullet();
 
 
-    BulletVTKObject* spheres[NUM_BULLET_SPHERES];
-    BulletVTKObject* cubes[36];
+
     BulletVTKObject* board;
     // -----------------------
     // -------------------------------------------------------------------------
@@ -36,9 +35,9 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     board_dimensions[1]  = 0.24;
     board_dimensions[2]  = 0.1;
     double *pose;
-    double stiffnes = 10000;
-    double damping = 3;
-    double friction = 10;
+    double stiffnes = 1000;
+    double damping = 20;
+    double friction = 0.5;
 
     pose= new double[7] {board_dimensions[0] / 2.45,
                          board_dimensions[1] / 2.78,
@@ -48,10 +47,9 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
                                 board_dimensions[2]};
     board = new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::DYNAMIC, dim, pose, 0.0, stiffnes,
-                                damping, friction);
-    board->GetActor()->GetProperty()->SetOpacity(0.);
-    board->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
+                                ObjectType::DYNAMIC, dim, pose, 0.0, friction);
+    board->GetActor()->GetProperty()->SetOpacity(1.0);
+    board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
     dynamicsWorld->addRigidBody(board->GetBody());
     actors.push_back(board->GetActor());
@@ -59,40 +57,37 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // Create spheres
     int cols = 4;
-    int rows = NUM_BULLET_SPHERES/cols;
-    double density = 10000; // kg/m3
-    stiffnes = 5000;
-    damping = 50;
-    friction = 0.5;
-
-    for (int i = 0; i < rows+1; ++i) {
-
-        if(i == rows)
-            cols = NUM_BULLET_SPHERES%cols;
+    int rows = 3;
+    double density = 7000; // kg/m3
+    stiffnes = 1000;
+    damping = 0.1;
+    friction = 0.2;
+    BulletVTKObject* cylinders[cols*rows];
+    for (int i = 0; i < rows; ++i) {
 
         for (int j = 0; j < cols; ++j) {
 
-            double ratio = (double)i/4.0;
+            std::vector<double> dim = {0.005, 0.05};
 
-            pose = new double[7]{(double)i * 0.02,
-                                 0.05,
-                                 0.08 + 0.02 * j,
+            pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
+                                 0.06,
+                                 0.08 + dim[1] *1.5* (double)j,
                                  0, 0, 0, 1};
 
-            std::vector<double> dim = {0.003};
-            spheres[i*rows+j] =
-                    new BulletVTKObject(ObjectShape::SPHERE,
+            cylinders[i*rows+j] =
+                    new BulletVTKObject(ObjectShape::CYLINDER,
                                         ObjectType::DYNAMIC, dim, pose, density,
-                                        stiffnes, damping,
-                                        friction);
+                                        friction, stiffnes, damping
+                                        );
             delete [] pose;
-            spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
+            double ratio = (double)i/4.0;
+            cylinders[i*rows+j]->GetActor()->GetProperty()->SetColor(
                     0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
-            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
+            cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
+            cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
 
-            dynamicsWorld->addRigidBody(spheres[i*rows+j]->GetBody());
-            actors.push_back(spheres[i*rows+j]->GetActor());
+            dynamicsWorld->addRigidBody(cylinders[i*rows+j]->GetBody());
+            actors.push_back(cylinders[i*rows+j]->GetActor());
 
         }
     }
@@ -100,33 +95,38 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // Create cubes
     rows = 3;
-    cols = 4;
-    int layers = 1;
-    double sides = 0.005;
-    stiffnes = 20000;
-    damping = 80;
-    friction = 0.5;
+    cols = 2;
+    int layers = 3;
+    BulletVTKObject* cubes[layers *rows *cols];
+
+    double sides = 0.01;
+    density = 7000; // kg/m3
+    stiffnes = 1000;
+    damping = 5.1;
+    friction = 0.1;
 
     for (int k = 0; k < layers; ++k) {
-        for (int i = 0; i < rows+1; ++i) {
+        for (int i = 0; i < rows; ++i) {
             for (int j = 0; j < cols; ++j) {
 
-                pose = new double[7] {(double)i * (sides + 0.01),
-                                      (double)j * (sides + 0.005) + 0.05,
-                                      (double)k * (sides + 0.005) + 0.3,
+                pose = new double[7] {(double)i * 2.2*sides + 0.1,
+                                      (double)j * 2.2*sides  + 0.05,
+                                      (double)k * 4*sides  + 0.01,
                                       0, 0, 0, 1};
 
                 std::vector<double> dim = {sides, sides, 2*sides};
                 cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
                                                       ObjectType::DYNAMIC, dim,
                                                       pose, density,
-                                                      stiffnes, damping,
-                                                      friction);
+                                                      friction, stiffnes, damping);
                 delete [] pose;
 
                 double ratio = (double)i/4.0;
                 cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
                         0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
+
+//                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
+//                        (float) stiffnes, (float) damping);
                 dynamicsWorld->addRigidBody(cubes[i*rows+j]->GetBody());
                 actors.push_back(cubes[i*rows+j]->GetActor());
 
@@ -144,17 +144,17 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
 
     // -------------------------------------------------------------------------
     // Create kinematic box
-    stiffnes = 5000;
-    damping= 100;
-    friction = 100;
+    stiffnes = 1000;
+    damping= 1;
+    friction = 1;
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_dim = {0.002, 0.002, 0.01};
     kine_box =
             new BulletVTKObject(ObjectShape::BOX,
                                 ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
-                                stiffnes, damping,
-                                friction);
+                                friction, stiffnes, damping
+);
     dynamicsWorld->addRigidBody(kine_box->GetBody());
     actors.push_back(kine_box->GetActor());
     kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
@@ -166,8 +166,8 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     kine_sphere_0 =
             new BulletVTKObject(ObjectShape::SPHERE,
                                 ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
-                                stiffnes, damping,
-                                friction);
+                                friction, stiffnes, damping
+            );
     dynamicsWorld->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
     kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
@@ -178,7 +178,8 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     kine_sphere_1 =
             new BulletVTKObject(ObjectShape::SPHERE,
                                 ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
-                                stiffnes, damping, friction);
+                                friction, stiffnes, damping
+            );
     delete [] pose;
     dynamicsWorld->addRigidBody(kine_sphere_1->GetBody());
     actors.push_back(kine_sphere_1->GetActor());
@@ -370,7 +371,7 @@ void TaskBullet::InitBullet() {
 void TaskBullet::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
 
-    dynamicsWorld->stepSimulation(1.f / 70.f, 40);
+    dynamicsWorld->stepSimulation(1.f / 120.f, 0);
 
 //    //print positions of all objects
 //    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
