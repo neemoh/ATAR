@@ -13,6 +13,16 @@
 #include <vtk-6.2/vtkFrameBufferObject.h>
 #include <vtk-6.2/vtkOpenGLRenderer.h>
 #include <vtk-6.2/vtkFrameBufferObject2.h>
+#include <vtkRenderPassCollection.h>
+#include <vtkSequencePass.h>
+#include <vtkShadowMapPass.h>
+#include <vtkCameraPass.h>
+#include <vtkLightsPass.h>
+#include <vtkOverlayPass.h>
+#include <vtkVolumetricPass.h>
+#include <vtkTranslucentPass.h>
+#include <vtkDepthPeelingPass.h>
+#include <vtkOpaquePass.h>
 
 Rendering::Rendering(uint num_windows)
         : num_render_windows(num_windows)
@@ -31,6 +41,10 @@ Rendering::Rendering(uint num_windows)
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
     if(num_render_windows==2)
         render_window_[1] = vtkSmartPointer<vtkRenderWindow>::New();
+
+    vtkFrameBufferObject::IsSupported(render_window_[0]); // adapted from line 182 of vtkShadowMapPass.cxx
+    vtkFrameBufferObject::IsSupported(render_window_[1]); // adapted from
+    // line 182 of vtkShadowMapPass.cxx
 
     for (int i = 0; i < 2; ++i) {
 
@@ -54,8 +68,89 @@ Rendering::Rendering(uint num_windows)
             scene_renderer_[i]->SetViewport(view_port[i]);
         }
 
+
+
+        vtkSmartPointer<vtkCameraPass> cameraP =
+                vtkSmartPointer<vtkCameraPass>::New();
+
+        vtkSmartPointer<vtkOpaquePass> opaque =
+                vtkSmartPointer<vtkOpaquePass>::New();
+
+        vtkSmartPointer<vtkDepthPeelingPass> peeling =
+                vtkSmartPointer<vtkDepthPeelingPass>::New();
+        peeling->SetMaximumNumberOfPeels(200);
+        peeling->SetOcclusionRatio(0.1);
+
+        vtkSmartPointer<vtkTranslucentPass> translucent =
+                vtkSmartPointer<vtkTranslucentPass>::New();
+        peeling->SetTranslucentPass(translucent);
+
+        vtkSmartPointer<vtkVolumetricPass> volume =
+                vtkSmartPointer<vtkVolumetricPass>::New();
+        vtkSmartPointer<vtkOverlayPass> overlay =
+                vtkSmartPointer<vtkOverlayPass>::New();
+
+        vtkSmartPointer<vtkLightsPass> lights =
+                vtkSmartPointer<vtkLightsPass>::New();
+
+        vtkSmartPointer<vtkSequencePass> opaqueSequence =
+                vtkSmartPointer<vtkSequencePass>::New();
+
+        vtkSmartPointer<vtkRenderPassCollection> passes2 =
+                vtkSmartPointer<vtkRenderPassCollection>::New();
+        passes2->AddItem(lights);
+        passes2->AddItem(opaque);
+        opaqueSequence->SetPasses(passes2);
+
+        vtkSmartPointer<vtkCameraPass> opaqueCameraPass =
+                vtkSmartPointer<vtkCameraPass>::New();
+        opaqueCameraPass->SetDelegatePass(opaqueSequence);
+
+        vtkSmartPointer<vtkShadowMapBakerPass> shadowsBaker =
+                vtkSmartPointer<vtkShadowMapBakerPass>::New();
+        shadowsBaker->SetOpaquePass(opaqueCameraPass);
+        shadowsBaker->SetResolution(1024);
+        // To cancel self-shadowing.
+        shadowsBaker->SetPolygonOffsetFactor(3.1f);
+        shadowsBaker->SetPolygonOffsetUnits(10.0f);
+
+        vtkSmartPointer<vtkShadowMapPass> shadows =
+                vtkSmartPointer<vtkShadowMapPass>::New();
+        shadows->SetShadowMapBakerPass(shadowsBaker);
+        shadows->SetOpaquePass(opaqueSequence);
+
+        vtkSmartPointer<vtkSequencePass> seq =
+                vtkSmartPointer<vtkSequencePass>::New();
+        vtkSmartPointer<vtkRenderPassCollection> passes =
+                vtkSmartPointer<vtkRenderPassCollection>::New();
+        passes->AddItem(shadowsBaker);
+        passes->AddItem(shadows);
+        passes->AddItem(lights);
+        passes->AddItem(peeling);
+        passes->AddItem(volume);
+        passes->AddItem(overlay);
+        seq->SetPasses(passes);
+        cameraP->SetDelegatePass(seq);
+
+        scene_renderer_[i]->SetPass(cameraP);
+
+
+        vtkSmartPointer<vtkLight> l1 =
+                vtkSmartPointer<vtkLight>::New();
+        l1->SetPosition(0.0,0.0,1.0);
+        l1->SetFocalPoint(0.1, 0.1, 0.0);
+        l1->SetColor(1.0,1.0,1.0);
+        l1->SetPositional(1);
+        scene_renderer_[i]->AddLight(l1);
+        l1->SetSwitch(1);
+
+        scene_renderer_[i]->ResetCamera();
+        vtkSmartPointer<vtkCamera> camera = scene_renderer_[i]->GetActiveCamera();
+
+
         scene_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
-        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
+
+//        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
 
         camera_to_world_transform_[i] = vtkSmartPointer<vtkMatrix4x4>::New();
         camera_to_world_transform_[i]->Identity();
@@ -78,8 +173,14 @@ Rendering::Rendering(uint num_windows)
         // important for getting high update rate (If needed, images can be shown
         // with opencv)
         //    render_window_->SetOffScreenRendering(1);
-
+        render_window_[j]->Render();
     }
+
+
+
+
+
+
 
 
 
@@ -325,12 +426,22 @@ void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 void
 Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
 
+    vtkSmartPointer<vtkInformation> key_properties[actors.size()];
+
     for (int i = 0; i <actors.size() ; ++i) {
-        scene_renderer_[0]->AddActor(actors[i]);
-        scene_renderer_[1]->AddActor(actors[i]);
+
+        key_properties[i] = vtkSmartPointer<vtkInformation>::New();
+        key_properties[i]->Set(vtkShadowMapBakerPass::OCCLUDER(),0);
+        key_properties[i]->Set(vtkShadowMapBakerPass::RECEIVER(),0);
+
+        actors[i]->SetPropertyKeys(key_properties[i]);
+
+        scene_renderer_[0]->AddViewProp(actors[i]);
+        scene_renderer_[1]->AddViewProp(actors[i]);
     }
-//    scene_renderer_[0]->AddViewProp( actors[actors.size()-1] );
-//    scene_renderer_[1]->AddViewProp( actors[actors.size()-1] );
+
+    //    scene_renderer_[0]->AddViewProp( actors[actors.size()-1] );
+    //    scene_renderer_[1]->AddViewProp( actors[actors.size()-1] );
 
 }
 
@@ -341,7 +452,7 @@ void Rendering::Render() {
 //    scene_renderer_->Modified();
 //    background_renderer_->Modified();
 //    render_window_->Modified();
-    for (int i = 0; i < num_render_windows; ++i) {
+    for (int i = 0; i < 1; ++i) {
         render_window_[i]->Render();
     }
 

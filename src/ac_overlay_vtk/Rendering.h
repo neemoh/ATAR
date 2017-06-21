@@ -14,6 +14,42 @@
 #include <vtkWindowToImageFilter.h>
 #include <vtkRenderWindowInteractor.h>
 #include <kdl/frames.hpp>
+#include <vtkOpenGLRenderer.h>
+#include <vtkLightActor.h>
+#include <vtkFrameBufferObject.h>
+#include <vtkImageSinusoidSource.h>
+#include <vtkImageData.h>
+#include <vtkImageDataGeometryFilter.h>
+#include <vtkDataSetSurfaceFilter.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkLookupTable.h>
+#include <vtkCamera.h>
+#include <vtkCameraPass.h>
+#include <vtkLightsPass.h>
+#include <vtkSequencePass.h>
+#include <vtkOpaquePass.h>
+#include <vtkDepthPeelingPass.h>
+#include <vtkTranslucentPass.h>
+#include <vtkVolumetricPass.h>
+#include <vtkOverlayPass.h>
+#include <vtkRenderPassCollection.h>
+#include <vtkShadowMapBakerPass.h>
+#include <vtkShadowMapPass.h>
+#include <vtkConeSource.h>
+#include <vtkPlaneSource.h>
+#include <vtkCubeSource.h>
+#include <vtkSphereSource.h>
+#include <vtkInformation.h>
+#include <vtkProperty.h>
+#include <vtkLight.h>
+#include <vtkLightCollection.h>
+#include <assert.h>
+#include <vtkMath.h>
+#include <vtkFrustumSource.h>
+#include <vtkPlanes.h>
+#include <vtkActorCollection.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkPointData.h>
 
 /**
  * \class Rendering
