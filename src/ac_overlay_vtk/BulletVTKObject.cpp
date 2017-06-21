@@ -9,7 +9,13 @@
 #include <kdl/frames.hpp>
 #include <vtkConeSource.h>
 #include <vtkCylinderSource.h>
+#include <src/ac_overlay_vtk/LoadObjGL/GLInstanceGraphicsShape.h>
+#include <vtkOBJReader.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkMassProperties.h>
+#include <vtkTriangleFilter.h>
 #include "BulletVTKObject.h"
+#include "LoadObjGL/LoadMeshFromObj.h"
 
 uint BulletVTKObject::num_bulletvtk_objects = 0;
 
@@ -63,7 +69,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             break;
         }
-
+// -------------------------------------------------------------------------
         case ObjectShape::CYLINDER : {
             // check if we have all the dimensions
             if (dimensions.size() != 2)
@@ -159,6 +165,85 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         }
 
         case ObjectShape::MESH : {
+
+            //load our obj mesh
+            std::string filepath = "/home/nima/Desktop/monkey.obj";
+
+            GLInstanceGraphicsShape* glmesh = LoadMeshFromObj(filepath.c_str(), "");
+            printf("[INFO] Obj loaded: Extracted %d verticed from obj file "
+                           "[%s]\n", glmesh->m_numvertices, filepath.c_str());
+
+            const GLInstanceVertex& v = glmesh->m_vertices->at(0);
+            btConvexHullShape* shape = new btConvexHullShape((const btScalar*)(&(v.xyzw[0])),
+                                                             glmesh->m_numvertices,
+                                                             sizeof(GLInstanceVertex));
+
+            btVector3 localScaling(0.001,0.001,0.001);
+            shape->setLocalScaling(localScaling);
+//
+            // option 1
+//            shape->optimizeConvexHull();
+
+            // option 2
+            shape->initializePolyhedralFeatures();
+
+            collision_shape_ = shape;
+            //            //shape->setMargin(0.001);
+            //            m_collisionShapes.push_back(shape);
+            //
+            //            btTransform startTransform;
+            //            startTransform.setIdentity();
+            //
+            //            btScalar	mass(1.f);
+            //            bool isDynamic = (mass != 0.f);
+            //            btVector3 localInertia(0,0,0);
+            //            if (isDynamic)
+            //                shape->calculateLocalInertia(mass,localInertia);
+            //
+            //            float color[4] = {1,1,1,1};
+            //            float orn[4] = {0,0,0,1};
+            //            float pos[4] = {0,3,0,0};
+            //            btVector3 position(pos[0],pos[1],pos[2]);
+            //            startTransform.setOrigin(position);
+            //            btRigidBody* body = createRigidBody(mass,startTransform,shape);
+
+            // -------------------------------------------------------------------------
+            // VTK
+
+
+            vtkSmartPointer<vtkOBJReader> reader =
+                    vtkSmartPointer<vtkOBJReader>::New();
+            reader->SetFileName(filepath.c_str());
+            reader->Update();
+            mapper->SetInputConnection(reader->GetOutputPort());
+
+            // calculate the volume
+            vtkSmartPointer<vtkMassProperties> Mass =
+            vtkSmartPointer<vtkMassProperties>::New();
+            vtkSmartPointer<vtkTriangleFilter> tri_filt =
+            vtkSmartPointer<vtkTriangleFilter>::New();
+            tri_filt->SetInputConnection(reader->GetOutputPort());
+                        Mass->SetInputConnection(tri_filt->GetOutputPort());
+            volume = Mass->GetVolume();
+            //            // transform would be necesary at this stage if
+            // cellLocator is going to be used
+            //            vtkSmartPointer<vtkTransform> transform =
+            //                    vtkSmartPointer<vtkTransform>::New();
+            //            transform->Translate(0.050, 0.060, 0.025);
+            //            transform->RotateX(180);
+            //            transform->RotateZ(150);
+            //
+            //            vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter =
+            //                    vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+            //            transformFilter->SetInputConnection(
+            //                    reader->GetOutputPort());
+            //            transformFilter->SetTransform(transform);
+            //            transformFilter->Update();
+            //
+            //            vtkSmartPointer<vtkPolyDataMapper> mapper =
+            //                    vtkSmartPointer<vtkPolyDataMapper>::New();
+            //            mapper->SetInputConnection(
+            //                    transformFilter->GetOutputPort());
 
             break;
         }
@@ -290,3 +375,5 @@ vtkSmartPointer<vtkMatrix4x4> PoseVectorToVTKMatrix(double pose[]) {
 
     return out;
 }
+
+
