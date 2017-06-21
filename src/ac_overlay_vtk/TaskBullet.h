@@ -45,7 +45,7 @@
 class TaskBullet : public VTKTask{
 public:
 
-    TaskBullet(const std::string stl_files_dir,
+    TaskBullet(const std::string mesh_files_dir,
             const bool show_ref_frames, const bool num_tools,
             const bool with_guidance);
 
@@ -96,7 +96,6 @@ public:
 private:
     std::vector<std::array<double, 3> > sphere_positions;
 
-    std::string stl_files_dir;
     double board_dimensions[3];
     BulletVTKObject* kine_box;
     BulletVTKObject* kine_sphere_0;

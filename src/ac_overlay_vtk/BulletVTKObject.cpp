@@ -24,6 +24,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
                                  std::vector<double> dimensions,
                                  double pose[],
                                  double density,
+                                 void *data,
                                  double friction,
                                  double contact_stiffness,
                                  double contact_damping
@@ -166,12 +167,14 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
         case ObjectShape::MESH : {
 
-            //load our obj mesh
-            std::string filepath = "/home/nima/Desktop/monkey.obj";
+            std::string* filepath = static_cast<std::string*>(data);
+            std::cout << "Loading mesh file from: " << filepath->c_str() << std::endl;
 
-            GLInstanceGraphicsShape* glmesh = LoadMeshFromObj(filepath.c_str(), "");
+            //load our obj mesh
+
+            GLInstanceGraphicsShape* glmesh = LoadMeshFromObj(filepath->c_str(), "");
             printf("[INFO] Obj loaded: Extracted %d verticed from obj file "
-                           "[%s]\n", glmesh->m_numvertices, filepath.c_str());
+                           "[%s]\n", glmesh->m_numvertices, filepath->c_str());
 
             const GLInstanceVertex& v = glmesh->m_vertices->at(0);
             btConvexHullShape* shape = new btConvexHullShape((const btScalar*)(&(v.xyzw[0])),
@@ -213,7 +216,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             vtkSmartPointer<vtkOBJReader> reader =
                     vtkSmartPointer<vtkOBJReader>::New();
-            reader->SetFileName(filepath.c_str());
+            reader->SetFileName(filepath->c_str());
             reader->Update();
             mapper->SetInputConnection(reader->GetOutputPort());
 

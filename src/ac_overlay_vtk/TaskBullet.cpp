@@ -8,12 +8,11 @@
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 
-TaskBullet::TaskBullet(const std::string stl_file_dir,
+TaskBullet::TaskBullet(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
-        :
-        VTKTask(show_ref_frames, biman, with_guidance),
-        stl_files_dir(stl_file_dir)
+    :
+    VTKTask(show_ref_frames, biman, with_guidance)
 {
 
 
@@ -40,14 +39,14 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     double friction = 0.5;
 
     pose= new double[7] {board_dimensions[0] / 2.45,
-                         board_dimensions[1] / 2.78,
-                         -board_dimensions[2]/2,
-                         0, 0, 0, 1};
+        board_dimensions[1] / 2.78,
+        -board_dimensions[2]/2,
+        0, 0, 0, 1};
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
-                                board_dimensions[2]};
+        board_dimensions[2]};
     board = new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::DYNAMIC, dim, pose, 0.0, friction);
+                                ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction);
     board->GetActor()->GetProperty()->SetOpacity(1.0);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
@@ -70,19 +69,19 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
             std::vector<double> dim = {0.005, 0.05};
 
             pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
-                                 0.06,
-                                 0.08 + dim[1] *1.5* (double)j,
-                                 0, 0, 0, 1};
+                0.06,
+                0.08 + dim[1] *1.5* (double)j,
+                0, 0, 0, 1};
 
             cylinders[i*rows+j] =
-                    new BulletVTKObject(ObjectShape::CYLINDER,
-                                        ObjectType::DYNAMIC, dim, pose, density,
-                                        friction, stiffnes, damping
-                                        );
+                new BulletVTKObject(ObjectShape::CYLINDER,
+                                    ObjectType::DYNAMIC, dim, pose, density,
+                                    NULL, friction, stiffnes, damping
+                );
             delete [] pose;
             double ratio = (double)i/4.0;
             cylinders[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                    0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
+                0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
             cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
             cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
 
@@ -110,20 +109,20 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
             for (int j = 0; j < cols; ++j) {
 
                 pose = new double[7] {(double)i * 2.2*sides + 0.1,
-                                      (double)j * 2.2*sides  + 0.05,
-                                      (double)k * 4*sides  + 0.01,
-                                      0, 0, 0, 1};
+                    (double)j * 2.2*sides  + 0.05,
+                    (double)k * 4*sides  + 0.01,
+                    0, 0, 0, 1};
 
                 std::vector<double> dim = {sides, sides, 2*sides};
                 cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
                                                       ObjectType::DYNAMIC, dim,
-                                                      pose, density,
+                                                      pose, density, NULL,
                                                       friction, stiffnes, damping);
                 delete [] pose;
 
                 double ratio = (double)i/4.0;
                 cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                        0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
+                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
 
 //                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
 //                        (float) stiffnes, (float) damping);
@@ -151,10 +150,15 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
     std::vector<double> _dim = {0.002};
     BulletVTKObject *mesh;
+    std::stringstream input_file_dir;
+    input_file_dir << mesh_files_dir << std::string("monkey.obj");
+    std::string mesh_file_dir_str = input_file_dir.str();
+
     mesh = new
-            BulletVTKObject(ObjectShape::MESH,
-                                ObjectType::DYNAMIC, _dim, pose, 6000,
-                                friction);
+        BulletVTKObject(ObjectShape::MESH,
+                        ObjectType::DYNAMIC, _dim, pose, 6000,
+                        &mesh_file_dir_str,
+                        friction);
     dynamicsWorld->addRigidBody(mesh->GetBody());
     actors.push_back(mesh->GetActor());
     mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
@@ -168,10 +172,10 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_dim = {0.002, 0.002, 0.01};
     kine_box =
-            new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
-                                friction, stiffnes, damping
-);
+        new BulletVTKObject(ObjectShape::BOX,
+                            ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
+                            NULL, friction, stiffnes, damping
+        );
     dynamicsWorld->addRigidBody(kine_box->GetBody());
     actors.push_back(kine_box->GetActor());
     kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
@@ -181,10 +185,10 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
 
     std::vector<double> kine_sph_dim = {0.002};
     kine_sphere_0 =
-            new BulletVTKObject(ObjectShape::SPHERE,
-                                ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
-                                friction, stiffnes, damping
-            );
+        new BulletVTKObject(ObjectShape::SPHERE,
+                            ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
+                            NULL, friction, stiffnes, damping
+        );
     dynamicsWorld->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
     kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
@@ -193,10 +197,10 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     // Create kinematic sphere
 
     kine_sphere_1 =
-            new BulletVTKObject(ObjectShape::SPHERE,
-                                ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
-                                friction, stiffnes, damping
-            );
+        new BulletVTKObject(ObjectShape::SPHERE,
+                            ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
+                            NULL, friction, stiffnes, damping
+        );
     delete [] pose;
     dynamicsWorld->addRigidBody(kine_sphere_1->GetBody());
     actors.push_back(kine_sphere_1->GetActor());
@@ -205,7 +209,7 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // FRAMES
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
-            vtkSmartPointer<vtkAxesActor>::New();
+        vtkSmartPointer<vtkAxesActor>::New();
 
     task_coordinate_axes->SetXAxisLabelText("");
     task_coordinate_axes->SetYAxisLabelText("");
@@ -324,10 +328,10 @@ void TaskBullet::FindAndPublishDesiredToolPose() {
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-            ("/PSM1/tool_pose_desired", 10);
+                             ("/PSM1/tool_pose_desired", 10);
     if(bimanual)
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                ("/PSM2/tool_pose_desired", 10);
+                                 ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(200);
 

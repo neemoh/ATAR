@@ -90,13 +90,17 @@ void OverlayROSConfig::SetupROS() {
     ROS_INFO("Rendered Images will be shown in a single window: %s",
              one_window_mode ? "true" : "false");
 
+    n.param<bool>("with_shadows", with_shadows, false);
+    ROS_INFO("Rendered Images will be shown in a single window: %s",
+             with_shadows ? "true" : "false");
 
-    if (n.getParam("stl_files_dir", stl_files_dir)) {
-        ROS_INFO("stl files will be loaded from: %s", stl_files_dir.c_str());
+
+    if (n.getParam("mesh_files_dir", mesh_files_dir)) {
+        ROS_INFO("stl files will be loaded from: %s", mesh_files_dir.c_str());
     } else
         ROS_ERROR(
             "Parameter '%s' is required. ",
-            n.resolveName("stl_files_dir").c_str());
+            n.resolveName("mesh_files_dir").c_str());
 
     // ---------------------------- CAM INTRINSICS  ----------------------------
     // ------- load the intrinsic calibration files
@@ -481,22 +485,22 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     if(task_id ==1){
         // allocate anew dynamic task
         std::cout << "Starting new BuzzWireTask task. "<< std::endl;
-        task_ptr   = new TaskBuzzWire(stl_files_dir, show_reference_frames,
+        task_ptr   = new TaskBuzzWire(mesh_files_dir, show_reference_frames,
                                       (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==2){
         std::cout << "Starting new TaskKidney task. "<< std::endl;
-        task_ptr   = new TaskKidney(stl_files_dir, false,
+        task_ptr   = new TaskKidney(mesh_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==3){
         std::cout << "Starting new TaskODE task. "<< std::endl;
-        task_ptr   = new TaskODE(stl_files_dir, false,
+        task_ptr   = new TaskODE(mesh_files_dir, false,
                                  (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==4){
         std::cout << "Starting TaskBullet task. "<< std::endl;
-        task_ptr   = new TaskBullet(stl_files_dir, false,
+        task_ptr   = new TaskBullet(mesh_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
     }
 

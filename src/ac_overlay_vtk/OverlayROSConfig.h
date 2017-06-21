@@ -129,6 +129,7 @@ public:
 
     bool publish_overlayed_images = false;
     bool one_window_mode= false;
+    bool with_shadows= false;
     KDL::Frame left_cam_to_right_cam_tr;
 
     cv::Vec3d cam_rvec[2];
@@ -151,7 +152,7 @@ private:
     int image_width;
     int image_height;
 
-    std::string stl_files_dir;
+    std::string mesh_files_dir;
     image_transport::ImageTransport *it;
     image_transport::Subscriber image_subscribers[2];
 
