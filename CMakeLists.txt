@@ -240,6 +240,30 @@ vtk_module_config(VTK
         )
 
 include(${VTK_USE_FILE})
+
+add_library(LoadObjGL
+        src/ac_overlay_vtk/LoadObjGL/LoadMeshFromObj.h
+        src/ac_overlay_vtk/LoadObjGL/LoadMeshFromObj.cpp
+        src/ac_overlay_vtk/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
+        src/ac_overlay_vtk/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
+        src/ac_overlay_vtk/LoadObjGL/tiny_obj_loader.cpp
+        src/ac_overlay_vtk/LoadObjGL/tiny_obj_loader.cpp
+        src/ac_overlay_vtk/LoadObjGL/GLInstanceGraphicsShape.h
+#        src/ac_overlay_vtk/LoadObjGL/GLInstancingRenderer.cpp
+#        src/ac_overlay_vtk/LoadObjGL/GLInstancingRenderer.h
+#        src/ac_overlay_vtk/LoadObjGL/OpenGLInclude.h
+
+        )
+
+target_link_libraries(
+        LoadObjGL
+        BulletDynamics
+        BulletCollision
+        LinearMath
+        Bullet3Common
+)
+
+
 add_executable(
         ac_overlay_vtk
         src/ac_overlay_vtk/main_ac_overlay_vtk.cpp
@@ -256,7 +280,15 @@ add_executable(
         src/ac_overlay_vtk/TaskKidney.h
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.h
-        src/ac_overlay_vtk/TaskODE.cpp src/ac_overlay_vtk/TaskODE.h src/ac_overlay_vtk/TaskBullet.cpp src/ac_overlay_vtk/TaskBullet.h src/ac_overlay_vtk/BulletVTKMotionState.h src/ac_overlay_vtk/BulletVTKObject.cpp src/ac_overlay_vtk/BulletVTKObject.h)
+        src/ac_overlay_vtk/TaskODE.cpp
+        src/ac_overlay_vtk/TaskODE.h
+        src/ac_overlay_vtk/TaskBullet.cpp
+        src/ac_overlay_vtk/TaskBullet.h
+        src/ac_overlay_vtk/BulletVTKMotionState.h
+        src/ac_overlay_vtk/BulletVTKObject.cpp
+        src/ac_overlay_vtk/BulletVTKObject.h
+
+)
 
 target_link_libraries(
         ac_overlay_vtk
@@ -267,6 +299,7 @@ target_link_libraries(
         BulletCollision
         LinearMath
         libode.a
+        LoadObjGL
         )
 set(ODE_PRECISION dSINGLE)
 

@@ -143,6 +143,23 @@ TaskBullet::TaskBullet(const std::string stl_file_dir,
     }
 
     // -------------------------------------------------------------------------
+    // Create mesh
+    stiffnes = 1000;
+    damping= 1;
+    friction = 1;
+
+    pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
+    std::vector<double> _dim = {0.002};
+    BulletVTKObject *mesh;
+    mesh = new
+            BulletVTKObject(ObjectShape::MESH,
+                                ObjectType::DYNAMIC, _dim, pose, 6000,
+                                friction);
+    dynamicsWorld->addRigidBody(mesh->GetBody());
+    actors.push_back(mesh->GetActor());
+    mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
+
+    // -------------------------------------------------------------------------
     // Create kinematic box
     stiffnes = 1000;
     damping= 1;
