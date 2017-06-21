@@ -49,7 +49,6 @@
 #include <vtkPlanes.h>
 #include <vtkActorCollection.h>
 #include <vtkPolyDataNormals.h>
-#include <vtkPointData.h>
 
 /**
  * \class Rendering
@@ -62,7 +61,7 @@ public:
     //    vtkTypeMacro(Rendering, vtkRenderWindow);
     //    static Rendering *New();
 
-    Rendering(uint num_windows);
+    Rendering(uint num_windows, bool with_shaodws);
     ~Rendering();
 
     void SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::Vec3d cam_tvec[]);
@@ -84,18 +83,26 @@ public:
     void RemoveAllActorsFromScene();
 
     void Render();
+
     void GetRenderedImage(cv::Mat *images);
 
 
 private:
 
+    void AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer>);
 
     // Set up the background scene_camera to fill the renderer with the image
     void SetImageCameraToFaceImage(const int id, const int *window_size);
-    int num_render_windows;
+
+private:
+    int num_render_windows_;
+    bool with_shadows_;
+
     //cameras
-    vtkSmartPointer<CalibratedCamera>       background_camera_[2];
-    vtkSmartPointer<CalibratedCamera>       scene_camera_[2];
+    CalibratedCamera  *                     background_camera_[2];
+    CalibratedCamera  *                     scene_camera_[2];
+
+    vtkSmartPointer<vtkLight>               lights[2];
     // renderer
     vtkSmartPointer<vtkOpenGLRenderer>      background_renderer_[2];
     vtkSmartPointer<vtkOpenGLRenderer>      scene_renderer_[2];
@@ -114,7 +121,6 @@ private:
 };
 
 namespace VTKConversions{
-
 
     void AxisAngleToVTKMatrix (const cv::Vec3d cam_rvec, const cv::Vec3d cam_tvec,
                                vtkSmartPointer<vtkMatrix4x4> out);

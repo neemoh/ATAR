@@ -23,9 +23,11 @@
 #include <vtkTranslucentPass.h>
 #include <vtkDepthPeelingPass.h>
 #include <vtkOpaquePass.h>
+void AddLightActors(vtkRenderer *r);
 
-Rendering::Rendering(uint num_windows)
-        : num_render_windows(num_windows)
+Rendering::Rendering(uint num_windows, bool with_shaodws)
+    : num_render_windows_(num_windows),
+    with_shadows_(with_shaodws)
 //        : background_renderer_(NULL)
 //        , scene_renderer_(NULL)
 //        , background_renderer_(NULL)
@@ -33,18 +35,31 @@ Rendering::Rendering(uint num_windows)
 //        , camera_to_world_transform_(NULL)
 {
     // make sure the number of windows are alright
-    if(num_render_windows <1) num_render_windows =1;
-    else if(num_render_windows >2) num_render_windows = 2;
+    if(num_render_windows_ <1) num_render_windows_ =1;
+    else if(num_render_windows_ >2) num_render_windows_ = 2;
 
     double view_port[2][4] = {{0.0, 0.0, 0.5, 1.0}, {0.5, 0.0, 1.0, 1.0}};
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
-    if(num_render_windows==2)
+    if(num_render_windows_==2)
         render_window_[1] = vtkSmartPointer<vtkRenderWindow>::New();
 
-    vtkFrameBufferObject::IsSupported(render_window_[0]); // adapted from line 182 of vtkShadowMapPass.cxx
-    vtkFrameBufferObject::IsSupported(render_window_[1]); // adapted from
     // line 182 of vtkShadowMapPass.cxx
+    lights[0] =   vtkSmartPointer<vtkLight>::New();
+    lights[1] =   vtkSmartPointer<vtkLight>::New();
+
+    lights[0]->SetPosition(0.0,0.0,0.2);
+    lights[0]->SetFocalPoint(0.0, 0.0, 0.0);
+    lights[0]->SetColor(1.0,1.0,1.0);
+    lights[0]->SetPositional(1);
+    lights[0]->SetSwitch(1);
+
+    lights[1]->SetPosition(0.0,0.0,0.3);
+    lights[1]->SetFocalPoint(0.0, 0.0, 0.0);
+    lights[1]->SetColor(1.0,1.0,1.0);
+    lights[1]->SetPositional(1);
+    lights[1]->SetSwitch(1);
+
 
     for (int i = 0; i < 2; ++i) {
 
@@ -56,115 +71,42 @@ Rendering::Rendering(uint num_windows)
         background_renderer_[i]->InteractiveOff();
         background_renderer_[i]->SetLayer(0);
 
-        background_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
-        background_renderer_[i]->SetActiveCamera(background_camera_[i]);
+        background_camera_[i] = new CalibratedCamera;
+        scene_camera_[i] = new CalibratedCamera;
+        background_renderer_[i]->SetActiveCamera(background_camera_[i]->camera);
 
         scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
         scene_renderer_[i]->InteractiveOff();
         scene_renderer_[i]->SetLayer(1);
 
-        if(num_render_windows==1){
+        if(num_render_windows_==1){
             background_renderer_[i]->SetViewport(view_port[i]);
             scene_renderer_[i]->SetViewport(view_port[i]);
         }
 
 
+        scene_renderer_[i]->AddLight(lights[0]);
+        scene_renderer_[i]->AddLight(lights[1]);
 
-        vtkSmartPointer<vtkCameraPass> cameraP =
-                vtkSmartPointer<vtkCameraPass>::New();
+        //scene_renderer_[i]->ResetCamera();
+        scene_camera_[i]->camera = scene_renderer_[i]->GetActiveCamera();
 
-        vtkSmartPointer<vtkOpaquePass> opaque =
-                vtkSmartPointer<vtkOpaquePass>::New();
+        if(with_shadows_)
+            AddShadowPass(scene_renderer_[i]);
 
-        vtkSmartPointer<vtkDepthPeelingPass> peeling =
-                vtkSmartPointer<vtkDepthPeelingPass>::New();
-        peeling->SetMaximumNumberOfPeels(200);
-        peeling->SetOcclusionRatio(0.1);
-
-        vtkSmartPointer<vtkTranslucentPass> translucent =
-                vtkSmartPointer<vtkTranslucentPass>::New();
-        peeling->SetTranslucentPass(translucent);
-
-        vtkSmartPointer<vtkVolumetricPass> volume =
-                vtkSmartPointer<vtkVolumetricPass>::New();
-        vtkSmartPointer<vtkOverlayPass> overlay =
-                vtkSmartPointer<vtkOverlayPass>::New();
-
-        vtkSmartPointer<vtkLightsPass> lights =
-                vtkSmartPointer<vtkLightsPass>::New();
-
-        vtkSmartPointer<vtkSequencePass> opaqueSequence =
-                vtkSmartPointer<vtkSequencePass>::New();
-
-        vtkSmartPointer<vtkRenderPassCollection> passes2 =
-                vtkSmartPointer<vtkRenderPassCollection>::New();
-        passes2->AddItem(lights);
-        passes2->AddItem(opaque);
-        opaqueSequence->SetPasses(passes2);
-
-        vtkSmartPointer<vtkCameraPass> opaqueCameraPass =
-                vtkSmartPointer<vtkCameraPass>::New();
-        opaqueCameraPass->SetDelegatePass(opaqueSequence);
-
-        vtkSmartPointer<vtkShadowMapBakerPass> shadowsBaker =
-                vtkSmartPointer<vtkShadowMapBakerPass>::New();
-        shadowsBaker->SetOpaquePass(opaqueCameraPass);
-        shadowsBaker->SetResolution(1024);
-        // To cancel self-shadowing.
-        shadowsBaker->SetPolygonOffsetFactor(3.1f);
-        shadowsBaker->SetPolygonOffsetUnits(10.0f);
-
-        vtkSmartPointer<vtkShadowMapPass> shadows =
-                vtkSmartPointer<vtkShadowMapPass>::New();
-        shadows->SetShadowMapBakerPass(shadowsBaker);
-        shadows->SetOpaquePass(opaqueSequence);
-
-        vtkSmartPointer<vtkSequencePass> seq =
-                vtkSmartPointer<vtkSequencePass>::New();
-        vtkSmartPointer<vtkRenderPassCollection> passes =
-                vtkSmartPointer<vtkRenderPassCollection>::New();
-        passes->AddItem(shadowsBaker);
-        passes->AddItem(shadows);
-        passes->AddItem(lights);
-        passes->AddItem(peeling);
-        passes->AddItem(volume);
-        passes->AddItem(overlay);
-        seq->SetPasses(passes);
-        cameraP->SetDelegatePass(seq);
-
-        scene_renderer_[i]->SetPass(cameraP);
-
-
-        vtkSmartPointer<vtkLight> l1 =
-                vtkSmartPointer<vtkLight>::New();
-        l1->SetPosition(0.0,0.0,1.0);
-        l1->SetFocalPoint(0.1, 0.1, 0.0);
-        l1->SetColor(1.0,1.0,1.0);
-        l1->SetPositional(1);
-        scene_renderer_[i]->AddLight(l1);
-        l1->SetSwitch(1);
-
-        scene_renderer_[i]->ResetCamera();
-        vtkSmartPointer<vtkCamera> camera = scene_renderer_[i]->GetActiveCamera();
-
-
-        scene_camera_[i] = vtkSmartPointer<CalibratedCamera>::New();
-
-//        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
-
+        //        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
         camera_to_world_transform_[i] = vtkSmartPointer<vtkMatrix4x4>::New();
         camera_to_world_transform_[i]->Identity();
 
-
         int j=0;
-        if(num_render_windows==2)
+        if(num_render_windows_==2)
             j=i;
         render_window_[j]->SetNumberOfLayers(2);
         render_window_[j]->AddRenderer(background_renderer_[i]);
         render_window_[j]->AddRenderer(scene_renderer_[i]);
 
         window_to_image_filter_[j] =
-                vtkSmartPointer<vtkWindowToImageFilter>::New();
+            vtkSmartPointer<vtkWindowToImageFilter>::New();
         window_to_image_filter_[j]->SetInput(render_window_[j]);
         //    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record  he
         // alpha (transparency) channel for future use
@@ -173,10 +115,13 @@ Rendering::Rendering(uint num_windows)
         // important for getting high update rate (If needed, images can be shown
         // with opencv)
         //    render_window_->SetOffScreenRendering(1);
-        render_window_[j]->Render();
+        //render_window_[j]->Render();
+        //AddLightActors(scene_renderer_[j]);
+
     }
 
-
+    render_window_[0]->SetWindowName("Augmented Left");
+    render_window_[1]->SetWindowName("Augmented right");
 
 
 
@@ -191,7 +136,7 @@ Rendering::Rendering(uint num_windows)
 Rendering::~Rendering()
 {
 
-    for (int j = 0; j < num_render_windows; ++j) {
+    for (int j = 0; j < num_render_windows_; ++j) {
         render_window_[j]->RemoveRenderer(background_renderer_[j]);
         render_window_[j]->RemoveRenderer(scene_renderer_[j]);
     }
@@ -224,8 +169,10 @@ void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::
         camera_to_world_transform_[k]->Invert();
 
         scene_camera_[k]->SetExtrinsicParameters(camera_to_world_transform_[k]);
+
     }
 
+    lights[0]->SetPosition(cam_tvec[0][0], cam_tvec[0][1], cam_tvec[0][2]);
 }
 
 
@@ -251,17 +198,15 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
 void Rendering::SetCameraIntrinsics(const cv::Mat intrinsics[])
 {
     for (int i = 0; i < 2; ++i) {
-//    m_Intrinsics = intrinsics;
+
         background_camera_[i]->SetIntrinsicParameters(intrinsics[i].at<double>(0, 0),
                                                       intrinsics[i].at<double>(1, 1),
                                                       intrinsics[i].at<double>(0, 2),
                                                       intrinsics[i].at<double>(1, 2));
-//    background_camera_->SetUseCalibratedCamera(true);
         scene_camera_[i]->SetIntrinsicParameters(intrinsics[i].at<double>(0, 0),
                                                  intrinsics[i].at<double>(1, 1),
                                                  intrinsics[i].at<double>(0, 2),
                                                  intrinsics[i].at<double>(1, 2));
-//    scene_camera_->SetUseCalibratedCamera(true);
     }
 }
 
@@ -269,6 +214,9 @@ void Rendering::SetCameraIntrinsics(const cv::Mat intrinsics[])
 //------------------------------------------------------------------------------
 void
 Rendering::SetImageCameraToFaceImage(const int id, const int *window_size) {
+
+    int corrected_win_size[2] = {window_size[0], window_size[1]/(3-
+        num_render_windows_)};
 
     int imageSize[3];
     image_importer_[id]->GetOutput()->GetDimensions(imageSize);
@@ -279,64 +227,7 @@ Rendering::SetImageCameraToFaceImage(const int id, const int *window_size) {
     double origin[3];
     image_importer_[id]->GetOutput()->GetOrigin(origin);
 
-    double clippingRange[2];
-    clippingRange[0] = 1;
-    clippingRange[1] = 100000;
-
-    double distanceAlongX = (spacing[0] * (imageSize[0] - 1)) / 2.0;
-    double vectorAlongX[3] = {1, 0, 0};
-    vectorAlongX[0] = distanceAlongX;
-
-    double distanceAlongY = (spacing[1] * (imageSize[1] - 1)) / 2.0;
-    double vectorAlongY[3] = {0, 1, 0};
-    vectorAlongY[1] = distanceAlongY;
-
-    double distanceToFocalPoint = -1000;
-    double vectorAlongZ[3] = {0, 0, 1};
-    vectorAlongZ[2] = distanceToFocalPoint;
-
-    double viewUpScaleFactor = 1.0e9;
-    if (true) {
-        viewUpScaleFactor *= -1;
-    }
-
-    double focalPoint[3] = {0, 0, 1};
-    for (unsigned int i = 0; i < 3; ++i) {
-        focalPoint[i] = origin[i] + vectorAlongX[i] + vectorAlongY[i];
-    }
-
-    double position[3] = {0, 0, 0};
-    position[0] = focalPoint[0] + vectorAlongZ[0];
-    position[1] = focalPoint[1] + vectorAlongZ[1];
-    position[2] = focalPoint[2] + vectorAlongZ[2];
-
-    double viewUp[3] = {0, 1, 0};
-    viewUp[0] = vectorAlongY[0] * viewUpScaleFactor;
-    viewUp[1] = vectorAlongY[1] * viewUpScaleFactor;
-    viewUp[2] = vectorAlongY[2] * viewUpScaleFactor;
-
-    double imageWidth = imageSize[0] * spacing[0];
-    double imageHeight = imageSize[1] * spacing[1];
-
-    double widthRatio = imageWidth / (window_size[0]/(3-
-                                                     num_render_windows));
-    double heightRatio = imageHeight / window_size[1];
-
-    double scale;
-    if (widthRatio > heightRatio) {
-        scale = 0.5 * imageWidth *
-                ((double) window_size[1] / (double)(window_size[0]/(3-
-                                                                  num_render_windows)));
-    } else {
-        scale = 0.5 * imageHeight;
-    }
-
-    background_camera_[id]->SetPosition(position);
-    background_camera_[id]->SetFocalPoint(focalPoint);
-    background_camera_[id]->SetViewUp(viewUp);
-    background_camera_[id]->SetParallelProjection(true);
-    background_camera_[id]->SetParallelScale(scale);
-    background_camera_[id]->SetClippingRange(clippingRange);
+    background_camera_[id]->SetCemraToFaceImage(corrected_win_size, imageSize, spacing, origin);
 
 }
 
@@ -360,12 +251,12 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
     for (int i = 0; i < 2; ++i) {
 
         int k = 0;
-        if(num_render_windows==2)
+        if(num_render_windows_==2)
             k=i;
         int *window_size = render_window_[k]->GetActualSize();
 
         // update each windows view
-        scene_camera_[i]->UpdateView(window_size[0] / (3 - num_render_windows),
+        scene_camera_[i]->UpdateView(window_size[0] / (3 - num_render_windows_),
                                      window_size[1]);
 
         // update the background image for each camera
@@ -381,8 +272,8 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
     int image_height = img[0].size().height;
 
     // if one window the width is double
-    for (int j = 0; j < num_render_windows; ++j) {
-        render_window_[j]->SetSize((3-num_render_windows) * image_width,
+    for (int j = 0; j < num_render_windows_; ++j) {
+        render_window_[j]->SetSize((3-num_render_windows_) * image_width,
                                    image_height);
     }
 
@@ -426,22 +317,19 @@ void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 void
 Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
 
-    vtkSmartPointer<vtkInformation> key_properties[actors.size()];
+
+    vtkSmartPointer<vtkInformation> key_properties = vtkSmartPointer<vtkInformation>::New();
+    key_properties->Set(vtkShadowMapBakerPass::OCCLUDER(),0);
+    key_properties->Set(vtkShadowMapBakerPass::RECEIVER(),0);
 
     for (int i = 0; i <actors.size() ; ++i) {
 
-        key_properties[i] = vtkSmartPointer<vtkInformation>::New();
-        key_properties[i]->Set(vtkShadowMapBakerPass::OCCLUDER(),0);
-        key_properties[i]->Set(vtkShadowMapBakerPass::RECEIVER(),0);
-
-        actors[i]->SetPropertyKeys(key_properties[i]);
+        if(with_shadows_)
+            actors[i]->SetPropertyKeys(key_properties);
 
         scene_renderer_[0]->AddViewProp(actors[i]);
         scene_renderer_[1]->AddViewProp(actors[i]);
     }
-
-    //    scene_renderer_[0]->AddViewProp( actors[actors.size()-1] );
-    //    scene_renderer_[1]->AddViewProp( actors[actors.size()-1] );
 
 }
 
@@ -452,7 +340,8 @@ void Rendering::Render() {
 //    scene_renderer_->Modified();
 //    background_renderer_->Modified();
 //    render_window_->Modified();
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < num_render_windows_; ++i) {
+//    for (int i = 0; i < 1; ++i) {
         render_window_[i]->Render();
     }
 
@@ -464,7 +353,7 @@ void Rendering::GetRenderedImage(cv::Mat *images) {
 
     // TODO: REWRITE FOR 2-WINDOW CASE (writes on the same image for now)
 
-    for (int i = 0; i < num_render_windows; ++i) {
+    for (int i = 0; i < num_render_windows_; ++i) {
 
         window_to_image_filter_[i]->Modified();
         vtkImageData *image = window_to_image_filter_[i]->GetOutput();
@@ -494,6 +383,64 @@ void Rendering::RemoveAllActorsFromScene() {
     scene_renderer_[1]->RemoveAllViewProps();
 }
 
+void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
+
+
+    vtkSmartPointer<vtkCameraPass> cameraP =
+        vtkSmartPointer<vtkCameraPass>::New();
+
+    vtkSmartPointer<vtkOpaquePass> opaque =
+        vtkSmartPointer<vtkOpaquePass>::New();
+
+    vtkSmartPointer<vtkVolumetricPass> volume =
+        vtkSmartPointer<vtkVolumetricPass>::New();
+    vtkSmartPointer<vtkOverlayPass> overlay =
+        vtkSmartPointer<vtkOverlayPass>::New();
+
+    vtkSmartPointer<vtkLightsPass> lights_pass =
+        vtkSmartPointer<vtkLightsPass>::New();
+
+    vtkSmartPointer<vtkSequencePass> opaqueSequence =
+        vtkSmartPointer<vtkSequencePass>::New();
+
+    vtkSmartPointer<vtkRenderPassCollection> passes2 =
+        vtkSmartPointer<vtkRenderPassCollection>::New();
+    passes2->AddItem(lights_pass);
+    passes2->AddItem(opaque);
+    opaqueSequence->SetPasses(passes2);
+
+    vtkSmartPointer<vtkCameraPass> opaqueCameraPass =
+        vtkSmartPointer<vtkCameraPass>::New();
+    opaqueCameraPass->SetDelegatePass(opaqueSequence);
+
+    vtkSmartPointer<vtkShadowMapBakerPass> shadowsBaker =
+        vtkSmartPointer<vtkShadowMapBakerPass>::New();
+    shadowsBaker->SetOpaquePass(opaqueCameraPass);
+    shadowsBaker->SetResolution(1024);
+    // To cancel self-shadowing.
+    shadowsBaker->SetPolygonOffsetFactor(3.1f);
+    shadowsBaker->SetPolygonOffsetUnits(10.0f);
+
+    vtkSmartPointer<vtkShadowMapPass> shadows =
+        vtkSmartPointer<vtkShadowMapPass>::New();
+    shadows->SetShadowMapBakerPass(shadowsBaker);
+    shadows->SetOpaquePass(opaqueSequence);
+
+    vtkSmartPointer<vtkSequencePass> seq =
+        vtkSmartPointer<vtkSequencePass>::New();
+    vtkSmartPointer<vtkRenderPassCollection> passes =
+        vtkSmartPointer<vtkRenderPassCollection>::New();
+    passes->AddItem(shadowsBaker);
+    passes->AddItem(shadows);
+    passes->AddItem(lights_pass);
+    passes->AddItem(volume);
+    passes->AddItem(overlay);
+    seq->SetPasses(passes);
+    cameraP->SetDelegatePass(seq);
+
+    renderer->SetPass(cameraP);
+
+}
 
 //------------------------------------------------------------------------------
 void VTKConversions::AxisAngleToVTKMatrix(const cv::Vec3d cam_rvec,
@@ -543,4 +490,30 @@ void VTKConversions::VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4> in,
         out.p[i] = in->GetElement(i, 3);
     }
 
+}
+
+
+// For each spotlight, add a light frustum wireframe representation and a cone
+// wireframe representation, colored with the light color.
+void AddLightActors(vtkRenderer *r)
+{
+    assert("pre: r_exists" && r!=0);
+
+    vtkLightCollection *lights=r->GetLights();
+
+    lights->InitTraversal();
+    vtkLight *l=lights->GetNextItem();
+    while(l!=0)
+    {
+        double angle=l->GetConeAngle();
+        if(l->LightTypeIsSceneLight() && l->GetPositional()
+            && angle<180.0) // spotlight
+        {
+            vtkLightActor *la=vtkLightActor::New();
+            la->SetLight(l);
+            r->AddViewProp(la);
+            la->Delete();
+        }
+        l=lights->GetNextItem();
+    }
 }
