@@ -288,7 +288,7 @@ add_executable(
         src/ac_overlay_vtk/BulletVTKObject.cpp
         src/ac_overlay_vtk/BulletVTKObject.h
 
-)
+        src/ac_overlay_vtk/ControlEvents.h)
 
 target_link_libraries(
         ac_overlay_vtk
@@ -322,11 +322,11 @@ find_package(Qt5Core REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(PROJECT_INCLUDE_DIR include)
+set(PROJECT_INCLUDE_DIR src/reporter/include)
 
 set (MyProjectLib_hdr
-        src/reporter/include/mainwindow.hpp
-        src/reporter/include/cvimagewidget.h)
+        ${PROJECT_INCLUDE_DIR}/mainwindow.hpp
+        ${PROJECT_INCLUDE_DIR}/cvimagewidget.h)
 set (MyProjectLib_src
         src/reporter/mainwindow.cpp
         src/reporter/rosclass.cpp)
@@ -335,7 +335,7 @@ qt5_wrap_ui (MyProjectLib_ui_moc  src/reporter/mainwindow.ui)
 
 include_directories (${PROJECT_SOURCE_DIR})
 include_directories (${PROJECT_BINARY_DIR})
-include_directories (src/reporter/include)
+include_directories (${PROJECT_INCLUDE_DIR})
 
 add_library (reporter_utils SHARED
         ${MyProjectLib_src}

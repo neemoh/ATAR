@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>266</width>
-    <height>492</height>
+    <width>568</width>
+    <height>347</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,10 +17,10 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>270</y>
-      <width>241</width>
-      <height>191</height>
+      <x>20</x>
+      <y>140</y>
+      <width>261</width>
+      <height>181</height>
      </rect>
     </property>
     <property name="title">
@@ -29,9 +29,9 @@
     <property name="checkable">
      <bool>false</bool>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <widget class="QPushButton" name="state_4">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QPushButton" name="button_task_1">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -49,8 +49,81 @@
        </attribute>
       </widget>
      </item>
-     <item>
-      <widget class="QPushButton" name="state_5">
+     <item row="0" column="1">
+      <widget class="QPushButton" name="button_task_4">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Task 4</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QPushButton" name="button_task_6">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Task 6</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QPushButton" name="button_task_5">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Task 5</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QPushButton" name="button_task_3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Task 3</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="button_task_2">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -73,9 +146,9 @@
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>130</y>
-      <width>241</width>
+      <x>290</x>
+      <y>20</y>
+      <width>261</width>
       <height>131</height>
      </rect>
     </property>
@@ -87,7 +160,7 @@
       <rect>
        <x>10</x>
        <y>90</y>
-       <width>221</width>
+       <width>241</width>
        <height>31</height>
       </rect>
      </property>
@@ -119,12 +192,12 @@ background-color: red;
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>12</x>
-       <y>32</y>
-       <width>221</width>
+       <y>33</y>
+       <width>241</width>
        <height>52</height>
       </rect>
      </property>
@@ -157,48 +230,22 @@ background-color: red
    <widget class="QGroupBox" name="groupBox_3">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>241</width>
-      <height>91</height>
+      <x>20</x>
+      <y>20</y>
+      <width>261</width>
+      <height>111</height>
      </rect>
     </property>
     <property name="title">
      <string>Acquisition Control</string>
     </property>
-    <widget class="QPushButton" name="button_repeat">
-     <property name="geometry">
-      <rect>
-       <x>80</x>
-       <y>30</y>
-       <width>151</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Repeat Last Acquisition</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="button_reset">
-     <property name="geometry">
-      <rect>
-       <x>81</x>
-       <y>60</y>
-       <width>151</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>ResetTask Task</string>
-     </property>
-    </widget>
     <widget class="QLineEdit" name="line_edit_num_repetitions">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>13</x>
        <y>30</y>
-       <width>51</width>
-       <height>23</height>
+       <width>81</width>
+       <height>21</height>
       </rect>
      </property>
      <property name="sizePolicy">
@@ -211,10 +258,10 @@ background-color: red
     <widget class="QLineEdit" name="line_edit_duration">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>60</y>
-       <width>51</width>
-       <height>23</height>
+       <x>13</x>
+       <y>58</y>
+       <width>81</width>
+       <height>22</height>
       </rect>
      </property>
      <property name="sizePolicy">
@@ -224,6 +271,123 @@ background-color: red
       </sizepolicy>
      </property>
     </widget>
+    <widget class="QWidget" name="layoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>30</y>
+       <width>152</width>
+       <height>52</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QPushButton" name="button_repeat">
+        <property name="text">
+         <string>Repeat Last Acquisition</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="button_reset">
+        <property name="text">
+         <string>ResetTask Task</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_4">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>160</y>
+      <width>261</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <widget class="QPushButton" name="button_calib_arm1">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>30</y>
+       <width>111</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Calibrate Arm 1</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="button_calib_arm2">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>70</y>
+       <width>111</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Calibrate Arm 2</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="checkBox_pub_imgs">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>111</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Publish Imgs</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="button_fullScreen">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>70</y>
+       <width>81</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>FullScreen</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="checkBox_shadows">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>85</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Shadows</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="button_exit">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>280</y>
+      <width>261</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>EXIT</string>
+    </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>

@@ -1,0 +1,34 @@
+//
+// Created by nima on 22/06/17.
+//
+
+#ifndef ATAR_CONTROLEVENTS_H
+#define ATAR_CONTROLEVENTS_H
+
+
+enum {
+    CE_START_TASK1  = 0,
+    CE_START_TASK2  = 1,
+    CE_START_TASK3  = 2,
+    CE_START_TASK4  = 3,
+    CE_START_TASK5  = 4,
+    CE_START_TASK6  = 5,
+    CE_START_TASK7  = 6,
+    CE_START_TASK8  = 7,
+    CE_START_TASK9  = 8,
+    CE_STOP_TASK    = 9,
+    CE_PAUSE_TASK = 10,
+    CE_RESET_TASK = 11,
+    CE_RESET_ACQUISITION = 12,
+
+    CE_CALIB_ARM1 = 20,
+    CE_CALIB_ARM2 = 21,
+
+    CE_TOGGLE_FULLSCREEN = 30,
+    CE_PUBLISh_IMGS = 31,
+
+    CE_EXIT = 100
+
+
+};
+#endif //ATAR_CONTROLEVENTS_H

@@ -10,6 +10,7 @@
 
 #include <custom_msgs/ActiveConstraintParameters.h>
 #include "custom_msgs/TaskState.h"
+#include <std_msgs/Int8.h>
 
 
 RosObj::RosObj(QObject *parent, std::string node_name)
@@ -204,9 +205,9 @@ void RosObj::GetROSParameterValues() {
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /task_state");
 
     //publisher
-    publisher_recording_events = n.advertise<std_msgs::Char>
-            ("/recording_events", 1);
-    ROS_INFO("Will publish on /recording_events");
+    publisher_recording_events = n.advertise<std_msgs::Int8>
+            ("/control_events", 1);
+    ROS_INFO("Will publish on /control_events");
 
     ros_rate = new ros::Rate(ros_freq);
 
