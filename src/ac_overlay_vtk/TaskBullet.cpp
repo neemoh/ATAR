@@ -150,12 +150,6 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
     std::vector<double> _dim = {0.002};
     BulletVTKObject *mesh;
-<<<<<<< HEAD
-    mesh = new
-            BulletVTKObject(ObjectShape::MESH,
-                                ObjectType::DYNAMIC, _dim, pose, 6000,
-                                friction);
-=======
     std::stringstream input_file_dir;
     input_file_dir << mesh_files_dir << std::string("monkey.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
@@ -165,7 +159,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
                         ObjectType::DYNAMIC, _dim, pose, 6000,
                         &mesh_file_dir_str,
                         friction);
->>>>>>> ab7df35061eaacf564caf6c2113af9d14b837332
+
     dynamicsWorld->addRigidBody(mesh->GetBody());
     actors.push_back(mesh->GetActor());
     mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
