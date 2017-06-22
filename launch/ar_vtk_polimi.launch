@@ -21,7 +21,6 @@
     <node pkg="uvc_camera" type="uvc_camera_node" name="webcam">
     </node>
 
-
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_charuco_left" output="screen" >
         <rosparam command="load"
@@ -41,9 +40,10 @@
                value="$(arg right_camera_img_topic)"/>
         <param name="show_image" value="false"/>
     </node>
+
     <!-- Node recording the data-->
-    <!--<node pkg="atar" type="reporter" name="reporter" output="screen">-->
-    <!--</node>-->
+    <node pkg="atar" type="reporter" name="reporter" output="screen">
+    </node>
 
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="atar" type="ac_overlay_vtk" name="ac_overlay" output="screen">
@@ -83,7 +83,7 @@ ca        -->
         <param name="master_2_name" value="$(arg master_2_name)"/>
 
         <!-- About stl_files_dir: The directory of the stl files -->
-        <param name= "stl_files_dir" value= "$(find atar)/resources/cads/" />
+        <param name= "mesh_files_dir" value= "$(find atar)/resources/cads/" />
 
         <!-- About desired_pose_update_frequency:
             //The overlayed images will be published only when new images are received.
@@ -106,6 +106,15 @@ ca        -->
 
         <!--Combine left and right images in one window -->
         <param name= "one_window_mode" value= "false" />
+
+        <!--add shadows to the graphics. Works on dedicated GPUs -->
+        <param name= "with_shadows" value= "false" />
+
+        <!--If the generated images are to be published on
+        ros, to help alleviate the considerable bottleneck of grabbing the
+        images from the gpu, activate this flag so that the rendering is done
+         off screen and not shown in opengl windows.-->
+        <param name= "offScreen_rendering" value= "false" />
 
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>

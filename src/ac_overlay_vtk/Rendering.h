@@ -87,7 +87,7 @@ public:
 
     void GetRenderedImage(cv::Mat *images);
 
-    void SetFullScreen();
+    void ToggleFullScreen();
 
 private:
 

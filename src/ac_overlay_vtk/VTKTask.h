@@ -6,6 +6,7 @@
 #define ATAR_VTKTASK_H
 
 
+#include <vtkSmartPointer.h>
 #include <vtkProp.h>
 #include <vtkPolyDataMapper.h>
 #include <vector>

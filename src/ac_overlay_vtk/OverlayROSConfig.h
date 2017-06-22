@@ -6,24 +6,22 @@
 #define TELEOP_VISION_OVERLAYROSCONFIG_H
 
 #include "ros/ros.h"
-
-#include "opencv2/highgui/highgui.hpp"
-#include <kdl_conversions/kdl_msg.h>
+#include <boost/thread/thread.hpp>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Float32.h>
+#include <std_msgs/Int8.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Joy.h>
-#include <std_msgs/Char.h>
-
-//#include "utils/Drawings.h"
+#include <cv_bridge/cv_bridge.h>
+#include "opencv2/highgui/highgui.hpp"
+#include <kdl_conversions/kdl_msg.h>
+#include <image_transport/image_transport.h>
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
-#include <boost/thread/thread.hpp>
-#include <std_msgs/Float32.h>
 #include "VTKTask.h"
+#include "Rendering.h"
 
 class OverlayROSConfig {
 
@@ -36,7 +34,7 @@ public:
     void LockAndGetImages(ros::Duration timeout, cv::Mat images[]);
 
     // return true if both images are newly received and copy them in imgs
-    bool GetNewImages(cv::Mat imgs[]);
+    bool NewImages();
 
     // returns the poses of the cameras. Intended to be used once at
     // initializations to load the poses provided as parameters. The poses
@@ -85,7 +83,7 @@ public:
 
     // this topic is used to control the task state from the recording node
     // during the acquisitions.
-    void RecordingEventsCallback(const std_msgs::CharConstPtr &msg);
+    void RecordingEventsCallback(const std_msgs::Int8ConstPtr &msg);
 
     // stop the running haptic thread (if any), destruct the previous task
     // (if any) and start a new task and thread.
@@ -96,7 +94,11 @@ public:
 
     void DoArmToWorldFrameCalibration(const uint arm_id);
 
+    void StartArmToWorldFrameCalibration(const uint arm_id);
+
     void Cleanup();
+
+    bool UpdateWorld();
 
 private:
 
@@ -139,14 +141,18 @@ public:
     bool new_image[2] = {false, false};
     bool new_cam_pose[2] = {false, false};;
     bool found_left_cam_to_right_cam_tr = false;
+
     VTKTask *task_ptr;
 
+    Rendering * graphics;
 private:
 
     int n_arms;
     cv::Mat image_from_ros[2];
+    uint running_task_id;
+    std::string cv_window_names[2];
 
-    char recording_event;
+    int8_t control_event;
     bool new_recording_event;
     bool show_reference_frames;
 
@@ -162,7 +168,7 @@ private:
     ros::Subscriber sub_cam_pose_left;
     ros::Subscriber sub_cam_pose_right;
     ros::Subscriber sub_foot_pedal_clutch;
-    ros::Subscriber subscriber_recording_events;
+    ros::Subscriber subscriber_control_events;
 
     ros::Subscriber * subtool_current_pose;
     ros::Subscriber * subtool_current_gripper;

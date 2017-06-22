@@ -455,7 +455,7 @@ void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
 
 }
 
-void Rendering::SetFullScreen() {
+void Rendering::ToggleFullScreen() {
 
     for (int k = 0; k < num_render_windows_; ++k) {
         if(render_window_[k]->GetFullScreen()==1)
