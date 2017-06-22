@@ -33,14 +33,12 @@ int main(int argc, char **argv)
         cvNamedWindow(cv_window_names[1].c_str() ,CV_WINDOW_NORMAL);
     }
 
-    std::stringstream ui_instructions;
-    ui_instructions <<"Test. " ;
-
     cv::Mat augmented_images[2];
     cv::Mat cam_images[2];
     rc.LockAndGetImages(ros::Duration(1), cam_images);
 
-    Rendering graphics(2-(uint)rc.one_window_mode, rc.with_shadows);
+    Rendering graphics(2 - (uint) rc.one_window_mode, rc.with_shadows,
+                       rc.offScreen_rendering);
 
     // in case camera poses are set as parameters
     cv::Vec3d cam_rvec[2], cam_tvec[2];
@@ -90,7 +88,7 @@ int main(int argc, char **argv)
         }
         else if (key == 'f')  //full screen
             graphics.SetFullScreen();
-//            VisualUtils::SwitchFullScreen(cv_window_names[0]);
+            //            VisualUtils::SwitchFullScreen(cv_window_names[0]);
 
 
         else if (key == '1' || key == '2'|| key == '3' || key == '4'){

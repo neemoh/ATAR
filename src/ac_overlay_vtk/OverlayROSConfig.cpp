@@ -91,9 +91,12 @@ void OverlayROSConfig::SetupROS() {
              one_window_mode ? "true" : "false");
 
     n.param<bool>("with_shadows", with_shadows, false);
-    ROS_INFO("Rendered Images will be shown in a single window: %s",
+    ROS_INFO("Shadows Generation: %s",
              with_shadows ? "true" : "false");
 
+    n.param<bool>("offScreen_rendering", offScreen_rendering, false);
+    ROS_INFO("offScreen_rendering: %s",
+             offScreen_rendering ? "true" : "false");
 
     if (n.getParam("mesh_files_dir", mesh_files_dir)) {
         ROS_INFO("stl files will be loaded from: %s", mesh_files_dir.c_str());

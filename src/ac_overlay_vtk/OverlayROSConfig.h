@@ -130,6 +130,7 @@ public:
     bool publish_overlayed_images = false;
     bool one_window_mode= false;
     bool with_shadows= false;
+    bool offScreen_rendering= false;
     KDL::Frame left_cam_to_right_cam_tr;
 
     cv::Vec3d cam_rvec[2];

@@ -25,7 +25,8 @@
 #include <vtkOpaquePass.h>
 void AddLightActors(vtkRenderer *r);
 
-Rendering::Rendering(uint num_windows, bool with_shaodws)
+Rendering::Rendering(uint num_windows, bool with_shaodws,
+                     bool offScreen_rendering)
     : num_render_windows_(num_windows),
     with_shadows_(with_shaodws)
 //        : background_renderer_(NULL)
@@ -114,14 +115,26 @@ Rendering::Rendering(uint num_windows, bool with_shaodws)
         // back buffer
         // important for getting high update rate (If needed, images can be shown
         // with opencv)
-        //    render_window_->SetOffScreenRendering(1);
         //render_window_[j]->Render();
         //AddLightActors(scene_renderer_[j]);
 
     }
 
-    render_window_[0]->SetWindowName("Augmented Left");
-    render_window_[1]->SetWindowName("Augmented right");
+    if(num_render_windows_==1) {
+        render_window_[0]->SetWindowName("Augmented Stereo");
+        if(offScreen_rendering)
+            render_window_[0]->SetOffScreenRendering(1);
+    }
+    else{
+        render_window_[0]->SetWindowName("Augmented Left");
+        render_window_[1]->SetWindowName("Augmented right");
+
+        if(offScreen_rendering){
+            render_window_[0]->SetOffScreenRendering(1);
+            render_window_[1]->SetOffScreenRendering(1);
+        }
+    }
+
 
 
 
