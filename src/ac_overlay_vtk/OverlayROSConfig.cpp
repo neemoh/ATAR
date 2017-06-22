@@ -11,6 +11,7 @@
 #include "TaskKidney.h"
 #include "TaskODE.h"
 #include "TaskBullet.h"
+#include "TaskBulletTest.h"
 #include "ControlEvents.h"
 
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
@@ -539,10 +540,10 @@ void OverlayROSConfig::RecordingEventsCallback(const std_msgs::Int8ConstPtr
             new_task_event = true;
             break;
 
-//        case CE_START_TASK5:
-//            running_task_id = 5;
-//            new_task_event = true;
-//            break;
+        case CE_START_TASK5:
+            running_task_id = 5;
+            new_task_event = true;
+            break;
 //
 //        case CE_START_TASK6:
 //            running_task_id = 6;
@@ -589,12 +590,18 @@ void OverlayROSConfig::StartTask(const uint task_id) {
                                  (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==4){
-        std:StartTask:cout << "Starting TaskBullet task. "<< std::endl;
+        std::cout << "Starting TaskBullet task. "<< std::endl;
         task_ptr   = new TaskBullet(mesh_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
     }
 
-    if(task_id >0 && task_id <5) {
+    else if(task_id ==5){
+        std::cout << "Starting TaskBulletTest task. "<< std::endl;
+        task_ptr   = new TaskBulletTest(mesh_files_dir, false,
+                                    (bool) (n_arms - 1), with_guidance);
+    }
+
+    if(task_id >0 && task_id <6) {
         // assign the tool pose pointers
         ros::spinOnce();
         task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);

@@ -284,10 +284,11 @@ add_executable(
         src/ac_overlay_vtk/TaskODE.h
         src/ac_overlay_vtk/TaskBullet.cpp
         src/ac_overlay_vtk/TaskBullet.h
+        src/ac_overlay_vtk/TaskBulletTest.cpp
+        src/ac_overlay_vtk/TaskBulletTest.h
         src/ac_overlay_vtk/BulletVTKMotionState.h
         src/ac_overlay_vtk/BulletVTKObject.cpp
         src/ac_overlay_vtk/BulletVTKObject.h
-
         src/ac_overlay_vtk/ControlEvents.h)
 
 target_link_libraries(
