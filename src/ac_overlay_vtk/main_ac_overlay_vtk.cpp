@@ -89,7 +89,8 @@ int main(int argc, char **argv)
                 rc.DoArmToWorldFrameCalibration(0);
         }
         else if (key == 'f')  //full screen
-            VisualUtils::SwitchFullScreen(cv_window_names[0]);
+            graphics.SetFullScreen();
+//            VisualUtils::SwitchFullScreen(cv_window_names[0]);
 
 
         else if (key == '1' || key == '2'|| key == '3' || key == '4'){

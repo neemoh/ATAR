@@ -442,6 +442,17 @@ void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
 
 }
 
+void Rendering::SetFullScreen() {
+
+    for (int k = 0; k < num_render_windows_; ++k) {
+        if(render_window_[k]->GetFullScreen()==1)
+            render_window_[k]->SetFullScreen(0);
+        else
+            render_window_[k]->SetFullScreen(1);
+    }
+
+}
+
 //------------------------------------------------------------------------------
 void VTKConversions::AxisAngleToVTKMatrix(const cv::Vec3d cam_rvec,
                                           const cv::Vec3d cam_tvec,

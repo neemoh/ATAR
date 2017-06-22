@@ -86,6 +86,7 @@ public:
 
     void GetRenderedImage(cv::Mat *images);
 
+    void SetFullScreen();
 
 private:
 
