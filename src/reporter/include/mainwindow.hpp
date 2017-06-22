@@ -8,49 +8,58 @@
 #include <QPushButton>
 #include <QPageLayout>
 
-#include <rosclass.hpp>
+#include "rosclass.hpp"
 #include "cvimagewidget.h"
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 class MainWindow : public QMainWindow
 {
-  Q_OBJECT
+Q_OBJECT
 
 public:
-  explicit MainWindow(QWidget *parent = 0);
-  ~MainWindow();
-  void StartRosLoop() { ros_obj.start(); }
-  void showImage();
+    explicit MainWindow(QWidget *parent = 0);
+    ~MainWindow();
+    void StartRosLoop() { ros_obj.start(); }
+    void showImage();
 
 private slots:
 
-  void on_button_state_0_clicked();
-  void on_state_1_clicked();
-  void on_state_2_clicked();
-  void on_state_3_clicked();
-  void on_state_4_clicked();
-  void on_state_5_clicked();
+    void on_task_1_clicked();
+    void on_task_2_clicked();
+    void on_task_3_clicked();
+    void on_task_4_clicked();
+    void on_task_5_clicked();
+    void on_task_6_clicked();
+    void on_task_7_clicked();
+    void on_task_8_clicked();
 
-  void on_stop_released();
+    void on_full_screen_clicked();
+    void on_pub_imgs_stateChanged();
+    void on_calib_arm1_clicked();
+    void on_calib_arm2_clicked();
 
-  void on_record_clicked();
-  void on_button_repeat_clicked();
+    void on_exit_clicked();
 
-  void on_button_reset_clicked();
+    void on_stop_released();
 
-  void onTimeout();
+    void on_record_clicked();
+    void on_button_repeat_clicked();
+
+    void on_button_reset_clicked();
+
+    void onTimeout();
 
 
 private:
-  Ui::MainWindow *ui;
-  QLabel *stat_label;
-  QProgressBar *stat_progress;
-  RosObj ros_obj;
-  CVImageWidget *imageWidget;
-  QTimer *timer;
+    Ui::MainWindow *ui;
+    QLabel *stat_label;
+    QProgressBar *stat_progress;
+    RosObj ros_obj;
+    CVImageWidget *imageWidget;
+    QTimer *timer;
 
 };
 

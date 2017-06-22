@@ -2,8 +2,8 @@
 // Created by nima on 13/06/17.
 //
 
-#ifndef ATAR_TASKBULLET_H
-#define ATAR_TASKBULLET_H
+#ifndef ATAR_TASKBULLETTEST_H
+#define ATAR_TASKBULLETTEST_H
 
 
 #include "VTKTask.h"
@@ -42,14 +42,14 @@
 
 
 
-class TaskBullet : public VTKTask{
+class TaskBulletTest : public VTKTask{
 public:
 
-    TaskBullet(const std::string mesh_files_dir,
+    TaskBulletTest(const std::string mesh_files_dir,
             const bool show_ref_frames, const bool num_tools,
             const bool with_guidance);
 
-    ~TaskBullet();
+    ~TaskBulletTest();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {

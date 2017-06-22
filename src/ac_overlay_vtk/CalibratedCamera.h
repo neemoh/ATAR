@@ -19,11 +19,18 @@
  * a correct rendering view (still need to add).
  */
 
-class CalibratedCamera : public vtkOpenGLCamera
+class CalibratedCamera
 {
 public:
-    static CalibratedCamera *New();
-    vtkTypeMacro(CalibratedCamera, vtkOpenGLCamera);
+
+
+
+    CalibratedCamera();
+
+    ~CalibratedCamera() {}
+
+    //static CalibratedCamera *New();
+    //vtkTypeMacro(CalibratedCamera, vtkOpenGLCamera);
 
 
     /**
@@ -58,10 +65,16 @@ public:
      */
     void SetExtrinsicParameters(vtkSmartPointer<vtkMatrix4x4> matrix);
 
-protected:
+    /**
+     * \brief FaceImage
+     */
+    void SetCemraToFaceImage(const int *window_siz,
+                             const int imageSize[], const double spacing[],
+                             const double origin[]);
 
-    CalibratedCamera();
-    ~CalibratedCamera() {}
+public:
+
+    vtkSmartPointer<vtkCamera> camera;
 
 private:
 

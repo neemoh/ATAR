@@ -2,13 +2,13 @@
 // Created by nima on 13/06/17.
 //
 
-#include "TaskBullet.h"
+#include "TaskBulletTest.h"
 
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 
-TaskBullet::TaskBullet(const std::string mesh_files_dir,
+TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
@@ -150,12 +150,6 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
     std::vector<double> _dim = {0.002};
     BulletVTKObject *mesh;
-<<<<<<< HEAD
-    mesh = new
-            BulletVTKObject(ObjectShape::MESH,
-                                ObjectType::DYNAMIC, _dim, pose, 6000,
-                                friction);
-=======
     std::stringstream input_file_dir;
     input_file_dir << mesh_files_dir << std::string("monkey.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
@@ -165,7 +159,6 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
                         ObjectType::DYNAMIC, _dim, pose, 6000,
                         &mesh_file_dir_str,
                         friction);
->>>>>>> ab7df35061eaacf564caf6c2113af9d14b837332
     dynamicsWorld->addRigidBody(mesh->GetBody());
     actors.push_back(mesh->GetActor());
     mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
@@ -234,7 +227,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
 
 //------------------------------------------------------------------------------
-void TaskBullet::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+void TaskBulletTest::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                            const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
@@ -242,13 +235,13 @@ void TaskBullet::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 }
 
 
-void TaskBullet::SetCurrentGripperpositionPointer(double &grip_position, const int
+void TaskBulletTest::SetCurrentGripperpositionPointer(double &grip_position, const int
 tool_id) {
     gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
-void TaskBullet::UpdateActors() {
+void TaskBulletTest::UpdateActors() {
 
     //--------------------------------
     //box
@@ -300,36 +293,36 @@ void TaskBullet::UpdateActors() {
 
 
 //------------------------------------------------------------------------------
-bool TaskBullet::IsACParamChanged() {
+bool TaskBulletTest::IsACParamChanged() {
     return false;
 }
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters TaskBullet::GetACParameters() {
+custom_msgs::ActiveConstraintParameters TaskBulletTest::GetACParameters() {
     custom_msgs::ActiveConstraintParameters msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }
 
 
-custom_msgs::TaskState TaskBullet::GetTaskStateMsg() {
+custom_msgs::TaskState TaskBulletTest::GetTaskStateMsg() {
     custom_msgs::TaskState task_state_msg;
     return task_state_msg;
 }
 
-void TaskBullet::ResetTask() {
+void TaskBulletTest::ResetTask() {
     ROS_INFO("Resetting the task.");
 
 }
 
-void TaskBullet::ResetCurrentAcquisition() {
+void TaskBulletTest::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
 
 }
 
 
-void TaskBullet::FindAndPublishDesiredToolPose() {
+void TaskBulletTest::FindAndPublishDesiredToolPose() {
 
     ros::Publisher pub_desired[2];
 
@@ -370,7 +363,7 @@ void TaskBullet::FindAndPublishDesiredToolPose() {
 
 
 
-void TaskBullet::InitBullet() {
+void TaskBulletTest::InitBullet() {
 
     ///-----initialization_start-----
 
@@ -396,7 +389,7 @@ void TaskBullet::InitBullet() {
 }
 
 
-void TaskBullet::StepDynamicsWorld() {
+void TaskBulletTest::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
 
     dynamicsWorld->stepSimulation(1.f / 120.f, 0);
@@ -423,7 +416,7 @@ void TaskBullet::StepDynamicsWorld() {
 }
 
 
-TaskBullet::~TaskBullet() {
+TaskBulletTest::~TaskBulletTest() {
 
     ROS_INFO("Destructing Bullet task: %d",
              dynamicsWorld->getNumCollisionObjects());

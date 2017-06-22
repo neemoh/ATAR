@@ -80,7 +80,7 @@ int main(int argc, char** argv)
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
         btRigidBody* body = new btRigidBody(rbInfo);
 
-        //add the body to the dynamics world
+        //add the body_ to the dynamics world
         dynamicsWorld->addRigidBody(body);
     }
 
