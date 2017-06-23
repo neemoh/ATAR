@@ -22,6 +22,7 @@
 #include "custom_msgs/TaskState.h"
 #include "VTKTask.h"
 #include "Rendering.h"
+#include <mutex>
 
 class OverlayROSConfig {
 
@@ -34,9 +35,13 @@ public:
     bool UpdateWorld();
 
 private:
+    std::mutex m;
 
     // stop the running haptic thread (if any), destruct the previous task
     // (if any) and start a new task and thread.
+    void HandleTaskEvent();
+
+    // start a new task and thread.
     void StartTask(const uint task_id);
 
     // stop the running haptic thread and destruct the  task object
@@ -46,7 +51,7 @@ private:
     void LockAndGetImages(ros::Duration timeout, cv::Mat images[]);
 
     // return true if both images are newly received and copy them in imgs
-    bool NewImages();
+    bool GetNewImages( cv::Mat images[]);
 
     // If the poses of the cameras are published, this method will return
     // true when any of the cam poses are updated. If left or right pose is
@@ -130,6 +135,7 @@ private:
     bool with_shadows                   = false;
     bool offScreen_rendering            = false;
     bool show_reference_frames          = false;
+    bool new_task_event                 = false;
 
     std::string mesh_files_dir;
 

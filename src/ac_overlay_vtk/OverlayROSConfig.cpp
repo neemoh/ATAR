@@ -15,7 +15,8 @@
 
 // -----------------------------------------------------------------------------
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
-        : n(node_name), cam_poses_provided_as_params(false), running_task_id(0)
+        : n(node_name), cam_poses_provided_as_params(false), running_task_id
+        (0), task_ptr(NULL)
 {
 
     // assign the callback functions
@@ -76,18 +77,21 @@ bool OverlayROSConfig::UpdateWorld() {
         Cleanup();
         return false;
     }
-
-    if(NewImages()) {
+    cv::Mat cam_images[2];
+    if(GetNewImages(cam_images)) {
 
         // Time performance debug
         //ros::Time start =ros::Time::now();
 
+        if(new_task_event)
+            HandleTaskEvent();
+
         // update the moving actors
-//        if(running_task_id)
-//            task_ptr->UpdateActors();
+        if(running_task_id)
+            task_ptr->UpdateActors();
 
         // update the camera images and view angle (in case window changes size)
-        graphics->UpdateBackgroundImage(image_from_ros);
+        graphics->UpdateBackgroundImage(cam_images);
         graphics->UpdateCameraViewForActualWindowSize();
 
         // Render!
@@ -123,6 +127,28 @@ bool OverlayROSConfig::UpdateWorld() {
     return true;
 }
 
+// -----------------------------------------------------------------------------
+void OverlayROSConfig::HandleTaskEvent() {
+
+    if (new_task_event){
+        ROS_INFO("Task %d Selected", running_task_id);
+        //close tasks if it was already running
+
+        if(task_ptr != NULL) {
+            graphics->RemoveAllActorsFromScene();
+            DeleteTask();
+        }
+
+        StartTask(running_task_id);
+        // Add the task actors to the graphics
+        graphics->AddActorsToScene(task_ptr->GetActors());
+
+        new_task_event = false;
+
+    }
+
+}
+
 
 // -----------------------------------------------------------------------------
 void OverlayROSConfig::StartTask(const uint task_id) {
@@ -130,28 +156,28 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     // create the task
     if(task_id ==1){
         // allocate anew dynamic task
-        std::cout << "Starting new BuzzWireTask task. "<< std::endl;
+        ROS_DEBUG("Starting new BuzzWireTask task. ");
         task_ptr   = new TaskBuzzWire(mesh_files_dir, show_reference_frames,
                                       (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==2){
-        std::cout << "Starting new TaskKidney task. "<< std::endl;
+        ROS_DEBUG("Starting new TaskKidney task. ");
         task_ptr   = new TaskKidney(mesh_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==3){
-        std::cout << "Starting new TaskODE task. "<< std::endl;
+        ROS_DEBUG("Starting new TaskODE task. ");
         task_ptr   = new TaskODE(mesh_files_dir, false,
                                  (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==4){
-        std::cout << "Starting TaskBullet task. "<< std::endl;
+        ROS_DEBUG("Starting new TaskBullet task. ");
         task_ptr   = new TaskBullet(mesh_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
     }
 
     else if(task_id ==5){
-        std::cout << "Starting TaskBulletTest task. "<< std::endl;
+        ROS_DEBUG("Starting new TaskBulletTest task. ");
         task_ptr   = new TaskBulletTest(mesh_files_dir, false,
                                         (bool) (n_arms - 1), with_guidance);
     }
@@ -174,7 +200,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
 // -----------------------------------------------------------------------------
 void OverlayROSConfig::DeleteTask() {
 
-    std::cout << "Interrupting haptics thread. "<< std::endl;
+    ROS_DEBUG("Interrupting haptics thread");
     haptics_thread.interrupt();
     ros::Rate sleep(50);
     sleep.sleep();
@@ -402,7 +428,7 @@ void OverlayROSConfig::SetupROS() {
                    << "/active_constraint_param";
         publisher_ac_params[n_arm] =
                 n.advertise<custom_msgs::ActiveConstraintParameters>(
-                param_name.str().c_str(), 1 );
+                        param_name.str().c_str(), 1 );
         ROS_INFO("Will publish on %s", param_name.str().c_str());
 
         // the transformation from the coordinate frame of the slave (RCM)
@@ -474,9 +500,11 @@ void OverlayROSConfig::LockAndGetImages(ros::Duration timeout,
 }
 
 // -----------------------------------------------------------------------------
-bool OverlayROSConfig::NewImages() {
+bool OverlayROSConfig::GetNewImages( cv::Mat images[]) {
 
     if(new_image[0] && new_image[1]) {
+        image_from_ros[0].copyTo(images[0]);
+        image_from_ros[1].copyTo(images[1]);
         new_image[0] = false;
         new_image[1] = false;
         return true;
@@ -785,10 +813,7 @@ void OverlayROSConfig::ControlEventsCallback(const std_msgs::Int8ConstPtr
                                              &msg) {
 
     control_event = msg->data;
-    ROS_INFO("Received control event %d", control_event);
-
-    bool new_task_event = false;
-    bool task_already_running = (running_task_id>0);
+    ROS_DEBUG("Received control event %d", control_event);
 
     switch(control_event){
         case CE_RESET_TASK:
@@ -845,20 +870,6 @@ void OverlayROSConfig::ControlEventsCallback(const std_msgs::Int8ConstPtr
             break;
     }
 
-
-    if (new_task_event){
-        ROS_INFO("Task %d Selected", running_task_id);
-        //close tasks if it was already running
-        if(task_already_running) {
-            graphics->RemoveAllActorsFromScene();
-            DeleteTask();
-        }
-
-        StartTask(running_task_id);
-        // Add the task actors to the graphics
-        graphics->AddActorsToScene(task_ptr->GetActors());
-
-    }
 }
 
 
