@@ -25,7 +25,8 @@ enum {
     CE_CALIB_ARM2 = 21,
 
     CE_TOGGLE_FULLSCREEN = 30,
-    CE_PUBLISh_IMGS = 31,
+    CE_PUBLISH_IMGS_ON = 31,
+    CE_PUBLISH_IMGS_OFF = 32,
 
     CE_EXIT = 100
 
