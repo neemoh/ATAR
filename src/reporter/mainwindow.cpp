@@ -14,9 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Set up ROS.
     // Create the image widget
-    imageWidget = new CVImageWidget();
+    //imageWidget = new CVImageWidget();
+
     //  ui->imageWidgetUI
     //ui->imageLayout->addWidget(imageWidget);
+
     connect(ui->button_task_1, SIGNAL(released()), this, SLOT(on_task_1_clicked()) );
     connect(ui->button_task_2, SIGNAL(released()), this, SLOT(on_task_2_clicked()) );
     connect(ui->button_task_3, SIGNAL(released()), this, SLOT(on_task_3_clicked()) );
@@ -26,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->button_fullScreen, SIGNAL(released()), this, SLOT(on_full_screen_clicked()) );
 
-    connect(ui->checkBox_pub_imgs, SIGNAL(stateChanged(int)), this, SLOT(on_pub_imgs_cheked()) );
+    connect(ui->checkBox_pub_imgs, SIGNAL(toggled(bool)), this, SLOT(on_pub_imgs_state_changed(bool)) );
 
     connect(ui->button_calib_arm1, SIGNAL(released()), this, SLOT(on_calib_arm1_clicked()) );
     connect(ui->button_calib_arm2, SIGNAL(released()), this, SLOT(on_calib_arm2_clicked()) );
@@ -145,10 +147,16 @@ void MainWindow::on_full_screen_clicked(){
 
 }
 
-void MainWindow::on_pub_imgs_stateChanged(){
+void MainWindow::on_pub_imgs_state_changed(bool state){
+
+    qDebug() << "Toggled pub imgs";
 
     std_msgs::Int8 msg;
-    msg.data =  CE_PUBLISh_IMGS;
+    if(state)
+        msg.data =  CE_PUBLISH_IMGS_ON;
+    else
+        msg.data =  CE_PUBLISH_IMGS_OFF;
+
     ros_obj.publisher_recording_events.publish(msg);
 }
 

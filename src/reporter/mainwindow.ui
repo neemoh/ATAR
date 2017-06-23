@@ -353,7 +353,7 @@ background-color: red
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>70</y>
+       <y>80</y>
        <width>81</width>
        <height>21</height>
       </rect>

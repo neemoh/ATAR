@@ -37,7 +37,8 @@ private slots:
     void on_task_8_clicked();
 
     void on_full_screen_clicked();
-    void on_pub_imgs_stateChanged();
+    void on_pub_imgs_state_changed(bool state);
+
     void on_calib_arm1_clicked();
     void on_calib_arm2_clicked();
 
