@@ -179,6 +179,8 @@ void MainWindow::on_exit_clicked(){
     msg.data =  CE_EXIT;
     ros_obj.publisher_recording_events.publish(msg);
     ros_obj.quit();
+    ros::shutdown();
+    close();
 }
 
 
