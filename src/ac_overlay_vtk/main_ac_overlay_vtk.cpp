@@ -6,10 +6,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "custom_conversions/Conversions.h"
 #include "OverlayROSConfig.h"
-#include <std_msgs/Float32.h>
 #include <ode/ode.h>
-#include "Rendering.h"
-#include "ControlEvents.h"
 
 dWorldID World;
 
