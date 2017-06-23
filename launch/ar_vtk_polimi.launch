@@ -105,10 +105,10 @@ ca        -->
         <param name= "publish_overlayed_images" value= "false" />
 
         <!--Combine left and right images in one window -->
-        <param name= "one_window_mode" value= "false" />
+        <param name= "one_window_mode" value= "true" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
-        <param name= "with_shadows" value= "false" />
+        <param name= "with_shadows" value= "true" />
 
         <!--If the generated images are to be published on
         ros, to help alleviate the considerable bottleneck of grabbing the

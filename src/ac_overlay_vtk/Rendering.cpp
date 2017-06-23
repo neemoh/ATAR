@@ -27,13 +27,9 @@ void AddLightActors(vtkRenderer *r);
 
 Rendering::Rendering(uint num_windows, bool with_shaodws,
                      bool offScreen_rendering)
-    : num_render_windows_(num_windows),
-    with_shadows_(with_shaodws)
-//        : background_renderer_(NULL)
-//        , scene_renderer_(NULL)
-//        , background_renderer_(NULL)
-//        , scene_renderer_(NULL)
-//        , camera_to_world_transform_(NULL)
+        : num_render_windows_(num_windows),
+          with_shadows_(with_shaodws)
+
 {
     // make sure the number of windows are alright
     if(num_render_windows_ <1) num_render_windows_ =1;
@@ -52,7 +48,7 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     lights[0]->SetPosition(0.0,0.0,0.2);
     lights[0]->SetFocalPoint(0.0, 0.0, 0.0);
     lights[0]->SetColor(1.0,1.0,1.0);
-    lights[0]->SetPositional(1);
+//    lights[0]->SetPositional(1);
     lights[0]->SetSwitch(1);
 
     lights[1]->SetPosition(0.0,0.0,0.3);
@@ -107,7 +103,7 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
         render_window_[j]->AddRenderer(scene_renderer_[i]);
 
         window_to_image_filter_[j] =
-            vtkSmartPointer<vtkWindowToImageFilter>::New();
+                vtkSmartPointer<vtkWindowToImageFilter>::New();
         window_to_image_filter_[j]->SetInput(render_window_[j]);
         //    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record  he
         // alpha (transparency) channel for future use
@@ -134,11 +130,6 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
             render_window_[1]->SetOffScreenRendering(1);
         }
     }
-
-
-
-
-
 
 
 
@@ -228,9 +219,6 @@ void Rendering::SetCameraIntrinsics(const cv::Mat intrinsics[])
 void
 Rendering::SetImageCameraToFaceImage(const int id, const int *window_size) {
 
-    int corrected_win_size[2] = {window_size[0], window_size[1]/(3-
-        num_render_windows_)};
-
     int imageSize[3];
     image_importer_[id]->GetOutput()->GetDimensions(imageSize);
 
@@ -240,7 +228,8 @@ Rendering::SetImageCameraToFaceImage(const int id, const int *window_size) {
     double origin[3];
     image_importer_[id]->GetOutput()->GetOrigin(origin);
 
-    background_camera_[id]->SetCemraToFaceImage(corrected_win_size, imageSize, spacing, origin);
+    background_camera_[id]->SetCemraToFaceImage(window_size, imageSize,
+                                                spacing, origin);
 
 }
 
@@ -268,12 +257,15 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
             k=i;
         int *window_size = render_window_[k]->GetActualSize();
 
+        int corrected_win_size[2]
+                = {window_size[0] / (3-num_render_windows_), window_size[1]};
+
         // update each windows view
-        scene_camera_[i]->UpdateView(window_size[0] / (3 - num_render_windows_),
-                                     window_size[1]);
+        scene_camera_[i]->UpdateView(corrected_win_size[0],
+                                     corrected_win_size[1]);
 
         // update the background image for each camera
-        SetImageCameraToFaceImage(i, window_size);
+        SetImageCameraToFaceImage(i, corrected_win_size);
     }
 }
 
@@ -289,7 +281,6 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
         render_window_[j]->SetSize((3-num_render_windows_) * image_width,
                                    image_height);
     }
-
 
     for (int i = 0; i < 2; ++i) {
         assert( img[i].data != NULL );
@@ -312,8 +303,6 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
         image_actor_[i]->SetInputData(camera_image_[i]);
     }
-
-
 }
 
 
@@ -400,34 +389,34 @@ void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
 
 
     vtkSmartPointer<vtkCameraPass> cameraP =
-        vtkSmartPointer<vtkCameraPass>::New();
+            vtkSmartPointer<vtkCameraPass>::New();
 
     vtkSmartPointer<vtkOpaquePass> opaque =
-        vtkSmartPointer<vtkOpaquePass>::New();
+            vtkSmartPointer<vtkOpaquePass>::New();
 
     vtkSmartPointer<vtkVolumetricPass> volume =
-        vtkSmartPointer<vtkVolumetricPass>::New();
+            vtkSmartPointer<vtkVolumetricPass>::New();
     vtkSmartPointer<vtkOverlayPass> overlay =
-        vtkSmartPointer<vtkOverlayPass>::New();
+            vtkSmartPointer<vtkOverlayPass>::New();
 
     vtkSmartPointer<vtkLightsPass> lights_pass =
-        vtkSmartPointer<vtkLightsPass>::New();
+            vtkSmartPointer<vtkLightsPass>::New();
 
     vtkSmartPointer<vtkSequencePass> opaqueSequence =
-        vtkSmartPointer<vtkSequencePass>::New();
+            vtkSmartPointer<vtkSequencePass>::New();
 
     vtkSmartPointer<vtkRenderPassCollection> passes2 =
-        vtkSmartPointer<vtkRenderPassCollection>::New();
+            vtkSmartPointer<vtkRenderPassCollection>::New();
     passes2->AddItem(lights_pass);
     passes2->AddItem(opaque);
     opaqueSequence->SetPasses(passes2);
 
     vtkSmartPointer<vtkCameraPass> opaqueCameraPass =
-        vtkSmartPointer<vtkCameraPass>::New();
+            vtkSmartPointer<vtkCameraPass>::New();
     opaqueCameraPass->SetDelegatePass(opaqueSequence);
 
     vtkSmartPointer<vtkShadowMapBakerPass> shadowsBaker =
-        vtkSmartPointer<vtkShadowMapBakerPass>::New();
+            vtkSmartPointer<vtkShadowMapBakerPass>::New();
     shadowsBaker->SetOpaquePass(opaqueCameraPass);
     shadowsBaker->SetResolution(1024);
     // To cancel self-shadowing.
@@ -435,18 +424,18 @@ void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
     shadowsBaker->SetPolygonOffsetUnits(10.0f);
 
     vtkSmartPointer<vtkShadowMapPass> shadows =
-        vtkSmartPointer<vtkShadowMapPass>::New();
+            vtkSmartPointer<vtkShadowMapPass>::New();
     shadows->SetShadowMapBakerPass(shadowsBaker);
     shadows->SetOpaquePass(opaqueSequence);
 
     vtkSmartPointer<vtkSequencePass> seq =
-        vtkSmartPointer<vtkSequencePass>::New();
+            vtkSmartPointer<vtkSequencePass>::New();
     vtkSmartPointer<vtkRenderPassCollection> passes =
-        vtkSmartPointer<vtkRenderPassCollection>::New();
+            vtkSmartPointer<vtkRenderPassCollection>::New();
     passes->AddItem(shadowsBaker);
     passes->AddItem(shadows);
-    passes->AddItem(lights_pass);
-    passes->AddItem(volume);
+//    passes->AddItem(lights_pass);
+//    passes->AddItem(volume);
     passes->AddItem(overlay);
     seq->SetPasses(passes);
     cameraP->SetDelegatePass(seq);
@@ -531,7 +520,7 @@ void AddLightActors(vtkRenderer *r)
     {
         double angle=l->GetConeAngle();
         if(l->LightTypeIsSceneLight() && l->GetPositional()
-            && angle<180.0) // spotlight
+           && angle<180.0) // spotlight
         {
             vtkLightActor *la=vtkLightActor::New();
             la->SetLight(l);
