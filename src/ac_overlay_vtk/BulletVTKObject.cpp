@@ -14,10 +14,12 @@
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkMassProperties.h>
 #include <vtkTriangleFilter.h>
+#include <iostream>
+#include <sstream>
 #include "BulletVTKObject.h"
 #include "LoadObjGL/LoadMeshFromObj.h"
-
-uint BulletVTKObject::num_bulletvtk_objects = 0;
+//for debug message
+#include "ros/ros.h"
 
 
 BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
@@ -31,10 +33,6 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 )
         : object_type_(o_type)
 {
-
-    num_bulletvtk_objects++;
-    std::cout << " num_bulletvtk_objects " << num_bulletvtk_objects <<
-              std::endl;
 
     vtkSmartPointer<vtkPolyDataMapper> mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -168,12 +166,11 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         case ObjectShape::MESH : {
 
             std::string* filepath = static_cast<std::string*>(data);
-            std::cout << "Loading mesh file from: " << filepath->c_str() << std::endl;
-
+            ROS_DEBUG("Loading mesh file from: %s", filepath->c_str()) ;
             //load our obj mesh
 
             GLInstanceGraphicsShape* glmesh = LoadMeshFromObj(filepath->c_str(), "");
-            printf("[INFO] Obj loaded: Extracted %d verticed from obj file "
+            ROS_DEBUG("[INFO] Obj loaded: Extracted %d verticed from obj file "
                            "[%s]\n", glmesh->m_numvertices, filepath->c_str());
 
             const GLInstanceVertex& v = glmesh->m_vertices->at(0);
@@ -320,15 +317,16 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         //set contact parameters
 //        body_->setContactStiffnessAndDamping((float) contact_stiffness,
 //                                             (float) contact_damping);
+        std::stringstream debug_msg;
 
-        std::cout << "Created BulletVTKObject with properties: "
-                  << " shape = " << shape_string
+        debug_msg << std::string(" shape = ") << shape_string
                   << ", mass = " << bt_mass
                   << ", volume = " << volume
                   << ", friction = " << friction
                   << ", contact_stiffness = " << contact_stiffness
-                  << ", contact_damping = " << contact_damping
-                  << std::endl;
+                  << ", contact_damping = " << contact_damping;
+        ROS_DEBUG("Created BulletVTKObject with properties: %s", debug_msg.str()
+                          .c_str());
     }
 }
 

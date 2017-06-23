@@ -195,7 +195,7 @@ TaskBuzzWire::TaskBuzzWire(const std::string stl_file_dir,
 
     vtkSmartPointer<vtkSTLReader> stand_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << input_file_dir.str() << std::endl;
+    ROS_DEBUG("Loading stl file from: %s", input_file_dir.str().c_str());
     stand_mesh_reader->SetFileName(input_file_dir.str().c_str());
     stand_mesh_reader->Update();
 
@@ -234,7 +234,7 @@ TaskBuzzWire::TaskBuzzWire(const std::string stl_file_dir,
 
     vtkSmartPointer<vtkSTLReader> hq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << input_file_dir.str() << std::endl;
+    ROS_DEBUG("Loading stl file from: %s", input_file_dir.str().c_str());
     hq_mesh_reader->SetFileName(input_file_dir.str().c_str());
     hq_mesh_reader->Update();
     vtkSmartPointer<vtkTransform> tube_transform =
@@ -268,7 +268,7 @@ TaskBuzzWire::TaskBuzzWire(const std::string stl_file_dir,
 
     vtkSmartPointer<vtkSTLReader> lq_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();
-    std::cout << "Loading stl file from: " << input_file_dir.str() << std::endl;
+    ROS_DEBUG("Loading stl file from: %s", input_file_dir.str().c_str());
     lq_mesh_reader->SetFileName(input_file_dir.str().c_str());
     lq_mesh_reader->Update();
 

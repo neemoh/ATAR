@@ -37,7 +37,6 @@ public:
             with_guidance(with_guidance){};
 
     virtual ~VTKTask(){
-        ROS_INFO("Task base Destructor called");
     };
 
     // returns all the task actors to be sent to the rendering part
