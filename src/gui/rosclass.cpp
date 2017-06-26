@@ -48,6 +48,10 @@ RosObj::RosObj(QObject *parent, std::string node_name)
 
 RosObj::~RosObj(){
     //    delete task_frame_to_slave_frame;;
+    qDebug() << "In rosobj dsstructor";
+    ros::shutdown();
+    qDebug() << "rosobj dsstructor end";
+
 }
 
 //-----------------------------------------------------------------------------------
@@ -535,6 +539,16 @@ void RosObj::CloseRecordingFile(){
 }
 
 
+
+void RosObj::CleanUpAndQuit(){
+
+    //TODO cleanup
+
+    ros::shutdown();
+
+    quit();
+
+}
 
 
 

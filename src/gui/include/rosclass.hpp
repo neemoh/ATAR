@@ -84,6 +84,9 @@ public:
      */
     cv::Mat& Image(ros::Duration timeout = ros::Duration(1));
 
+
+    void CleanUpAndQuit();
+
 private:
     void GetROSParameterValues();
     int n_arms;

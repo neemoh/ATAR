@@ -175,12 +175,18 @@ void MainWindow::on_calib_arm2_clicked(){
 }
 
 void MainWindow::on_exit_clicked(){
+
+    ROS_INFO("Exiting...");
+
     std_msgs::Int8 msg;
     msg.data =  CE_EXIT;
     ros_obj.publisher_recording_events.publish(msg);
-    ros_obj.quit();
-    ros::shutdown();
+
+    ros_obj.CleanUpAndQuit();
     close();
+
+    timer->stop();
+
 }
 
 
@@ -233,3 +239,4 @@ void MainWindow::on_button_reset_clicked()
     ros_obj.publisher_recording_events.publish(msg);
 
 }
+

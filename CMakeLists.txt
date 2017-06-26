@@ -324,16 +324,16 @@ find_package(Qt5Core REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(PROJECT_INCLUDE_DIR src/reporter/include)
+set(PROJECT_INCLUDE_DIR src/gui/include)
 
 set (MyProjectLib_hdr
         ${PROJECT_INCLUDE_DIR}/mainwindow.hpp
         ${PROJECT_INCLUDE_DIR}/cvimagewidget.h)
 set (MyProjectLib_src
-        src/reporter/mainwindow.cpp
-        src/reporter/rosclass.cpp)
+        src/gui/mainwindow.cpp
+        src/gui/rosclass.cpp)
 qt5_wrap_cpp(MyProjectLib_hdr_moc ${MyProjectLib_hdr})
-qt5_wrap_ui (MyProjectLib_ui_moc  src/reporter/mainwindow.ui)
+qt5_wrap_ui (MyProjectLib_ui_moc src/gui/mainwindow.ui)
 
 include_directories (${PROJECT_SOURCE_DIR})
 include_directories (${PROJECT_BINARY_DIR})
@@ -350,7 +350,7 @@ target_link_libraries (reporter_utils
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
 
-add_executable(reporter src/reporter/labelling_node.cpp)
+add_executable(reporter src/gui/ui_node.cpp)
 target_link_libraries (reporter
         ${catkin_LIBRARIES}
         reporter_utils
