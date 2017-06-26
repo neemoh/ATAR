@@ -6,6 +6,7 @@
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLRenderWindow.h>
+#include <ros/ros.h> // added only for ros_debug
 
 //
 //
@@ -48,8 +49,8 @@ void CalibratedCamera::SetIntrinsicParameters(const double& fx, const double& fy
     cx_ = cx;
     cy_ = cy;
 
-    std::cout << "fx_: " <<  fx_ << " fy_: " <<  fy_
-              << " cx_: " <<  cx_ << " cy_: " <<  cy_ << std::endl;
+    ROS_DEBUG_STREAM( std::string("Camera Matrix: fx= ") <<  fx_ << ", fy= " <<  fy_
+              << ", cx= " <<  cx_ << ", cy= " <<  cy_ );
 }
 
 
@@ -87,7 +88,7 @@ void CalibratedCamera::UpdateView(const double &window_width,
     double window_aspect_ratio =  window_width / window_height;
 
     double window_resize_factor;
-    if(window_aspect_ratio > image_aspect_ratio)
+    if(window_aspect_ratio >= image_aspect_ratio)
         window_resize_factor = window_height / image_height_;
     else
         window_resize_factor = window_width / image_width_;
