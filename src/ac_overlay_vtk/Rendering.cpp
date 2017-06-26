@@ -45,16 +45,21 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     lights[0] =   vtkSmartPointer<vtkLight>::New();
     lights[1] =   vtkSmartPointer<vtkLight>::New();
 
-    lights[0]->SetPosition(0.0,0.0,0.2);
-    lights[0]->SetFocalPoint(0.0, 0.0, 0.0);
-    lights[0]->SetColor(1.0,1.0,1.0);
-//    lights[0]->SetPositional(1);
+    lights[0]->SetPosition(0.05, 0.04, 0.2);
+    lights[0]->SetFocalPoint(0.05, 0.03, 0.05);
+    //lights[0]->SetColor(1.0,1.0,1.0);
+    lights[0]->SetPositional(1);
+    lights[0]->SetConeAngle(45);
+    //lights[0]->SetLightTypeToCameraLight();
     lights[0]->SetSwitch(1);
 
-    lights[1]->SetPosition(0.0,0.0,0.3);
-    lights[1]->SetFocalPoint(0.0, 0.0, 0.0);
+    lights[1]->SetPosition(0.04, 0.03, 0.18);
+    lights[1]->SetFocalPoint(0.02, 0.02, 0.0);
     lights[1]->SetColor(1.0,1.0,1.0);
     lights[1]->SetPositional(1);
+    lights[1]->SetConeAngle(45);
+    //lights[1]->SetLightTypeToCameraLight();
+    lights[1]->SetExponent(0.5);
     lights[1]->SetSwitch(1);
 
 
@@ -111,9 +116,9 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
         // back buffer
         // important for getting high update rate (If needed, images can be shown
         // with opencv)
-        //render_window_[j]->Render();
-        //AddLightActors(scene_renderer_[j]);
+        render_window_[j]->Render();
 
+        //AddLightActors(scene_renderer_[j]);
     }
 
     if(num_render_windows_==1) {
@@ -157,13 +162,17 @@ void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::
         cv::Mat rotationMatrix(3, 3, cv::DataType<double>::type);
         cv::Rodrigues(cam_rvec[k], rotationMatrix);
 
-        vtkSmartPointer<vtkMatrix4x4> world_to_camera_transform =vtkSmartPointer<vtkMatrix4x4>::New();
+        vtkSmartPointer<vtkMatrix4x4>
+            world_to_camera_transform = vtkSmartPointer<vtkMatrix4x4>::New();
         world_to_camera_transform->Identity();
 
         // Convert to VTK matrix.
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                world_to_camera_transform->SetElement(i, j, rotationMatrix.at<double>(i, j));
+                world_to_camera_transform->SetElement(
+                    i, j, rotationMatrix.at<double>(
+                        i, j
+                    ));
             }
             world_to_camera_transform->SetElement(i, 3, cam_tvec[k][i]);
         }
@@ -176,9 +185,13 @@ void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::
 
     }
 
-    lights[0]->SetPosition(cam_tvec[0][0], cam_tvec[0][1], cam_tvec[0][2]);
-}
+    //lights[0]->SetPosition(
+    //    camera_to_world_transform_[0]->Element[0][3],
+    //    camera_to_world_transform_[0]->Element[1][3],
+    //    camera_to_world_transform_[0]->Element[2][3]
+    //);
 
+}
 
 //------------------------------------------------------------------------------
 void Rendering::SetEnableBackgroundImage(bool isEnabled)
@@ -434,8 +447,8 @@ void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
             vtkSmartPointer<vtkRenderPassCollection>::New();
     passes->AddItem(shadowsBaker);
     passes->AddItem(shadows);
-//    passes->AddItem(lights_pass);
-//    passes->AddItem(volume);
+    passes->AddItem(lights_pass);
+    passes->AddItem(volume);
     passes->AddItem(overlay);
     seq->SetPasses(passes);
     cameraP->SetDelegatePass(seq);
