@@ -77,14 +77,17 @@ bool OverlayROSConfig::UpdateWorld() {
         Cleanup();
         return false;
     }
+
+    if(new_task_event)
+        HandleTaskEvent();
+
     cv::Mat cam_images[2];
     if(GetNewImages(cam_images)) {
 
         // Time performance debug
         //ros::Time start =ros::Time::now();
 
-        if(new_task_event)
-            HandleTaskEvent();
+
 
         // update the moving actors
         if(running_task_id)

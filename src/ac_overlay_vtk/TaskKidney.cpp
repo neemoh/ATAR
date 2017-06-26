@@ -206,23 +206,38 @@ TaskKidney::TaskKidney(const std::string stl_file_dir,
 
     // -------------------------------------------------------------------------
     // Create a cube for the floor
-    vtkSmartPointer<vtkCubeSource> floor_source =
-            vtkSmartPointer<vtkCubeSource>::New();
-    double floor_dimensions[3] = {0.1, 0.09, 0.001};
-    floor_source->SetXLength(floor_dimensions[0]);
-    floor_source->SetYLength(floor_dimensions[1]);
-    floor_source->SetZLength(floor_dimensions[2]);
-    vtkSmartPointer<vtkPolyDataMapper> floor_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
-    floor_mapper->SetInputConnection(floor_source->GetOutputPort());
-    vtkSmartPointer<vtkActor> floor_actor = vtkSmartPointer<vtkActor>::New();
-    floor_actor->SetMapper(floor_mapper);
-    floor_actor->SetPosition(floor_dimensions[0] / 2, floor_dimensions[1] / 2,
-                             -floor_dimensions[2]);
-    floor_actor->GetProperty()->SetOpacity(0.3);
-    floor_actor->GetProperty()->SetColor(COLORS::Pink);
+    vtkSmartPointer<vtkCubeSource> box_source =
+        vtkSmartPointer<vtkCubeSource>::New();
+    double box_dimensions[3] = {0.0154, 0.0154, 0.0154};
+    box_source->SetXLength(box_dimensions[0]);
+    box_source->SetYLength(box_dimensions[1]);
+    box_source->SetZLength(box_dimensions[2]);
+    vtkSmartPointer<vtkPolyDataMapper> box_mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    box_mapper->SetInputConnection(box_source->GetOutputPort());
+    vtkSmartPointer<vtkActor> box1_actor = vtkSmartPointer<vtkActor>::New();
+    box1_actor->SetMapper(box_mapper);
+    box1_actor->SetPosition(box_dimensions[0] / 2, box_dimensions[1] / 2,
+                             box_dimensions[2]/2);
+    box1_actor->GetProperty()->SetOpacity(1.0);
+    box1_actor->GetProperty()->SetColor(COLORS::Pink);
 
 
+    vtkSmartPointer<vtkActor> box2_actor = vtkSmartPointer<vtkActor>::New();
+    box2_actor->SetMapper(box_mapper);
+    box2_actor->SetPosition(box_dimensions[0] / 2 + box_dimensions[0]*2,
+                            box_dimensions[1] / 2,
+                             box_dimensions[2]/2);
+    box2_actor->GetProperty()->SetOpacity(1.0);
+    box2_actor->GetProperty()->SetColor(COLORS::Pink);
+
+    vtkSmartPointer<vtkActor> box3_actor = vtkSmartPointer<vtkActor>::New();
+    box3_actor->SetMapper(box_mapper);
+    box3_actor->SetPosition(box_dimensions[0] / 2 + box_dimensions[0]*4,
+                            box_dimensions[1] / 2,
+                             box_dimensions[2]/2);
+    box3_actor->GetProperty()->SetOpacity(1.0);
+    box3_actor->GetProperty()->SetColor(COLORS::Pink);
     // -------------------------------------------------------------------------
     // Add all actors to a vector
     if (show_ref_frames) {
@@ -236,7 +251,10 @@ TaskKidney::TaskKidney(const std::string stl_file_dir,
 
 
     actors.push_back(mesh_actor);
-//    actors.push_back(floor_actor);
+    actors.push_back(box1_actor);
+    actors.push_back(box2_actor);
+    actors.push_back(box3_actor);
+//    actors.push_back(ring_actor[0]);
 //    actors.push_back(ring_actor[0]);
 //    if(bimanual){
 //        actors.push_back(ring_actor[1]);

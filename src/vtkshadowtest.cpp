@@ -278,9 +278,9 @@ int main(int, char*[])
     l2->SetPosition(4.0,5.0,1.0);
     l2->SetFocalPoint(sphereActor->GetPosition());
     l2->SetColor(1.0,0.0,1.0);
-//  l2->SetColor(1.0,1.0,1.0);
+    //  l2->SetColor(1.0,1.0,1.0);
     l2->SetPositional(1);
-//    renderer->AddLight(l2);
+    renderer->AddLight(l2);
     l2->SetSwitch(1);
 
     AddLightActors(renderer);
