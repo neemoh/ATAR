@@ -22,7 +22,13 @@ IntrinsicCalibrationCharuco::IntrinsicCalibrationCharuco(
     dictionary = cv::aruco::getPredefinedDictionary(
             cv::aruco::PREDEFINED_DICTIONARY_NAME(charuco_board_params[0]));
 
-    // create charuco board object
+    // create charuco board object with params:
+    // int squaresX,
+    // int squaresY,
+    // float squareLength,
+    // float markerLength,
+    // const Ptr<Dictionary> &dictionary);
+
     charuco_board = cv::aruco::CharucoBoard::create(
             (int)charuco_board_params[1],
             (int)charuco_board_params[2],
@@ -155,24 +161,28 @@ bool IntrinsicCalibrationCharuco::DoCalibration(std::string outputFile,
 void IntrinsicCalibrationCharuco::CameraImageCallback(
         const sensor_msgs::ImageConstPtr &msg) {
 
+    // generally not a good idea to do things that may take a while, in the
+    // callback, but let's bet on the low refresh rate of images and do it
+    // anyways!
+
     cv::Mat image, imageCopy;
 
-    try
-    {
+    try {
         image = cv_bridge::toCvCopy(msg, "bgr8")->image;
     }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
+    catch (cv_bridge::Exception &e) {
+        ROS_ERROR("Could not convert from '%s' to 'bgr8'.",
+                  msg->encoding.c_str());
     }
-
 
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners, rejected;
 
     // detect markers
-    cv::aruco::detectMarkers(image, dictionary, corners, ids,
-                             detector_params, rejected);
+    cv::aruco::detectMarkers(
+        image, dictionary, corners, ids,
+        detector_params, rejected
+    );
 
     // refind strategy to detect more markers
     //            if (refindStrategy)
@@ -182,9 +192,9 @@ void IntrinsicCalibrationCharuco::CameraImageCallback(
     cv::Mat currentCharucoCorners, currentCharucoIds;
     if (ids.size() > 0)
         cv::aruco::interpolateCornersCharuco(
-                corners, ids, image, charuco_board,
-                currentCharucoCorners,
-                currentCharucoIds
+            corners, ids, image, charuco_board,
+            currentCharucoCorners,
+            currentCharucoIds
         );
 
     // draw results
@@ -194,28 +204,38 @@ void IntrinsicCalibrationCharuco::CameraImageCallback(
 
     if (currentCharucoCorners.total() > 0)
         cv::aruco::drawDetectedCornersCharuco(
-                imageCopy, currentCharucoCorners, currentCharucoIds
+            imageCopy, currentCharucoCorners, currentCharucoIds
         );
 
     cv::putText(
-            imageCopy, "Press 'c' to add current frame. 'f' to finish and "
-                    "calibrate.",
-            cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,
-                                                                         0, 0), 2
+        imageCopy, "Press 'c' to add current frame. 'f' to finish and "
+            "calibrate.",
+        cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(
+            255,
+            0, 0
+        ), 2
     );
 
     cv::imshow("Intrinsic calibration", imageCopy);
     char key = (char) cv::waitKey(1);
     if (key == 'f')
         finished_capturing = true;
-    if (key == 'c' && ids.size() > 0) {
-        std::cout << "Frame captured" << std::endl;
-        allCorners.push_back(corners);
-        allIds.push_back(ids);
-        allImgs.push_back(image);
-        imgSize = image.size();
-    }
 
+    cv::Size size;
+    size = charuco_board->getChessboardSize();
+
+    if (key == 'c') {
+        if (ids.size() >= (size.height * size.width / 2)) {
+            std::cout << "Frame " << allImgs.size() + 1 << " captured and found "
+                      << ids.size() << " markers" << std::endl;
+            allCorners.push_back(corners);
+            allIds.push_back(ids);
+            allImgs.push_back(image);
+            imgSize = image.size();
+        } else
+            std::cout << "Not enough markers detected: "
+                      << ids.size() << std::endl;
+    }
 }
 
 
