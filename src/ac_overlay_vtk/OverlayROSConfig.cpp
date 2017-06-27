@@ -12,6 +12,7 @@
 #include "TaskBullet.h"
 #include "TaskBulletTest.h"
 #include "ControlEvents.h"
+#include "TaskPegInHole.h"
 
 // -----------------------------------------------------------------------------
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
@@ -178,14 +179,18 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         task_ptr   = new TaskBullet(mesh_files_dir, false,
                                     (bool) (n_arms - 1), with_guidance);
     }
-
     else if(task_id ==5){
         ROS_DEBUG("Starting new TaskBulletTest task. ");
         task_ptr   = new TaskBulletTest(mesh_files_dir, false,
                                         (bool) (n_arms - 1), with_guidance);
     }
+    else if(task_id ==6){
+        ROS_DEBUG("Starting new TaskPegInHole task. ");
+        task_ptr   = new TaskPegInHole(mesh_files_dir, false,
+                                        (bool) (n_arms - 1), with_guidance);
+    }
 
-    if(task_id >0 && task_id <6) {
+    if(task_id >0 && task_id <7) {
         // assign the tool pose pointers
         ros::spinOnce();
         task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
@@ -616,8 +621,17 @@ void OverlayROSConfig::DoArmToWorldFrameCalibration(const uint arm_id) {
     std::string cam_image_name_space ;
     n.getParam("left_image_topic_name", cam_image_name_space);
 
-    double calib_points_distance;
-    n.param<double>("calib_points_distance", calib_points_distance, 0.05);
+    // putting the calibration point on the corners of the board squares
+    // the parameter can be set directly, unless there is the global
+    // /calibrations/board_params
+    double calib_points_distance = 0.01;
+    std::vector<float> board_params = std::vector<float>(5, 0.0);
+
+    if(!n.getParam("calib_points_distance", calib_points_distance)){
+        if(n.getParam("/calibrations/board_params", board_params))
+            calib_points_distance = board_params[3];
+
+    };
 
     int num_calib_points;
     n.param<int>("number_of_calibration_points", num_calib_points, 6);
@@ -872,11 +886,11 @@ void OverlayROSConfig::ControlEventsCallback(const std_msgs::Int8ConstPtr
             running_task_id = 5;
             new_task_event = true;
             break;
-//
-//        case CE_START_TASK6:
-//            running_task_id = 6;
-//            new_task_event = true;
-//            break;
+
+        case CE_START_TASK6:
+            running_task_id = 6;
+            new_task_event = true;
+            break;
 
         default:
             break;
