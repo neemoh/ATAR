@@ -224,7 +224,7 @@ void ArmToWorldCalibration::PutDrawings(cv::Mat img) {
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 50, 0), 2);
     }
     else { // if(!calibration_done)
-        instructions = "Calibration finished. Press 'f' to exit";
+        instructions = "Calibration finished. Press 'Esc' to exit";
 
         // ---------------------- draw the tool tip frame ----------------------
         KDL::Frame arm_pose_world_frame = world_to_arm_tr.Inverse() *
