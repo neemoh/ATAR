@@ -38,8 +38,12 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     double view_port[2][4] = {{0.0, 0.0, 0.5, 1.0}, {0.5, 0.0, 1.0, 1.0}};
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
-    if(num_render_windows_==2)
+    render_window_[0]->SetPosition(200, 0);
+    if(num_render_windows_==2) {
         render_window_[1] = vtkSmartPointer<vtkRenderWindow>::New();
+        render_window_[1]->SetPosition(600, 0);
+
+    }
 
     // line 182 of vtkShadowMapPass.cxx
     lights[0] =   vtkSmartPointer<vtkLight>::New();
@@ -191,6 +195,7 @@ void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::
     //    camera_to_world_transform_[0]->Element[2][3]
     //);
 
+
 }
 
 //------------------------------------------------------------------------------
@@ -291,8 +296,8 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
     // if one window the width is double
     for (int j = 0; j < num_render_windows_; ++j) {
-        render_window_[j]->SetSize((3-num_render_windows_) * image_width,
-                                   image_height);
+        render_window_[j]->SetSize((3-num_render_windows_) * 640,
+                                   480);
     }
 
     for (int i = 0; i < 2; ++i) {

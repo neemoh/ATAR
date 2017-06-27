@@ -677,6 +677,12 @@ void OverlayROSConfig::PublishRenderedImages() {
 
     cv::Mat augmented_images[2];
 
+    char key = (char)cv::waitKey(1);
+    if (key == 27) // Esc
+        ros::shutdown();
+    else if (key == 'f')  //full screen
+        SwitchFullScreenCV(cv_window_names[0]);
+
     graphics->GetRenderedImage(augmented_images);
     if(one_window_mode){
         cv::imshow(cv_window_names[0], augmented_images[0]);
@@ -696,7 +702,10 @@ void OverlayROSConfig::PublishRenderedImages() {
                                        augmented_images[i])
                             .toImageMsg());
         }
+        if (key == 'f')  //full screen
+            SwitchFullScreenCV(cv_window_names[1]);
     }
+
 }
 
 
@@ -877,3 +886,12 @@ void OverlayROSConfig::ControlEventsCallback(const std_msgs::Int8ConstPtr
 
 
 
+void SwitchFullScreenCV(const std::string window_name) {
+
+    if (cvGetWindowProperty(window_name.c_str(), CV_WND_PROP_FULLSCREEN) ==
+        CV_WINDOW_NORMAL)
+        cvSetWindowProperty(window_name.c_str(), CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+    else
+        cvSetWindowProperty(window_name.c_str(), CV_WND_PROP_FULLSCREEN, CV_WINDOW_NORMAL);
+
+}

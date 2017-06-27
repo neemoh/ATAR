@@ -192,5 +192,6 @@ private:
 
 };
 
+void SwitchFullScreenCV(const std::string window_name);
 
 #endif //TELEOP_VISION_OVERLAYROSCONFIG_H
