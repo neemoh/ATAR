@@ -113,7 +113,9 @@ private:
     vtkSmartPointer<vtkImageActor>          image_actor_[2];
     vtkSmartPointer<vtkImageData>           camera_image_[2];
     // transforms
-    vtkSmartPointer<vtkMatrix4x4>           camera_to_world_transform_[2];
+    // used as a history to check for large changes;
+    cv::Vec3d cam_tvec_last_[2];
+
     // windows
     vtkSmartPointer<vtkRenderWindow>        render_window_[2];
     //    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;

@@ -105,8 +105,6 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
             AddShadowPass(scene_renderer_[i]);
 
         //        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
-        camera_to_world_transform_[i] = vtkSmartPointer<vtkMatrix4x4>::New();
-        camera_to_world_transform_[i]->Identity();
 
         int j=0;
         if(num_render_windows_==2)
@@ -166,30 +164,39 @@ Rendering::~Rendering()
 void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::Vec3d cam_tvec[]) {
 
     for (int k = 0; k < 2; ++k) {
+        // to prevent jitter due to wrong board pose estimation
+        if(cv::norm(cam_tvec_last_[k] - cam_tvec[k]) < 0.01) {
 
-        cv::Mat rotationMatrix(3, 3, cv::DataType<double>::type);
-        cv::Rodrigues(cam_rvec[k], rotationMatrix);
+            cv::Mat rotationMatrix(3, 3, cv::DataType<double>::type);
+            cv::Rodrigues(cam_rvec[k], rotationMatrix);
 
-        vtkSmartPointer<vtkMatrix4x4>
-            world_to_camera_transform = vtkSmartPointer<vtkMatrix4x4>::New();
-        world_to_camera_transform->Identity();
+            vtkSmartPointer<vtkMatrix4x4>
+                world_to_camera_transform =
+                vtkSmartPointer<vtkMatrix4x4>::New();
+            world_to_camera_transform->Identity();
 
-        // Convert to VTK matrix.
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                world_to_camera_transform->SetElement(
-                    i, j, rotationMatrix.at<double>(
-                        i, j
-                    ));
+            // Convert to VTK matrix.
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    world_to_camera_transform->SetElement(
+                        i, j, rotationMatrix.at<double>(
+                            i, j
+                        ));
+                }
+                world_to_camera_transform->SetElement(i, 3, cam_tvec[k][i]);
             }
-            world_to_camera_transform->SetElement(i, 3, cam_tvec[k][i]);
+
+            vtkSmartPointer<vtkMatrix4x4> camera_to_world_transform =
+                vtkSmartPointer<vtkMatrix4x4>::New();
+            camera_to_world_transform->Identity();
+
+            camera_to_world_transform->DeepCopy(world_to_camera_transform);
+
+            camera_to_world_transform->Invert();
+
+            scene_camera_[k]->SetExtrinsicParameters(camera_to_world_transform);
         }
-
-        camera_to_world_transform_[k]->DeepCopy(world_to_camera_transform);
-
-        camera_to_world_transform_[k]->Invert();
-
-        scene_camera_[k]->SetExtrinsicParameters(camera_to_world_transform_[k]);
+        cam_tvec_last_[k] = cam_tvec[k];
 
     }
 
@@ -442,7 +449,7 @@ void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
     shadowsBaker->SetOpaquePass(opaqueCameraPass);
     shadowsBaker->SetResolution(1024);
     // To cancel self-shadowing.
-    shadowsBaker->SetPolygonOffsetFactor(3.1f);
+    shadowsBaker->SetPolygonOffsetFactor(2.4f);
     shadowsBaker->SetPolygonOffsetUnits(10.0f);
 
     vtkSmartPointer<vtkShadowMapPass> shadows =
