@@ -38,11 +38,15 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     double view_port[2][4] = {{0.0, 0.0, 0.5, 1.0}, {0.5, 0.0, 1.0, 1.0}};
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
-    render_window_[0]->SetPosition(200, 0);
-    if(num_render_windows_==2) {
+    render_window_[0]->BordersOff();
+    render_window_[0]->SetPosition(100, 0);
+
+    if(num_render_windows_==1)
+        render_window_[0]->SetPosition(1920, 0);
+    else if(num_render_windows_==2) {
         render_window_[1] = vtkSmartPointer<vtkRenderWindow>::New();
         render_window_[1]->SetPosition(600, 0);
-
+        render_window_[1]->BordersOff();
     }
 
     // line 182 of vtkShadowMapPass.cxx
@@ -470,7 +474,6 @@ void Rendering::ToggleFullScreen() {
         else
             render_window_[k]->SetFullScreen(1);
     }
-
 }
 
 //------------------------------------------------------------------------------
