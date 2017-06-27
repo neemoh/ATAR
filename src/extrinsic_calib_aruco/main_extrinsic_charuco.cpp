@@ -79,11 +79,18 @@ int main(int argc, char *argv[]) {
     //-----------
 
     //----------- Read boardparameters
+    // board_params comprises:
+    // [dictionary_id, board_w, board_h,
+    // square_length_in_meters, marker_length_in_meters]
     std::vector<float> board_params = std::vector<float>(5, 0.0);
     if(!n.getParam("board_params", board_params))
-        ROS_ERROR("Ros parameter board_param is required. board_param="
+    {
+        if(!n.getParam("/calibrations/board_params", board_params))
+            ROS_ERROR("Ros parameter board_param is required. board_param="
                           "[dictionary_id, board_w, board_h, "
                           "square_length_in_meters, marker_length_in_meters]");
+    }
+
 
     Ptr<aruco::Dictionary> dictionary =
             aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME
@@ -317,24 +324,24 @@ bool DetectCharucoBoardPose(cv::Mat &image,
 //------------------------------------------------------------------------------
 std::string GetCameraTopicName(ros::NodeHandle &n){
 
-    std::string image_transport_namespace;
+    std::string camera_img_topic;
 
-    if (n.getParam("image_transport_namespace", image_transport_namespace)) {
+    if (n.getParam("camera_img_topic", camera_img_topic)) {
         // if the topic name is found, check if something is being published on it
         if (!ros::topic::waitForMessage<sensor_msgs::Image>(
-                image_transport_namespace, ros::Duration(5))) {
+                camera_img_topic, ros::Duration(5))) {
             ROS_ERROR("Topic '%s' is not publishing.",
-                      image_transport_namespace.c_str());
+                      camera_img_topic.c_str());
         }
         else
             ROS_INFO("[SUBSCRIBERS] Images will be read from topic %s",
-                     image_transport_namespace.c_str());
+                     camera_img_topic.c_str());
     } else {
         ROS_ERROR("%s Parameter '%s' is required.",
                   ros::this_node::getName().c_str(),
-                  n.resolveName("image_transport_namespace").c_str());
+                  n.resolveName("camera_img_topic").c_str());
     }
-    return  image_transport_namespace;
+    return  camera_img_topic;
 
 }
 
