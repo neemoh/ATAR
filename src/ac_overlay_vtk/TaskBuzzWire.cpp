@@ -74,7 +74,6 @@ TaskBuzzWire::TaskBuzzWire(const std::string stl_file_dir,
         tool_current_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
         tool_desired_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
         tool_current_pose[1] = vtkSmartPointer<vtkMatrix4x4>::New();
-
     }
 
     tube_mesh_actor = vtkSmartPointer<vtkActor>::New();
@@ -160,7 +159,7 @@ TaskBuzzWire::TaskBuzzWire(const std::string stl_file_dir,
     destination_ring_actor->RotateX(90);
     destination_ring_actor->RotateY(-60);
     destination_ring_actor->GetProperty()->SetColor(Colors::Green);
-    destination_ring_actor->GetProperty()->SetOpacity(0.5);
+    //destination_ring_actor->GetProperty()->SetOpacity(0.5);
 
     // -------------------------------------------------------------------------
     // FRAMES
@@ -441,8 +440,25 @@ void TaskBuzzWire::UpdateActors() {
     // -------------------------------------------------------------------------
     // Find closest points and update frames
     for (int k = 0; k < 1 + (int)bimanual; ++k) {
-        tool_current_frame_axes[k]->SetUserMatrix(tool_current_pose[k]);
-        ring_actor[k]->SetUserMatrix(tool_current_pose[k]);
+
+        // -------------
+        // the noise in the pose measurements of the tool made the rendered
+        // shadows behave unexpectedly, to fix it we do a 1 step moving
+        // averqge of the position of the tool before applying it to the ring
+
+        vtkSmartPointer<vtkMatrix4x4>   tool_pose_filt = vtkSmartPointer<vtkMatrix4x4>::New();
+        KDL::Frame tool_current_kdl = *tool_current_pose_kdl[k];
+
+        KDL::Frame tool_current_filt_kdl = tool_current_kdl;
+        tool_current_filt_kdl.p = 0.5*(tool_last_pose[k].p + tool_current_kdl.p);
+
+        VTKConversions::KDLFrameToVTKMatrix(tool_current_filt_kdl, tool_pose_filt);
+        tool_last_pose[k] = *tool_current_pose_kdl[k];
+        // -------------
+
+        // setting the transformations
+        tool_current_frame_axes[k]->SetUserMatrix(tool_pose_filt);
+        ring_actor[k]->SetUserMatrix(tool_pose_filt);
     }
 
 //    ring_guides_mesh_actor->SetUserMatrix(tool_current_pose[0]);

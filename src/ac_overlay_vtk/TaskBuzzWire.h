@@ -169,6 +169,7 @@ private:
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
+    KDL::Frame tool_last_pose[2];
 
     uint destination_ring_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
