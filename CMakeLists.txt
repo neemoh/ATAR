@@ -263,6 +263,9 @@ target_link_libraries(
         Bullet3Common
 )
 
+# Assume all files that start with "Task" are to be added
+file(GLOB tasks_src "src/ac_overlay_vtk/Task*.cpp")
+file(GLOB tasks_h "src/ac_overlay_vtk/Task*.h")
 
 add_executable(
         ac_overlay_vtk
@@ -273,23 +276,16 @@ add_executable(
         src/ac_overlay_vtk/Rendering.h
         src/ac_overlay_vtk/OverlayROSConfig.cpp
         src/ac_overlay_vtk/OverlayROSConfig.h
-        src/ac_overlay_vtk/VTKTask.h
-        src/ac_overlay_vtk/TaskBuzzWire.cpp
-        src/ac_overlay_vtk/TaskBuzzWire.h
-        src/ac_overlay_vtk/TaskKidney.cpp
-        src/ac_overlay_vtk/TaskKidney.h
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.h
-        src/ac_overlay_vtk/TaskODE.cpp
-        src/ac_overlay_vtk/TaskODE.h
-        src/ac_overlay_vtk/TaskBullet.cpp
-        src/ac_overlay_vtk/TaskBullet.h
-        src/ac_overlay_vtk/TaskBulletTest.cpp
-        src/ac_overlay_vtk/TaskBulletTest.h
+        src/ac_overlay_vtk/ControlEvents.h
         src/ac_overlay_vtk/BulletVTKMotionState.h
         src/ac_overlay_vtk/BulletVTKObject.cpp
         src/ac_overlay_vtk/BulletVTKObject.h
-        src/ac_overlay_vtk/ControlEvents.h)
+        src/ac_overlay_vtk/VTKTask.h
+        ${tasks_src}
+        ${tasks_h}
+)
 
 
 target_link_libraries(
@@ -303,6 +299,7 @@ target_link_libraries(
         libode.a
         LoadObjGL
         )
+
 set(ODE_PRECISION dSINGLE)
 
 add_executable(
