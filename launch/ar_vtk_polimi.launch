@@ -15,7 +15,7 @@
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
-        <rosparam command="load" file="$(find atar)/launch/params_overlay_polimi.yaml" />
+        <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
         <rosparam command="load"
                   file="$(find atar)/launch/params_charuco_board_4_6_polimi_small.yaml" />
     </group>
@@ -85,7 +85,7 @@
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
         -->
-        <param name= "show_reference_frames" value= "true" />
+        <param name= "show_reference_frames" value= "false" />
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "enable_guidance" value= "false" />
