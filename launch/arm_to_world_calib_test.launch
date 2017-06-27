@@ -4,26 +4,27 @@
     <arg name="left_camera_img_topic" value="/endoscope/left/image_raw"/>
     <arg name="right_camera_img_topic" value="/endoscope/right/image_raw"/>
 
-    <node pkg="atar"
-          type="arm_to_world_calibration"
-          name="arm_to_world_calibration"
-          output="screen">
+    <node pkg="atar" type="arm_to_world_calibration"
+          name="arm_to_world_calibration" output="screen">
         <param name="cam_name" value= "$(arg left_cam_name)" />
-        <param name="image_transport_namespace"
-               value="$(arg left_camera_img_topic)"/>
+        <param name="camera_img_topic" value="$(arg left_camera_img_topic)"/>
         <param name= "arm_pose_namespace"    value=
                 "/dvrk/PSM1/position_cartesian_current"/>
         <param name= "number_of_calibration_points" value= "6" />
-        <param name= "calib_points_distance" value= "0.0247" />
+        <!-- Calib points are put on corners of the board squares. so
+        calib_points_distance should correspond to the square-length parameter
+        of the used board. If this is not set here we look for
+        /calibrations/board_param-->
+        <param name= "calib_points_distance" value= "0.0154" />
     </node>
+
 
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_charuco_left" output="screen" >
         <rosparam command="load"
-                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
+                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_small.yaml" />
         <param name="camera_name" value="$(arg left_cam_name)"/>
-        <param name="image_transport_namespace"
-               value="$(arg left_camera_img_topic)"/>
+        <param name="camera_img_topic" value="$(arg left_camera_img_topic)"/>
         <param name="show_image" value="true"/>
     </node>
 

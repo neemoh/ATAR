@@ -50,24 +50,15 @@ bool ArmToWorldCalibration::DoCalibration(const std::string img_topic_namespace,
                         &ArmToWorldCalibration::ArmPoseCallback, this);
 
     // -------------------------------------------------------------------------
-    // Definition of target points for calib2
-    for (uint i=0; i<num_calib_points; i++){
-        if(i<num_calib_points/3)
-            calib_points_in_world_frame.push_back(
-                    Eigen::Vector3d((1+i)*(calib_points_distance),
-                                    calib_points_distance,
-                                    0.0));
-        if(i>num_calib_points/3-1 && i<2*num_calib_points/3)
-            calib_points_in_world_frame.push_back(
-                    Eigen::Vector3d((i+1-num_calib_points/3)*(calib_points_distance),
-                                    2*calib_points_distance,
-                                    0.0));
-        if(i>-1+2*num_calib_points/3)
-            calib_points_in_world_frame.push_back(
-                    Eigen::Vector3d((i+1-2*num_calib_points/3)*(calib_points_distance),
-                                    3*calib_points_distance,
-                                    0.0));
+    // define calibration points in rows of 3 points
+    int rows = 3;
+    for (uint i=0; i<num_calib_points; i++) {
+        calib_points_in_world_frame.push_back(
+            Eigen::Vector3d( (1 + i/rows) * calib_points_distance,
+                             (1 + i%rows) * calib_points_distance,
+                              0.0) );
     }
+
     // -------------------------------------------------------------------------
 
     while(ros::ok() && !exit ){
@@ -212,12 +203,12 @@ void ArmToWorldCalibration::PutDrawings(cv::Mat img) {
 
         for (uint i = 0; i < calib_points_in_world_frame.size(); i++) {
             cv::circle(img, calib_points_screen[i], 6, cv::Scalar(255, 255, 0),
-                       1, CV_AA);
+                       2, CV_AA);
         }
 
         // draw the current target with a different colou
         cv::circle(img, calib_points_screen[calib_points_in_arm_frame.size()],
-                   6, cv::Scalar(0, 0, 255), 1, CV_AA);
+                   6, cv::Scalar(0, 0, 255), 2, CV_AA);
         // --------------------------------------------------------------------
 
         instructions = "Point at the red point with the tooltip, then press "

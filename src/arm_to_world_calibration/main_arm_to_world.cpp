@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
     // a topic name is required for the images
     std::string cam_name_space;
-    n.param<std::string>("image_transport_namespace", cam_name_space,
+    n.param<std::string>("camera_img_topic", cam_name_space,
                          "/camera/image_raw");
 
     std::stringstream cam_pose_namespace;
@@ -39,11 +39,21 @@ int main(int argc, char *argv[]) {
     n.param<std::string>("arm_pose_namespace", arm_pose_namespace,
                          "/dvrk/PSM1/");
 
+    // putting the calibration point on the corners of the board squares
+    // the parameter can be set directly, unless there is the global
+    // /calibrations/board_params
+    double calib_points_distance = 0.01;
+    std::vector<float> board_params = std::vector<float>(5, 0.0);
+
+    if(!n.getParam("calib_points_distance", calib_points_distance)){
+        if(n.getParam("/calibrations/board_params", board_params))
+            calib_points_distance = board_params[3];
+
+    };
+
     int num_calib_points;
     n.param<int>("number_of_calibration_points", num_calib_points, 6);
 
-    double calib_points_distance;
-    n.param<double>("calib_points_distance", calib_points_distance, 0.05);
 
     KDL::Frame arm_to_world_frame;
     ArmToWorldCalibration AWC;
