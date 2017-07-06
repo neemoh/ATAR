@@ -37,6 +37,12 @@ public:
 private:
     std::mutex m;
 
+    // Reads parameters and sets up subscribers and publishers
+    void SetupROSandGetParameters();
+
+    // reads required parameters and initializes the graphics
+    void SetupGraphics();
+
     // stop the running haptic thread (if any), destruct the previous task
     // (if any) and start a new task and thread.
     void HandleTaskEvent();
@@ -74,9 +80,6 @@ private:
     void Cleanup();
 
     void PublishRenderedImages();
-
-    // Reads parameters and sets up subscribers and publishers
-    void SetupROS();
 
     // reads the intrinsic camera parameters
     void ReadCameraParameters(const std::string file_path,
@@ -132,10 +135,8 @@ private:
     int n_arms;
     bool publish_overlayed_images       = false;
     bool one_window_mode                = false;
-    bool with_shadows                   = false;
-    bool offScreen_rendering            = false;
-    bool show_reference_frames          = false;
     bool new_task_event                 = false;
+    bool show_reference_frames          = false;
 
     std::string mesh_files_dir;
 

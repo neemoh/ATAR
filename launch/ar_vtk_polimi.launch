@@ -7,21 +7,21 @@
     <!--<arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>-->
     <!--<arg name= "left_cam_name" value= "ecml" />-->
     <!--<arg name= "right_cam_name" value= "ecmr" />    -->
-    <arg name="left_camera_img_topic" value="/endoscope/left/image_raw"/>
-    <arg name="right_camera_img_topic" value="/endoscope/right/image_raw"/>
-    <arg name= "left_cam_name" value= "ecml" />
-    <arg name= "right_cam_name" value= "ecmr" />
-    <arg name= "haptic_referesh_rate" value= "200" />
+    <arg name="left_camera_img_topic" value="/image_raw"/>
+    <arg name="right_camera_img_topic" value="/image_raw"/>
+    <arg name= "left_cam_name" value= "asus_webcam" />
+    <arg name= "right_cam_name" value= "asus_webcam" />
+    <arg name= "haptic_referesh_rate" value= "200" />-->
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
         <rosparam command="load"
-                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_small.yaml" />
+                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
     </group>
 
-    <!--<node pkg="uvc_camera" type="uvc_camera_node" name="webcam">-->
-    <!--</node>-->
+    <node pkg="uvc_camera" type="uvc_camera_node" name="webcam">
+    </node>
 
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_charuco_left" output="screen" >
@@ -85,7 +85,7 @@
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
         -->
-        <param name= "show_reference_frames" value= "false" />
+        <param name= "show_reference_frames" value= "true" />
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "enable_guidance" value= "false" />
@@ -97,7 +97,7 @@
         <param name= "one_window_mode" value= "true" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
-        <param name= "with_shadows" value= "true" />
+        <param name= "with_shadows" value= "false" />
 
         <!--If the generated images are to be published on
         ros, to help alleviate the considerable bottleneck of grabbing the
@@ -105,6 +105,8 @@
          off screen and not shown in opengl windows.-->
         <param name= "offScreen_rendering" value= "false" />
 
+        <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
+        <rosparam param="windows_position"> [1200, 40, 300, 0]</rosparam>
 
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
