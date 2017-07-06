@@ -17,6 +17,11 @@
 // instance), not for dynamic bodies. For that you should either use Convex
 // Hulls and/or basic shapes to create bodies that resemble your mesh to some
 // extent. Please see ConvexDecomposition demo for that.
+//
+//IMPORTANT NOTE: We were interested in objects with dimensions in the
+//        order of a few millimiters. It turned out that the bullet simulation
+//        becomes unstable for such small dimensions. To get around this, the
+//        dimensions of all the bullet related things are multiplied by B_DIM_SCALE.
 
 enum ObjectType {
     NOPHYSICS,  // Just graphics
