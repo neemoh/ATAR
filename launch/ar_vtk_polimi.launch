@@ -3,25 +3,25 @@
     <arg name="slave_2_name" value="PSM2"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
-    <arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>
-    <arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>
-    <arg name= "left_cam_name" value= "ecml" />
-    <arg name= "right_cam_name" value= "ecmr" />
-    <!--<arg name="left_camera_img_topic" value="/image_raw"/>-->
-    <!--<arg name="right_camera_img_topic" value="/image_raw"/>-->
-    <!--<arg name= "left_cam_name" value= "asus_webcam" />-->
-    <!--<arg name= "right_cam_name" value= "asus_webcam" />-->
+    <!--<arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>-->
+    <!--<arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>-->
+    <!--<arg name= "left_cam_name" value= "ecml" />-->
+    <!--<arg name= "right_cam_name" value= "ecmr" />-->
+    <arg name="left_camera_img_topic" value="/image_raw"/>
+    <arg name="right_camera_img_topic" value="/image_raw"/>
+    <arg name= "left_cam_name" value= "asus_webcam" />
+    <arg name= "right_cam_name" value= "asus_webcam" />
     <arg name= "haptic_referesh_rate" value= "500" />-->
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
         <rosparam command="load"
-                  file="$(find atar)/launch/params_charuco_board_8_12_polimi.yaml" />
+                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
     </group>
 
-    <!--<node pkg="uvc_camera" type="uvc_camera_node" name="webcam">-->
-    <!--</node>-->
+    <node pkg="uvc_camera" type="uvc_camera_node" name="webcam">
+    </node>
 
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_charuco_left" output="screen" >
@@ -87,6 +87,12 @@
         -->
         <param name= "show_reference_frames" value= "true" />
 
+        <!--[0-1] weigthed average of the estimated cam pose. lower number
+        results in smoother estimation but adds delay. Set 1.0 if you don't
+        want averaging.
+         -->
+        <param name= "cam_pose_averaging_factor" value= "0.1" />
+
         <!--Activate or deactivate haptic guidance -->
         <param name= "enable_guidance" value= "false" />
 
@@ -97,7 +103,7 @@
         <param name= "one_window_mode" value= "true" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
-        <param name= "with_shadows" value= "true" />
+        <param name= "with_shadows" value= "false" />
 
         <!--If the generated images are to be published on
         ros, to help alleviate the considerable bottleneck of grabbing the
@@ -106,7 +112,7 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="windows_position"> [1920, 0, 300, 0]</rosparam>
+        <rosparam param="windows_position"> [1400, 50, 300, 0]</rosparam>
 
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>

@@ -102,7 +102,6 @@ private:
 private:
     int num_render_windows_;
     bool with_shadows_;
-
     //cameras
     CalibratedCamera  *                     background_camera_[2];
     CalibratedCamera  *                     scene_camera_[2];
@@ -116,8 +115,6 @@ private:
     vtkSmartPointer<vtkImageActor>          image_actor_[2];
     vtkSmartPointer<vtkImageData>           camera_image_[2];
     // transforms
-    // used as a history to check for large changes;
-    cv::Vec3d cam_tvec_last_[2];
 
     // windows
     vtkSmartPointer<vtkRenderWindow>        render_window_[2];
