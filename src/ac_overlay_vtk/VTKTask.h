@@ -29,12 +29,16 @@
 
 class VTKTask{
 public:
-    VTKTask(const bool show_ref_frames,
+    VTKTask(
+            const bool show_ref_frames,
             const bool biman,
-            const bool with_guidance) :
+            const bool with_guidance,
+            const double haptic_loop_rate
+        ) :
             show_ref_frames(show_ref_frames),
             bimanual(biman),
-            with_guidance(with_guidance){};
+            with_guidance(with_guidance),
+            haptic_loop_rate(haptic_loop_rate){};
 
     virtual ~VTKTask(){
     };
@@ -79,6 +83,7 @@ protected:
     bool bimanual;
     bool with_guidance;
     bool show_ref_frames;
+    double haptic_loop_rate;
     std::vector<vtkSmartPointer<vtkProp>>           actors;
 
 };

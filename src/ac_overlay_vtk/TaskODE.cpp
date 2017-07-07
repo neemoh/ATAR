@@ -12,7 +12,7 @@ TaskODE::TaskODE(const std::string stl_file_dir,
                  const bool show_ref_frames, const bool biman,
                  const bool with_guidance)
         :
-        VTKTask(show_ref_frames, biman, with_guidance),
+    VTKTask(show_ref_frames, biman, with_guidance, 0),
         stl_files_dir(stl_file_dir),
         d_board_actor(vtkSmartPointer<vtkActor>::New())
 

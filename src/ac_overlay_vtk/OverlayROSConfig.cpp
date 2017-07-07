@@ -46,9 +46,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 
     // Loop frequency
     n.param<double>("desired_pose_update_frequency",
-                    desired_pose_update_freq, 100);
-    ROS_INFO("The desired pose will be updated at '%f'",
-             desired_pose_update_freq);
+                        haptic_loop_rate, 100);
 
     n.param<bool>("enable_guidance", with_guidance, true);
     ROS_INFO("Starting the BuzzWire task with guidance: %s",
@@ -432,8 +430,10 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     if(task_id ==1){
         // allocate anew dynamic task
         ROS_DEBUG("Starting new BuzzWireTask task. ");
-        task_ptr   = new TaskBuzzWire(mesh_files_dir, show_reference_frames,
-                                      (bool) (n_arms - 1), with_guidance);
+        task_ptr   = new TaskBuzzWire(
+            mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
+            with_guidance, haptic_loop_rate
+        );
     }
     else if(task_id ==2){
         ROS_DEBUG("Starting new TaskKidney task. ");

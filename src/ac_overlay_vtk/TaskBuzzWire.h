@@ -65,9 +65,13 @@ enum class TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
 class TaskBuzzWire : public VTKTask{
 public:
 
-    TaskBuzzWire(const std::string stl_files_dir,
-                     const bool show_ref_frames, const bool num_tools,
-                     const bool with_guidance);
+    TaskBuzzWire(
+            const std::string stl_files_dir,
+            const bool show_ref_frames,
+            const bool num_tools,
+            const bool with_guidance,
+            const double haptic_loop_rate
+        );
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {

@@ -131,7 +131,7 @@ private:
     // ----------------------------------
 
     ros::NodeHandle n;
-    double desired_pose_update_freq;
+    double   haptic_loop_rate;
     int n_arms;
     bool publish_overlayed_images       = false;
     bool one_window_mode                = false;

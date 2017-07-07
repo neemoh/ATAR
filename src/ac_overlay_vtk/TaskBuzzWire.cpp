@@ -23,11 +23,15 @@ namespace Colors {
     double DeepPink[3] {1.0, 0.08, 0.58};
 };
 
-TaskBuzzWire::TaskBuzzWire(const std::string stl_file_dir,
-                           const bool show_ref_frames, const bool biman,
-                           const bool with_guidance)
+TaskBuzzWire::TaskBuzzWire(
+        const std::string stl_file_dir,
+        const bool show_ref_frames,
+        const bool biman,
+        const bool with_guidance,
+        const double haptic_loop_rate
+    )
         :
-        VTKTask(show_ref_frames, biman, with_guidance),
+    VTKTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
         stl_files_dir(stl_file_dir),
 //        show_ref_frames(show_ref_frames),
 //        bimanual(biman),
@@ -914,7 +918,9 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
                 ("/PSM2/tool_pose_desired", 10);
 
-    ros::Rate loop_rate(200);
+    ros::Rate loop_rate(haptic_loop_rate);
+    ROS_INFO("The desired pose will be updated at '%f'",
+             haptic_loop_rate);
 
     while (ros::ok())
     {

@@ -12,7 +12,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
-    VTKTask(show_ref_frames, biman, with_guidance)
+    VTKTask(show_ref_frames, biman, with_guidance, 0)
 {
 
 
