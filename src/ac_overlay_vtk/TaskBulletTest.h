@@ -72,6 +72,9 @@ public:
 
     custom_msgs::TaskState GetTaskStateMsg();
 
+    // check if the task is finished
+    void EndChecking();
+
     // resets the number of repetitions and task state;
     void ResetTask();
 
@@ -97,9 +100,30 @@ private:
     std::vector<std::array<double, 3> > sphere_positions;
 
     double board_dimensions[3];
+    double peg_dimensions[3];
+    double sides;
+    bool out[4];
+    double actual_distance;
+    double target_distance;
+    ros::Time start_pause;
     BulletVTKObject* kine_box;
-    BulletVTKObject* kine_sphere_0;
-    BulletVTKObject* kine_sphere_1;
+    BulletVTKObject* kine_cylinder_0;
+    BulletVTKObject* kine_cylinder_1;
+    BulletVTKObject* peg4;
+    BulletVTKObject* peg1;
+    BulletVTKObject* peg2;
+    BulletVTKObject* peg3;
+    BulletVTKObject* cubes[4];
+    double* peg_pose1;
+    double* peg_pose2;
+    double* peg_pose3;
+    double* peg_pose4;
+    double* peg_p1;
+    double* peg_p2;
+    double* peg_p3;
+    double* peg_p4;
+    std::vector<double> target_pos;
+    KDL::Vector previous_point;
     btDiscreteDynamicsWorld* dynamicsWorld;
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
@@ -120,6 +144,9 @@ private:
     double * gripper_position[2];
 //    vtkSmartPointer<vtkActor>                       d_board_actor;
 //    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
+
+    int peg_type=1; // 1 = spheres, 0= cubes
+
 
 };
 
