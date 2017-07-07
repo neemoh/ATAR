@@ -16,8 +16,8 @@
 
 // -----------------------------------------------------------------------------
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
-        : n(node_name), cam_poses_provided_as_params(false), running_task_id
-        (0), task_ptr(NULL)
+    : n(node_name), cam_poses_provided_as_params(false), running_task_id
+    (0), task_ptr(NULL)
 {
 
     // assign the callback functions
@@ -28,7 +28,280 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name)
 
     it = new image_transport::ImageTransport(n);
 
-    SetupROS();
+    SetupROSandGetParameters();
+
+    SetupGraphics();
+
+}
+
+//------------------------------------------------------------------------------
+void OverlayROSConfig::SetupROSandGetParameters() {
+
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
+                                       ros::console::levels::Debug) ) {
+        ros::console::notifyLoggerLevelsChanged();
+    }
+
+    bool all_required_params_found = true;
+
+    // Loop frequency
+    n.param<double>("desired_pose_update_frequency",
+                    desired_pose_update_freq, 100);
+    ROS_INFO("The desired pose will be updated at '%f'",
+             desired_pose_update_freq);
+
+    n.param<bool>("enable_guidance", with_guidance, true);
+    ROS_INFO("Starting the BuzzWire task with guidance: %s",
+             with_guidance ? "true" : "false");
+
+
+    if (n.getParam("mesh_files_dir", mesh_files_dir)) {
+        ROS_INFO("stl files will be loaded from: %s", mesh_files_dir.c_str());
+    } else
+        ROS_ERROR(
+            "Parameter '%s' is required. ",
+            n.resolveName("mesh_files_dir").c_str());
+
+    // ---------------------------- CAM INTRINSICS  ----------------------------
+    // ------- load the intrinsic calibration files
+    // get home directory
+    struct passwd *pw = getpwuid(getuid());
+    const char *home_dir = pw->pw_dir;
+
+    std::string left_cam_name;
+    if (n.getParam("left_cam_name", left_cam_name)) {
+
+        std::stringstream path;
+        path << std::string(home_dir) << std::string("/.ros/camera_info/")
+             << left_cam_name << "_intrinsics.yaml";
+        ReadCameraParameters(path.str(), camera_matrix[0],
+                             camera_distortion[0]);
+    } else
+        ROS_ERROR(
+            "Parameter '%s' is required. Place the intrinsic calibration "
+                "file of each camera in ~/.ros/camera_info/ named as "
+                "<cam_name>_intrinsics.yaml",
+            n.resolveName("left_cam_name").c_str());
+
+    std::string right_cam_name;
+    if (n.getParam("right_cam_name", right_cam_name)) {
+        std::stringstream path;
+        path << std::string(home_dir) << std::string("/.ros/camera_info/")
+             << right_cam_name << "_intrinsics.yaml";
+        ReadCameraParameters(path.str(), camera_matrix[1],
+                             camera_distortion[1]);
+    } else
+        ROS_ERROR(
+            "Parameter '%s' is required. Place the intrinsic calibration "
+                "file of each camera in ~/.ros/camera_info/ named as "
+                "<cam_name>_intrinsics.yaml",
+            n.resolveName("right_cam_name").c_str());
+
+
+    // ------------------------------------- IMAGES ----------------------------
+    // Left image subscriber
+    std::string left_image_topic_name = "/camera/left/image_color";;
+    if (n.getParam("left_image_topic_name", left_image_topic_name))
+        ROS_INFO(
+            "[SUBSCRIBERS] Left camera images will be read from topic '%s'",
+            left_image_topic_name.c_str());
+    image_subscribers[0] = it->subscribe(
+        left_image_topic_name, 1, &OverlayROSConfig::ImageLeftCallback,
+        this);
+
+    //--------
+    // Left image subscriber.
+    std::string right_image_topic_name = "/camera/right/image_color";
+    if (n.getParam("right_image_topic_name", right_image_topic_name))
+        ROS_INFO(
+            "[SUBSCRIBERS] Right camera images will be read from topic '%s'",
+            right_image_topic_name.c_str());
+    image_subscribers[1] = it->subscribe(
+        right_image_topic_name, 1, &OverlayROSConfig::ImageRightCallback,
+        this);
+
+    // KEPT FOR THE OLD OVERLAY NODE TO WORK THE NEW NODE HAS JUST ONE PUBLISHER
+    // publishers for the overlayed images
+    publisher_overlayed[0] = it->advertise("left/image_color", 1);
+    publisher_overlayed[1] = it->advertise("right/image_color", 1);
+
+    publisher_stereo_overlayed = it->advertise("stereo/image_color", 1);
+
+
+    // -------------------------------- CAM POSES ------------------------------
+    // We need to know the pose of the cameras with respect to thetask-space
+    // coordinates. If the camera or the markers move the pose should be
+    // estimated by a node and here we subscribe to that topic. If on the
+    // other hand no cam/marker motion is involved the fixed pose is read
+    // as a static parameter.
+
+    // we first try to read the poses as parameters and later update the
+    // poses if new messages are arrived on the topics
+    std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
+    // left cam pose as parameter
+    if (n.getParam("/calibrations/world_frame_to_left_cam_frame", temp_vec)) {
+        conversions::VectorToKDLFrame(temp_vec, pose_cam[0]);
+        conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec[0], cam_tvec[0]);
+
+        // right pose as parameter
+        if (n.getParam("/calibrations/world_frame_to_right_cam_frame",
+                       temp_vec)) {
+            conversions::VectorToKDLFrame(temp_vec, pose_cam[1]);
+            conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec[1],
+                                            cam_tvec[1]);
+
+            left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
+            found_left_cam_to_right_cam_tr = true;
+            cam_poses_provided_as_params = true;
+        }
+    }
+
+    // now we set up the subscribers
+    std::stringstream topic_name;
+    topic_name << std::string("/") << left_cam_name
+               << "/world_to_camera_transform";
+    ROS_INFO("[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
+             topic_name.str().c_str());
+    sub_cam_pose_left = n.subscribe(
+        topic_name.str(), 1, &OverlayROSConfig::LeftCamPoseCallback, this);
+
+    topic_name.str("");
+    topic_name << std::string("/") << right_cam_name
+               << "/world_to_camera_transform";
+    // if the topic name is found, check if something is being published on it
+    ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
+             topic_name.str().c_str());
+    sub_cam_pose_right = n.subscribe(
+        topic_name.str(), 1, &OverlayROSConfig::RightCamPoseCallback, this);
+
+
+    // ------------------------------------- Clutches---------------------------
+    sub_foot_pedal_clutch = n.subscribe( "/dvrk/footpedals/camera", 1,
+                                         &OverlayROSConfig::FootSwitchCallback, this);
+    ROS_INFO("[SUBSCRIBERS] Subscribed to /dvrk/footpedals/camera");
+
+    // ------------------------------------- TOOLS -----------------------------
+    n.param<int>("number_of_arms", n_arms, 1);
+    if(n_arms<1 || n_arms>2)
+        throw std::runtime_error("number_of_arms must be 1 or 2");
+    ROS_INFO("Expecting '%d' arm(s)", n_arms);
+
+    //    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
+    subtool_current_pose = new ros::Subscriber[(uint)n_arms];
+    subtool_current_gripper = new ros::Subscriber[(uint)n_arms];
+    publisher_ac_params = new ros::Publisher[(uint)n_arms];
+
+
+    std::string slave_names[n_arms];
+    std::string master_names[n_arms];
+    //std::string master_names[n_arms];
+    std::string check_topic_name;
+
+    for(int n_arm = 0; n_arm<n_arms; n_arm++){
+
+        //getting the name of the arms
+        std::stringstream param_name;
+        param_name << std::string("slave_") << n_arm + 1 << "_name";
+        n.getParam(param_name.str(), slave_names[n_arm]);
+
+
+        param_name.str("");
+        param_name << std::string("master_") << n_arm + 1 << "_name";
+        n.getParam(param_name.str(), master_names[n_arm]);
+
+        // the current pose of the tools (slaves)
+        param_name.str("");
+        param_name << std::string("/dvrk/") <<slave_names[n_arm]
+                   << "/position_cartesian_current";
+        subtool_current_pose[n_arm] =
+            n.subscribe(param_name.str(), 1,
+                        pose_current_tool_callbacks[n_arm], this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
+        // we will later check to see if something is publishing on the
+        // current slave pose
+        check_topic_name = param_name.str();
+
+        // the current pose of the tools (slaves)
+        param_name.str("");
+        param_name << std::string("/dvrk/") <<master_names[n_arm]
+                   << "/gripper_position_current";
+        subtool_current_gripper[n_arm] =
+            n.subscribe(param_name.str(), 1, gripper_callbacks[n_arm], this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
+        // we will later check to see if something is publishing on the
+        // current slave pose
+        check_topic_name = param_name.str();
+
+        // Publishing the active constraint parameters that may change during
+        // the task
+        param_name.str("");
+        param_name << std::string("/")<< master_names[n_arm]
+                   << "/active_constraint_param";
+        publisher_ac_params[n_arm] =
+            n.advertise<custom_msgs::ActiveConstraintParameters>(
+                param_name.str().c_str(), 1 );
+        ROS_INFO("Will publish on %s", param_name.str().c_str());
+
+        // the transformation from the coordinate frame of the slave (RCM)
+        // to the task coordinate frame.
+        param_name.str("");
+        param_name << (std::string)"/calibrations/world_frame_to_" <<
+                   slave_names[n_arm] << "_frame";
+        std::vector<double> vect_temp = std::vector<double>(7, 0.0);
+        if(n.getParam(param_name.str(), vect_temp)){
+            conversions::VectorToKDLFrame(vect_temp,
+                                          slave_frame_to_world_frame[n_arm]);
+            // param is from task to RCM, we want the inverse
+            slave_frame_to_world_frame[n_arm] =
+                slave_frame_to_world_frame[n_arm].Inverse();
+        }
+        else
+            ROS_INFO("Parameter %s was not found. Arm to world calibration "
+                         "must be performed.", param_name.str().c_str());
+    }
+
+    // Publisher for the task state
+    std::string task_state_topic_name = "/task_state";
+    publisher_task_state = n.advertise<custom_msgs::TaskState>(
+        task_state_topic_name.c_str(), 1);
+    ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
+
+    subscriber_control_events = n.subscribe(
+        "/control_events", 1, &OverlayROSConfig::ControlEventsCallback,
+        this);
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to /control_events");
+
+
+    if (!all_required_params_found)
+        throw std::runtime_error("ERROR: some required topics are not set");
+}
+
+
+// -----------------------------------------------------------------------------
+void OverlayROSConfig::SetupGraphics() {
+
+
+    n.param<bool>("publish_overlayed_images", publish_overlayed_images, true);
+    ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
+             publish_overlayed_images ? "true" : "false");
+
+    n.param<bool>("one_window_mode", one_window_mode, false);
+    ROS_INFO("Rendered Images will be shown in a single window: %s",
+             one_window_mode ? "true" : "false");
+
+    bool offScreen_rendering, with_shadows;
+    n.param<bool>("with_shadows", with_shadows, false);
+    ROS_INFO("Shadows Generation: %s",
+             with_shadows ? "true" : "false");
+
+    n.param<bool>("offScreen_rendering", offScreen_rendering, false);
+    ROS_INFO("offScreen_rendering: %s",
+             offScreen_rendering ? "true" : "false");
+
+    n.param<bool>("show_reference_frames", show_reference_frames, true);
+
+    std::vector<int> windows_position(4, 0);
+    bool temp = n.getParam("windows_position", windows_position);
 
     // Create the window for the video feed if we publish the images
     if(publish_overlayed_images) {
@@ -48,7 +321,7 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name)
     LockAndGetImages(ros::Duration(1), cam_images);
 
     graphics = new Rendering(2 - (uint) one_window_mode, with_shadows,
-                             offScreen_rendering);
+                             offScreen_rendering, windows_position);
 
     // in case camera poses are set as parameters
     graphics->SetWorldToCameraTransform(cam_rvec, cam_tvec);
@@ -60,8 +333,6 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name)
     graphics->Render();
 
 }
-
-
 // -----------------------------------------------------------------------------
 bool OverlayROSConfig::UpdateWorld() {
 
@@ -104,9 +375,6 @@ bool OverlayROSConfig::UpdateWorld() {
         // arm calibration
         if(control_event== CE_CALIB_ARM1)
             StartArmToWorldFrameCalibration(0);
-        // arm calibration
-        if(control_event== CE_CALIB_ARM2)
-            StartArmToWorldFrameCalibration(1);
 
         // Copy the rendered image to memory, show it and/or publish it.
         if(publish_overlayed_images)
@@ -116,7 +384,7 @@ bool OverlayROSConfig::UpdateWorld() {
         if(running_task_id) {
             if (task_ptr->IsACParamChanged()) {
                 PublishACtiveConstraintParameters(
-                        task_ptr->GetACParameters());
+                    task_ptr->GetACParameters());
             }
             // publish the task state
             PublishTaskState(task_ptr->GetTaskStateMsg());
@@ -169,28 +437,28 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     }
     else if(task_id ==2){
         ROS_DEBUG("Starting new TaskKidney task. ");
-        task_ptr   = new TaskKidney(mesh_files_dir, false,
+        task_ptr   = new TaskKidney(mesh_files_dir, show_reference_frames,
                                     (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==3){
         ROS_DEBUG("Starting new TaskODE task. ");
-        task_ptr   = new TaskODE(mesh_files_dir, false,
+        task_ptr   = new TaskODE(mesh_files_dir, show_reference_frames,
                                  (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==4){
         ROS_DEBUG("Starting new TaskBullet task. ");
-        task_ptr   = new TaskBullet(mesh_files_dir, false,
+        task_ptr   = new TaskBullet(mesh_files_dir, show_reference_frames,
                                     (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==5){
         ROS_DEBUG("Starting new TaskBulletTest task. ");
-        task_ptr   = new TaskBulletTest(mesh_files_dir, false,
+        task_ptr   = new TaskBulletTest(mesh_files_dir, show_reference_frames,
                                         (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==6){
         ROS_DEBUG("Starting new TaskPegInHole task. ");
-        task_ptr   = new TaskPegInHole(mesh_files_dir, false,
-                                        (bool) (n_arms - 1), with_guidance);
+        task_ptr   = new TaskPegInHole(mesh_files_dir, show_reference_frames,
+                                       (bool) (n_arms - 1), with_guidance);
     }
 
     if(task_id >0 && task_id <7) {
@@ -204,7 +472,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
 
         // bind the haptics thread
         haptics_thread = boost::thread(boost::bind(
-                &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
+            &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
     }
 }
 
@@ -216,265 +484,6 @@ void OverlayROSConfig::DeleteTask() {
     ros::Rate sleep(50);
     sleep.sleep();
     delete task_ptr;
-}
-
-
-//------------------------------------------------------------------------------
-void OverlayROSConfig::SetupROS() {
-
-    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
-                                       ros::console::levels::Debug) ) {
-        ros::console::notifyLoggerLevelsChanged();
-    }
-
-    bool all_required_params_found = true;
-    // Loop frequency
-    n.param<double>("desired_pose_update_frequency",
-                    desired_pose_update_freq, 100);
-    ROS_INFO("The desired pose will be updated at '%f'",
-             desired_pose_update_freq);
-
-    n.param<bool>("enable_guidance", with_guidance, true);
-    ROS_INFO("Starting the BuzzWire task with guidance: %s",
-             with_guidance ? "true" : "false");
-
-
-    n.param<bool>("publish_overlayed_images", publish_overlayed_images, true);
-    ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
-             publish_overlayed_images ? "true" : "false");
-
-    n.param<bool>("one_window_mode", one_window_mode, false);
-    ROS_INFO("Rendered Images will be shown in a single window: %s",
-             one_window_mode ? "true" : "false");
-
-    n.param<bool>("with_shadows", with_shadows, false);
-    ROS_INFO("Shadows Generation: %s",
-             with_shadows ? "true" : "false");
-
-    n.param<bool>("offScreen_rendering", offScreen_rendering, false);
-    ROS_INFO("offScreen_rendering: %s",
-             offScreen_rendering ? "true" : "false");
-
-    if (n.getParam("mesh_files_dir", mesh_files_dir)) {
-        ROS_INFO("stl files will be loaded from: %s", mesh_files_dir.c_str());
-    } else
-        ROS_ERROR(
-                "Parameter '%s' is required. ",
-                n.resolveName("mesh_files_dir").c_str());
-
-    // ---------------------------- CAM INTRINSICS  ----------------------------
-    // ------- load the intrinsic calibration files
-    // get home directory
-    struct passwd *pw = getpwuid(getuid());
-    const char *home_dir = pw->pw_dir;
-
-    std::string left_cam_name;
-    if (n.getParam("left_cam_name", left_cam_name)) {
-
-        std::stringstream path;
-        path << std::string(home_dir) << std::string("/.ros/camera_info/")
-             << left_cam_name << "_intrinsics.yaml";
-        ReadCameraParameters(path.str(), camera_matrix[0],
-                             camera_distortion[0]);
-    } else
-        ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n.resolveName("left_cam_name").c_str());
-
-    std::string right_cam_name;
-    if (n.getParam("right_cam_name", right_cam_name)) {
-        std::stringstream path;
-        path << std::string(home_dir) << std::string("/.ros/camera_info/")
-             << right_cam_name << "_intrinsics.yaml";
-        ReadCameraParameters(path.str(), camera_matrix[1],
-                             camera_distortion[1]);
-    } else
-        ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n.resolveName("right_cam_name").c_str());
-
-
-    // ------------------------------------- IMAGES ----------------------------
-    // Left image subscriber
-    std::string left_image_topic_name = "/camera/left/image_color";;
-    if (n.getParam("left_image_topic_name", left_image_topic_name))
-        ROS_INFO(
-                "[SUBSCRIBERS] Left camera images will be read from topic '%s'",
-                left_image_topic_name.c_str());
-    image_subscribers[0] = it->subscribe(
-            left_image_topic_name, 1, &OverlayROSConfig::ImageLeftCallback,
-            this);
-
-    //--------
-    // Left image subscriber.
-    std::string right_image_topic_name = "/camera/right/image_color";
-    if (n.getParam("right_image_topic_name", right_image_topic_name))
-        ROS_INFO(
-                "[SUBSCRIBERS] Right camera images will be read from topic '%s'",
-                right_image_topic_name.c_str());
-    image_subscribers[1] = it->subscribe(
-            right_image_topic_name, 1, &OverlayROSConfig::ImageRightCallback,
-            this);
-
-    // KEPT FOR THE OLD OVERLAY NODE TO WORK THE NEW NODE HAS JUST ONE PUBLISHER
-    // publishers for the overlayed images
-    publisher_overlayed[0] = it->advertise("left/image_color", 1);
-    publisher_overlayed[1] = it->advertise("right/image_color", 1);
-
-    publisher_stereo_overlayed = it->advertise("stereo/image_color", 1);
-
-
-    // -------------------------------- CAM POSES ------------------------------
-    // We need to know the pose of the cameras with respect to thetask-space
-    // coordinates. If the camera or the markers move the pose should be
-    // estimated by a node and here we subscribe to that topic. If on the
-    // other hand no cam/marker motion is involved the fixed pose is read
-    // as a static parameter.
-
-    // we first try to read the poses as parameters and later update the
-    // poses if new messages are arrived on the topics
-    std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
-    // left cam pose as parameter
-    if (n.getParam("/calibrations/world_frame_to_left_cam_frame", temp_vec)) {
-        conversions::VectorToKDLFrame(temp_vec, pose_cam[0]);
-        conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec[0], cam_tvec[0]);
-
-        // right pose as parameter
-        if (n.getParam("/calibrations/world_frame_to_right_cam_frame",
-                       temp_vec)) {
-            conversions::VectorToKDLFrame(temp_vec, pose_cam[1]);
-            conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec[1],
-                                            cam_tvec[1]);
-
-            left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
-            found_left_cam_to_right_cam_tr = true;
-            cam_poses_provided_as_params = true;
-        }
-    }
-
-    // now we set up the subscribers
-    std::stringstream topic_name;
-    topic_name << std::string("/") << left_cam_name
-               << "/world_to_camera_transform";
-    ROS_INFO("[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
-             topic_name.str().c_str());
-    sub_cam_pose_left = n.subscribe(
-            topic_name.str(), 1, &OverlayROSConfig::LeftCamPoseCallback, this);
-
-    topic_name.str("");
-    topic_name << std::string("/") << right_cam_name
-               << "/world_to_camera_transform";
-    // if the topic name is found, check if something is being published on it
-    ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
-             topic_name.str().c_str());
-    sub_cam_pose_right = n.subscribe(
-            topic_name.str(), 1, &OverlayROSConfig::RightCamPoseCallback, this);
-
-
-    // ------------------------------------- Clutches---------------------------
-    sub_foot_pedal_clutch = n.subscribe( "/dvrk/footpedals/camera", 1,
-                                         &OverlayROSConfig::FootSwitchCallback, this);
-    ROS_INFO("[SUBSCRIBERS] Subscribed to /dvrk/footpedals/camera");
-
-    // ------------------------------------- TOOLS -----------------------------
-    n.param<int>("number_of_arms", n_arms, 1);
-    if(n_arms<1 || n_arms>2)
-        throw std::runtime_error("number_of_arms must be 1 or 2");
-    ROS_INFO("Expecting '%d' arm(s)", n_arms);
-
-    //    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
-    subtool_current_pose = new ros::Subscriber[(uint)n_arms];
-    subtool_current_gripper = new ros::Subscriber[(uint)n_arms];
-    publisher_ac_params = new ros::Publisher[(uint)n_arms];
-
-
-    std::string slave_names[n_arms];
-    std::string master_names[n_arms];
-    //std::string master_names[n_arms];
-    std::string check_topic_name;
-
-    for(int n_arm = 0; n_arm<n_arms; n_arm++){
-
-        //getting the name of the arms
-        std::stringstream param_name;
-        param_name << std::string("slave_") << n_arm + 1 << "_name";
-        n.getParam(param_name.str(), slave_names[n_arm]);
-
-
-        param_name.str("");
-        param_name << std::string("master_") << n_arm + 1 << "_name";
-        n.getParam(param_name.str(), master_names[n_arm]);
-
-        // the current pose of the tools (slaves)
-        param_name.str("");
-        param_name << std::string("/dvrk/") <<slave_names[n_arm]
-                   << "/position_cartesian_current";
-        subtool_current_pose[n_arm] =
-                n.subscribe(param_name.str(), 1,
-                            pose_current_tool_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
-        // we will later check to see if something is publishing on the
-        // current slave pose
-        check_topic_name = param_name.str();
-
-        // the current pose of the tools (slaves)
-        param_name.str("");
-        param_name << std::string("/dvrk/") <<master_names[n_arm]
-                   << "/gripper_position_current";
-        subtool_current_gripper[n_arm] =
-                n.subscribe(param_name.str(), 1, gripper_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
-        // we will later check to see if something is publishing on the
-        // current slave pose
-        check_topic_name = param_name.str();
-
-        // Publishing the active constraint parameters that may change during
-        // the task
-        param_name.str("");
-        param_name << std::string("/")<< master_names[n_arm]
-                   << "/active_constraint_param";
-        publisher_ac_params[n_arm] =
-                n.advertise<custom_msgs::ActiveConstraintParameters>(
-                        param_name.str().c_str(), 1 );
-        ROS_INFO("Will publish on %s", param_name.str().c_str());
-
-        // the transformation from the coordinate frame of the slave (RCM)
-        // to the task coordinate frame.
-        param_name.str("");
-        param_name << (std::string)"/calibrations/world_frame_to_" <<
-                   slave_names[n_arm] << "_frame";
-        std::vector<double> vect_temp = std::vector<double>(7, 0.0);
-        if(n.getParam(param_name.str(), vect_temp)){
-            conversions::VectorToKDLFrame(vect_temp,
-                                          slave_frame_to_world_frame[n_arm]);
-            // param is from task to RCM, we want the inverse
-            slave_frame_to_world_frame[n_arm] =
-                    slave_frame_to_world_frame[n_arm].Inverse();
-        }
-        else
-            ROS_INFO("Parameter %s was not found. Arm to world calibration "
-                             "must be performed.", param_name.str().c_str());
-    }
-
-    // Publisher for the task state
-    std::string task_state_topic_name = "/task_state";
-    publisher_task_state = n.advertise<custom_msgs::TaskState>(
-            task_state_topic_name.c_str(), 1);
-    ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
-
-    subscriber_control_events = n.subscribe(
-            "/control_events", 1, &OverlayROSConfig::ControlEventsCallback,
-            this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to /control_events");
-
-    n.param<bool>("show_reference_frames", show_reference_frames, true);
-
-    if (!all_required_params_found)
-        throw std::runtime_error("ERROR: some required topics are not set");
 }
 
 
@@ -545,7 +554,7 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
             }
             if(count > 100){
                 ROS_ERROR("Giving up. No camera pose parameter was present and "
-                                  "poses of both cams was not being published.");
+                              "poses of both cams was not being published.");
                 break;
             }
         }
@@ -589,7 +598,7 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
 
 // -----------------------------------------------------------------------------
 void OverlayROSConfig::PublishACtiveConstraintParameters(
-        const custom_msgs::ActiveConstraintParameters &ac_params) {
+    const custom_msgs::ActiveConstraintParameters &ac_params) {
 
     publisher_ac_params[0].publish(ac_params);
     if(n_arms==2)
@@ -704,20 +713,20 @@ void OverlayROSConfig::PublishRenderedImages() {
     if(one_window_mode){
         cv::imshow(cv_window_names[0], augmented_images[0]);
         publisher_stereo_overlayed.publish(
-                cv_bridge::CvImage(std_msgs::Header(),
-                                   "bgr8",
-                                   augmented_images[0])
-                        .toImageMsg());
+            cv_bridge::CvImage(std_msgs::Header(),
+                               "bgr8",
+                               augmented_images[0])
+                .toImageMsg());
 
     }
     else{
         for (int i = 0; i < 2; ++i) {
             cv::imshow(cv_window_names[i], augmented_images[i]);
             publisher_overlayed[i].publish(
-                    cv_bridge::CvImage(std_msgs::Header(),
-                                       "bgr8",
-                                       augmented_images[i])
-                            .toImageMsg());
+                cv_bridge::CvImage(std_msgs::Header(),
+                                   "bgr8",
+                                   augmented_images[i])
+                    .toImageMsg());
         }
         if (key == 'f')  //full screen
             SwitchFullScreenCV(cv_window_names[1]);
@@ -783,7 +792,7 @@ void OverlayROSConfig::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 
 // -----------------------------------------------------------------------------
 void OverlayROSConfig::LeftCamPoseCallback(
-        const geometry_msgs::PoseStampedConstPtr & msg)
+    const geometry_msgs::PoseStampedConstPtr & msg)
 {
     new_cam_pose[0] = true;
     tf::poseMsgToKDL(msg->pose, pose_cam[0]);
@@ -792,7 +801,7 @@ void OverlayROSConfig::LeftCamPoseCallback(
 }
 
 void OverlayROSConfig::RightCamPoseCallback(
-        const geometry_msgs::PoseStampedConstPtr & msg)
+    const geometry_msgs::PoseStampedConstPtr & msg)
 {
     new_cam_pose[1] = true;
     tf::poseMsgToKDL(msg->pose, pose_cam[1]);
@@ -803,7 +812,7 @@ void OverlayROSConfig::RightCamPoseCallback(
 // Reading the pose of the slaves and take them to task space
 // -----------------------------------------------------------------------------
 void OverlayROSConfig::Tool1PoseCurrentCallback(
-        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    const geometry_msgs::PoseStamped::ConstPtr &msg) {
     // take the pose from the arm frame to the task frame
     KDL::Frame frame;
     tf::poseMsgToKDL(msg->pose, frame);
@@ -812,7 +821,7 @@ void OverlayROSConfig::Tool1PoseCurrentCallback(
 }
 
 void OverlayROSConfig::Tool2PoseCurrentCallback(
-        const geometry_msgs::PoseStamped::ConstPtr &msg) {
+    const geometry_msgs::PoseStamped::ConstPtr &msg) {
     // take the pose from the arm frame to the task frame
     KDL::Frame frame;
     tf::poseMsgToKDL(msg->pose, frame);
@@ -822,12 +831,12 @@ void OverlayROSConfig::Tool2PoseCurrentCallback(
 // -----------------------------------------------------------------------------
 // Reading the gripper positions
 void OverlayROSConfig::Tool1GripperCurrentCallback(
-        const std_msgs::Float32::ConstPtr &msg) {
+    const std_msgs::Float32::ConstPtr &msg) {
     gripper_current[0] =  msg->data;
 }
 
 void OverlayROSConfig::Tool2GripperCurrentCallback(
-        const std_msgs::Float32::ConstPtr &msg) {
+    const std_msgs::Float32::ConstPtr &msg) {
     gripper_current[1] =  msg->data;
 
 }
@@ -845,62 +854,61 @@ void OverlayROSConfig::ControlEventsCallback(const std_msgs::Int8ConstPtr
     ROS_DEBUG("Received control event %d", control_event);
 
     switch(control_event){
-        case CE_RESET_TASK:
-            task_ptr->ResetTask();
-            break;
+    case CE_RESET_TASK:
+        task_ptr->ResetTask();
+        break;
 
-        case CE_RESET_ACQUISITION:
-            task_ptr->ResetCurrentAcquisition();
-            break;
+    case CE_RESET_ACQUISITION:
+        task_ptr->ResetCurrentAcquisition();
+        break;
 
-        case CE_PUBLISH_IMGS_ON:
-            publish_overlayed_images = true;
-            break;
+    case CE_PUBLISH_IMGS_ON:
+        publish_overlayed_images = true;
+        break;
 
-        case CE_PUBLISH_IMGS_OFF:
-            publish_overlayed_images = false;
-            break;
+    case CE_PUBLISH_IMGS_OFF:
+        publish_overlayed_images = false;
+        break;
 
-        case CE_TOGGLE_FULLSCREEN:
-            graphics->ToggleFullScreen();
-            break;
+    case CE_TOGGLE_FULLSCREEN:
+        graphics->ToggleFullScreen();
+        break;
 
-        case CE_START_TASK1:
-            running_task_id = 1;
-            new_task_event = true;
-            break;
+    case CE_START_TASK1:
+        running_task_id = 1;
+        new_task_event = true;
+        break;
 
-        case CE_START_TASK2:
-            running_task_id = 2;
-            new_task_event = true;
-            break;
+    case CE_START_TASK2:
+        running_task_id = 2;
+        new_task_event = true;
+        break;
 
-        case CE_START_TASK3:
-            running_task_id = 3;
-            new_task_event = true;
-            break;
+    case CE_START_TASK3:
+        running_task_id = 3;
+        new_task_event = true;
+        break;
 
-        case CE_START_TASK4:
-            running_task_id = 4;
-            new_task_event = true;
-            break;
+    case CE_START_TASK4:
+        running_task_id = 4;
+        new_task_event = true;
+        break;
 
-        case CE_START_TASK5:
-            running_task_id = 5;
-            new_task_event = true;
-            break;
+    case CE_START_TASK5:
+        running_task_id = 5;
+        new_task_event = true;
+        break;
 
-        case CE_START_TASK6:
-            running_task_id = 6;
-            new_task_event = true;
-            break;
+    case CE_START_TASK6:
+        running_task_id = 6;
+        new_task_event = true;
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
 }
-
 
 
 void SwitchFullScreenCV(const std::string window_name) {

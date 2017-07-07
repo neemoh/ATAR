@@ -26,7 +26,7 @@
 void AddLightActors(vtkRenderer *r);
 
 Rendering::Rendering(uint num_windows, bool with_shaodws,
-                     bool offScreen_rendering)
+                     bool offScreen_rendering, std::vector<int> window_position)
         : num_render_windows_(num_windows),
           with_shadows_(with_shaodws)
 
@@ -42,10 +42,10 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     render_window_[0]->SetPosition(100, 0);
 
     if(num_render_windows_==1)
-        render_window_[0]->SetPosition(1920, 0);
+        render_window_[0]->SetPosition(window_position[0], window_position[1]);
     else if(num_render_windows_==2) {
         render_window_[1] = vtkSmartPointer<vtkRenderWindow>::New();
-        render_window_[1]->SetPosition(600, 0);
+        render_window_[1]->SetPosition(window_position[2], window_position[3]);
         render_window_[1]->BordersOff();
     }
 

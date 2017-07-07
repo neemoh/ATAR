@@ -58,10 +58,10 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
             mapper->SetInputConnection(source->GetOutputPort());
 
             // Bullet Shape
-            collision_shape_ = new btSphereShape(btScalar(dimensions[0]));
+            collision_shape_ = new btSphereShape(btScalar(B_DIM_SCALE*dimensions[0]));
 
             // calculate volume
-            volume = 4/3*M_PI* pow(dimensions[0], 3);
+            volume = 4/3*M_PI* pow(B_DIM_SCALE*dimensions[0], 3);
 
             // set name
             shape_string = collision_shape_->getName();
@@ -87,13 +87,13 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
             // Bullet Shape
             // TODO: ATTENTION TO THE DOUBLED RADIUS
             collision_shape_ =
-                    new btCylinderShape(btVector3(btScalar(2*dimensions[0]),
-                                                  btScalar(dimensions[1]/2),
-                                                  0
+                    new btCylinderShape(btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
+                                                  btScalar(B_DIM_SCALE*dimensions[1]/2),
+                                                  btScalar(B_DIM_SCALE*dimensions[0])
                     ));
 
             // calculate volume
-            volume = M_PI * pow(dimensions[0], 2) * dimensions[1];
+            volume = M_PI * pow(B_DIM_SCALE*dimensions[0], 2) * B_DIM_SCALE*dimensions[1];
 
             // set name
             shape_string = collision_shape_->getName();
@@ -108,9 +108,6 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
                 throw std::runtime_error("BulletVTKObject BOX shape requires "
                                                  "a vector of three doubles "
                                                  "as dimensions.");
-            // calculate volume
-            volume = dimensions[0] * dimensions[1] * dimensions[2];
-
 
             // VTK actor_
             vtkSmartPointer<vtkCubeSource> board_source =
@@ -124,9 +121,14 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             // Bullet Shape
             collision_shape_ = new btBoxShape(
-                    btVector3(btScalar(dimensions[0]/2),
-                              btScalar(dimensions[1]/2),
-                              btScalar(dimensions[2]/2)));
+                    btVector3(btScalar(B_DIM_SCALE*dimensions[0]/2),
+                              btScalar(B_DIM_SCALE*dimensions[1]/2),
+                              btScalar(B_DIM_SCALE*dimensions[2]/2)));
+            // calculate volume
+            volume = B_DIM_SCALE*dimensions[0] *
+                    B_DIM_SCALE*dimensions[1] *
+                    B_DIM_SCALE*dimensions[2];
+
             // set name
             shape_string = collision_shape_->getName();;
 
@@ -152,10 +154,11 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             // Bullet Shape
             collision_shape_ = new btConeShape(
-                    btScalar(dimensions[0]), btScalar(dimensions[1]/2));
+                    btScalar(B_DIM_SCALE*dimensions[0]), btScalar(B_DIM_SCALE*dimensions[1]/2));
 
             // calculate volume
-            volume = float(M_PI* pow(dimensions[0], 2) * dimensions[1]/3);
+            volume = float(M_PI* pow(B_DIM_SCALE*dimensions[0], 2) *
+                                   B_DIM_SCALE*dimensions[1]/3);
 
             // set name
             shape_string = collision_shape_->getName();;
@@ -171,7 +174,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             GLInstanceGraphicsShape* glmesh = LoadMeshFromObj(filepath->c_str(), "");
             ROS_DEBUG("[INFO] Obj loaded: Extracted %d verticed from obj file "
-                           "[%s]\n", glmesh->m_numvertices, filepath->c_str());
+                              "[%s]\n", glmesh->m_numvertices, filepath->c_str());
 
             const GLInstanceVertex& v = glmesh->m_vertices->at(0);
             btConvexHullShape* shape = new btConvexHullShape((const btScalar*)(&(v.xyzw[0])),
@@ -221,11 +224,11 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             // calculate the volume
             vtkSmartPointer<vtkMassProperties> Mass =
-            vtkSmartPointer<vtkMassProperties>::New();
+                    vtkSmartPointer<vtkMassProperties>::New();
             vtkSmartPointer<vtkTriangleFilter> tri_filt =
-            vtkSmartPointer<vtkTriangleFilter>::New();
+                    vtkSmartPointer<vtkTriangleFilter>::New();
             tri_filt->SetInputConnection(reader->GetOutputPort());
-                        Mass->SetInputConnection(tri_filt->GetOutputPort());
+            Mass->SetInputConnection(tri_filt->GetOutputPort());
             volume = Mass->GetVolume();
             //            // transform would be necesary at this stage if
             // cellLocator is going to be used
@@ -326,7 +329,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
                   << ", contact_stiffness = " << contact_stiffness
                   << ", contact_damping = " << contact_damping;
         ROS_DEBUG("Created BulletVTKObject with properties: %s", debug_msg.str()
-                          .c_str());
+                .c_str());
     }
 }
 
@@ -347,8 +350,9 @@ void BulletVTKObject::SetKinematicPose(double *pose) {
 
         btTransform transform;
         transform.setIdentity();
-        transform.setOrigin(btVector3((float) pose[0], (float) pose[1],
-                                      (float) pose[2]));
+        transform.setOrigin(btVector3(float(B_DIM_SCALE*pose[0]),
+                                      float(B_DIM_SCALE*pose[1]),
+                                      float(B_DIM_SCALE*pose[2]) ));;
         transform.setRotation(btQuaternion((float) pose[3], (float) pose[4],
                                            (float) pose[5], (float) pose[6]));
 

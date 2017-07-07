@@ -10,6 +10,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkActor.h>
 
+#define B_DIM_SCALE 10.0
 //==============================================================================
 /*!
     \class      BulletVTKMotionState
@@ -21,6 +22,11 @@
     If the object is kinematic (e.g. a tool)the getWorldTransform method
     is called at every loop, and the pose of the object must be set
     externally using the setKinematicPos method.
+
+    IMPORTANT NOTE: We were interested in objects with dimensions in the
+    order of a few millimiters. It turned out that the bullet simulation
+    becomes unstable for such small dimensions. To get around this, the
+    dimensions of all the bullet related things are multiplied by B_DIM_SCALE.
 
     \author    Nima Enayati
 
@@ -37,15 +43,16 @@ protected:
 
 public:
     BulletVTKMotionState(const double pose[],
-                         vtkSmartPointer<vtkActor> actor){
+                         vtkSmartPointer<vtkActor> actor)
+    : actor_(actor){
 
         btTransform init_transform;
         init_transform.setIdentity();
-        init_transform.setOrigin(btVector3((float) pose[0], (float) pose[1],
-                                           (float) pose[2]));
+        init_transform.setOrigin(btVector3(float(B_DIM_SCALE*pose[0]),
+                                           float(B_DIM_SCALE*pose[1]),
+                                           float(B_DIM_SCALE*pose[2]) ));
         init_transform.setRotation(btQuaternion((float) pose[3], (float) pose[4],
                                                 (float) pose[5], (float) pose[6]));
-        actor_ = actor;
         bt_pose_ = init_transform;
     }
 
@@ -84,22 +91,22 @@ public:
         //actor_->SetOrientation(r*180/M_PI, p*180/M_PI, y*180/M_PI);
         double pose[7] = {pos.x(), pos.y(), pos.z(), rot.x(), rot.y(), rot.z(), rot.w()};
 
-        vtkSmartPointer<vtkMatrix4x4> out =
+        vtkSmartPointer<vtkMatrix4x4> vtk_mat =
             vtkSmartPointer<vtkMatrix4x4>::New();
 
         KDL::Frame k(KDL::Rotation::Quaternion( pose[3],  pose[4],
                                                 pose[5],  pose[6])
-            , KDL::Vector(pose[0], pose[1], pose[2]) );
+            , KDL::Vector(pose[0], pose[1], pose[2])/B_DIM_SCALE);
 
         // Convert to VTK matrix.
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                out->SetElement(i, j, k.M(i,j));
+                vtk_mat->SetElement(i, j, k.M(i,j));
             }
-            out->SetElement(i, 3, k.p[i]);
+            vtk_mat->SetElement(i, 3, k.p[i]);
         }
 
-        actor_->SetUserMatrix(out);
+        actor_->SetUserMatrix(vtk_mat);
         // set the position
         //actor_->SetPosition(pos.x(), pos.y(), pos.z());
 
@@ -126,7 +133,7 @@ public:
 
         KDL::Frame k(KDL::Rotation::Quaternion( pose[3],  pose[4],
                                                 pose[5],  pose[6])
-            , KDL::Vector(pose[0], pose[1], pose[2]) );
+            , KDL::Vector(pose[0], pose[1], pose[2])/B_DIM_SCALE );
 
         // Convert to VTK matrix.
         for (int i = 0; i < 3; i++) {

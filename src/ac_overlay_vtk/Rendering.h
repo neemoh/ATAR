@@ -61,8 +61,11 @@ public:
     //    vtkTypeMacro(Rendering, vtkRenderWindow);
     //    static Rendering *New();
 
-    Rendering(uint num_windows, bool with_shaodws,
-                  bool offScreen_rendering);
+    Rendering(uint num_windows,
+              bool with_shaodws,
+              bool offScreen_rendering,
+              std::vector<int> window_position);
+
     ~Rendering();
 
     void SetWorldToCameraTransform(const cv::Vec3d cam_rvec[], const cv::Vec3d cam_tvec[]);

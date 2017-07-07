@@ -12,7 +12,8 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
-    VTKTask(show_ref_frames, biman, with_guidance)
+    VTKTask(show_ref_frames, biman, with_guidance),
+    time_last(ros::Time::now())
 {
 
     InitBullet();
@@ -53,7 +54,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // Create spheres
     int cols = 4;
     int rows = 3;
-    double density = 7000; // kg/m3
+    double density = 5000; // kg/m3
     stiffnes = 1000;
     damping = 0.1;
     friction = 0.2;
@@ -64,10 +65,16 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
             std::vector<double> dim = {0.005, 0.05};
 
+            double q3 = 0;
+            double q4 = 1;
+            if(j<cols/2){
+                q3 = 0.70711;
+                q4 = 0.70711;
+            }
             pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
                 0.06,
                 0.01 + dim[1] *1.5* (double)j,
-                0, 0, 0, 1};
+                0, 0, q3, q4};
 
             cylinders[i*rows+j] =
                 new BulletVTKObject(ObjectShape::CYLINDER,
@@ -95,7 +102,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     BulletVTKObject* cubes[layers *rows *cols];
 
     double sides = 0.01;
-    density = 7000; // kg/m3
+    density = 5000; // kg/m3
     stiffnes = 1000;
     damping = 5.1;
     friction = 0.1;
@@ -388,8 +395,11 @@ void TaskPegInHole::InitBullet() {
 
 void TaskPegInHole::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
+    double time_step = (ros::Time::now() - time_last).toSec();
 
-    dynamicsWorld->stepSimulation(1.f / 120.f, 0);
+    // simulation seems more realistic when time_step is halved right now!
+    dynamicsWorld->stepSimulation(btScalar(time_step*0.5), 5);
+    time_last = ros::Time::now();
 
 //    //print positions of all objects
 //    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
