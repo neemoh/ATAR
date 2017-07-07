@@ -46,7 +46,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 
     // Loop frequency
     n.param<double>("desired_pose_update_frequency",
-                        haptic_loop_rate, 100);
+                    haptic_loop_rate, 100);
 
     n.param<bool>("enable_guidance", with_guidance, true);
     ROS_INFO("Starting the BuzzWire task with guidance: %s",
@@ -650,11 +650,16 @@ void OverlayROSConfig::DoArmToWorldFrameCalibration(const uint arm_id) {
 
     ArmToWorldCalibration AWC;
     KDL::Frame world_to_arm_frame;
-    if(AWC.DoCalibration(cam_image_name_space,
-                         cam_pose_namespace.str(), arm_pose_namespace.str(),
-                         camera_matrix[0], camera_distortion[0],
-                         (uint)num_calib_points, calib_points_distance,
-                         world_to_arm_frame)){
+    std::vector<double> calib_point_center
+        = {board_params[1]/2 * calib_points_distance
+           , board_params[2]/2 * calib_points_distance};
+
+    if(AWC.DoCalibration(
+        cam_image_name_space, cam_pose_namespace.str(),
+        arm_pose_namespace.str(),
+        camera_matrix[0], camera_distortion[0], (uint) num_calib_points,
+        calib_points_distance, calib_point_center, world_to_arm_frame
+    )){
 
         // set ros param
         param_name.str("");

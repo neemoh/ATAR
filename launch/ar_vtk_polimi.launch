@@ -3,32 +3,32 @@
     <arg name="slave_2_name" value="PSM2"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
-    <!--<arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>-->
-    <!--<arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>-->
-    <!--<arg name= "left_cam_name" value= "ecml" />-->
-    <!--<arg name= "right_cam_name" value= "ecmr" />    -->
-    <arg name="left_camera_img_topic" value="/image_raw"/>
-    <arg name="right_camera_img_topic" value="/image_raw"/>
-    <arg name= "left_cam_name" value= "asus_webcam" />
-    <arg name= "right_cam_name" value= "asus_webcam" />
-    <arg name= "haptic_referesh_rate" value= "200" />-->
+    <arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>
+    <arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>
+    <arg name= "left_cam_name" value= "ecml" />
+    <arg name= "right_cam_name" value= "ecmr" />
+    <!--<arg name="left_camera_img_topic" value="/image_raw"/>-->
+    <!--<arg name="right_camera_img_topic" value="/image_raw"/>-->
+    <!--<arg name= "left_cam_name" value= "asus_webcam" />-->
+    <!--<arg name= "right_cam_name" value= "asus_webcam" />-->
+    <arg name= "haptic_referesh_rate" value= "500" />-->
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
         <rosparam command="load"
-                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
+                  file="$(find atar)/launch/params_charuco_board_8_12_polimi.yaml" />
     </group>
 
-    <node pkg="uvc_camera" type="uvc_camera_node" name="webcam">
-    </node>
+    <!--<node pkg="uvc_camera" type="uvc_camera_node" name="webcam">-->
+    <!--</node>-->
 
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_charuco_left" output="screen" >
         <param name="camera_name" value="$(arg left_cam_name)"/>
         <param name="camera_img_topic"
                value="$(arg left_camera_img_topic)"/>
-        <param name="show_image" value="false"/>
+        <param name="show_image" value="true"/>
     </node>
 
     <node pkg="atar" type="extrinsic_calib_charuco"
@@ -36,7 +36,7 @@
         <param name="camera_name" value="$(arg right_cam_name)"/>
         <param name="camera_img_topic"
                value="$(arg right_camera_img_topic)"/>
-        <param name="show_image" value="false"/>
+        <param name="show_image" value="true"/>
     </node>
 
     <!-- Node recording the data-->
@@ -76,11 +76,11 @@
             // hand needs to be update faster (even if the ac geometry may be updated at the
             // rate of the received images if it is generated based on the image).
         -->
-        <param name= "desired_pose_update_frequency" value= "$(arg haptic_referesh_rate)" />
+        <param name= "/desired_pose_update_frequency" value= "$(arg haptic_referesh_rate)" />
 
         <!-- num_calib_points: Number of points used for arm to world
         calibration -->
-        <param name= "num_calib_points" value= "9" />
+        <param name= "number_of_calibration_points" value= "7" />
 
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate

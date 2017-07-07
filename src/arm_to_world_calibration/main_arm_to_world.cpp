@@ -57,14 +57,11 @@ int main(int argc, char *argv[]) {
 
     KDL::Frame arm_to_world_frame;
     ArmToWorldCalibration AWC;
-    AWC.DoCalibration(cam_name_space,
-                      cam_pose_namespace.str(),
-                      arm_pose_namespace,
-                      cam_mat,
-                      dist_mat,
-                      num_calib_points,
-                      calib_points_distance,
-                      arm_to_world_frame);
+    AWC.DoCalibration(
+        cam_name_space, cam_pose_namespace.str(), arm_pose_namespace,
+        cam_mat, dist_mat, num_calib_points, calib_points_distance,
+        std::vector<double>(), arm_to_world_frame
+    );
 
 
 }

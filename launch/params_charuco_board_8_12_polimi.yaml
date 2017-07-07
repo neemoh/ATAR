@@ -1,0 +1,4 @@
+  
+  #  [dictionary_id, board_w, board_h, square_length_in_meters, marker_length_in_meters]
+  board_params: [2, 18, 12, 0.0152, 0.0114]
+

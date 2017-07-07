@@ -17,13 +17,17 @@ class ArmToWorldCalibration {
 public:
     ArmToWorldCalibration() {};
 
-    bool DoCalibration(const std::string img_topic_namespace,
-                       const std::string cam_pose_topic_namespace,
-                       const std::string arm_pose_topic_namespace,
-                       const cv::Mat camera_matrix,
-                       const cv::Mat dist_coeffs, uint num_calib_points,
-                       const double calib_points_distance,
-                       KDL::Frame & result);
+    bool DoCalibration(
+        const std::string img_topic_namespace,
+        const std::string cam_pose_topic_namespace,
+        const std::string arm_pose_topic_namespace,
+        const cv::Mat camera_matrix,
+        const cv::Mat dist_coeffs,
+        const uint num_calib_points,
+        const double calib_points_distance,
+        const std::vector<double> calib_points_position_center,
+        KDL::Frame &result
+    );
 private:
     void CameraImageCallback(const sensor_msgs::ImageConstPtr &msg);
 

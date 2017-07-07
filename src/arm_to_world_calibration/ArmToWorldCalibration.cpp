@@ -14,14 +14,17 @@
 
 // -----------------------------------------------------------------------------
 //
-bool ArmToWorldCalibration::DoCalibration(const std::string img_topic_namespace,
-                                          const std::string cam_pose_topic_namespace,
-                                          const std::string arm_pose_topic_namespace,
-                                          const cv::Mat camera_matrix,
-                                          const cv::Mat dist_coeffs,
-                                          const uint num_calib_points,
-                                          const double calib_points_distance,
-                                          KDL::Frame & result) {
+bool ArmToWorldCalibration::DoCalibration(
+    const std::string img_topic_namespace,
+    const std::string cam_pose_topic_namespace,
+    const std::string arm_pose_topic_namespace,
+    const cv::Mat camera_matrix,
+    const cv::Mat dist_coeffs,
+    const uint num_calib_points,
+    const double calib_points_distance,
+    const std::vector<double> calib_points_position_center,
+    KDL::Frame &result
+) {
 
     cam_mat = camera_matrix;
     dist_mat = dist_coeffs;
@@ -50,12 +53,18 @@ bool ArmToWorldCalibration::DoCalibration(const std::string img_topic_namespace,
                         &ArmToWorldCalibration::ArmPoseCallback, this);
 
     // -------------------------------------------------------------------------
-    // define calibration points in rows of 3 points
+    // define calibration points in rows of 3 points centered around
+    // calib_points_position_center
+
     int rows = 3;
+    int cols = num_calib_points/rows + int((num_calib_points%rows)>0);
     for (uint i=0; i<num_calib_points; i++) {
         calib_points_in_world_frame.push_back(
-            Eigen::Vector3d( (1 + i/rows) * calib_points_distance,
-                             (1 + i%rows) * calib_points_distance,
+            Eigen::Vector3d(
+                calib_points_position_center[0] +
+                                 (1-cols/2 + i/rows) * calib_points_distance
+                ,calib_points_position_center[1] +
+                             (-1 + double(i%rows)) * calib_points_distance,
                               0.0) );
     }
 
