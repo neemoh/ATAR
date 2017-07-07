@@ -607,7 +607,8 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                 cam_rvec_out[k] = cam_rvec_avg[k];
                 cam_tvec_out[k] = cam_tvec_avg[k];
                 new_cam_pose[k] = false;
-                return true;
+                if(k==1)
+                    return true;
             }
         }
     }
