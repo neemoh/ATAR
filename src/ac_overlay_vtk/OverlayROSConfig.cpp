@@ -299,7 +299,7 @@ void OverlayROSConfig::SetupGraphics() {
     n.param<bool>("show_reference_frames", show_reference_frames, true);
 
     std::vector<int> windows_position(4, 0);
-    bool temp = n.getParam("windows_position", windows_position);
+    n.getParam("windows_position", windows_position);
 
     // Create the window for the video feed if we publish the images
     if(publish_overlayed_images) {

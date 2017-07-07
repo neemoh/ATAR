@@ -22,15 +22,15 @@
 #include "ros/ros.h"
 
 
-BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
-                                 std::vector<double> dimensions,
-                                 double pose[],
-                                 double density,
-                                 void *data,
-                                 double friction,
-                                 double contact_stiffness,
-                                 double contact_damping
-)
+BulletVTKObject::BulletVTKObject(
+        ObjectShape shape,
+        ObjectType o_type,
+        std::vector<double> dimensions,
+        double pose[],
+        double density,
+        void *data,
+        double friction
+    )
         : object_type_(o_type)
 {
 
@@ -154,7 +154,8 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             // Bullet Shape
             collision_shape_ = new btConeShape(
-                    btScalar(B_DIM_SCALE*dimensions[0]), btScalar(B_DIM_SCALE*dimensions[1]/2));
+                    btScalar(B_DIM_SCALE*dimensions[0]),
+                    btScalar(B_DIM_SCALE*dimensions[1]/2));
 
             // calculate volume
             volume = float(M_PI* pow(B_DIM_SCALE*dimensions[0], 2) *
@@ -303,31 +304,32 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         // rolling friction
         if (shape == ObjectShape::CONE ||
             shape == ObjectShape::CYLINDER){
-            body_->setRollingFriction(0.02);
-            body_->setSpinningFriction(0.02);
-//            body_->setAnisotropicFriction
-//                    (collision_shape_->getAnisotropicRollingFrictionDirection
-//                            (),btCollisionObject::CF_ANISOTROPIC_ROLLING_FRICTION);
+            body_->setRollingFriction(btScalar(0.02));
+            body_->setSpinningFriction(btScalar(0.02));
+            //            body_->setAnisotropicFriction
+            //                    (collision_shape_->getAnisotropicRollingFrictionDirection
+            //                            (),btCollisionObject::CF_ANISOTROPIC_ROLLING_FRICTION);
         }
         else if(shape == ObjectShape::SPHERE) {
-            body_->setRollingFriction(0.001);
-            body_->setSpinningFriction(0.001);
+            body_->setRollingFriction(btScalar(0.001));
+            body_->setSpinningFriction(btScalar(0.001));
         }
 
-        body_->setFriction((btScalar)friction);
-        body_->setSpinningFriction(0.001);
+        body_->setFriction(btScalar(friction));
+        body_->setSpinningFriction(btScalar(0.001));
 
-        //set contact parameters
-//        body_->setContactStiffnessAndDamping((float) contact_stiffness,
-//                                             (float) contact_damping);
+        ////set contact parameters
+        //body_->setContactStiffnessAndDamping(btScalar(10000),
+        //                                     btScalar(0.1));
+
         std::stringstream debug_msg;
 
         debug_msg << std::string(" shape = ") << shape_string
                   << ", mass = " << bt_mass
                   << ", volume = " << volume
                   << ", friction = " << friction
-                  << ", contact_stiffness = " << contact_stiffness
-                  << ", contact_damping = " << contact_damping;
+                  << ", contact_stiffness = " << body_->getContactStiffness()
+                  << ", contact_damping = " << body_->getContactDamping();;
         ROS_DEBUG("Created BulletVTKObject with properties: %s", debug_msg.str()
                 .c_str());
     }

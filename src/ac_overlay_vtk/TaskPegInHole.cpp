@@ -31,8 +31,8 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     board_dimensions[1]  = 0.24;
     board_dimensions[2]  = 0.1;
     double *pose;
-    double stiffnes = 1000;
-    double damping = 20;
+    //double stiffnes = 1000;
+    //double damping = 20;
     double friction = 0.5;
 
     pose= new double[7] {board_dimensions[0] / 2.45,
@@ -42,9 +42,10 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
-    board = new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction);
-    board->GetActor()->GetProperty()->SetOpacity(1.0);
+    board = new BulletVTKObject(
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
+    );
+    board->GetActor()->GetProperty()->SetOpacity(0.05);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
     dynamicsWorld->addRigidBody(board->GetBody());
@@ -55,8 +56,8 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     int cols = 4;
     int rows = 3;
     double density = 5000; // kg/m3
-    stiffnes = 1000;
-    damping = 0.1;
+    //stiffnes = 20000;
+    //damping = 0.9;
     friction = 0.2;
     BulletVTKObject* cylinders[cols*rows];
     for (int i = 0; i < rows; ++i) {
@@ -77,9 +78,9 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
                 0, 0, q3, q4};
 
             cylinders[i*rows+j] =
-                new BulletVTKObject(ObjectShape::CYLINDER,
-                                    ObjectType::DYNAMIC, dim, pose, density,
-                                    NULL, friction, stiffnes, damping
+                new BulletVTKObject(
+                    ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
+                    density, NULL, friction
                 );
             delete [] pose;
             double ratio = (double)i/4.0;
@@ -103,9 +104,9 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
     double sides = 0.01;
     density = 5000; // kg/m3
-    stiffnes = 1000;
-    damping = 5.1;
-    friction = 0.1;
+    //stiffnes = 20000;
+    //damping = 0.9;
+    //friction = 0.1;
 
     for (int k = 0; k < layers; ++k) {
         for (int i = 0; i < rows; ++i) {
@@ -117,10 +118,10 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
                     0, 0, 0, 1};
 
                 std::vector<double> dim = {sides, sides, 2*sides};
-                cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
-                                                      ObjectType::DYNAMIC, dim,
-                                                      pose, density, NULL,
-                                                      friction, stiffnes, damping);
+                cubes[i*rows+j] = new BulletVTKObject(
+                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
+                    NULL, friction
+                );
                 delete [] pose;
 
                 double ratio = (double)i/4.0;
@@ -169,16 +170,14 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // Create kinematic box
-    stiffnes = 1000;
-    damping= 1;
     friction = 1;
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
-    std::vector<double> kine_box_dim = {0.002, 0.002, 0.01};
+    std::vector<double> kine_box_c_dim = {0.002, 0.002, 0.01};
     kine_box =
-        new BulletVTKObject(ObjectShape::BOX,
-                            ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
-                            NULL, friction, stiffnes, damping
+        new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_c_dim, pose, 0.0,
+            NULL, friction
         );
     dynamicsWorld->addRigidBody(kine_box->GetBody());
     actors.push_back(kine_box->GetActor());
@@ -187,11 +186,11 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     // Create kinematic sphere
 
-    std::vector<double> kine_sph_dim = {0.002};
+    std::vector<double> kine_box_jaw_dim = {0.002, 0.002, 0.01};
     kine_sphere_0 =
-        new BulletVTKObject(ObjectShape::SPHERE,
-                            ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
-                            NULL, friction, stiffnes, damping
+        new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_jaw_dim, pose,
+            0.0, NULL, friction
         );
     dynamicsWorld->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
@@ -201,9 +200,9 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // Create kinematic sphere
 
     kine_sphere_1 =
-        new BulletVTKObject(ObjectShape::SPHERE,
-                            ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
-                            NULL, friction, stiffnes, damping
+        new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_jaw_dim, pose,
+            0.0, NULL, friction
         );
     delete [] pose;
     dynamicsWorld->addRigidBody(kine_sphere_1->GetBody());

@@ -45,8 +45,9 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
-    board = new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction);
+    board = new BulletVTKObject(
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
+    );
     board->GetActor()->GetProperty()->SetOpacity(1.0);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
@@ -74,9 +75,9 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
                 0, 0, 0, 1};
 
             cylinders[i*rows+j] =
-                new BulletVTKObject(ObjectShape::CYLINDER,
-                                    ObjectType::DYNAMIC, dim, pose, density,
-                                    NULL, friction, stiffnes, damping
+                new BulletVTKObject(
+                    ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
+                    density, NULL, friction
                 );
             delete [] pose;
             double ratio = (double)i/4.0;
@@ -114,10 +115,10 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
                     0, 0, 0, 1};
 
                 std::vector<double> dim = {sides, sides, 2*sides};
-                cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
-                                                      ObjectType::DYNAMIC, dim,
-                                                      pose, density, NULL,
-                                                      friction, stiffnes, damping);
+                cubes[i*rows+j] = new BulletVTKObject(
+                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
+                    NULL, friction
+                );
                 delete [] pose;
 
                 double ratio = (double)i/4.0;
@@ -155,10 +156,10 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     std::string mesh_file_dir_str = input_file_dir.str();
 
     mesh = new
-        BulletVTKObject(ObjectShape::MESH,
-                        ObjectType::DYNAMIC, _dim, pose, 6000,
-                        &mesh_file_dir_str,
-                        friction);
+        BulletVTKObject(
+        ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose, 6000,
+        &mesh_file_dir_str, friction
+    );
 
     dynamicsWorld->addRigidBody(mesh->GetBody());
     actors.push_back(mesh->GetActor());
@@ -173,9 +174,9 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_dim = {0.002, 0.002, 0.01};
     kine_box =
-        new BulletVTKObject(ObjectShape::BOX,
-                            ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
-                            NULL, friction, stiffnes, damping
+        new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
+            NULL, friction
         );
     dynamicsWorld->addRigidBody(kine_box->GetBody());
     actors.push_back(kine_box->GetActor());
@@ -186,9 +187,9 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
     std::vector<double> kine_sph_dim = {0.002};
     kine_sphere_0 =
-        new BulletVTKObject(ObjectShape::SPHERE,
-                            ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
-                            NULL, friction, stiffnes, damping
+        new BulletVTKObject(
+            ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
+            NULL, friction
         );
     dynamicsWorld->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
@@ -198,9 +199,9 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     // Create kinematic sphere
 
     kine_sphere_1 =
-        new BulletVTKObject(ObjectShape::SPHERE,
-                            ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
-                            NULL, friction, stiffnes, damping
+        new BulletVTKObject(
+            ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
+            NULL, friction
         );
     delete [] pose;
     dynamicsWorld->addRigidBody(kine_sphere_1->GetBody());

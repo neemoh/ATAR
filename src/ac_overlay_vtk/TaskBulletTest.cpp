@@ -46,8 +46,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
-    board = new BulletVTKObject(ObjectShape::BOX,
-                                ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction);
+    board = new BulletVTKObject(
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
+    );
     board->GetActor()->GetProperty()->SetOpacity(0.0);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
@@ -176,9 +177,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_dim = {0.005, 0.005, 0.02};
     kine_box =
-        new BulletVTKObject(ObjectShape::BOX,
-                            ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
-                            NULL, friction, stiffnes, damping
+        new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
+            NULL, friction
         );
     dynamicsWorld->addRigidBody(kine_box->GetBody());
     kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
@@ -190,9 +191,10 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
     std::vector<double> kine_scoop_dim = {0.02, 0.0002, 0.02};
     kine_cylinder_0 =
-        new BulletVTKObject(ObjectShape::BOX,
-                            ObjectType::KINEMATIC, kine_scoop_dim, pose, 10.0,
-                            NULL, friction, stiffnes, damping);
+        new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::KINEMATIC, kine_scoop_dim, pose, 10.0,
+            NULL, friction
+        );
     dynamicsWorld->addRigidBody(kine_cylinder_0->GetBody());
     actors.push_back(kine_cylinder_0->GetActor());
     kine_cylinder_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
@@ -239,9 +241,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         std::vector<double> peg_SPHERE_dimension = {peg_dimensions[0] / 2};
 
         peg1 = new BulletVTKObject(
-            ObjectShape::SPHERE,
-            ObjectType::DYNAMIC, peg_SPHERE_dimension, peg_pose1, density,
-            NULL, friction_sphere, stiffnes_sphere, damping_sphere
+            ObjectShape::SPHERE, ObjectType::DYNAMIC, peg_SPHERE_dimension,
+            peg_pose1, density, NULL, friction_sphere
         );
         peg1->GetActor()->GetProperty()->SetOpacity(1.0);
         peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
@@ -261,9 +262,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
 
         peg2 = new BulletVTKObject(
-            ObjectShape::SPHERE,
-            ObjectType::DYNAMIC, peg_SPHERE_dimension, peg_pose2, density,
-            NULL, friction_sphere, stiffnes_sphere, damping_sphere
+            ObjectShape::SPHERE, ObjectType::DYNAMIC, peg_SPHERE_dimension,
+            peg_pose2, density, NULL, friction_sphere
         );
         peg2->GetActor()->GetProperty()->SetOpacity(1.0);
         peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
@@ -283,9 +283,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
 
         peg3 = new BulletVTKObject(
-            ObjectShape::SPHERE,
-            ObjectType::DYNAMIC, peg_SPHERE_dimension, peg_pose3, density,
-            NULL, friction_sphere, stiffnes_sphere, damping_sphere
+            ObjectShape::SPHERE, ObjectType::DYNAMIC, peg_SPHERE_dimension,
+            peg_pose3, density, NULL, friction_sphere
         );
         peg3->GetActor()->GetProperty()->SetOpacity(1.0);
         peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
@@ -302,9 +301,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         };
 
         peg4 = new BulletVTKObject(
-            ObjectShape::SPHERE,
-            ObjectType::DYNAMIC, peg_SPHERE_dimension, peg_pose4, density,
-            NULL, friction_sphere, stiffnes_sphere, damping_sphere
+            ObjectShape::SPHERE, ObjectType::DYNAMIC, peg_SPHERE_dimension,
+            peg_pose4, density, NULL, friction_sphere
         );
         peg4->GetActor()->GetProperty()->SetOpacity(1.0);
         peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
@@ -327,9 +325,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
             peg_dimensions[0], peg_dimensions[1], peg_dimensions[2]
         };
         peg1 = new BulletVTKObject(
-            ObjectShape::BOX,
-            ObjectType::DYNAMIC, peg_dim, peg_pose1, density,
-            NULL, friction, stiffnes, damping
+            ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim, peg_pose1, density,
+            NULL, friction
         );
         peg1->GetActor()->GetProperty()->SetOpacity(1.0);
         peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
@@ -348,9 +345,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         };
 
         peg2 = new BulletVTKObject(
-            ObjectShape::BOX,
-            ObjectType::DYNAMIC, peg_dim, peg_pose2, density,
-            NULL, friction, stiffnes, damping
+            ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim, peg_pose2, density,
+            NULL, friction
         );
         peg2->GetActor()->GetProperty()->SetOpacity(1.0);
         peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
@@ -367,9 +363,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         };
 
         peg3 = new BulletVTKObject(
-            ObjectShape::BOX,
-            ObjectType::DYNAMIC, peg_dim, peg_pose3, density,
-            NULL, friction, stiffnes, damping
+            ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim, peg_pose3, density,
+            NULL, friction
         );
         peg3->GetActor()->GetProperty()->SetOpacity(1.0);
         peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
@@ -386,9 +381,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         };
 
         peg4 = new BulletVTKObject(
-            ObjectShape::BOX,
-            ObjectType::DYNAMIC, peg_dim, peg_pose4, density,
-            NULL, friction, stiffnes, damping
+            ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim, peg_pose4, density,
+            NULL, friction
         );
         peg4->GetActor()->GetProperty()->SetOpacity(1.0);
         peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
@@ -445,9 +439,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     pose = new double[7] {target_pos[0]+sides, target_pos[1], target_pos[2],
         0, 0, 0, 1};
 
-    cubes[0] = new BulletVTKObject(ObjectShape::BOX,
-                                   ObjectType::DYNAMIC, dim1, pose, 0.0,
-                                   NULL, stiffnes, damping, friction);
+    cubes[0] = new BulletVTKObject(
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose, 0.0, NULL, stiffnes
+    );
     cubes[0]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
     dynamicsWorld->addRigidBody(cubes[0]->GetBody());
@@ -458,9 +452,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     pose = new double[7] {target_pos[0], target_pos[1]-sides, target_pos[2],
         0, 0, 0, 1};
 
-    cubes[1] = new BulletVTKObject(ObjectShape::BOX,
-                                   ObjectType::DYNAMIC, dim2, pose, 0.0,
-                                   NULL, stiffnes, damping, friction);
+    cubes[1] = new BulletVTKObject(
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose, 0.0, NULL, stiffnes
+    );
     cubes[1]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
     dynamicsWorld->addRigidBody(cubes[1]->GetBody());
@@ -471,9 +465,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     pose = new double[7] {target_pos[0], target_pos[1]+sides, target_pos[2],
         0, 0, 0, 1};
 
-    cubes[2] = new BulletVTKObject(ObjectShape::BOX,
-                                   ObjectType::DYNAMIC, dim2, pose, 0.0,
-                                   NULL, stiffnes, damping, friction);
+    cubes[2] = new BulletVTKObject(
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose, 0.0, NULL, stiffnes
+    );
     cubes[2]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
     dynamicsWorld->addRigidBody(cubes[2]->GetBody());
@@ -484,9 +478,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     pose = new double[7] {target_pos[0]-sides, target_pos[1], target_pos[2],
         0, 0, 0, 1};
 
-    cubes[3] = new BulletVTKObject(ObjectShape::BOX,
-                                   ObjectType::DYNAMIC, dim1, pose, 0.0,
-                                   NULL, stiffnes, damping, friction);
+    cubes[3] = new BulletVTKObject(
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose, 0.0, NULL, stiffnes
+    );
     cubes[3]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
     dynamicsWorld->addRigidBody(cubes[3]->GetBody());
