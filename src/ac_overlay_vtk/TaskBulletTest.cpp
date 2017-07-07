@@ -12,7 +12,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
-    VTKTask(show_ref_frames, biman, with_guidance, 0)
+    VTKTask(show_ref_frames, biman, with_guidance, 0) ,
+    time_last(ros::Time::now())
 {
 
 
@@ -30,8 +31,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //board_dimensions[1]  = 0.14;
     //board_dimensions[2]  = 0.1;
 
-    board_dimensions[0]  = 0.28;
-    board_dimensions[1]  = 0.24;
+    board_dimensions[0]  = 0.48;
+    board_dimensions[1]  = 0.54;
     board_dimensions[2]  = 0.05;
     double *pose;
     double density;
@@ -39,8 +40,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     double damping = 20;
     double friction = 0.5;
 
-    pose= new double[7] {-board_dimensions[0] / 2.45*0.3,
-        -board_dimensions[1] / 2.78*0.3,
+    pose= new double[7] {board_dimensions[0]/2,
+        board_dimensions[1] / 2,
         0,
         0, 0, 0, 1};
 
@@ -49,7 +50,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     board = new BulletVTKObject(
         ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
     );
-    board->GetActor()->GetProperty()->SetOpacity(0.0);
+    board->GetActor()->GetProperty()->SetOpacity(1.0);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
     dynamicsWorld->addRigidBody(board->GetBody());
@@ -171,7 +172,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
     stiffnes = 1000;
     damping= 100;
-    friction = 0.51;
+    friction = 5.1;
 
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
@@ -220,7 +221,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     peg_dimensions[2]  = 0.008;
 
     // Set cubic pegs params
-    density = 10;
+    density = 4000;
     stiffnes = 1000;
     damping = 20;
     friction = 100;
@@ -235,7 +236,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         // Create sphere 1
 
         peg_pose1 = new double[7]{
-            0.0, 0.0, peg_dimensions[2] / 2, 0, 0, 0, 1
+            0.04, 0.04, board_dimensions[2] , 0, 0, 0, 1
         };
 
         std::vector<double> peg_SPHERE_dimension = {peg_dimensions[0] / 2};
@@ -257,7 +258,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         // Create sphere 2
 
         peg_pose2 = new double[7]{
-            0.04, 0.0, peg_dimensions[2] / 2, 0, 0, 0, 1
+            0.08, 0.04, 0.1 , 0, 0, 0, 1
         };
 
 
@@ -278,7 +279,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         // Create sphere 3
 
         peg_pose3 = new double[7]{
-            0.0, 0.04, peg_dimensions[2] / 2, 0, 0, 0, 1
+            0.04, 0.08, board_dimensions[2], 0, 0, 0, 1
         };
 
 
@@ -297,7 +298,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         // Create sphere 4
 
         peg_pose4 = new double[7]{
-            0.02, 0.02, peg_dimensions[2] / 2, 0, 0, 0, 1
+            0.06, 0.06, board_dimensions[2], 0, 0, 0, 1
         };
 
         peg4 = new BulletVTKObject(
@@ -318,7 +319,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         // Create  cubic peg1
 
         peg_pose1 = new double[7]{
-            0.0, 0.0, peg_dimensions[2] / 2, 0, 0, 0, 1
+            0.0, 0.0, board_dimensions[2] , 0, 0, 0, 1
         };
 
         std::vector<double> peg_dim = {
@@ -432,7 +433,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     std::vector<double> dim1 = {sides/2, 3*sides-0.5*sides, 2*sides};
     std::vector<double> dim2 = {2*sides-0.5*sides, sides/2, 2*sides};
 
-    target_pos = {0.05, 0.07, board_dimensions[2]-0.01};
+    target_pos = {0.12, 0.11, board_dimensions[2]-0.01};
 
     // Create Cube1
 
@@ -440,7 +441,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         0, 0, 0, 1};
 
     cubes[0] = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose, 0.0, NULL, stiffnes
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose, 0.0, NULL, friction
     );
     cubes[0]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
@@ -453,7 +454,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         0, 0, 0, 1};
 
     cubes[1] = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose, 0.0, NULL, stiffnes
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose, 0.0, NULL, friction
     );
     cubes[1]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
@@ -466,7 +467,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         0, 0, 0, 1};
 
     cubes[2] = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose, 0.0, NULL, stiffnes
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose, 0.0, NULL, friction
     );
     cubes[2]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
@@ -479,7 +480,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         0, 0, 0, 1};
 
     cubes[3] = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose, 0.0, NULL, stiffnes
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose, 0.0, NULL, friction
     );
     cubes[3]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
@@ -759,8 +760,12 @@ void TaskBulletTest::InitBullet() {
 void TaskBulletTest::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
 
-    dynamicsWorld->stepSimulation(1.f / 120.f, 0);
+    ///-----stepsimulation_start-----
+    double time_step = (ros::Time::now() - time_last).toSec();
 
+    // simulation seems more realistic when time_step is halved right now!
+    dynamicsWorld->stepSimulation(btScalar(time_step*0.5), 5);
+    time_last = ros::Time::now();
 //    //print positions of all objects
 //    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
 //    {

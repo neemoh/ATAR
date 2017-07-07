@@ -170,7 +170,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // Create kinematic box
-    friction = 1;
+    friction = 10;
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_c_dim = {0.002, 0.002, 0.01};
@@ -186,7 +186,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     // Create kinematic sphere
 
-    std::vector<double> kine_box_jaw_dim = {0.002, 0.002, 0.01};
+    std::vector<double> kine_box_jaw_dim = {0.02, 0.002, 0.01};
     kine_sphere_0 =
         new BulletVTKObject(
             ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_jaw_dim, pose,

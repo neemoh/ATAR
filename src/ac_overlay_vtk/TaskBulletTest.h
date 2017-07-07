@@ -125,6 +125,8 @@ private:
     std::vector<double> target_pos;
     KDL::Vector previous_point;
     btDiscreteDynamicsWorld* dynamicsWorld;
+    ros::Time time_last;
+
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
 //    btAlignedObjectArray<btCollisionShape*> collisionShapes;

@@ -28,7 +28,7 @@
         <param name="camera_name" value="$(arg left_cam_name)"/>
         <param name="camera_img_topic"
                value="$(arg left_camera_img_topic)"/>
-        <param name="show_image" value="true"/>
+        <param name="show_image" value="false"/>
     </node>
 
     <node pkg="atar" type="extrinsic_calib_charuco"
@@ -36,7 +36,7 @@
         <param name="camera_name" value="$(arg right_cam_name)"/>
         <param name="camera_img_topic"
                value="$(arg right_camera_img_topic)"/>
-        <param name="show_image" value="true"/>
+        <param name="show_image" value="false"/>
     </node>
 
     <!-- Node recording the data-->
@@ -80,7 +80,7 @@
 
         <!-- num_calib_points: Number of points used for arm to world
         calibration -->
-        <param name= "number_of_calibration_points" value= "7" />
+        <param name= "number_of_calibration_points" value= "6" />
 
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
@@ -97,7 +97,7 @@
         <param name= "one_window_mode" value= "true" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
-        <param name= "with_shadows" value= "false" />
+        <param name= "with_shadows" value= "true" />
 
         <!--If the generated images are to be published on
         ros, to help alleviate the considerable bottleneck of grabbing the
@@ -106,7 +106,7 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="windows_position"> [1200, 40, 300, 0]</rosparam>
+        <rosparam param="windows_position"> [1920, 0, 300, 0]</rosparam>
 
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
