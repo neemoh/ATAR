@@ -104,6 +104,9 @@ bool OverlayROSConfig::UpdateWorld() {
         // arm calibration
         if(control_event== CE_CALIB_ARM1)
             StartArmToWorldFrameCalibration(0);
+        // arm calibration
+        if(control_event== CE_CALIB_ARM2)
+            StartArmToWorldFrameCalibration(1);
 
         // Copy the rendered image to memory, show it and/or publish it.
         if(publish_overlayed_images)
