@@ -221,7 +221,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     peg_dimensions[2]  = 0.008;
 
     // Set cubic pegs params
-    density = 4000;
+    density = 4;
     stiffnes = 1000;
     damping = 20;
     friction = 100;
@@ -591,8 +591,8 @@ void TaskBulletTest::EndChecking(){
     // Check if the peg is in the correct position.
         double* peg_position;
         peg_position = peg1->GetActor()->GetCenter();
-        std::cout<< peg_position[0]<< "pause" << peg_position[1] << "pause" << peg_position[2] << std::endl;
-        std::cout<< fabs(peg_position[0]-target_pos[0]) << "pause" << 3*sides/2 << std::endl;
+        //std::cout<< peg_position[0]<< "pause" << peg_position[1] << "pause" << peg_position[2] << std::endl;
+        //std::cout<< fabs(peg_position[0]-target_pos[0]) << "pause" << 3*sides/2 << std::endl;
 
 
         // check if the first peg is inside the target or fallen
@@ -764,7 +764,7 @@ void TaskBulletTest::StepDynamicsWorld() {
     double time_step = (ros::Time::now() - time_last).toSec();
 
     // simulation seems more realistic when time_step is halved right now!
-    dynamicsWorld->stepSimulation(btScalar(time_step*0.5), 5);
+    dynamicsWorld->stepSimulation(btScalar(time_step), 5);
     time_last = ros::Time::now();
 //    //print positions of all objects
 //    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)

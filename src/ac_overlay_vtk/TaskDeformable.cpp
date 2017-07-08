@@ -2,7 +2,7 @@
 // Created by nima on 13/06/17.
 //
 
-#include "TaskBullet.h"
+#include "TaskDeformable.h"
 
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
@@ -11,52 +11,8 @@
 
 
 
-void renderSoftbody(btSoftBody* b, vtkSmartPointer<vtkActor> actor)
 
-{
-    //faces
-    vtkSmartPointer<vtkCellArray> triangles =
-        vtkSmartPointer<vtkCellArray>::New();
-    vtkSmartPointer<vtkPolyDataMapper> mapper =
-        vtkSmartPointer<vtkPolyDataMapper>::New();
-    // Create a polydata object
-    vtkSmartPointer<vtkPolyData> polyData =
-        vtkSmartPointer<vtkPolyData>::New();
-    vtkSmartPointer<vtkPoints> points =
-        vtkSmartPointer<vtkPoints>::New();
-
-    std::vector<vtkSmartPointer<vtkTriangle> >triangle;
-
-    for(int i=0;i<b->m_faces.size();i++)
-    {
-        triangle.push_back(vtkSmartPointer<vtkTriangle>::New());
-
-        for(int j=0;j<3;j++) {
-            points->InsertNextPoint(b->m_faces[i].m_n[j]->m_x.x()/B_DIM_SCALE,
-                                    b->m_faces[i].m_n[j]->m_x.y()/B_DIM_SCALE,
-                                    b->m_faces[i].m_n[j]->m_x.z()/B_DIM_SCALE);
-
-            triangle[i]->GetPointIds()->SetId ( j, i*3  + j );
-        }
-
-        triangles->InsertNextCell ( triangle[i] );
-    }
-    // Add the geometry and topology to the polydata
-    polyData->SetPoints ( points );
-    polyData->SetPolys ( triangles );
-    mapper->SetInputData(polyData);
-    actor->SetMapper(mapper);
-
-////    for(int i=0;i<b->m_links.size();i++)
-//    {
-//        for(int j=0;j<2;j++)
-//            (b->m_links[i].m_n[j]->m_x.x(),
-//                       b->m_links[i].m_n[j]->m_x.y(),
-//                       b->m_links[i].m_n[j]->m_x.z());
-//    }
-}
-
-TaskBullet::TaskBullet(const std::string mesh_files_dir,
+TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
@@ -67,7 +23,16 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
     InitBullet();
 
-    BulletVTKObject* board;
+    // always add a floor in under the workspace of your workd to prevent
+    // objects falling too far and mess things up.
+    double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+    std::vector<double> floor_dims = {0., 0., 1., -0.5};
+    BulletVTKObject* floor= new BulletVTKObject(
+        ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
+        floor_dims, dummy_pose, 0.0, NULL);
+    dynamics_world->addRigidBody(floor->GetBody());
+
+
     // -----------------------
     // -------------------------------------------------------------------------
     // Create a cube for the board
@@ -75,38 +40,76 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     //board_dimensions[0]  = 0.18;
     //board_dimensions[1]  = 0.14;
     //board_dimensions[2]  = 0.1;
-    float attention_center[3] = {0.08, 0.08, 0.04};
+    float attention_center[3] = {0.08, 0.08, 0.06};
 
-    board_dimensions[0]  = 0.28;
-    board_dimensions[1]  = 0.24;
-    board_dimensions[2]  = 0.1;
-    double *pose;
-    double stiffnes = 1000;
-    double damping = 20;
+    board_dimensions[0]  = 0.035;
+    board_dimensions[1]  = 0.035;
+    board_dimensions[2]  = 0.01;
     double friction = 0.1;
 
-    pose= new double[7] {board_dimensions[0] / 2.45,
-        board_dimensions[1] / 2.78,
+    double board_pose[7] = {attention_center[0] ,
+        attention_center[1],
         -board_dimensions[2]/2,
         0, 0, 0, 1};
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
-    board = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
+    BulletVTKObject* board = new BulletVTKObject(
+        ObjectShape::BOX, ObjectType::DYNAMIC, dim, board_pose, 0.0, NULL, friction
     );
-    board->GetActor()->GetProperty()->SetOpacity(.0);
+    board->GetActor()->GetProperty()->SetOpacity(1.0);
     board->GetActor()->GetProperty()->SetColor(0.2, 0.3, 0.1);
 
     dynamics_world->addRigidBody(board->GetBody());
     actors.push_back(board->GetActor());
 
-    // -------------------------------------------------------------------------
-    // Create spheres
-    int cols = 3;
-    int rows = 2;
-    double density = 4; // kg/cm3
 
+
+    // -------------------------------------------------------------------------
+    // SOFT BODY
+    float l = float(0.04 * B_DIM_SCALE);
+    dynamics_world->setGravity(btVector3(0, 0, btScalar(-9.8)));
+
+    sb_w_info = new btSoftBodyWorldInfo;
+    sb_w_info->m_broadphase =overlappingPairCache;
+    sb_w_info->m_dispatcher =dispatcher;
+    sb_w_info->m_gravity=(btVector3(0, 0, btScalar(-9.8)));
+    sb_w_info->m_sparsesdf.Initialize();
+
+//    sb = btSoftBodyHelpers::CreatePatch(
+//            *sb_w_info,
+//            btVector3(0, 0, l/2),
+//            btVector3(l, 0, l/2),
+//            btVector3(0, l, l/2),
+//            btVector3(l, l, l/2), 20, 20, 1+2+4+8, true);
+//    sb->m_cfg.viterations = 50;
+//    sb->setTotalMass(1);
+
+    sb=btSoftBodyHelpers::CreateEllipsoid(
+        *sb_w_info,
+        btVector3(attention_center[0]*B_DIM_SCALE,
+                  attention_center[1]*B_DIM_SCALE,
+                  attention_center[2]*B_DIM_SCALE),
+        btVector3(l/4,l/4,l/4),1000);
+    sb->m_cfg.viterations=20;
+    sb->m_cfg.piterations=20;
+    sb->m_cfg.kPR = 400 /B_DIM_SCALE;
+    sb->setTotalDensity(4000/(B_DIM_SCALE*B_DIM_SCALE));
+    sb->setMass(0, 0);
+    std::cout <<   "ddddddddddddddd  " << sb->getTotalMass() << std::endl;  ;
+    sb->getCollisionShape()->setMargin(0.08);
+//    sb->generateBendingConstraints(3);
+    dynamics_world->addSoftBody(sb);
+
+
+
+    //// -------------------------------------------------------------------------
+    //// Create spheres
+    //int cols = 3;
+    //int rows = 2;
+    //double density = 4; // kg/cm3
+    //double * sphere_pose;
+    //
     //BulletVTKObject* spheres[cols*rows];
     //for (int i = 0; i < rows; ++i) {
     //
@@ -114,7 +117,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     //
     //        std::vector<double> dim = {0.004};
     //
-    //        pose = new double[7]{
+    //        sphere_pose = new double[7]{
     //            attention_center[0] + (double)i * 4*dim[0] + (double)j * dim[0]/2,
     //            attention_center[1],
     //            attention_center[2] + 0.12 + dim[0] *1.5* (double)j,
@@ -122,10 +125,10 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     //
     //        spheres[i*rows+j] =
     //            new BulletVTKObject(
-    //                ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, pose,
+    //                ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, sphere_pose,
     //                density, NULL, friction
     //            );
-    //        delete [] pose;
+    //        delete [] sphere_pose;
     //        double ratio = (double)i/4.0;
     //        spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
     //            0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);
@@ -214,16 +217,15 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     // Create kinematic box
 
-    pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_dim = {0.002, 0.002, 0.01};
-    kine_box =
-        new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
-            NULL, friction
-        );
-    dynamics_world->addRigidBody(kine_box->GetBody());
-    actors.push_back(kine_box->GetActor());
-    kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
+    //kine_box =
+    //    new BulletVTKObject(
+    //        ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim, dummy_pose, 0.0,
+    //        NULL, friction
+    //    );
+    //dynamics_world->addRigidBody(kine_box->GetBody());
+    //actors.push_back(kine_box->GetActor());
+    //kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
 
     // -------------------------------------------------------------------------
     // Create kinematic sphere
@@ -231,7 +233,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     std::vector<double> kine_sph_dim = {0.002};
     kine_sphere_0 =
         new BulletVTKObject(
-            ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
+            ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, dummy_pose, 0.0,
             NULL, friction
         );
     dynamics_world->addRigidBody(kine_sphere_0->GetBody());
@@ -243,10 +245,10 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
     kine_sphere_1 =
         new BulletVTKObject(
-            ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
+            ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, dummy_pose, 0.0,
             NULL, friction
         );
-    delete [] pose;
+
     dynamics_world->addRigidBody(kine_sphere_1->GetBody());
     actors.push_back(kine_sphere_1->GetActor());
     kine_sphere_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
@@ -260,44 +262,6 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
     actors.push_back(task_coordinate_axes);
-
-
-
-
-    // -------------------------------------------------------------------------
-    // SOFT BODY
-    float l = float(0.04 * B_DIM_SCALE);
-    dynamics_world->setGravity(btVector3(0, 0, btScalar(-9.8)));
-
-    sb_w_info = new btSoftBodyWorldInfo;
-    sb_w_info->m_broadphase =overlappingPairCache;
-    sb_w_info->m_dispatcher =dispatcher;
-    sb_w_info->m_gravity=(btVector3(0, 0, btScalar(-9.8)));
-    sb_w_info->m_sparsesdf.Initialize();
-
-//    sb = btSoftBodyHelpers::CreatePatch(
-//            *sb_w_info,
-//            btVector3(0, 0, l/2),
-//            btVector3(l, 0, l/2),
-//            btVector3(0, l, l/2),
-//            btVector3(l, l, l/2), 20, 20, 1+2+4+8, true);
-//    sb->m_cfg.viterations = 50;
-//    sb->setTotalMass(1);
-
-    sb=btSoftBodyHelpers::CreateEllipsoid(
-        *sb_w_info,
-        btVector3(attention_center[0]*B_DIM_SCALE,
-                  attention_center[1]*B_DIM_SCALE,
-                  attention_center[2]*B_DIM_SCALE),
-        btVector3(l/4,l/4,l/4),1000);
-    sb->m_cfg.viterations=20;
-    sb->m_cfg.piterations=20;
-    sb->m_cfg.kPR=200;
-    sb->setTotalDensity(btScalar(1));
-    sb->setMass(0, 0);
-    sb->getCollisionShape()->setMargin(0.08);
-//    sb->generateBendingConstraints(3);
-    dynamics_world->addSoftBody(sb);
 
 
 
@@ -321,7 +285,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
 
 //------------------------------------------------------------------------------
-void TaskBullet::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+void TaskDeformable::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                            const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
@@ -329,32 +293,32 @@ void TaskBullet::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 }
 
 
-void TaskBullet::SetCurrentGripperpositionPointer(double &grip_position, const int
+void TaskDeformable::SetCurrentGripperpositionPointer(double &grip_position, const int
 tool_id) {
     gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
-void TaskBullet::UpdateActors() {
+void TaskDeformable::UpdateActors() {
 
-    renderSoftbody(sb, def_actor);
+    RenderSoftbody(sb, def_actor);
     //--------------------------------
     //box
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
 
     KDL::Vector box_posit = tool_pose * KDL::Vector( 0.0 , 0.0, -0.03);
 
-    double x, y, z, w;
-    tool_pose.M.GetQuaternion(x,y,z,w);
-    double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
-    kine_box->SetKinematicPose(box_pose);
+    //double x, y, z, w;
+    //tool_pose.M.GetQuaternion(x,y,z,w);
+    //double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
+    //kine_box->SetKinematicPose(box_pose);
 
 
     //--------------------------------
     //sphere 0
     double grip_posit = (*gripper_position[0]);
 
-    KDL::Vector gripper_pos = KDL::Vector( 0.0, (1+grip_posit)* 0.006, 0.006);
+    KDL::Vector gripper_pos = KDL::Vector( 0.0, (1+grip_posit)* 0.002, 0.001);
     gripper_pos = tool_pose * gripper_pos;
 
     double sphere_0_pose[7] = {
@@ -367,7 +331,7 @@ void TaskBullet::UpdateActors() {
 
     //--------------------------------
     //sphere 1
-    gripper_pos = KDL::Vector( 0.0, -(1+grip_posit)* 0.006, 0.006);
+    gripper_pos = KDL::Vector( 0.0, -(1+grip_posit)* 0.002, 0.001);
     gripper_pos = tool_pose.p + tool_pose.M * gripper_pos;
 
     double sphere_1_pose[7] = {
@@ -388,36 +352,36 @@ void TaskBullet::UpdateActors() {
 
 
 //------------------------------------------------------------------------------
-bool TaskBullet::IsACParamChanged() {
+bool TaskDeformable::IsACParamChanged() {
     return false;
 }
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters TaskBullet::GetACParameters() {
+custom_msgs::ActiveConstraintParameters TaskDeformable::GetACParameters() {
     custom_msgs::ActiveConstraintParameters msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }
 
 
-custom_msgs::TaskState TaskBullet::GetTaskStateMsg() {
+custom_msgs::TaskState TaskDeformable::GetTaskStateMsg() {
     custom_msgs::TaskState task_state_msg;
     return task_state_msg;
 }
 
-void TaskBullet::ResetTask() {
+void TaskDeformable::ResetTask() {
     ROS_INFO("Resetting the task.");
 
 }
 
-void TaskBullet::ResetCurrentAcquisition() {
+void TaskDeformable::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
 
 }
 
 
-void TaskBullet::FindAndPublishDesiredToolPose() {
+void TaskDeformable::FindAndPublishDesiredToolPose() {
 
     ros::Publisher pub_desired[2];
 
@@ -458,7 +422,7 @@ void TaskBullet::FindAndPublishDesiredToolPose() {
 
 
 
-void TaskBullet::InitBullet() {
+void TaskDeformable::InitBullet() {
 
     ///-----initialization_start-----
 
@@ -486,7 +450,7 @@ void TaskBullet::InitBullet() {
 }
 
 
-void TaskBullet::StepDynamicsWorld() {
+void TaskDeformable::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
 
     double time_step = (ros::Time::now() - time_last).toSec();
@@ -517,7 +481,7 @@ void TaskBullet::StepDynamicsWorld() {
 }
 
 
-TaskBullet::~TaskBullet() {
+TaskDeformable::~TaskDeformable() {
 
     ROS_INFO("Destructing Bullet task: %d",
              dynamics_world->getNumCollisionObjects());
@@ -568,6 +532,54 @@ TaskBullet::~TaskBullet() {
 
     //next line is optional: it will be cleared by the destructor when the array goes out of scope
 //    collisionShapes.clear();
+}
+
+void TaskDeformable::RenderSoftbody(
+    btSoftBody *b,
+    vtkSmartPointer<vtkActor> actor
+) {
+    // first attempt. I doubt it is the most efficient way.
+    //faces
+    vtkSmartPointer<vtkCellArray> triangles =
+        vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    // Create a polydata object
+    vtkSmartPointer<vtkPolyData> polyData =
+        vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkPoints> points =
+        vtkSmartPointer<vtkPoints>::New();
+
+    std::vector<vtkSmartPointer<vtkTriangle> >triangle;
+
+    for(int i=0;i<b->m_faces.size();i++)
+    {
+        triangle.push_back(vtkSmartPointer<vtkTriangle>::New());
+
+        for(int j=0;j<3;j++) {
+            points->InsertNextPoint(b->m_faces[i].m_n[j]->m_x.x()/B_DIM_SCALE,
+                                    b->m_faces[i].m_n[j]->m_x.y()/B_DIM_SCALE,
+                                    b->m_faces[i].m_n[j]->m_x.z()/B_DIM_SCALE);
+
+            triangle[i]->GetPointIds()->SetId ( j, i*3  + j );
+        }
+
+        triangles->InsertNextCell ( triangle[i] );
+    }
+    // Add the geometry and topology to the polydata
+    polyData->SetPoints ( points );
+    polyData->SetPolys ( triangles );
+    mapper->SetInputData(polyData);
+    actor->SetMapper(mapper);
+
+////    for(int i=0;i<b->m_links.size();i++)
+//    {
+//        for(int j=0;j<2;j++)
+//            (b->m_links[i].m_n[j]->m_x.x(),
+//                       b->m_links[i].m_n[j]->m_x.y(),
+//                       b->m_links[i].m_n[j]->m_x.z());
+//    }
+
 }
 
 

@@ -2,8 +2,8 @@
 // Created by nima on 13/06/17.
 //
 
-#ifndef ATAR_TASKBULLET_H
-#define ATAR_TASKBULLET_H
+#ifndef ATAR_TASKDEFORMABLE_H
+#define ATAR_TASKDEFORMABLE_H
 
 
 #include "VTKTask.h"
@@ -46,14 +46,14 @@
 
 
 
-class TaskBullet : public VTKTask{
+class TaskDeformable : public VTKTask{
 public:
 
-    TaskBullet(const std::string mesh_files_dir,
+    TaskDeformable(const std::string mesh_files_dir,
             const bool show_ref_frames, const bool num_tools,
             const bool with_guidance);
 
-    ~TaskBullet();
+    ~TaskDeformable();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -97,6 +97,7 @@ public:
     void StepDynamicsWorld();
 
 
+    void RenderSoftbody(btSoftBody* b, vtkSmartPointer<vtkActor> actor);
 private:
     std::vector<std::array<double, 3> > sphere_positions;
 
@@ -132,4 +133,4 @@ private:
 
 };
 
-#endif //ATAR_TASKBULLETt_H
+#endif //ATAR_TASKDEFORMABLE_H

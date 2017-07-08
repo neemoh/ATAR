@@ -9,7 +9,7 @@
 #include "TaskBuzzWire.h"
 #include "TaskKidney.h"
 #include "TaskODE.h"
-#include "TaskBullet.h"
+#include "TaskDeformable.h"
 #include "TaskBulletTest.h"
 #include "ControlEvents.h"
 #include "TaskPegInHole.h"
@@ -429,35 +429,35 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     // create the task
     if(task_id ==1){
         // allocate anew dynamic task
-        ROS_DEBUG("Starting new BuzzWireTask task. ");
-        task_ptr   = new TaskBuzzWire(
-                mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
-                with_guidance, haptic_loop_rate
-        );
-    }
-    else if(task_id ==2){
-        ROS_DEBUG("Starting new TaskKidney task. ");
+        ROS_DEBUG("Starting new TaskKidney. ");
         task_ptr   = new TaskKidney(mesh_files_dir, show_reference_frames,
                                     (bool) (n_arms - 1), with_guidance);
     }
+    else if(task_id ==2){
+        ROS_DEBUG("Starting new BuzzWireTask task. ");
+        task_ptr   = new TaskBuzzWire(
+            mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
+            with_guidance, haptic_loop_rate
+        );
+    }
     else if(task_id ==3){
-        ROS_DEBUG("Starting new TaskODE task. ");
+        ROS_DEBUG("Starting new TaskODE.");
         task_ptr   = new TaskODE(mesh_files_dir, show_reference_frames,
                                  (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==4){
-        ROS_DEBUG("Starting new TaskBullet task. ");
-        task_ptr   = new TaskBullet(mesh_files_dir, show_reference_frames,
+        ROS_DEBUG("Starting new TaskPegInHole. ");
+        task_ptr   = new TaskPegInHole(mesh_files_dir, show_reference_frames,
                                     (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==5){
-        ROS_DEBUG("Starting new TaskBulletTest task. ");
+        ROS_DEBUG("Starting new TaskBulletTest. ");
         task_ptr   = new TaskBulletTest(mesh_files_dir, show_reference_frames,
                                         (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==6){
-        ROS_DEBUG("Starting new TaskPegInHole task. ");
-        task_ptr   = new TaskPegInHole(mesh_files_dir, show_reference_frames,
+        ROS_DEBUG("Starting new TaskDeformable . ");
+        task_ptr   = new TaskDeformable(mesh_files_dir, show_reference_frames,
                                        (bool) (n_arms - 1), with_guidance);
     }
 
