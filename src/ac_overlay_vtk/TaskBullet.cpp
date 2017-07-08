@@ -7,12 +7,74 @@
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
+#include <vtkTriangle.h>
+//
+
+
+void renderSoftbody(btSoftBody* b, vtkSmartPointer<vtkActor> actor)
+
+{
+    //faces
+////    glBegin(GL_TRIANGLES);
+    vtkSmartPointer<vtkCellArray> triangles =
+            vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+    // Create a polydata object
+    vtkSmartPointer<vtkPolyData> polyData =
+            vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkPoints> points =
+            vtkSmartPointer<vtkPoints>::New();
+
+    std::vector<vtkSmartPointer<vtkTriangle> >triangle;
+
+    for(int i=0;i<b->m_faces.size();i++)
+    {
+
+        triangle.push_back(vtkSmartPointer<vtkTriangle>::New());
+
+        for(int j=0;j<3;j++) {
+//            glVertex3f(b->m_faces[i].m_n[j]->m_x.x(),
+//                       b->m_faces[i].m_n[j]->m_x.y(),
+//                       b->m_faces[i].m_n[j]->m_x.z());
+
+            points->InsertNextPoint(b->m_faces[i].m_n[j]->m_x.x()/B_DIM_SCALE,
+                                    b->m_faces[i].m_n[j]->m_x.y()/B_DIM_SCALE,
+                                    b->m_faces[i].m_n[j]->m_x.z()/B_DIM_SCALE);
+
+            triangle[i]->GetPointIds()->SetId ( j, i*3  + j );
+        }
+
+        triangles->InsertNextCell ( triangle[i] );
+
+    }
+    // Add the geometry and topology to the polydata
+    polyData->SetPoints ( points );
+    polyData->SetPolys ( triangles );
+    mapper->SetInputData(polyData);
+    actor->SetMapper(mapper);
+
+////    glEnd();
+////    //lines
+////    glColor3f(0.0,0.0,1.0);
+////    glBegin(GL_LINES);
+////    for(int i=0;i<b->m_links.size();i++)
+//    {
+//        for(int j=0;j<2;j++)
+//            glVertex3f(b->m_links[i].m_n[j]->m_x.x(),
+//                       b->m_links[i].m_n[j]->m_x.y(),
+//                       b->m_links[i].m_n[j]->m_x.z());
+//    }
+//    glEnd();
+}
 
 TaskBullet::TaskBullet(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
-    VTKTask(show_ref_frames, biman, with_guidance, 0)
+    VTKTask(show_ref_frames, biman, with_guidance, 0),
+    time_last(ros::Time::now())
+
 {
 
 
@@ -49,9 +111,9 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
         ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
     );
     board->GetActor()->GetProperty()->SetOpacity(1.0);
-    board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
+    board->GetActor()->GetProperty()->SetColor(0.2, 0.3, 0.1);
 
-    dynamicsWorld->addRigidBody(board->GetBody());
+    dynamics_world->addRigidBody(board->GetBody());
     actors.push_back(board->GetActor());
 
     // -------------------------------------------------------------------------
@@ -82,11 +144,11 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
             delete [] pose;
             double ratio = (double)i/4.0;
             cylinders[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
+                0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);
             cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
             cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
 
-            dynamicsWorld->addRigidBody(cylinders[i*rows+j]->GetBody());
+            dynamics_world->addRigidBody(cylinders[i*rows+j]->GetBody());
             actors.push_back(cylinders[i*rows+j]->GetActor());
 
         }
@@ -127,8 +189,8 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
 //                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
 //                        (float) stiffnes, (float) damping);
-                dynamicsWorld->addRigidBody(cubes[i*rows+j]->GetBody());
-                actors.push_back(cubes[i*rows+j]->GetActor());
+//                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
+//                actors.push_back(cubes[i*rows+j]->GetActor());
 
             }
         }
@@ -161,8 +223,8 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
         &mesh_file_dir_str, friction
     );
 
-    dynamicsWorld->addRigidBody(mesh->GetBody());
-    actors.push_back(mesh->GetActor());
+//    dynamics_world->addRigidBody(mesh->GetBody());
+//    actors.push_back(mesh->GetActor());
     mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
 
     // -------------------------------------------------------------------------
@@ -178,7 +240,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
             ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
             NULL, friction
         );
-    dynamicsWorld->addRigidBody(kine_box->GetBody());
+    dynamics_world->addRigidBody(kine_box->GetBody());
     actors.push_back(kine_box->GetActor());
     kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
 
@@ -191,7 +253,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
             ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, pose, 0.0,
             NULL, friction
         );
-    dynamicsWorld->addRigidBody(kine_sphere_0->GetBody());
+    dynamics_world->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
     kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
@@ -204,12 +266,10 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
             NULL, friction
         );
     delete [] pose;
-    dynamicsWorld->addRigidBody(kine_sphere_1->GetBody());
+    dynamics_world->addRigidBody(kine_sphere_1->GetBody());
     actors.push_back(kine_sphere_1->GetActor());
     kine_sphere_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
-    // -------------------------------------------------------------------------
-    // FRAMES
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
         vtkSmartPointer<vtkAxesActor>::New();
 
@@ -218,9 +278,72 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     task_coordinate_axes->SetZAxisLabelText("");
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-
-
     actors.push_back(task_coordinate_axes);
+
+
+
+
+    // -------------------------------------------------------------------------
+    // SOFT BODY
+    float l = float(0.1 * B_DIM_SCALE);
+    dynamics_world->setGravity(btVector3(0, 0, btScalar(-9.8)));
+
+    sb_w_info = new btSoftBodyWorldInfo;
+    sb_w_info->m_broadphase =overlappingPairCache;
+    sb_w_info->m_dispatcher =dispatcher;
+    sb_w_info->m_gravity=(btVector3(0, 0, btScalar(-9.8)));
+    sb_w_info->m_sparsesdf.Initialize();
+
+//    sb = btSoftBodyHelpers::CreatePatch(
+//            *sb_w_info,
+//            btVector3(0, 0, l/2),
+//            btVector3(l, 0, l/2),
+//            btVector3(0, l, l/2),
+//            btVector3(l, l, l/2), 20, 20, 1+2+4+8, true);
+//    sb->m_cfg.viterations = 50;
+//    sb->setTotalMass(1);
+
+
+    sb=btSoftBodyHelpers::CreateEllipsoid(*sb_w_info,
+                                          btVector3(l/4,l/1.5,l/2),
+                                          btVector3(l/3,l/3,l/3),1000);
+    sb->m_cfg.viterations=50;
+    sb->m_cfg.piterations=50;
+    sb->m_cfg.kPR=100;
+    sb->setTotalMass(13.0);
+//    sb->setMass(0,0);
+
+    dynamics_world->addSoftBody(sb);
+
+
+
+    // Create a polydata object
+    vtkSmartPointer<vtkPolyData> polyData =
+            vtkSmartPointer<vtkPolyData>::New();
+
+
+
+    // Visualize
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+
+    mapper->SetInputData(polyData);
+    def_actor = vtkSmartPointer<vtkActor>::New();
+    def_actor->SetMapper(mapper);
+
+    actors.push_back(def_actor);
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -245,6 +368,7 @@ tool_id) {
 //------------------------------------------------------------------------------
 void TaskBullet::UpdateActors() {
 
+    renderSoftbody(sb, def_actor);
     //--------------------------------
     //box
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
@@ -370,7 +494,7 @@ void TaskBullet::InitBullet() {
     ///-----initialization_start-----
 
     ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-    collisionConfiguration = new btDefaultCollisionConfiguration();
+    collisionConfiguration = new btSoftBodyRigidBodyCollisionConfiguration();
 
     ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
     dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -381,11 +505,13 @@ void TaskBullet::InitBullet() {
     ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
     solver = new btSequentialImpulseConstraintSolver;
 
-    dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,
-                                                overlappingPairCache, solver,
-                                                collisionConfiguration);
+    sb_solver = new btDefaultSoftBodySolver;
 
-    dynamicsWorld->setGravity(btVector3(0, 0, -10));
+    dynamics_world = new btSoftRigidDynamicsWorld(dispatcher,
+                                                overlappingPairCache, solver,
+                                                collisionConfiguration, sb_solver);
+
+    dynamics_world->setGravity(btVector3(0, 0, btScalar(-9.8)));
 
 
 }
@@ -394,7 +520,11 @@ void TaskBullet::InitBullet() {
 void TaskBullet::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
 
-    dynamicsWorld->stepSimulation(1.f / 120.f, 0);
+    double time_step = (ros::Time::now() - time_last).toSec();
+
+    // simulation seems more realistic when time_step is halved right now!
+    dynamics_world->stepSimulation(btScalar(time_step/2), 7);
+    time_last = ros::Time::now();
 
 //    //print positions of all objects
 //    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
@@ -421,17 +551,17 @@ void TaskBullet::StepDynamicsWorld() {
 TaskBullet::~TaskBullet() {
 
     ROS_INFO("Destructing Bullet task: %d",
-             dynamicsWorld->getNumCollisionObjects());
+             dynamics_world->getNumCollisionObjects());
     //remove the rigidbodies from the dynamics world and delete them
-    for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+    for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
     {
-        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];
         btRigidBody* body = btRigidBody::upcast(obj);
         if (body && body->getMotionState())
         {
             delete body->getMotionState();
         }
-        dynamicsWorld->removeCollisionObject(obj);
+        dynamics_world->removeCollisionObject(obj);
         delete obj;
     }
 
@@ -451,10 +581,12 @@ TaskBullet::~TaskBullet() {
 //    }
 
     //delete dynamics world
-    delete dynamicsWorld;
+    delete dynamics_world;
 
     //delete solver
     delete solver;
+
+    delete sb_solver;
 
     //delete broadphase
     delete overlappingPairCache;
@@ -463,6 +595,7 @@ TaskBullet::~TaskBullet() {
     delete dispatcher;
 
     delete collisionConfiguration;
+
 
     //next line is optional: it will be cleared by the destructor when the array goes out of scope
 //    collisionShapes.clear();

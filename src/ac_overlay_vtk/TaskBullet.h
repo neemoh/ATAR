@@ -39,6 +39,10 @@
 #include <btBulletDynamicsCommon.h>
 #include "BulletVTKObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
+#include <BulletSoftBody/btDefaultSoftBodySolver.h>
+#include <BulletSoftBody/btSoftRigidDynamicsWorld.h>
+#include <BulletSoftBody/btSoftBodyHelpers.h>
+#include <BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
 
 
 
@@ -100,17 +104,22 @@ private:
     BulletVTKObject* kine_box;
     BulletVTKObject* kine_sphere_0;
     BulletVTKObject* kine_sphere_1;
-    btDiscreteDynamicsWorld* dynamicsWorld;
+    btSoftRigidDynamicsWorld* dynamics_world;
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
 //    btAlignedObjectArray<btCollisionShape*> collisionShapes;
     btSequentialImpulseConstraintSolver* solver;
+    btSoftBodySolver* sb_solver;
     btBroadphaseInterface* overlappingPairCache;
     btCollisionDispatcher* dispatcher;
-    btDefaultCollisionConfiguration* collisionConfiguration;
-
+    btSoftBodyRigidBodyCollisionConfiguration* collisionConfiguration;
+    btSoftBody* sb;
+    ros::Time time_last;
+    btSoftBodyWorldInfo *sb_w_info;
     // -------------------------------------------------------------------------
     // graphics
+
+    vtkSmartPointer<vtkActor> def_actor;
 
     // for not we use the same type of active constraint for both arms
     custom_msgs::ActiveConstraintParameters ac_parameters;

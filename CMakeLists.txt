@@ -298,7 +298,8 @@ target_link_libraries(
         LinearMath
         libode.a
         LoadObjGL
-        )
+        BulletSoftBody
+)
 
 set(ODE_PRECISION dSINGLE)
 
