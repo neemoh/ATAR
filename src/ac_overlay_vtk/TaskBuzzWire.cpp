@@ -12,38 +12,36 @@
 
 
 namespace Colors {
-    double Red[3] {1.0, 0.1, 0.03};
-    double OrangeRed[3] {1.0, 0.27, 0.03};
-    double Gold[3] {1.0, 0.84, 0.0};
-    double Green[3] {0.0, 0.9, 0.03};
-    double Pink[3] {1.0, 0.0, 1.0};
-    double Orange[3] {0.9, 0.4, 0.1};
-    double Gray [3] {0.4, 0.4, 0.4};
-    double Turquoise[3]	{0.25, 0.88, 0.82};
-    double DeepPink[3] {1.0, 0.08, 0.58};
+double Red[3] {1.0, 0.1, 0.03};
+double OrangeRed[3] {1.0, 0.27, 0.03};
+double Gold[3] {1.0, 0.84, 0.0};
+double Green[3] {0.0, 0.9, 0.03};
+double Pink[3] {1.0, 0.0, 1.0};
+double Orange[3] {0.9, 0.4, 0.1};
+double Gray [3] {0.4, 0.4, 0.4};
+double Turquoise[3]	{0.25, 0.88, 0.82};
+double DeepPink[3] {1.0, 0.08, 0.58};
 };
 
 TaskBuzzWire::TaskBuzzWire(
-        const std::string stl_file_dir,
-        const bool show_ref_frames,
-        const bool biman,
-        const bool with_guidance,
-        const double haptic_loop_rate
-    )
-        :
+    const std::string stl_file_dir,
+    const bool show_ref_frames,
+    const bool biman,
+    const bool with_guidance,
+    const double haptic_loop_rate
+)
+    :
     VTKTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
-        stl_files_dir(stl_file_dir),
+    stl_files_dir(stl_file_dir),
 //        show_ref_frames(show_ref_frames),
 //        bimanual(biman),
 //        with_guidance(with_guidance),
-        destination_ring_counter(0),
-        ac_params_changed(true),
-        task_state(TaskState::Idle),
-        number_of_repetition(0),
-        n_score_history(10),
-        idle_point(KDL::Vector(-0.006, 0.026, 0.029)),
-        start_point(KDL::Vector(0.0019, 0.031, 0.030)),
-        end_point(KDL::Vector(0.034, 0.043, 0.053)) {
+    destination_ring_counter(0),
+    ac_params_changed(true),
+    task_state(TaskState::Idle),
+    number_of_repetition(0),
+    n_score_history(10)
+{
 
 
 
@@ -101,19 +99,19 @@ TaskBuzzWire::TaskBuzzWire(
     double source_scales = 0.006;
 
     vtkSmartPointer<vtkParametricTorus> parametricObject =
-            vtkSmartPointer<vtkParametricTorus>::New();
+        vtkSmartPointer<vtkParametricTorus>::New();
     parametricObject->SetCrossSectionRadius(
-            ring_cross_section_radius / source_scales);
+        ring_cross_section_radius / source_scales);
     parametricObject->SetRingRadius(ring_radius / source_scales);
 
     vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource =
-            vtkSmartPointer<vtkParametricFunctionSource>::New();
+        vtkSmartPointer<vtkParametricFunctionSource>::New();
     parametricFunctionSource->SetParametricFunction(parametricObject);
     parametricFunctionSource->Update();
 
     // to transform the data
     vtkSmartPointer<vtkTransformPolyDataFilter>
-            ring_local_transform_filter[2];
+        ring_local_transform_filter[2];
     vtkSmartPointer<vtkTransform> ring_local_transform[2];
     vtkSmartPointer<vtkPolyDataMapper> ring_mapper[2];
 
@@ -121,21 +119,21 @@ TaskBuzzWire::TaskBuzzWire(
     for (int k = 0; k < 1 + (int)bimanual; ++k) {
 
         ring_local_transform_filter[k] =
-                vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
         ring_local_transform_filter[k]->SetInputConnection(
-                parametricFunctionSource->GetOutputPort());
+            parametricFunctionSource->GetOutputPort());
 
         ring_local_transform[k] = vtkSmartPointer<vtkTransform>::New();
 
         if(k == 0){
             ring_local_transform[k]->RotateX(90);
             ring_local_transform[k]->Translate(0.0, ring_radius /
-                                                    source_scales, 0.0);
+                source_scales, 0.0);
         }
         else{
 //            ring_local_transform[k]->RotateX(0);
             ring_local_transform[k]->Translate(0.0, ring_radius /
-                                                    source_scales, 0.0);
+                source_scales, 0.0);
         }
 
         ring_local_transform_filter[k]->SetTransform(ring_local_transform[k]);
@@ -143,7 +141,7 @@ TaskBuzzWire::TaskBuzzWire(
 
         ring_mapper[k] = vtkSmartPointer<vtkPolyDataMapper>::New();
         ring_mapper[k]->SetInputConnection(
-                ring_local_transform_filter[k]->GetOutputPort());
+            ring_local_transform_filter[k]->GetOutputPort());
 
         ring_actor[k]->SetMapper(ring_mapper[k]);
         ring_actor[k]->SetScale(source_scales);
@@ -155,9 +153,9 @@ TaskBuzzWire::TaskBuzzWire(
     // Destination ring
 
     vtkSmartPointer<vtkPolyDataMapper> destination_ring_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     destination_ring_mapper->SetInputConnection(
-            parametricFunctionSource->GetOutputPort());
+        parametricFunctionSource->GetOutputPort());
     destination_ring_actor->SetMapper(destination_ring_mapper);
     destination_ring_actor->SetScale(0.004);
     destination_ring_actor->RotateX(90);
@@ -168,7 +166,7 @@ TaskBuzzWire::TaskBuzzWire(
     // -------------------------------------------------------------------------
     // FRAMES
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
-            vtkSmartPointer<vtkAxesActor>::New();
+        vtkSmartPointer<vtkAxesActor>::New();
 
     task_coordinate_axes->SetXAxisLabelText("");
     task_coordinate_axes->SetYAxisLabelText("");
@@ -191,39 +189,50 @@ TaskBuzzWire::TaskBuzzWire(
         tool_desired_frame_axes[k]->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
     }
+
+    // hard coding the position of of the destinations
+    // if the base is rotated the destinations will not be valid anymore...
+    KDL::Vector base_position = KDL::Vector(0.10, 0.08, 0.025);
+
+    idle_point  = base_position + KDL::Vector(-0.056, -0.034, 0.004);
+    start_point  = base_position + KDL::Vector(-0.048, -0.029, 0.005);
+    end_point  = base_position + KDL::Vector(-0.016, -0.017, 0.028);
+
     // -------------------------------------------------------------------------
     // Stand MESH hq
     std::stringstream input_file_dir;
     input_file_dir << stl_files_dir << std::string("task1_4_stand.STL");
 
     vtkSmartPointer<vtkSTLReader> stand_mesh_reader =
-            vtkSmartPointer<vtkSTLReader>::New();
+        vtkSmartPointer<vtkSTLReader>::New();
     ROS_DEBUG("Loading stl file from: %s", input_file_dir.str().c_str());
     stand_mesh_reader->SetFileName(input_file_dir.str().c_str());
     stand_mesh_reader->Update();
 
     // transform
     vtkSmartPointer<vtkTransform> stand_transform =
-            vtkSmartPointer<vtkTransform>::New();
-    stand_transform->Translate(0.050, 0.060, 0.025);
+        vtkSmartPointer<vtkTransform>::New();
+
+    stand_transform->Translate(base_position[0], base_position[1],
+                               base_position[2]);
     stand_transform->RotateX(180);
     stand_transform->RotateZ(150);
 
     vtkSmartPointer<vtkTransformPolyDataFilter> stand_mesh_transformFilter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        vtkSmartPointer<vtkTransformPolyDataFilter>::New();
     stand_mesh_transformFilter->SetInputConnection(
-            stand_mesh_reader->GetOutputPort());
+        stand_mesh_reader->GetOutputPort());
     stand_mesh_transformFilter->SetTransform(stand_transform);
     stand_mesh_transformFilter->Update();
 
 
     vtkSmartPointer<vtkPolyDataMapper> stand_mesh_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     stand_mesh_mapper->SetInputConnection(
-            stand_mesh_transformFilter->GetOutputPort());
+        stand_mesh_transformFilter->GetOutputPort());
 
     vtkSmartPointer<vtkActor> stand_mesh_actor =
-            vtkSmartPointer<vtkActor>::New();
+        vtkSmartPointer<vtkActor>::New();
     stand_mesh_actor->SetMapper(stand_mesh_mapper);
     stand_mesh_actor->GetProperty()->SetColor(Colors::Gray);
     //    stand_mesh_actor->GetProperty()->SetSpecular(0.8);
@@ -236,26 +245,26 @@ TaskBuzzWire::TaskBuzzWire(
     input_file_dir << stl_files_dir << std::string("task1_4_tube.STL");
 
     vtkSmartPointer<vtkSTLReader> hq_mesh_reader =
-            vtkSmartPointer<vtkSTLReader>::New();
+        vtkSmartPointer<vtkSTLReader>::New();
     ROS_DEBUG("Loading stl file from: %s", input_file_dir.str().c_str());
     hq_mesh_reader->SetFileName(input_file_dir.str().c_str());
     hq_mesh_reader->Update();
     vtkSmartPointer<vtkTransform> tube_transform =
-            vtkSmartPointer<vtkTransform>::New();
+        vtkSmartPointer<vtkTransform>::New();
     tube_transform->DeepCopy(stand_transform);
     tube_transform->RotateX(-15);
 
     vtkSmartPointer<vtkTransformPolyDataFilter> hq_mesh_transformFilter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        vtkSmartPointer<vtkTransformPolyDataFilter>::New();
     hq_mesh_transformFilter->SetInputConnection(
-            hq_mesh_reader->GetOutputPort());
+        hq_mesh_reader->GetOutputPort());
     hq_mesh_transformFilter->SetTransform(tube_transform);
     hq_mesh_transformFilter->Update();
 
     vtkSmartPointer<vtkPolyDataMapper> hq_mesh_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     hq_mesh_mapper->SetInputConnection(
-            hq_mesh_transformFilter->GetOutputPort());
+        hq_mesh_transformFilter->GetOutputPort());
 
     tube_mesh_actor->SetMapper(hq_mesh_mapper);
     tube_mesh_actor->GetProperty()->SetColor(Colors::Orange);
@@ -270,23 +279,23 @@ TaskBuzzWire::TaskBuzzWire(
     input_file_dir << stl_files_dir << std::string("task1_4_wire.STL");
 
     vtkSmartPointer<vtkSTLReader> lq_mesh_reader =
-            vtkSmartPointer<vtkSTLReader>::New();
+        vtkSmartPointer<vtkSTLReader>::New();
     ROS_DEBUG("Loading stl file from: %s", input_file_dir.str().c_str());
     lq_mesh_reader->SetFileName(input_file_dir.str().c_str());
     lq_mesh_reader->Update();
 
 
     vtkSmartPointer<vtkTransformPolyDataFilter> lq_mesh_transformFilter =
-            vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        vtkSmartPointer<vtkTransformPolyDataFilter>::New();
     lq_mesh_transformFilter->SetInputConnection(
-            lq_mesh_reader->GetOutputPort());
+        lq_mesh_reader->GetOutputPort());
     lq_mesh_transformFilter->SetTransform(tube_transform);
     lq_mesh_transformFilter->Update();
 
     vtkSmartPointer<vtkPolyDataMapper> lq_mesh_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     lq_mesh_mapper->SetInputConnection(
-            lq_mesh_transformFilter->GetOutputPort());
+        lq_mesh_transformFilter->GetOutputPort());
 
     vtkSmartPointer<vtkActor> lq_mesh_actor = vtkSmartPointer<vtkActor>::New();
     lq_mesh_actor->SetMapper(lq_mesh_mapper);
@@ -298,13 +307,13 @@ TaskBuzzWire::TaskBuzzWire(
     // -------------------------------------------------------------------------
     // Create a cube for the floor
     vtkSmartPointer<vtkCubeSource> floor_source =
-            vtkSmartPointer<vtkCubeSource>::New();
+        vtkSmartPointer<vtkCubeSource>::New();
     double floor_dimensions[3] = {0.1, 0.07, 0.001};
     floor_source->SetXLength(floor_dimensions[0]);
     floor_source->SetYLength(floor_dimensions[1]);
     floor_source->SetZLength(floor_dimensions[2]);
     vtkSmartPointer<vtkPolyDataMapper> floor_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     floor_mapper->SetInputConnection(floor_source->GetOutputPort());
     vtkSmartPointer<vtkActor> floor_actor = vtkSmartPointer<vtkActor>::New();
     floor_actor->SetMapper(floor_mapper);
@@ -316,7 +325,7 @@ TaskBuzzWire::TaskBuzzWire(
     // -------------------------------------------------------------------------
     // Lines
     vtkSmartPointer<vtkPolyDataMapper> line1_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     line1_mapper->SetInputConnection(line1_source->GetOutputPort());
     line1_actor->SetMapper(line1_mapper);
     line1_actor->GetProperty()->SetLineWidth(3);
@@ -324,7 +333,7 @@ TaskBuzzWire::TaskBuzzWire(
     line1_actor->GetProperty()->SetOpacity(0.8);
 
     vtkSmartPointer<vtkPolyDataMapper> line2_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     line2_mapper->SetInputConnection(line2_source->GetOutputPort());
 
     line2_actor->SetMapper(line2_mapper);
@@ -332,33 +341,11 @@ TaskBuzzWire::TaskBuzzWire(
 //    line2_actor->GetProperty()->SetColor(Colors::DeepPink);
     line2_actor->GetProperty()->SetOpacity(0.8);
 
-//    // -------------------------------------------------------------------------
-//    // destination cone
-//    vtkSmartPointer<vtkConeSource> destination_cone_source =
-//            vtkSmartPointer<vtkConeSource>::New();
-//    destination_cone_source->SetRadius(0.002 / source_scales);
-//    destination_cone_source->SetHeight(0.006 / source_scales);
-//    destination_cone_source->SetResolution(12);
-//
-//    vtkSmartPointer<vtkPolyDataMapper> destination_cone_mapper =
-//            vtkSmartPointer<vtkPolyDataMapper>::New();
-//    destination_cone_mapper->SetInputConnection(
-//            destination_cone_source->GetOutputPort());
-//    destination_cone_actor = vtkSmartPointer<vtkActor>::New();
-//    destination_cone_actor->SetMapper(destination_cone_mapper);
-//    destination_cone_actor->SetScale(source_scales);
-//    destination_cone_actor->GetProperty()->SetColor(Colors::Green);
-//    destination_cone_actor->GetProperty()->SetOpacity(0.5);
-//    destination_cone_actor->RotateY(90);
-//    destination_cone_actor->RotateZ(30);
-//
-//    destination_cone_actor->SetPosition(idle_point[0], idle_point[1],
-//                                        idle_point[2]);
 
     // -------------------------------------------------------------------------
     // TEXTS
     cornerAnnotation =
-            vtkSmartPointer<vtkCornerAnnotation>::New();
+        vtkSmartPointer<vtkCornerAnnotation>::New();
     cornerAnnotation->SetLinearFontScaleFactor( 2 );
     cornerAnnotation->SetNonlinearFontScaleFactor( 1 );
     cornerAnnotation->SetMaximumFontSize( 30 );
@@ -373,13 +360,13 @@ TaskBuzzWire::TaskBuzzWire(
     // Error history spheres
 
     vtkSmartPointer<vtkSphereSource>  source =
-            vtkSmartPointer<vtkSphereSource>::New();
+        vtkSmartPointer<vtkSphereSource>::New();
 
     source->SetRadius(0.002);
     source->SetPhiResolution(15);
     source->SetThetaResolution(15);
     vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     sphere_mapper->SetInputConnection(source->GetOutputPort());
 
     for (int i = 0; i < n_score_history; ++i) {
@@ -414,7 +401,6 @@ TaskBuzzWire::TaskBuzzWire(
         actors.push_back(line1_actor);
         actors.push_back(line2_actor);
     }
-//    actors.push_back(destination_cone_actor);
     actors.push_back(destination_ring_actor);
     for (int j = 0; j < score_sphere_actors.size(); ++j) {
         actors.push_back(score_sphere_actors[j]);
@@ -472,7 +458,7 @@ void TaskBuzzWire::UpdateActors() {
 
     for (int k = 0; k < 1 + (int)bimanual; ++k) {
         tool_desired_pose[k] =
-                vtkSmartPointer<vtkMatrix4x4>::New();
+            vtkSmartPointer<vtkMatrix4x4>::New();
         VTKConversions::KDLFrameToVTKMatrix(tool_desired_pose_kdl[k],
                                             tool_desired_pose[k]);
         tool_desired_frame_axes[k]->SetUserMatrix(tool_desired_pose[k]);
@@ -482,7 +468,7 @@ void TaskBuzzWire::UpdateActors() {
     // Task logic
     // -------------------------------------------------------------------------
     double positioning_tolerance = 0.003;
-    KDL::Vector destination_cone_position;
+    KDL::Vector destination_ring_position;
 
 
     // when the active constraints is suddenly enabled the tool makes some
@@ -494,7 +480,7 @@ void TaskBuzzWire::UpdateActors() {
     // we enable the active constraint.
     if (task_state == TaskState::Idle && with_guidance &&
         (ring_center[0] - start_point).Norm() <
-        positioning_tolerance) {
+            positioning_tolerance) {
         // Make sure the active constraint is inactive
         if (ac_parameters.active == 0) {
             ac_parameters.active = 1;
@@ -507,9 +493,9 @@ void TaskBuzzWire::UpdateActors() {
     // sorry it is totally unreadable!
     if (task_state == TaskState::Idle
         && ( (position_error_norm[0] < 0.001 && ac_parameters.active == 1)
-             ||
-             (!with_guidance && (ring_center[0] - start_point).Norm() <
-                                positioning_tolerance)  ))
+            ||
+                (!with_guidance && (ring_center[0] - start_point).Norm() <
+                    positioning_tolerance)  ))
     {
         task_state = TaskState::ToEndPoint;
         //increment the repetition number
@@ -523,8 +509,8 @@ void TaskBuzzWire::UpdateActors() {
         // If the tool reaches the end point the user needs to go back to
         // the starting point. This counts as a separate repetition of the task
     else if (task_state == TaskState::ToEndPoint &&
-             (ring_center[0] - end_point).Norm() <
-             positioning_tolerance) {
+        (ring_center[0] - end_point).Norm() <
+            positioning_tolerance) {
         task_state = TaskState::ToStartPoint;
         //increment the repetition number
         number_of_repetition++;
@@ -540,8 +526,8 @@ void TaskBuzzWire::UpdateActors() {
         // If the tool reaches the start point while in ToStartPoint state,
         // we can mark the task complete
     else if (task_state == TaskState::ToStartPoint &&
-             (ring_center[0] - start_point).Norm() <
-             positioning_tolerance) {
+        (ring_center[0] - start_point).Norm() <
+            positioning_tolerance) {
         task_state = TaskState::RepetitionComplete;
         // calculate and save the score of this repetition
         CalculateAndSaveError();
@@ -554,25 +540,25 @@ void TaskBuzzWire::UpdateActors() {
         // and in case another repetition is to be performed, the user can
         // flag that by going to the starting position again
     else if (task_state == TaskState::RepetitionComplete &&
-             (ring_center[0] - idle_point).Norm() <
-             positioning_tolerance) {
+        (ring_center[0] - idle_point).Norm() <
+            positioning_tolerance) {
         task_state = TaskState::Idle;
     }
 
     // update the position of the cone according to the state we're in.
     if (task_state == TaskState::Idle) {
-        destination_cone_position = start_point;
+        destination_ring_position = start_point;
         destination_ring_actor->GetProperty()->SetColor(Colors::Green);
 
     } else if (task_state == TaskState::ToStartPoint) {
-        destination_cone_position = start_point;
+        destination_ring_position = start_point;
         destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
 
     } else if (task_state == TaskState::ToEndPoint) {
-        destination_cone_position = end_point;
+        destination_ring_position = end_point;
         destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
     } else if (task_state == TaskState::RepetitionComplete) {
-        destination_cone_position = idle_point;
+        destination_ring_position = idle_point;
         destination_ring_actor->GetProperty()->SetColor(Colors::Green);
 
     }
@@ -582,9 +568,9 @@ void TaskBuzzWire::UpdateActors() {
     destination_ring_counter++;
     destination_ring_actor->SetScale(0.006 + 0.001*dt);
 
-    destination_ring_actor->SetPosition(destination_cone_position[0],
-                                        destination_cone_position[1],
-                                        destination_cone_position[2]);
+    destination_ring_actor->SetPosition(destination_ring_position[0],
+                                        destination_ring_position[1],
+                                        destination_ring_position[2]);
     // -------------------------------------------------------------------------
     // Performance Metrics
     UpdateTubeColor();
@@ -605,11 +591,11 @@ void TaskBuzzWire::UpdateActors() {
         // calculate score to show to user
         if (bimanual) {
             posit_error_sum +=
-                    0.5 * (position_error_norm[0] +
-                           position_error_norm[1]);
+                0.5 * (position_error_norm[0] +
+                    position_error_norm[1]);
             orient_error_sum +=
-                    0.5 *(orientation_error_norm[0] +
-                          orientation_error_norm[1]);
+                0.5 *(orientation_error_norm[0] +
+                    orientation_error_norm[1]);
         }
         else {
             posit_error_sum += position_error_norm[0];
@@ -633,7 +619,7 @@ void TaskBuzzWire::UpdateActors() {
         double rings_distance = (ring_center[1] - ring_center[0]).Norm();
         double ideal_distance = 0.007;
         double error_ratio = 3 * fabs(rings_distance - ideal_distance)
-                             / ideal_distance;
+            / ideal_distance;
         if (error_ratio > 1.0)
             error_ratio = 1.0;
         line1_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
@@ -676,8 +662,8 @@ void TaskBuzzWire::CalculatedDesiredToolPose() {
 
         //Find the closest cell to the grip point
         double grip_point[3] = {(tool_current_pose).p[0],
-                                (tool_current_pose).p[1],
-                                (tool_current_pose).p[2]};
+            (tool_current_pose).p[1],
+            (tool_current_pose).p[2]};
 
         double closest_point[3] = {0.0, 0.0, 0.0};
         double closestPointDist2; //the squared distance to the closest point
@@ -694,8 +680,8 @@ void TaskBuzzWire::CalculatedDesiredToolPose() {
 
         //Find the closest cell to the the central point
         double ring_central_point[3] = {ring_center[k][0],
-                                        ring_center[k][1],
-                                        ring_center[k][2]};
+            ring_center[k][1],
+            ring_center[k][2]};
         cellLocator->Update();
         cellLocator->FindClosestPoint(ring_central_point, closest_point,
                                       cell_id,
@@ -708,16 +694,16 @@ void TaskBuzzWire::CalculatedDesiredToolPose() {
         KDL::Vector radial_tool_point_kdl;
         if(k==0)
             radial_tool_point_kdl =
-                    tool_current_pose *
+                tool_current_pose *
                     KDL::Vector(ring_radius, 0.0, ring_radius);
         else
             radial_tool_point_kdl =
-                    tool_current_pose *
+                tool_current_pose *
                     KDL::Vector(ring_radius, ring_radius, 0.0);
 
         double radial_tool_point[3] = {radial_tool_point_kdl[0],
-                                       radial_tool_point_kdl[1],
-                                       radial_tool_point_kdl[2]};
+            radial_tool_point_kdl[1],
+            radial_tool_point_kdl[2]};
 
         cellLocator->Update();
         cellLocator->FindClosestPoint(radial_tool_point, closest_point, cell_id,
@@ -730,7 +716,7 @@ void TaskBuzzWire::CalculatedDesiredToolPose() {
         // Find the vector from ring center to the corresponding closest point on
         // the wire
         KDL::Vector ring_center_to_cp =
-                closest_point_to_ring_center[k] - ring_center[k];
+            closest_point_to_ring_center[k] - ring_center[k];
 
         // desired pose only when the ring is close to the wire.if it is too
         // far we don't want fixtures
@@ -749,18 +735,18 @@ void TaskBuzzWire::CalculatedDesiredToolPose() {
             // wire_radius_ * (ring_center_to_cp/ring_center_to_cp.Norm());
 
             tool_desired_pose_kdl[k].p =
-                    (tool_current_pose).p + wire_center -
+                (tool_current_pose).p + wire_center -
                     ring_center[k];
 
 
 
             KDL::Vector radial_to_cp =
-                    closest_point_to_radial_point[k] - radial_tool_point_kdl;
+                closest_point_to_radial_point[k] - radial_tool_point_kdl;
 
             KDL::Vector desired_z, desired_y, desired_x;
 
             KDL::Vector grip_to_cp =
-                    closest_point_to_grip_point[k] -
+                closest_point_to_grip_point[k] -
                     (tool_current_pose).p;
             if(k==0) {
                 desired_z = grip_to_cp / grip_to_cp.Norm();
@@ -794,9 +780,9 @@ void TaskBuzzWire::CalculatedDesiredToolPose() {
             position_error_norm[k] = (wire_center - ring_center[k]).Norm();
             KDL::Vector rpy;
             (tool_desired_pose_kdl[k].M *
-             (tool_current_pose).M.Inverse() ).GetRPY(rpy[0],
-                                                      rpy[1],
-                                                      rpy[2]);
+                (tool_current_pose).M.Inverse() ).GetRPY(rpy[0],
+                                                         rpy[1],
+                                                         rpy[2]);
             orientation_error_norm[k] = rpy.Norm();
 
 
@@ -812,11 +798,11 @@ void TaskBuzzWire::CalculatedDesiredToolPose() {
             KDL::Vector distal_tool_point_kdl;
             if (k == 0)
                 distal_tool_point_kdl =
-                        tool_current_pose *
+                    tool_current_pose *
                         KDL::Vector(0.0, 0.0, 2 * ring_radius);
             else
                 distal_tool_point_kdl =
-                        tool_current_pose *
+                    tool_current_pose *
                         KDL::Vector(0.0, 2 * ring_radius, 0.0);
 
             if (k == 0) {
@@ -864,7 +850,7 @@ void TaskBuzzWire::UpdateTubeColor() {
     // orientation error is tricky to perceive, so we weigh it half the
     // position error
     double error_ratio = ( (orientation_error_norm[0] / max_orient_error)
-                           + 2* (position_error_norm[0] / max_pos_error)) /3;
+        + 2* (position_error_norm[0] / max_pos_error)) /3;
 
     if (error_ratio > 1.3)
         error_ratio = 1.3;
@@ -874,7 +860,7 @@ void TaskBuzzWire::UpdateTubeColor() {
 //    score_sphere_actors->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
 //                                                0.1);
     if(task_state== TaskState::ToEndPoint
-       || task_state== TaskState::ToStartPoint)
+        || task_state== TaskState::ToStartPoint)
         tube_mesh_actor->GetProperty()->SetColor(0.9,
                                                  0.5- 0.4*(error_ratio-0.3),
                                                  0.1);
@@ -896,7 +882,7 @@ void TaskBuzzWire::ResetTask() {
 void TaskBuzzWire::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
     if(task_state== TaskState::ToEndPoint ||
-       task_state == TaskState::ToStartPoint){
+        task_state == TaskState::ToStartPoint){
 
         ResetOnGoingEvaluation();
         if(number_of_repetition>0)
@@ -913,10 +899,10 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-            ("/PSM1/tool_pose_desired", 10);
+                             ("/PSM1/tool_pose_desired", 10);
     if(bimanual)
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                ("/PSM2/tool_pose_desired", 10);
+                                 ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(haptic_loop_rate);
     ROS_INFO("The desired pose will be updated at '%f'",
@@ -928,13 +914,13 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
                                             tool_current_pose[0]);
         // find the center of the ring
         ring_center[0] = *tool_current_pose_kdl[0] *
-                         KDL::Vector(0.0, 0.0,ring_radius);
+            KDL::Vector(0.0, 0.0,ring_radius);
 
         if(bimanual){
             VTKConversions::KDLFrameToVTKMatrix(*tool_current_pose_kdl[1],
                                                 tool_current_pose[1]);
             ring_center[1] = *tool_current_pose_kdl[1] *
-                             KDL::Vector(0.0, ring_radius, 0.0);
+                KDL::Vector(0.0, ring_radius, 0.0);
         }
 
 
@@ -984,10 +970,10 @@ void TaskBuzzWire::CalculateAndSaveError() {
         duration = duration_ideal;
 
     double score = ( posit_error_avg_ideal/posit_error_avg
-                     + posit_error_max_ideal/posit_error_max
-                     + duration_ideal/duration
-                     + orient_error_avg_ideal/orient_error_avg)
-                   * 100 / 4;
+        + posit_error_max_ideal/posit_error_max
+        + duration_ideal/duration
+        + orient_error_avg_ideal/orient_error_avg)
+        * 100 / 4;
 
     // when the history gets full we start a new set
     if (score_history.size() == n_score_history)
