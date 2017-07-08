@@ -10,7 +10,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkActor.h>
 
-#define B_DIM_SCALE 10.0
+#define B_DIM_SCALE 50.0f
 //==============================================================================
 /*!
     \class      BulletVTKMotionState

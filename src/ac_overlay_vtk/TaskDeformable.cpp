@@ -8,36 +8,30 @@
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 #include <vtkTriangle.h>
-//
+
 
 
 void renderSoftbody(btSoftBody* b, vtkSmartPointer<vtkActor> actor)
 
 {
     //faces
-////    glBegin(GL_TRIANGLES);
     vtkSmartPointer<vtkCellArray> triangles =
-            vtkSmartPointer<vtkCellArray>::New();
+        vtkSmartPointer<vtkCellArray>::New();
     vtkSmartPointer<vtkPolyDataMapper> mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
     // Create a polydata object
     vtkSmartPointer<vtkPolyData> polyData =
-            vtkSmartPointer<vtkPolyData>::New();
+        vtkSmartPointer<vtkPolyData>::New();
     vtkSmartPointer<vtkPoints> points =
-            vtkSmartPointer<vtkPoints>::New();
+        vtkSmartPointer<vtkPoints>::New();
 
     std::vector<vtkSmartPointer<vtkTriangle> >triangle;
 
     for(int i=0;i<b->m_faces.size();i++)
     {
-
         triangle.push_back(vtkSmartPointer<vtkTriangle>::New());
 
         for(int j=0;j<3;j++) {
-//            glVertex3f(b->m_faces[i].m_n[j]->m_x.x(),
-//                       b->m_faces[i].m_n[j]->m_x.y(),
-//                       b->m_faces[i].m_n[j]->m_x.z());
-
             points->InsertNextPoint(b->m_faces[i].m_n[j]->m_x.x()/B_DIM_SCALE,
                                     b->m_faces[i].m_n[j]->m_x.y()/B_DIM_SCALE,
                                     b->m_faces[i].m_n[j]->m_x.z()/B_DIM_SCALE);
@@ -46,7 +40,6 @@ void renderSoftbody(btSoftBody* b, vtkSmartPointer<vtkActor> actor)
         }
 
         triangles->InsertNextCell ( triangle[i] );
-
     }
     // Add the geometry and topology to the polydata
     polyData->SetPoints ( points );
@@ -54,18 +47,13 @@ void renderSoftbody(btSoftBody* b, vtkSmartPointer<vtkActor> actor)
     mapper->SetInputData(polyData);
     actor->SetMapper(mapper);
 
-////    glEnd();
-////    //lines
-////    glColor3f(0.0,0.0,1.0);
-////    glBegin(GL_LINES);
 ////    for(int i=0;i<b->m_links.size();i++)
 //    {
 //        for(int j=0;j<2;j++)
-//            glVertex3f(b->m_links[i].m_n[j]->m_x.x(),
+//            (b->m_links[i].m_n[j]->m_x.x(),
 //                       b->m_links[i].m_n[j]->m_x.y(),
 //                       b->m_links[i].m_n[j]->m_x.z());
 //    }
-//    glEnd();
 }
 
 TaskBullet::TaskBullet(const std::string mesh_files_dir,
@@ -87,6 +75,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     //board_dimensions[0]  = 0.18;
     //board_dimensions[1]  = 0.14;
     //board_dimensions[2]  = 0.1;
+    float attention_center[3] = {0.08, 0.08, 0.04};
 
     board_dimensions[0]  = 0.28;
     board_dimensions[1]  = 0.24;
@@ -106,7 +95,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     board = new BulletVTKObject(
         ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
     );
-    board->GetActor()->GetProperty()->SetOpacity(1.0);
+    board->GetActor()->GetProperty()->SetOpacity(.0);
     board->GetActor()->GetProperty()->SetColor(0.2, 0.3, 0.1);
 
     dynamics_world->addRigidBody(board->GetBody());
@@ -116,37 +105,38 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     // Create spheres
     int cols = 3;
     int rows = 2;
-    double density = 4000; // kg/m3
+    double density = 4; // kg/cm3
 
-    BulletVTKObject* spheres[cols*rows];
-    for (int i = 0; i < rows; ++i) {
-
-        for (int j = 0; j < cols; ++j) {
-
-            std::vector<double> dim = {0.008};
-
-            pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
-                0.06,
-                0.16 + dim[0] *1.5* (double)j,
-                0, 0, 0, 1};
-
-            spheres[i*rows+j] =
-                new BulletVTKObject(
-                    ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, pose,
-                    density, NULL, friction
-                );
-            delete [] pose;
-            double ratio = (double)i/4.0;
-            spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);
-            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
-
-            dynamics_world->addRigidBody(spheres[i*rows+j]->GetBody());
-            actors.push_back(spheres[i*rows+j]->GetActor());
-
-        }
-    }
+    //BulletVTKObject* spheres[cols*rows];
+    //for (int i = 0; i < rows; ++i) {
+    //
+    //    for (int j = 0; j < cols; ++j) {
+    //
+    //        std::vector<double> dim = {0.004};
+    //
+    //        pose = new double[7]{
+    //            attention_center[0] + (double)i * 4*dim[0] + (double)j * dim[0]/2,
+    //            attention_center[1],
+    //            attention_center[2] + 0.12 + dim[0] *1.5* (double)j,
+    //            0, 0, 0, 1};
+    //
+    //        spheres[i*rows+j] =
+    //            new BulletVTKObject(
+    //                ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, pose,
+    //                density, NULL, friction
+    //            );
+    //        delete [] pose;
+    //        double ratio = (double)i/4.0;
+    //        spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
+    //            0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);
+    //        spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
+    //        spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
+    //
+    //        dynamics_world->addRigidBody(spheres[i*rows+j]->GetBody());
+    //        actors.push_back(spheres[i*rows+j]->GetActor());
+    //
+    //    }
+    //}
 
 //    // -------------------------------------------------------------------------
 //    // Create cubes
@@ -276,7 +266,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // SOFT BODY
-    float l = float(0.1 * B_DIM_SCALE);
+    float l = float(0.04 * B_DIM_SCALE);
     dynamics_world->setGravity(btVector3(0, 0, btScalar(-9.8)));
 
     sb_w_info = new btSoftBodyWorldInfo;
@@ -294,15 +284,17 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 //    sb->m_cfg.viterations = 50;
 //    sb->setTotalMass(1);
 
-
-    sb=btSoftBodyHelpers::CreateEllipsoid(*sb_w_info,
-                                          btVector3(l/4,l/1.5,l),
-                                          btVector3(l/4,l/4,l/4),1000);
+    sb=btSoftBodyHelpers::CreateEllipsoid(
+        *sb_w_info,
+        btVector3(attention_center[0]*B_DIM_SCALE,
+                  attention_center[1]*B_DIM_SCALE,
+                  attention_center[2]*B_DIM_SCALE),
+        btVector3(l/4,l/4,l/4),1000);
     sb->m_cfg.viterations=20;
     sb->m_cfg.piterations=20;
     sb->m_cfg.kPR=200;
-    sb->setTotalDensity(btScalar(100));
-    sb->setMass(100,0);
+    sb->setTotalDensity(btScalar(1));
+    sb->setMass(0, 0);
     sb->getCollisionShape()->setMargin(0.08);
 //    sb->generateBendingConstraints(3);
     dynamics_world->addSoftBody(sb);
@@ -311,34 +303,19 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
     // Create a polydata object
     vtkSmartPointer<vtkPolyData> polyData =
-            vtkSmartPointer<vtkPolyData>::New();
+        vtkSmartPointer<vtkPolyData>::New();
 
 
 
     // Visualize
     vtkSmartPointer<vtkPolyDataMapper> mapper =
-            vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtkSmartPointer<vtkPolyDataMapper>::New();
 
     mapper->SetInputData(polyData);
     def_actor = vtkSmartPointer<vtkActor>::New();
     def_actor->SetMapper(mapper);
 
     actors.push_back(def_actor);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
 
@@ -377,7 +354,7 @@ void TaskBullet::UpdateActors() {
     //sphere 0
     double grip_posit = (*gripper_position[0]);
 
-    KDL::Vector gripper_pos = KDL::Vector( 0.0, (1+grip_posit)* 0.01, 0.01);
+    KDL::Vector gripper_pos = KDL::Vector( 0.0, (1+grip_posit)* 0.006, 0.006);
     gripper_pos = tool_pose * gripper_pos;
 
     double sphere_0_pose[7] = {
@@ -390,7 +367,7 @@ void TaskBullet::UpdateActors() {
 
     //--------------------------------
     //sphere 1
-    gripper_pos = KDL::Vector( 0.0, -(1+grip_posit)* 0.01, 0.01);
+    gripper_pos = KDL::Vector( 0.0, -(1+grip_posit)* 0.006, 0.006);
     gripper_pos = tool_pose.p + tool_pose.M * gripper_pos;
 
     double sphere_1_pose[7] = {
@@ -500,8 +477,8 @@ void TaskBullet::InitBullet() {
     sb_solver = new btDefaultSoftBodySolver;
 
     dynamics_world = new btSoftRigidDynamicsWorld(dispatcher,
-                                                overlappingPairCache, solver,
-                                                collisionConfiguration, sb_solver);
+                                                  overlappingPairCache, solver,
+                                                  collisionConfiguration, sb_solver);
 
     dynamics_world->setGravity(btVector3(0, 0, btScalar(-9.8)));
 
@@ -515,7 +492,7 @@ void TaskBullet::StepDynamicsWorld() {
     double time_step = (ros::Time::now() - time_last).toSec();
 
     // simulation seems more realistic when time_step is halved right now!
-    dynamics_world->stepSimulation(btScalar(time_step/2), 7);
+    dynamics_world->stepSimulation(btScalar(time_step), 7);
     time_last = ros::Time::now();
 
 //    //print positions of all objects
