@@ -303,7 +303,9 @@ BulletVTKObject::BulletVTKObject(
         // to prevent rounded objects from rolling for ever we add a bit of
         // rolling friction
         if (shape == ObjectShape::CONE ||
-            shape == ObjectShape::CYLINDER){
+            shape == ObjectShape::CYLINDER ||
+            shape == ObjectShape::BOX
+            ){
             body_->setRollingFriction(btScalar(0.02));
             body_->setSpinningFriction(btScalar(0.02));
             //            body_->setAnisotropicFriction
@@ -327,7 +329,7 @@ BulletVTKObject::BulletVTKObject(
         debug_msg << std::string(" shape = ") << shape_string
                   << ", mass = " << bt_mass
                   << ", volume = " << volume
-                  << ", friction = " << friction
+                  << ", friction = " << body_->getFriction()
                   << ", contact_stiffness = " << body_->getContactStiffness()
                   << ", contact_damping = " << body_->getContactDamping();;
         ROS_DEBUG("Created BulletVTKObject with properties: %s", debug_msg.str()

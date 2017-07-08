@@ -7,6 +7,9 @@
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
+#include <math.h>
+#define _USE_MATH_DEFINES
+
 
 TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
@@ -58,13 +61,13 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     double density = 5000; // kg/m3
     //stiffnes = 20000;
     //damping = 0.9;
-    friction = 0.2;
+    friction = 2.2;
     BulletVTKObject* cylinders[cols*rows];
     for (int i = 0; i < rows; ++i) {
 
         for (int j = 0; j < cols; ++j) {
 
-            std::vector<double> dim = {0.005, 0.05};
+            std::vector<double> dim = {0.003, 0.03};
 
             double q3 = 0;
             double q4 = 1;
@@ -102,11 +105,11 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     int layers = 3;
     BulletVTKObject* cubes[layers *rows *cols];
 
-    double sides = 0.01;
-    density = 5000; // kg/m3
+    double sides = 0.006;
+    //density = 5; // kg/m3
     //stiffnes = 20000;
     //damping = 0.9;
-    //friction = 0.1;
+    //friction = 100.1;
 
     for (int k = 0; k < layers; ++k) {
         for (int i = 0; i < rows; ++i) {
@@ -117,7 +120,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
                     (double)k * 4*sides  + 0.005,
                     0, 0, 0, 1};
 
-                std::vector<double> dim = {sides, sides, 2*sides};
+                std::vector<double> dim = {sides, sides, sides};
                 cubes[i*rows+j] = new BulletVTKObject(
                     ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
                     NULL, friction
@@ -170,7 +173,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // Create kinematic box
-    friction = 10;
+    //friction = 100;
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_c_dim = {0.002, 0.002, 0.01};
@@ -186,7 +189,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     // Create kinematic sphere
 
-    std::vector<double> kine_box_jaw_dim = {0.02, 0.002, 0.01};
+    std::vector<double> kine_box_jaw_dim = {0.005, 0.001 , 0.02};
     kine_sphere_0 =
         new BulletVTKObject(
             ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_jaw_dim, pose,
@@ -225,7 +228,6 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
 
 
-
 }
 
 
@@ -250,7 +252,7 @@ void TaskPegInHole::UpdateActors() {
     //box
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
 
-    KDL::Vector box_posit = tool_pose * KDL::Vector( 0.0 , 0.0, -0.03);
+    KDL::Vector box_posit = tool_pose * KDL::Vector( 0.0 , 0.0, -0.012);
 
     double x, y, z, w;
     tool_pose.M.GetQuaternion(x,y,z,w);
@@ -259,30 +261,51 @@ void TaskPegInHole::UpdateActors() {
 
 
     //--------------------------------
-    //sphere 0
+    // first gripper
     double grip_posit = (*gripper_position[0]);
+    double theta_max=M_PI/6;
+    double grip_angle = theta_max*(grip_posit+0.5)/1.55;
 
-    KDL::Vector gripper_pos = KDL::Vector( 0.0, (1+grip_posit)* 0.01, 0.01);
-    gripper_pos = tool_pose * gripper_pos;
+    //std:cout<<"Grip"<<grip_posit<<std::endl;
+
+    KDL::Vector gripper_pos = KDL::Vector( 0.0, 0.01*sin(grip_angle), 0.0128-0.01*cos(grip_angle));
+
+    KDL::Rotation tool_p=tool_pose.M;
+
+    tool_p.DoRotX(-grip_angle);
+
+
+    gripper_pos = tool_pose.p + tool_p*gripper_pos;
+
+    tool_p.GetQuaternion(x, y, z, w);
 
     double sphere_0_pose[7] = {
         gripper_pos[0],
         gripper_pos[1],
         gripper_pos[2],
-        0,0,0,1};
+        x, y, z, w};
+
     kine_sphere_0->SetKinematicPose(sphere_0_pose);
 
 
     //--------------------------------
-    //sphere 1
-    gripper_pos = KDL::Vector( 0.0, -(1+grip_posit)* 0.01, 0.01);
-    gripper_pos = tool_pose.p + tool_pose.M * gripper_pos;
+    // second gripper
+
+    gripper_pos = KDL::Vector( 0.0, 0.01*sin(-grip_angle), 0.0128-0.01*cos(-grip_angle));
+
+    tool_p=tool_pose.M;
+
+    tool_p.DoRotX(grip_angle);
+    gripper_pos = tool_pose.p+ tool_p*gripper_pos;
+
+    tool_p.GetQuaternion(x, y, z, w);
 
     double sphere_1_pose[7] = {
         gripper_pos[0],
         gripper_pos[1],
         gripper_pos[2],
-        0,0,0,1};
+        x, y, z, w};
+
     kine_sphere_1->SetKinematicPose(sphere_1_pose);
 
 
