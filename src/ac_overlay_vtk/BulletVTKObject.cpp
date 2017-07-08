@@ -306,8 +306,8 @@ BulletVTKObject::BulletVTKObject(
             shape == ObjectShape::CYLINDER ||
             shape == ObjectShape::BOX
             ){
-            body_->setRollingFriction(btScalar(0.02));
-            body_->setSpinningFriction(btScalar(0.02));
+            body_->setRollingFriction(btScalar(0.001));
+            body_->setSpinningFriction(btScalar(0.001));
             //            body_->setAnisotropicFriction
             //                    (collision_shape_->getAnisotropicRollingFrictionDirection
             //                            (),btCollisionObject::CF_ANISOTROPIC_ROLLING_FRICTION);
