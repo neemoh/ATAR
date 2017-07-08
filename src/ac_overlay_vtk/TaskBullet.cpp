@@ -77,11 +77,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
 {
 
-
-
     InitBullet();
-
-
 
     BulletVTKObject* board;
     // -----------------------
@@ -98,7 +94,7 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
     double *pose;
     double stiffnes = 1000;
     double damping = 20;
-    double friction = 0.5;
+    double friction = 0.1;
 
     pose= new double[7] {board_dimensions[0] / 2.45,
         board_dimensions[1] / 2.78,
@@ -118,83 +114,81 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // Create spheres
-    int cols = 4;
-    int rows = 3;
-    double density = 7000; // kg/m3
-    stiffnes = 1000;
-    damping = 0.1;
-    friction = 0.2;
-    BulletVTKObject* cylinders[cols*rows];
+    int cols = 3;
+    int rows = 2;
+    double density = 4000; // kg/m3
+
+    BulletVTKObject* spheres[cols*rows];
     for (int i = 0; i < rows; ++i) {
 
         for (int j = 0; j < cols; ++j) {
 
-            std::vector<double> dim = {0.005, 0.05};
+            std::vector<double> dim = {0.008};
 
             pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
                 0.06,
-                0.08 + dim[1] *1.5* (double)j,
+                0.16 + dim[0] *1.5* (double)j,
                 0, 0, 0, 1};
 
-            cylinders[i*rows+j] =
+            spheres[i*rows+j] =
                 new BulletVTKObject(
-                    ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
+                    ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, pose,
                     density, NULL, friction
                 );
             delete [] pose;
             double ratio = (double)i/4.0;
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetColor(
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
                 0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
 
-            dynamics_world->addRigidBody(cylinders[i*rows+j]->GetBody());
-            actors.push_back(cylinders[i*rows+j]->GetActor());
+            dynamics_world->addRigidBody(spheres[i*rows+j]->GetBody());
+            actors.push_back(spheres[i*rows+j]->GetActor());
 
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Create cubes
-    rows = 3;
-    cols = 2;
-    int layers = 3;
-    BulletVTKObject* cubes[layers *rows *cols];
-
-    double sides = 0.01;
-    density = 7000; // kg/m3
-    stiffnes = 1000;
-    damping = 5.1;
-    friction = 0.1;
-
-    for (int k = 0; k < layers; ++k) {
-        for (int i = 0; i < rows; ++i) {
-            for (int j = 0; j < cols; ++j) {
-
-                pose = new double[7] {(double)i * 2.2*sides + 0.1,
-                    (double)j * 2.2*sides  + 0.05,
-                    (double)k * 4*sides  + 0.01,
-                    0, 0, 0, 1};
-
-                std::vector<double> dim = {sides, sides, 2*sides};
-                cubes[i*rows+j] = new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
-                    NULL, friction
-                );
-                delete [] pose;
-
-                double ratio = (double)i/4.0;
-                cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
-
-//                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
-//                        (float) stiffnes, (float) damping);
-//                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
-//                actors.push_back(cubes[i*rows+j]->GetActor());
-
-            }
-        }
-    }
+//    // -------------------------------------------------------------------------
+//    // Create cubes
+//    rows = 3;
+//    cols = 2;
+//    int layers = 3;
+//    BulletVTKObject* cubes[layers *rows *cols];
+//
+//    double sides = 0.01;
+//    density = 7000; // kg/m3
+//    stiffnes = 1000;
+//    damping = 5.1;
+////    friction = 0.1;
+//
+//    for (int k = 0; k < layers; ++k) {
+//        for (int i = 0; i < rows; ++i) {
+//            for (int j = 0; j < cols; ++j) {
+//
+//                pose = new double[7] {(double)i * 2.2*sides + 0.1,
+//                    (double)j * 2.2*sides  + 0.05,
+//                    (double)k * 4*sides  + 0.01,
+//                    0, 0, 0, 1};
+//
+//                std::vector<double> dim = {sides, sides, 2*sides};
+//                cubes[i*rows+j] = new BulletVTKObject(
+//                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
+//                    NULL, friction
+//                );
+//                delete [] pose;
+//
+//                double ratio = (double)i/4.0;
+//                cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
+//                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
+//
+////                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
+////                        (float) stiffnes, (float) damping);
+////                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
+////                actors.push_back(cubes[i*rows+j]->GetActor());
+//
+//            }
+//        }
+//    }
 
     {
 //        std::vector<double> dim = {sides, sides, sides};
@@ -206,32 +200,29 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // Create mesh
-    stiffnes = 1000;
-    damping= 1;
-    friction = 1;
-
-    pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
-    std::vector<double> _dim = {0.002};
-    BulletVTKObject *mesh;
-    std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("monkey.obj");
-    std::string mesh_file_dir_str = input_file_dir.str();
-
-    mesh = new
-        BulletVTKObject(
-        ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose, 6000,
-        &mesh_file_dir_str, friction
-    );
-
-//    dynamics_world->addRigidBody(mesh->GetBody());
-//    actors.push_back(mesh->GetActor());
-    mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
+//    stiffnes = 1000;
+//    damping= 1;
+////    friction = 1;
+//
+//    pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
+//    std::vector<double> _dim = {0.002};
+//    BulletVTKObject *mesh;
+//    std::stringstream input_file_dir;
+//    input_file_dir << mesh_files_dir << std::string("monkey.obj");
+//    std::string mesh_file_dir_str = input_file_dir.str();
+//
+//    mesh = new
+//        BulletVTKObject(
+//        ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose, 6000,
+//        &mesh_file_dir_str, friction
+//    );
+//
+////    dynamics_world->addRigidBody(mesh->GetBody());
+////    actors.push_back(mesh->GetActor());
+//    mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
 
     // -------------------------------------------------------------------------
     // Create kinematic box
-    stiffnes = 1000;
-    damping= 1;
-    friction = 1;
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_dim = {0.002, 0.002, 0.01};
@@ -305,14 +296,15 @@ TaskBullet::TaskBullet(const std::string mesh_files_dir,
 
 
     sb=btSoftBodyHelpers::CreateEllipsoid(*sb_w_info,
-                                          btVector3(l/4,l/1.5,l/2),
-                                          btVector3(l/3,l/3,l/3),1000);
-    sb->m_cfg.viterations=50;
-    sb->m_cfg.piterations=50;
-    sb->m_cfg.kPR=100;
-    sb->setTotalMass(13.0);
-//    sb->setMass(0,0);
-
+                                          btVector3(l/4,l/1.5,l),
+                                          btVector3(l/4,l/4,l/4),1000);
+    sb->m_cfg.viterations=20;
+    sb->m_cfg.piterations=20;
+    sb->m_cfg.kPR=200;
+    sb->setTotalDensity(btScalar(100));
+    sb->setMass(100,0);
+    sb->getCollisionShape()->setMargin(0.08);
+//    sb->generateBendingConstraints(3);
     dynamics_world->addSoftBody(sb);
 
 
