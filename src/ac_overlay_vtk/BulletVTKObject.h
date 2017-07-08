@@ -30,6 +30,7 @@ enum ObjectType {
 };
 
 enum ObjectShape {
+    STATICPLANE, //dims = [normal_x, normal_y, normal_z]
     SPHERE,     //dims = [radius]
     CYLINDER,   //dims = [radius, height]
     BOX,        //dims = [width, length, height]
@@ -46,7 +47,7 @@ public:
             double pose[],
             double density,
             void *data,
-            double friction
+            double friction = 0.1
         );
 
     ~BulletVTKObject();

@@ -42,10 +42,29 @@ BulletVTKObject::BulletVTKObject(
 
     switch (shape){
 
+        case ObjectShape::STATICPLANE : {
+            // check if we have all the dimensions
+            if (dimensions.size() != 4)
+                throw std::runtime_error("BulletVTKObject STATICPLANE "
+                                             "shape requires a vector of 4 "
+                                             "doubles as dimensions.");
+
+            collision_shape_ = new btStaticPlaneShape(
+                btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
+                          btScalar(B_DIM_SCALE*dimensions[1]),
+                          btScalar(B_DIM_SCALE*dimensions[2])),
+                btScalar(B_DIM_SCALE*dimensions[3]) );
+
+            volume = 0.0;
+            shape_string = collision_shape_->getName();
+
+            break;
+        }
+
         case ObjectShape::SPHERE : {
             // check if we have all the dimensions
             if (dimensions.size() != 1)
-                throw std::runtime_error("BulletVTKObject BOX shape requires "
+                throw std::runtime_error("BulletVTKObject SPHERE shape requires "
                                                  "a vector of 1 double "
                                                  "as dimensions.");
             // VTK actor_
@@ -85,7 +104,6 @@ BulletVTKObject::BulletVTKObject(
             mapper->SetInputConnection(source->GetOutputPort());
 
             // Bullet Shape
-            // TODO: ATTENTION TO THE DOUBLED RADIUS
             collision_shape_ =
                     new btCylinderShape(btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
                                                   btScalar(B_DIM_SCALE*dimensions[1]/2),
