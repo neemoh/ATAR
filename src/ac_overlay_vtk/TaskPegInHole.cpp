@@ -55,6 +55,17 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     actors.push_back(board->GetActor());
 
     // -------------------------------------------------------------------------
+    // static floor
+    // always add a floor in under the workspace of your workd to prevent
+    // objects falling too far and mess things up.
+    double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+    std::vector<double> floor_dims = {0., 0., 1., -0.5};
+    BulletVTKObject* floor= new BulletVTKObject(
+        ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
+        floor_dims, dummy_pose, 0.0, NULL);
+    dynamicsWorld->addRigidBody(floor->GetBody());
+
+    // -------------------------------------------------------------------------
     // Create spheres
     int cols = 4;
     int rows = 3;

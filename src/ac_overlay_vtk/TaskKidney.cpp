@@ -175,7 +175,7 @@ TaskKidney::TaskKidney(const std::string stl_file_dir,
     // transform
     vtkSmartPointer<vtkTransform> kidney_mesh_transform =
             vtkSmartPointer<vtkTransform>::New();
-    kidney_mesh_transform->Translate(0.050, 0.020, 0.0);
+    kidney_mesh_transform->Translate(0.090, 0.020, 0.0);
 //    kidney_mesh_transform->RotateX(180);
 //    kidney_mesh_transform->RotateZ(150);
     kidney_mesh_transform->Scale(0.01, 0.01, 0.01);
@@ -251,9 +251,9 @@ TaskKidney::TaskKidney(const std::string stl_file_dir,
 
 
     actors.push_back(mesh_actor);
-    actors.push_back(box1_actor);
-    actors.push_back(box2_actor);
-    actors.push_back(box3_actor);
+    //actors.push_back(box1_actor);
+    //actors.push_back(box2_actor);
+    //actors.push_back(box3_actor);
 //    actors.push_back(ring_actor[0]);
 //    actors.push_back(ring_actor[0]);
 //    if(bimanual){
