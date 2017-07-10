@@ -434,10 +434,22 @@ void OverlayROSConfig::StartTask(const uint task_id) {
                                     (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==2){
+
+        // getting the names of the slaves
+        std::string slave_names[n_arms];
+        for(int n_arm = 0; n_arm<n_arms; n_arm++) {
+
+            //getting the name of the arms
+            std::stringstream param_name;
+            param_name << std::string("slave_") << n_arm + 1 << "_name";
+            n.getParam(param_name.str(), slave_names[n_arm]);
+        }
+
+        // starting the task
         ROS_DEBUG("Starting new BuzzWireTask task. ");
         task_ptr   = new TaskBuzzWire(
             mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
-            with_guidance, haptic_loop_rate
+            with_guidance, haptic_loop_rate, slave_names
         );
     }
     else if(task_id ==3){

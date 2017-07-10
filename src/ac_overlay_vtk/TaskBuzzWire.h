@@ -32,6 +32,8 @@
 #include "custom_msgs/TaskState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/Bool.h>
+
 
 
 /**
@@ -70,9 +72,11 @@ public:
             const bool show_ref_frames,
             const bool num_tools,
             const bool with_guidance,
-            const double haptic_loop_rate
+            const double haptic_loop_rate,
+            const std::string slave_names[]
         );
 
+    ~TaskBuzzWire();
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
         return actors;
@@ -136,6 +140,7 @@ private:
 //    bool with_guidance;
     TaskState task_state;
     std::string stl_files_dir;
+    std::string *slave_names;
 
     KDL::Vector idle_point;
     KDL::Vector start_point;

@@ -24,12 +24,13 @@ double DeepPink[3] {1.0, 0.08, 0.58};
 };
 
 TaskBuzzWire::TaskBuzzWire(
-    const std::string stl_file_dir,
-    const bool show_ref_frames,
-    const bool biman,
-    const bool with_guidance,
-    const double haptic_loop_rate
-)
+        const std::string stl_file_dir,
+        const bool show_ref_frames,
+        const bool biman,
+        const bool with_guidance,
+        const double haptic_loop_rate,
+        const std::string slave_names_in[]
+    )
     :
     VTKTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
     stl_files_dir(stl_file_dir),
@@ -44,6 +45,9 @@ TaskBuzzWire::TaskBuzzWire(
 {
 
 
+    slave_names = new std::string[bimanual+1];
+
+    *slave_names = *slave_names_in;
 
     // -------------------------------------------------------------------------
     //  ACTIVE CONSTRAINT
@@ -159,7 +163,7 @@ TaskBuzzWire::TaskBuzzWire(
     destination_ring_actor->SetMapper(destination_ring_mapper);
     destination_ring_actor->SetScale(0.004);
     destination_ring_actor->RotateX(90);
-    destination_ring_actor->RotateY(60);
+    destination_ring_actor->RotateY(-60);
     destination_ring_actor->GetProperty()->SetColor(Colors::Green);
     //destination_ring_actor->GetProperty()->SetOpacity(0.5);
 
@@ -192,15 +196,15 @@ TaskBuzzWire::TaskBuzzWire(
 
     // hard coding the position of of the destinations
     // if the base is rotated the destinations will not be valid anymore...
-    KDL::Vector base_position = KDL::Vector(0.06, 0.08, 0.025);
+    KDL::Vector base_position = KDL::Vector(0.095, 0.09, 0.025);
     //
-    //idle_point  = base_position + KDL::Vector(-0.056, -0.034, 0.004);
-    //start_point  = base_position + KDL::Vector(-0.048, -0.029, 0.005);
-    //end_point  = base_position + KDL::Vector(-0.016, -0.017, 0.028);
+    idle_point  = base_position + KDL::Vector(-0.056, -0.034, 0.004);
+    start_point  = base_position + KDL::Vector(-0.048, -0.029, 0.005);
+    end_point  = base_position + KDL::Vector(-0.016, -0.017, 0.028);
 
-    idle_point  = base_position + KDL::Vector(0.056, -0.032, 0.004);
-    start_point  = base_position + KDL::Vector(0.048, -0.026, 0.005);
-    end_point  = base_position + KDL::Vector(0.020, -0.003, 0.028);
+    //idle_point  = base_position + KDL::Vector(0.056, -0.032, 0.004);
+    //start_point  = base_position + KDL::Vector(0.048, -0.026, 0.005);
+    //end_point  = base_position + KDL::Vector(0.020, -0.003, 0.028);
 
     // -------------------------------------------------------------------------
     // Stand MESH hq
@@ -220,7 +224,7 @@ TaskBuzzWire::TaskBuzzWire(
     stand_transform->Translate(base_position[0], base_position[1],
                                base_position[2]);
     stand_transform->RotateX(180);
-    stand_transform->RotateZ(30);
+    stand_transform->RotateZ(150);
 
     vtkSmartPointer<vtkTransformPolyDataFilter> stand_mesh_transformFilter =
         vtkSmartPointer<vtkTransformPolyDataFilter>::New();
@@ -906,19 +910,57 @@ void TaskBuzzWire::ResetCurrentAcquisition() {
 
 void TaskBuzzWire::FindAndPublishDesiredToolPose() {
 
+    //----------------------------------------------
+    // setting  up haptics
+
+    //std::string master_names[n_arms];
+    std::string check_topic_name;
+
+    //getting the name of the arms
+    std::stringstream param_name;
+    param_name << std::string("/") << slave_names[0] << "/tool_pose_desired";
+
     ros::Publisher pub_desired[2];
+    ros::Publisher pub_wrench_abs[2];
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                             ("/PSM2/tool_pose_desired", 10);
-    if(bimanual)
+                             (param_name.str(), 10);
+    ROS_INFO("Will publish on %s", param_name.str().c_str());
+
+    // make sure the masters are in wrench absolute orientation
+   // assuming MTMR is always used
+    std::string master_topic = "/dvrk/MTMR/set_wrench_body_orientation_absolute";
+    pub_wrench_abs[0] = node->advertise<std_msgs::Bool>(master_topic.c_str(), 1);
+    std_msgs::Bool wrench_body_orientation_absolute;
+    wrench_body_orientation_absolute.data = 1;
+    pub_wrench_abs[0].publish(wrench_body_orientation_absolute);
+    ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
+
+    if(bimanual) {
+        //getting the name of the arms
+        param_name.str("");
+        param_name << std::string("/") << slave_names[1] << "/tool_pose_desired";
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                 ("/PSM1/tool_pose_desired", 10);
+                                 (param_name.str(), 10);
+        ROS_INFO("Will publish on %s", param_name.str().c_str());
+
+        // make sure the masters are in wrench absolute orientation
+        // assuming MTMR is always used
+        master_topic = "/dvrk/MTML/set_wrench_body_orientation_absolute";
+        pub_wrench_abs[1] = node->advertise<std_msgs::Bool>(master_topic.c_str(), 1);
+        pub_wrench_abs[1].publish(wrench_body_orientation_absolute);
+        ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
+    }
+
 
     ros::Rate loop_rate(haptic_loop_rate);
     ROS_INFO("The desired pose will be updated at '%f'",
              haptic_loop_rate);
 
+    //---------------------------------------------
+    // loop
+    
     while (ros::ok())
     {
         VTKConversions::KDLFrameToVTKMatrix(*tool_current_pose_kdl[0],
@@ -1039,4 +1081,8 @@ void TaskBuzzWire::ResetScoreHistory() {
 
     }
 
+}
+
+TaskBuzzWire::~TaskBuzzWire() {
+    delete [] slave_names;
 }
