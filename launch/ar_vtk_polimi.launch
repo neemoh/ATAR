@@ -1,8 +1,8 @@
 <launch>
-    <arg name="slave_1_name" value="PSM1"/>
-    <arg name="slave_2_name" value="PSM2"/>
-    <arg name="master_1_name" value="MTMR"/>
-    <arg name="master_2_name" value="MTML"/>
+    <arg name="slave_1_name" value="PSM2"/>
+    <arg name="slave_2_name" value="PSM1"/>
+    <arg name="master_1_name" value="MTML"/>
+    <arg name="master_2_name" value="MTMR"/>
     <arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>
     <arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>
     <arg name= "left_cam_name" value= "ecml" />
@@ -96,7 +96,7 @@
         <param name= "cam_pose_averaging_factor" value= "0.05" />
 
         <!--Activate or deactivate haptic guidance -->
-        <param name= "enable_guidance" value= "false" />
+        <param name= "enable_guidance" value= "true" />
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />
@@ -105,7 +105,7 @@
         <param name= "one_window_mode" value= "true" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
-        <param name= "with_shadows" value= "false" />
+        <param name= "with_shadows" value= "true" />
 
         <!--If the generated images are to be published on
         ros, to help alleviate the considerable bottleneck of grabbing the
@@ -125,20 +125,20 @@
 	The node generates wrench when receives desired pose, so the loop rate depends on the frequency of the
 	desired pose topic. The sampling_frequency param is for filtering.
     -->
-    <!--<node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">-->
-    <!--<param name="number_of_arms" value="1"/>-->
-    <!--<param name="slave_1_name" value="$(arg slave_1_name)"/>-->
-    <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
-    <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
-    <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
-    <!--<param name="max_force" value="3"/>-->
-    <!--<param name="max_torque" value="0.03"/>&lt;!&ndash; 0.03 &ndash;&gt;-->
-    <!--<param name="linear_elastic_coeff" value="1000"/>-->
-    <!--<param name="linear_damping_coeff" value="10"/>-->
-    <!--<param name="angular_elastic_coeff" value="0.04"/>-->
-    <!--<param name="angular_damping_coeff" value="0.002"/>-->
-    <!--<param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>-->
-    <!--</node>-->
+    <node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">
+        <param name="number_of_arms" value="1"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
+        <param name="max_force" value="3"/>
+        <param name="max_torque" value="0.03"/><!-- 0.03 -->
+        <param name="linear_elastic_coeff" value="1000"/>
+        <param name="linear_damping_coeff" value="10"/>
+        <param name="angular_elastic_coeff" value="0.04"/>
+        <param name="angular_damping_coeff" value="0.002"/>
+        <param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>
+    </node>
 
 
 </launch>

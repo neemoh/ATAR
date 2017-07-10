@@ -159,7 +159,7 @@ TaskBuzzWire::TaskBuzzWire(
     destination_ring_actor->SetMapper(destination_ring_mapper);
     destination_ring_actor->SetScale(0.004);
     destination_ring_actor->RotateX(90);
-    destination_ring_actor->RotateY(-60);
+    destination_ring_actor->RotateY(60);
     destination_ring_actor->GetProperty()->SetColor(Colors::Green);
     //destination_ring_actor->GetProperty()->SetOpacity(0.5);
 
@@ -192,11 +192,15 @@ TaskBuzzWire::TaskBuzzWire(
 
     // hard coding the position of of the destinations
     // if the base is rotated the destinations will not be valid anymore...
-    KDL::Vector base_position = KDL::Vector(0.10, 0.08, 0.025);
+    KDL::Vector base_position = KDL::Vector(0.06, 0.08, 0.025);
+    //
+    //idle_point  = base_position + KDL::Vector(-0.056, -0.034, 0.004);
+    //start_point  = base_position + KDL::Vector(-0.048, -0.029, 0.005);
+    //end_point  = base_position + KDL::Vector(-0.016, -0.017, 0.028);
 
-    idle_point  = base_position + KDL::Vector(-0.056, -0.034, 0.004);
-    start_point  = base_position + KDL::Vector(-0.048, -0.029, 0.005);
-    end_point  = base_position + KDL::Vector(-0.016, -0.017, 0.028);
+    idle_point  = base_position + KDL::Vector(0.056, -0.032, 0.004);
+    start_point  = base_position + KDL::Vector(0.048, -0.026, 0.005);
+    end_point  = base_position + KDL::Vector(0.020, -0.003, 0.028);
 
     // -------------------------------------------------------------------------
     // Stand MESH hq
@@ -216,7 +220,7 @@ TaskBuzzWire::TaskBuzzWire(
     stand_transform->Translate(base_position[0], base_position[1],
                                base_position[2]);
     stand_transform->RotateX(180);
-    stand_transform->RotateZ(150);
+    stand_transform->RotateZ(30);
 
     vtkSmartPointer<vtkTransformPolyDataFilter> stand_mesh_transformFilter =
         vtkSmartPointer<vtkTransformPolyDataFilter>::New();
@@ -270,13 +274,13 @@ TaskBuzzWire::TaskBuzzWire(
     tube_mesh_actor->GetProperty()->SetColor(Colors::Orange);
     tube_mesh_actor->GetProperty()->SetSpecular(0.8);
     tube_mesh_actor->GetProperty()->SetSpecularPower(80);
-    //    tube_mesh_actor->GetProperty()->SetOpacity(0.5);
+        //tube_mesh_actor->GetProperty()->SetOpacity(0.5);
 
 
     // -------------------------------------------------------------------------
     // MESH lq
     input_file_dir.str("");
-    input_file_dir << stl_files_dir << std::string("task1_4_wire.STL");
+    input_file_dir << stl_files_dir << std::string("task1_4_wire_vhq.STL");
 
     vtkSmartPointer<vtkSTLReader> lq_mesh_reader =
         vtkSmartPointer<vtkSTLReader>::New();
@@ -289,7 +293,14 @@ TaskBuzzWire::TaskBuzzWire(
         vtkSmartPointer<vtkTransformPolyDataFilter>::New();
     lq_mesh_transformFilter->SetInputConnection(
         lq_mesh_reader->GetOutputPort());
-    lq_mesh_transformFilter->SetTransform(tube_transform);
+    // TODO: just changed the wire mesh and its coordinate frame doesn't match
+    // that of the tube. Fixing it here temporarily
+    vtkSmartPointer<vtkTransform> wire_transform =
+        vtkSmartPointer<vtkTransform>::New();
+    wire_transform->DeepCopy(tube_transform);
+    wire_transform->Translate(0.0, 0.0, -0.030);
+
+    lq_mesh_transformFilter->SetTransform(wire_transform);
     lq_mesh_transformFilter->Update();
 
     vtkSmartPointer<vtkPolyDataMapper> lq_mesh_mapper =
@@ -374,7 +385,7 @@ TaskBuzzWire::TaskBuzzWire(
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
         actor->GetProperty()->SetColor(Colors::Gray);
-        actor->SetPosition(0.02 - (double)i * 0.006, 0.1 - (double)i * 0.0003,
+        actor->SetPosition(0.09- (double)i * 0.006, 0.132 - (double)i * 0.0003,
                            0.01);
         score_sphere_actors.push_back(actor);
     }
@@ -899,10 +910,10 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                             ("/PSM1/tool_pose_desired", 10);
+                             ("/PSM2/tool_pose_desired", 10);
     if(bimanual)
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                 ("/PSM2/tool_pose_desired", 10);
+                                 ("/PSM1/tool_pose_desired", 10);
 
     ros::Rate loop_rate(haptic_loop_rate);
     ROS_INFO("The desired pose will be updated at '%f'",
