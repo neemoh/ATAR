@@ -56,7 +56,7 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     lights[0] =   vtkSmartPointer<vtkLight>::New();
     lights[1] =   vtkSmartPointer<vtkLight>::New();
 
-    lights[0]->SetPosition(0.05, 0.04, 0.2);
+    lights[0]->SetPosition(0.08, 0.08, 0.16);
     lights[0]->SetFocalPoint(0.05, 0.03, 0.05);
     //lights[0]->SetColor(1.0,1.0,1.0);
     lights[0]->SetPositional(1);
@@ -64,8 +64,8 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     //lights[0]->SetLightTypeToCameraLight();
     lights[0]->SetSwitch(1);
 
-    lights[1]->SetPosition(0.04, 0.03, 0.18);
-    lights[1]->SetFocalPoint(0.02, 0.02, 0.0);
+    lights[1]->SetPosition(0.10, 0.14, 0.13);
+    lights[1]->SetFocalPoint(0.02, 0.05, 0.0);
     lights[1]->SetColor(1.0,1.0,1.0);
     lights[1]->SetPositional(1);
     lights[1]->SetConeAngle(45);
