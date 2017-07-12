@@ -53,6 +53,10 @@
 /**
  * \class Rendering
  * \brief Rendering using opengl and vtk
+ *
+ * scene_renderer_ renders the virtual objects
+ * background_renderer_ renders the images captured by the real camera
+ *
  */
 
 class Rendering {
@@ -61,10 +65,9 @@ public:
     //    vtkTypeMacro(Rendering, vtkRenderWindow);
     //    static Rendering *New();
 
-    Rendering(uint num_windows,
-              bool with_shaodws,
-              bool offScreen_rendering,
-              std::vector<int> window_position);
+    Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
+                  bool offScreen_rendering,
+                  std::vector<int> window_position);
 
     ~Rendering();
 
@@ -102,6 +105,7 @@ private:
 private:
     int num_render_windows_;
     bool with_shadows_;
+    bool ar_mode_;
     //cameras
     CalibratedCamera  *                     background_camera_[3];
     CalibratedCamera  *                     scene_camera_[3];

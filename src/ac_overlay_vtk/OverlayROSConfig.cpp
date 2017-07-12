@@ -278,6 +278,10 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 void OverlayROSConfig::SetupGraphics() {
 
 
+    n.param<bool>("AR_mode", ar_mode, false);
+    ROS_INFO("AR mode: %s",
+             ar_mode ? "true" : "false");
+
     n.param<bool>("publish_overlayed_images", publish_overlayed_images, true);
     ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
              publish_overlayed_images ? "true" : "false");
@@ -317,7 +321,7 @@ void OverlayROSConfig::SetupGraphics() {
     cv::Mat cam_images[2];
     LockAndGetImages(ros::Duration(1), cam_images);
 
-    graphics = new Rendering(2 - (uint) one_window_mode, with_shadows,
+    graphics = new Rendering(false, 2 - (uint) one_window_mode, with_shadows,
                              offScreen_rendering, windows_position);
 
     // in case camera poses are set as parameters
@@ -351,7 +355,7 @@ bool OverlayROSConfig::UpdateWorld() {
         HandleTaskEvent();
 
     cv::Mat cam_images[2];
-    if(GetNewImages(cam_images)) {
+    if(GetNewImages(cam_images) || !ar_mode) {
 
         // Time performance debug
         //ros::Time start =ros::Time::now();
@@ -360,9 +364,11 @@ bool OverlayROSConfig::UpdateWorld() {
         if(task_ptr)
             task_ptr->UpdateActors();
 
-        // update the camera images and view angle (in case window changes size)
-        graphics->UpdateBackgroundImage(cam_images);
-        graphics->UpdateCameraViewForActualWindowSize();
+        if(ar_mode) {
+            // update the camera images and view angle (in case window changes size)
+            graphics->UpdateBackgroundImage(cam_images);
+            graphics->UpdateCameraViewForActualWindowSize();
+        }
 
         // Render!
         graphics->Render();

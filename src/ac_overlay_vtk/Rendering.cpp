@@ -29,18 +29,20 @@
 void AddLightActors(vtkRenderer *r);
 
 
-Rendering::Rendering(uint num_windows, bool with_shaodws,
-                     bool offScreen_rendering, std::vector<int> window_position)
+Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
+                     bool offScreen_rendering,
+                     std::vector<int> window_position)
         : num_render_windows_(num_windows),
-          with_shadows_(with_shaodws)
+          with_shadows_(with_shaodws),
+          ar_mode_(AR_mode)
 {
     // make sure the number of windows are alright
     if(num_render_windows_ <1) num_render_windows_ =1;
     else if(num_render_windows_ >2) num_render_windows_ = 2;
 
     double view_port[3][4] = {{0.333, 0.0, 0.666, 1.0}
-                              , {0.666, 0.0, 1.0, 1.0}
-                              ,{0.0, 0.0, 0.333, 1.0}};
+            , {0.666, 0.0, 1.0, 1.0}
+            ,{0.0, 0.0, 0.333, 1.0}};
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
     render_window_[0]->BordersOff();
@@ -79,25 +81,29 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
 
         image_importer_[i] = vtkSmartPointer<vtkImageImport>::New();
         image_actor_[i] = vtkSmartPointer<vtkImageActor>::New();
-        camera_image_[i]   = vtkSmartPointer<vtkImageData>::New();
+        camera_image_[i] = vtkSmartPointer<vtkImageData>::New();
 
+        scene_camera_[i] = new CalibratedCamera;
+        scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
+
+        // In AR the background renderer shows the real camera images from
+        // the world
         background_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
         background_renderer_[i]->InteractiveOff();
         background_renderer_[i]->SetLayer(0);
 
         background_camera_[i] = new CalibratedCamera;
-        scene_camera_[i] = new CalibratedCamera;
         background_renderer_[i]->SetActiveCamera(background_camera_[i]->camera);
 
-        scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
+        // in AR we do not need interactive windows or dual layer render
         scene_renderer_[i]->InteractiveOff();
         scene_renderer_[i]->SetLayer(1);
+
 
         if(num_render_windows_==1){
             background_renderer_[i]->SetViewport(view_port[i]);
             scene_renderer_[i]->SetViewport(view_port[i]);
         }
-
 
         scene_renderer_[i]->AddLight(lights[0]);
         scene_renderer_[i]->AddLight(lights[1]);
@@ -108,13 +114,14 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
         if(with_shadows_)
             AddShadowPass(scene_renderer_[i]);
 
-        //        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
 
         int j=0;
         if(num_render_windows_==2)
             j=i;
+
         render_window_[j]->SetNumberOfLayers(2);
         render_window_[j]->AddRenderer(background_renderer_[i]);
+
         render_window_[j]->AddRenderer(scene_renderer_[i]);
 
         window_to_image_filter_[j] =
@@ -131,19 +138,25 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
         //AddLightActors(scene_renderer_[j]);
     }
 
+    //-------------------------------------------------
+    // I added the third renderer to have a way of showing what is happening
+    // to the other people who are not behind the console. this should be
+    // integrated in the loop above later...
+    scene_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
 
     background_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
     background_renderer_[2]->InteractiveOff();
     background_renderer_[2]->SetLayer(0);
     background_renderer_[2]->SetActiveCamera(background_camera_[1]->camera);
 
-
-    scene_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
-    scene_renderer_[2]->InteractiveOff();
+    if(ar_mode_)
+        scene_renderer_[2]->InteractiveOff();
     scene_renderer_[2]->SetLayer(1);
+
 
     scene_camera_[2] = new CalibratedCamera;
     scene_camera_[2]->camera = scene_renderer_[2]->GetActiveCamera();
+
     if(num_render_windows_==1){
         background_renderer_[2]->SetViewport(view_port[2]);
         scene_renderer_[2]->SetViewport(view_port[2]);
@@ -156,12 +169,10 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     if(with_shadows_)
         AddShadowPass(scene_renderer_[2]);
 
-    //        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
     render_window_[0]->AddRenderer(background_renderer_[2]);
     render_window_[0]->AddRenderer(scene_renderer_[2]);
 
-
-
+    //------------------------------------------------
 
     if(num_render_windows_==1) {
         render_window_[0]->SetWindowName("Augmented Stereo");

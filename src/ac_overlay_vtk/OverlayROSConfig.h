@@ -133,6 +133,7 @@ private:
     ros::NodeHandle n;
     double   haptic_loop_rate;
     int n_arms;
+    bool ar_mode                        = false;
     bool publish_overlayed_images       = false;
     bool one_window_mode                = false;
     bool new_task_event                 = false;
