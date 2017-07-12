@@ -38,11 +38,12 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
     if(num_render_windows_ <1) num_render_windows_ =1;
     else if(num_render_windows_ >2) num_render_windows_ = 2;
 
-    double view_port[2][4] = {{0.0, 0.0, 0.5, 1.0}, {0.5, 0.0, 1.0, 1.0}};
+    double view_port[3][4] = {{0.333, 0.0, 0.666, 1.0}
+                              , {0.666, 0.0, 1.0, 1.0}
+                              ,{0.0, 0.0, 0.333, 1.0}};
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
     render_window_[0]->BordersOff();
-    render_window_[0]->SetPosition(100, 0);
 
     if(num_render_windows_==1)
         render_window_[0]->SetPosition(window_position[0], window_position[1]);
@@ -130,6 +131,38 @@ Rendering::Rendering(uint num_windows, bool with_shaodws,
         //AddLightActors(scene_renderer_[j]);
     }
 
+
+    background_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
+    background_renderer_[2]->InteractiveOff();
+    background_renderer_[2]->SetLayer(0);
+    background_renderer_[2]->SetActiveCamera(background_camera_[1]->camera);
+
+
+    scene_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
+    scene_renderer_[2]->InteractiveOff();
+    scene_renderer_[2]->SetLayer(1);
+
+    scene_camera_[2] = new CalibratedCamera;
+    scene_camera_[2]->camera = scene_renderer_[2]->GetActiveCamera();
+    if(num_render_windows_==1){
+        background_renderer_[2]->SetViewport(view_port[2]);
+        scene_renderer_[2]->SetViewport(view_port[2]);
+    }
+
+
+    scene_renderer_[2]->AddLight(lights[0]);
+    scene_renderer_[2]->AddLight(lights[1]);
+
+    if(with_shadows_)
+        AddShadowPass(scene_renderer_[2]);
+
+    //        scene_renderer_[i]->SetActiveCamera(scene_camera_[i]);
+    render_window_[0]->AddRenderer(background_renderer_[2]);
+    render_window_[0]->AddRenderer(scene_renderer_[2]);
+
+
+
+
     if(num_render_windows_==1) {
         render_window_[0]->SetWindowName("Augmented Stereo");
         if(offScreen_rendering)
@@ -198,6 +231,8 @@ void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[],
         camera_to_world_transform->Invert();
 
         scene_camera_[k]->SetExtrinsicParameters(camera_to_world_transform);
+        if(k==1)
+            scene_camera_[2]->SetExtrinsicParameters(camera_to_world_transform);
 
 
     }
@@ -227,6 +262,16 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
                 background_renderer_[i]->RemoveActor(image_actor_[i]);
         }
     }
+    if (isEnabled)
+    {
+        if(background_renderer_[2]->GetActors()->GetNumberOfItems() == 0)
+            background_renderer_[2]->AddActor(image_actor_[0]);
+    }
+    else
+    {
+        if(background_renderer_[2]->GetActors()->GetNumberOfItems() > 0)
+            background_renderer_[2]->RemoveActor(image_actor_[0]);
+    }
 }
 
 
@@ -244,6 +289,10 @@ void Rendering::SetCameraIntrinsics(const cv::Mat intrinsics[])
                                                  intrinsics[i].at<double>(0, 2),
                                                  intrinsics[i].at<double>(1, 2));
     }
+    scene_camera_[2]->SetIntrinsicParameters(intrinsics[1].at<double>(0, 0),
+                                             intrinsics[1].at<double>(1, 1),
+                                             intrinsics[1].at<double>(0, 2),
+                                             intrinsics[1].at<double>(1, 2));
 }
 
 
@@ -282,22 +331,25 @@ void Rendering::UpdateBackgroundImage(cv::Mat  img[]) {
 //------------------------------------------------------------------------------
 void Rendering::UpdateCameraViewForActualWindowSize() {
 
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i <2; ++i) {
 
         int k = 0;
         if(num_render_windows_==2)
             k=i;
         int *window_size = render_window_[k]->GetActualSize();
 
-        int corrected_win_size[2]
-                = {window_size[0] / (3-num_render_windows_), window_size[1]};
+        int single_win_size[2]
+                = {window_size[0] / (4-num_render_windows_), window_size[1]};
 
         // update each windows view
-        scene_camera_[i]->UpdateView(corrected_win_size[0],
-                                     corrected_win_size[1]);
+        scene_camera_[i]->UpdateView(single_win_size[0],
+                                     single_win_size[1]);
+        if(i==1)
+            scene_camera_[2]->UpdateView(single_win_size[0],
+                                         single_win_size[1]);
 
         // update the background image for each camera
-        SetImageCameraToFaceImage(i, corrected_win_size);
+        SetImageCameraToFaceImage(i, single_win_size);
     }
 }
 
@@ -310,7 +362,7 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
     // if one window the width is double
     for (int j = 0; j < num_render_windows_; ++j) {
-        render_window_[j]->SetSize((3-num_render_windows_) * 640,
+        render_window_[j]->SetSize((4-num_render_windows_) * 640,
                                    480);
     }
 
@@ -335,6 +387,8 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
         image_actor_[i]->SetInputData(camera_image_[i]);
     }
+    scene_camera_[2]->SetCameraImageSize(image_width, image_height);
+
 }
 
 
@@ -343,6 +397,7 @@ void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 
     scene_renderer_[0]->AddActor(actor);
     scene_renderer_[1]->AddActor(actor);
+    scene_renderer_[2]->AddActor(actor);
 
 }
 
@@ -363,6 +418,7 @@ Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
 
         scene_renderer_[0]->AddViewProp(actors[i]);
         scene_renderer_[1]->AddViewProp(actors[i]);
+        scene_renderer_[2]->AddViewProp(actors[i]);
     }
 
 }
@@ -415,6 +471,7 @@ void Rendering::RemoveAllActorsFromScene() {
 
     scene_renderer_[0]->RemoveAllViewProps();
     scene_renderer_[1]->RemoveAllViewProps();
+    scene_renderer_[2]->RemoveAllViewProps();
 }
 
 void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {

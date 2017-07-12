@@ -103,13 +103,13 @@ private:
     int num_render_windows_;
     bool with_shadows_;
     //cameras
-    CalibratedCamera  *                     background_camera_[2];
-    CalibratedCamera  *                     scene_camera_[2];
+    CalibratedCamera  *                     background_camera_[3];
+    CalibratedCamera  *                     scene_camera_[3];
 
     vtkSmartPointer<vtkLight>               lights[2];
     // renderer
-    vtkSmartPointer<vtkOpenGLRenderer>      background_renderer_[2];
-    vtkSmartPointer<vtkOpenGLRenderer>      scene_renderer_[2];
+    vtkSmartPointer<vtkOpenGLRenderer>      background_renderer_[3];
+    vtkSmartPointer<vtkOpenGLRenderer>      scene_renderer_[3];
     // image importing
     vtkSmartPointer<vtkImageImport>         image_importer_[2];
     vtkSmartPointer<vtkImageActor>          image_actor_[2];
@@ -117,7 +117,7 @@ private:
     // transforms
 
     // windows
-    vtkSmartPointer<vtkRenderWindow>        render_window_[2];
+    vtkSmartPointer<vtkRenderWindow>        render_window_[3];
     //    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
     // reading images back
     vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter_[2] ;
