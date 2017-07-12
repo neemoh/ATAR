@@ -960,7 +960,7 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
 
     //---------------------------------------------
     // loop
-    
+
     while (ros::ok())
     {
         VTKConversions::KDLFrameToVTKMatrix(*tool_current_pose_kdl[0],

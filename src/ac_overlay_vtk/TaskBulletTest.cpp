@@ -38,7 +38,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     double density;
     double stiffnes = 1000;
     double damping = 20;
-    double friction = 0.5;
+    double friction = 6;
 
     pose= new double[7] {board_dimensions[0]/2,
         board_dimensions[1] / 2,
@@ -50,7 +50,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     board = new BulletVTKObject(
         ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
     );
-    board->GetActor()->GetProperty()->SetOpacity(1.0);
+    board->GetActor()->GetProperty()->SetOpacity(0.0);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
     dynamicsWorld->addRigidBody(board->GetBody());
@@ -172,7 +172,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
     stiffnes = 1000;
     damping= 100;
-    friction = 5.1;
+    friction = 50.1;
 
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
@@ -191,14 +191,14 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     // Create kinematic scoop
 
     std::vector<double> kine_scoop_dim = {0.02, 0.0002, 0.02};
-    kine_cylinder_0 =
+    kine_scoop =
         new BulletVTKObject(
             ObjectShape::BOX, ObjectType::KINEMATIC, kine_scoop_dim, pose, 10.0,
             NULL, friction
         );
-    dynamicsWorld->addRigidBody(kine_cylinder_0->GetBody());
-    actors.push_back(kine_cylinder_0->GetActor());
-    kine_cylinder_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
+    dynamicsWorld->addRigidBody(kine_scoop->GetBody());
+    actors.push_back(kine_scoop->GetActor());
+    kine_scoop->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
     // -------------------------------------------------------------------------
     //// Create kinematic cylinder
@@ -221,7 +221,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     peg_dimensions[2]  = 0.008;
 
     // Set cubic pegs params
-    density = 4;
+    density = 12;
     stiffnes = 1000;
     damping = 20;
     friction = 100;
@@ -236,7 +236,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         // Create sphere 1
 
         peg_pose1 = new double[7]{
-            0.04, 0.04, board_dimensions[2] , 0, 0, 0, 1
+            0.04, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
         };
 
         std::vector<double> peg_SPHERE_dimension = {peg_dimensions[0] / 2};
@@ -250,15 +250,13 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(peg1->GetBody());
         actors.push_back(peg1->GetActor());
-        peg_p1=peg1->GetActor()->GetCenter();
-        std::cout << "centro della sfera"<< peg_p1[0] << peg_p1[1] <<peg_p1[2] << std::endl;
 
 
         // -------------------------------------------------------------------------
         // Create sphere 2
 
         peg_pose2 = new double[7]{
-            0.08, 0.04, 0.1 , 0, 0, 0, 1
+            0.08, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
         };
 
 
@@ -271,15 +269,12 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(peg2->GetBody());
         actors.push_back(peg2->GetActor());
-        peg_p2=peg2->GetActor()->GetCenter();
-        std::cout << "centro della sfera"<< peg_p2[0] << peg_p2[1] <<peg_p2[2] << std::endl;
-
 
         // -------------------------------------------------------------------------
         // Create sphere 3
 
         peg_pose3 = new double[7]{
-            0.04, 0.08, board_dimensions[2], 0, 0, 0, 1
+            0.04, 0.08, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
         };
 
 
@@ -292,13 +287,12 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(peg3->GetBody());
         actors.push_back(peg3->GetActor());
-        peg_p3=peg3->GetActor()->GetCenter();
 
         // -------------------------------------------------------------------------
         // Create sphere 4
 
         peg_pose4 = new double[7]{
-            0.06, 0.06, board_dimensions[2], 0, 0, 0, 1
+            0.06, 0.06, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
         };
 
         peg4 = new BulletVTKObject(
@@ -310,7 +304,6 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(peg4->GetBody());
         actors.push_back(peg4->GetActor());
-        peg_p4=peg4->GetActor()->GetCenter();
 
     }
 
@@ -319,7 +312,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
         // Create  cubic peg1
 
         peg_pose1 = new double[7]{
-            0.0, 0.0, board_dimensions[2] , 0, 0, 0, 1
+            0.0, 0.0, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
         };
 
         std::vector<double> peg_dim = {
@@ -334,15 +327,13 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(peg1->GetBody());
         actors.push_back(peg1->GetActor());
-        peg_p1=peg1->GetActor()->GetCenter();
-
 
 
         // -------------------------------------------------------------------------
         // Create cubic peg2
 
         peg_pose2 = new double[7]{
-            0.04, 0.0, peg_dimensions[2] / 2, 0, 0, 0, 1
+            0.04, 0.0, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
         };
 
         peg2 = new BulletVTKObject(
@@ -354,13 +345,12 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(peg2->GetBody());
         actors.push_back(peg2->GetActor());
-        peg_p2=peg2->GetActor()->GetCenter();
 
         // -------------------------------------------------------------------------
         // Create cubic peg3
 
         peg_pose3 = new double[7]{
-            0.0, 0.04, peg_dimensions[2] / 2, 0, 0, 0, 1
+            0.0, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
         };
 
         peg3 = new BulletVTKObject(
@@ -372,13 +362,12 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(peg3->GetBody());
         actors.push_back(peg3->GetActor());
-        peg_p3=peg3->GetActor()->GetCenter();
 
         // -------------------------------------------------------------------------
         // Create cubic peg4
 
         peg_pose4 = new double[7]{
-            0.02, 0.02, peg_dimensions[2] / 2, 0, 0, 0, 1
+            0.02, 0.02, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
         };
 
         peg4 = new BulletVTKObject(
@@ -390,7 +379,6 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(peg4->GetBody());
         actors.push_back(peg4->GetActor());
-        peg_p4=peg4->GetActor()->GetCenter();
     }
 
     //// Create a ring (mesh object)
@@ -507,8 +495,6 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //KDL::Vector target_position(target_pos[0], target_pos[1], target_pos[2]);
     //target_distance=(target_position - peg_position).Norm();
     //previous_point = peg_position;
-
-    ResetTask();
 }
 
 
@@ -548,39 +534,19 @@ void TaskBulletTest::UpdateActors() {
     KDL::Vector gripper_pos = KDL::Vector( -0.0, -0.0, -0.01+0.01); //previously (4 the cylinder) y=(1+grip_posit)* 0.004
     gripper_pos = tool_pose * gripper_pos;
 
-    double cyl_0_pose[7] = {
+    double scoop_pose[7] = {
         gripper_pos[0],
         gripper_pos[1],
         gripper_pos[2],
         x,y,z,w};
-    kine_cylinder_0->SetKinematicPose(cyl_0_pose);
+    kine_scoop->SetKinematicPose(scoop_pose);
 
-
-    //--------------------------------
-    ////cylinder 1
-    //gripper_pos = KDL::Vector( 0.0, -(1+grip_posit)* 0.004, 0.002);
-    //gripper_pos = tool_pose.p + tool_pose.M * gripper_pos;
-    //
-    //double cyl_1_pose[7] = {
-    //    gripper_pos[0],
-    //    gripper_pos[1],
-    //    gripper_pos[2],
-    //    x,y,z,w};
-    //kine_cylinder_1->SetKinematicPose(cyl_1_pose);
-
-
-    //--------------------------------
-    //update distance
-
-    //actual_distance = (previous_point-)
-    //previous_point =
-    //
     //--------------------------------
     // step the world
     StepDynamicsWorld();
 
     //--------------------------------
-    //// Check if the task is completed
+    // Check if the task is completed
     EndChecking();
 
 }
@@ -588,42 +554,46 @@ void TaskBulletTest::UpdateActors() {
 
 //------------------------------------------------------------------------------
 void TaskBulletTest::EndChecking(){
-    // Check if the peg is in the correct position.
+    // Check if the pegs are in the correct position.
         double* peg_position;
         peg_position = peg1->GetActor()->GetCenter();
-        //std::cout<< peg_position[0]<< "pause" << peg_position[1] << "pause" << peg_position[2] << std::endl;
-        //std::cout<< fabs(peg_position[0]-target_pos[0]) << "pause" << 3*sides/2 << std::endl;
+        peg1->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
 
 
-        // check if the first peg is inside the target or fallen
+    // check if the first peg is inside the target or fallen
         if (peg_position[2]<0){
             out[0]=1;
-            std::cout<< "è out?" << out[0] << std::endl;
 
         }
         if ((fabs(peg_position[0]-target_pos[0])<=3*sides/2 && fabs(peg_position[1]-target_pos[1])<=3*sides/2) || out[0]==1) {
 
+            // the first peg is in the target! the second peg turns green
+            peg2->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
+
             // check if the second peg is inside the target or fallen
             peg_position = peg2->GetActor()->GetCenter();
-            std::cout << "daje regaz 1" << std::endl;
 
             if (peg_position[2]<0){
                 out[1]=1;
             }
             if ((fabs(peg_position[0]-target_pos[0])<=3*sides/2 && fabs(peg_position[1]-target_pos[1])<=3*sides/2 && fabs(peg_position[2]==target_pos[2])<=3*sides) || out[1]==1) {
 
+                // the second peg is in the target! the third peg turns green
+                peg3->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
+
                 // check if the third peg is inside the target or fallen
                 peg_position = peg3->GetActor()->GetCenter();
-                std::cout << "daje regaz 2" << std::endl;
 
                 if (peg_position[2]<0){
                     out[2]=1;
                 }
                 if ((fabs(peg_position[0]-target_pos[0])<=3*sides/2 && fabs(peg_position[1]-target_pos[1])<=3*sides/2 && fabs(peg_position[2]==target_pos[2])<=3*sides) || out[2]==1) {
 
+                    // the third peg is in the target! the last peg turns green
+                    peg4->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
+
                     // check if the last peg is inside the target or fallen
                     peg_position = peg4->GetActor()->GetCenter();
-                    std::cout << "daje regaz 3" << std::endl;
 
                     if (peg_position[2]<0){ out[3]=1;
                 }
@@ -661,8 +631,6 @@ custom_msgs::TaskState TaskBulletTest::GetTaskStateMsg() {
 
 void TaskBulletTest::ResetTask() {
 
-    //ros::Duration(0.1).sleep();
-
     // save the measurements and the metrics and reset the initial conditions
     // to start a new repetition of the task
     ROS_INFO("Repetition completed. Resetting the task.");
@@ -676,11 +644,25 @@ void TaskBulletTest::ResetTask() {
         out[i]=0;
     }
 
+    peg1->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose1));
+    motion_state_ = new BulletVTKMotionState(peg_pose1, peg1->GetActor());
+    peg1->GetBody()->setMotionState(motion_state_);
+    peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
-    //peg1->GetActor()->SetPosition(0.0, 0.0, peg_dimensions[2] / 2);
-    //peg2->GetActor()->SetPosition(0.04, 0.0, peg_dimensions[2] / 2);
-    //peg3->GetActor()->SetPosition(0.0, 0.04, peg_dimensions[2] / 2);
-    //peg4->GetActor()->SetPosition(0.04, 0.04, peg_dimensions[2] / 2);
+    peg2->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose2));
+    motion_state_ = new BulletVTKMotionState(peg_pose2, peg2->GetActor());
+    peg2->GetBody()->setMotionState(motion_state_);
+    peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
+
+    peg3->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose3));
+    motion_state_ = new BulletVTKMotionState(peg_pose3, peg3->GetActor());
+    peg3->GetBody()->setMotionState(motion_state_);
+    peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
+
+    peg4->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose4));
+    motion_state_ = new BulletVTKMotionState(peg_pose4, peg4->GetActor());
+    peg4->GetBody()->setMotionState(motion_state_);
+    peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
 }
 

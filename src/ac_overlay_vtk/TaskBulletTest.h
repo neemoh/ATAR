@@ -107,7 +107,7 @@ private:
     double target_distance;
     ros::Time start_pause;
     BulletVTKObject* kine_box;
-    BulletVTKObject* kine_cylinder_0;
+    BulletVTKObject* kine_scoop;
     BulletVTKObject* kine_cylinder_1;
     BulletVTKObject* peg4;
     BulletVTKObject* peg1;
@@ -122,6 +122,7 @@ private:
     double* peg_p2;
     double* peg_p3;
     double* peg_p4;
+    BulletVTKMotionState* motion_state_;
     std::vector<double> target_pos;
     KDL::Vector previous_point;
     btDiscreteDynamicsWorld* dynamicsWorld;
