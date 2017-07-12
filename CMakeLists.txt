@@ -296,12 +296,9 @@ target_link_libraries(
         BulletDynamics
         BulletCollision
         LinearMath
-        libode.a
         LoadObjGL
         BulletSoftBody
 )
-
-set(ODE_PRECISION dSINGLE)
 
 add_executable(
         vtk_shadow_test src/vtkshadowtest.cpp

@@ -8,7 +8,6 @@
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
 #include "TaskBuzzWire.h"
 #include "TaskKidney.h"
-#include "TaskODE.h"
 #include "TaskDeformable.h"
 #include "TaskBulletTest.h"
 #include "ControlEvents.h"
@@ -357,10 +356,8 @@ bool OverlayROSConfig::UpdateWorld() {
         // Time performance debug
         //ros::Time start =ros::Time::now();
 
-
-
         // update the moving actors
-        if(running_task_id)
+        if(task_ptr)
             task_ptr->UpdateActors();
 
         // update the camera images and view angle (in case window changes size)
@@ -379,7 +376,7 @@ bool OverlayROSConfig::UpdateWorld() {
             PublishRenderedImages();
 
         // publish the active constraint parameters if needed
-        if(running_task_id) {
+        if(task_ptr) {
             if (task_ptr->IsACParamChanged()) {
                 PublishACtiveConstraintParameters(
                         task_ptr->GetACParameters());
@@ -393,8 +390,8 @@ bool OverlayROSConfig::UpdateWorld() {
 
     } // if new image
 
-    // if no task is running we need to spin ourself
-    if(running_task_id==0)
+    // if no task is running we need to spin our self
+    if(!task_ptr)
         ros::spinOnce();
 
     return true;
@@ -404,17 +401,20 @@ bool OverlayROSConfig::UpdateWorld() {
 void OverlayROSConfig::HandleTaskEvent() {
 
     if (new_task_event){
-        ROS_INFO("Task %d Selected", running_task_id);
-        //close tasks if it was already running
 
-        if(task_ptr != NULL) {
+        ROS_INFO("Task %d Selected", running_task_id);
+
+        //close tasks if it was already running
+        if(task_ptr) {
             graphics->RemoveAllActorsFromScene();
             DeleteTask();
         }
 
         StartTask(running_task_id);
-        // Add the task actors to the graphics
-        graphics->AddActorsToScene(task_ptr->GetActors());
+
+        if(task_ptr)
+            // If task initialized, add the task actors to the graphics
+            graphics->AddActorsToScene(task_ptr->GetActors());
 
         new_task_event = false;
 
@@ -448,32 +448,31 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         // starting the task
         ROS_DEBUG("Starting new BuzzWireTask task. ");
         task_ptr   = new TaskBuzzWire(
-            mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
-            with_guidance, haptic_loop_rate, slave_names
+                mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
+                with_guidance, haptic_loop_rate, slave_names
         );
     }
     else if(task_id ==3){
-        ROS_DEBUG("Starting new TaskODE.");
-        task_ptr   = new TaskODE(mesh_files_dir, show_reference_frames,
-                                 (bool) (n_arms - 1), with_guidance);
-    }
-    else if(task_id ==4){
         ROS_DEBUG("Starting new TaskPegInHole. ");
         task_ptr   = new TaskPegInHole(mesh_files_dir, show_reference_frames,
-                                    (bool) (n_arms - 1), with_guidance);
+                                       (bool) (n_arms - 1), with_guidance);
     }
-    else if(task_id ==5){
+    else if(task_id ==4){
         ROS_DEBUG("Starting new TaskBulletTest. ");
         task_ptr   = new TaskBulletTest(mesh_files_dir, show_reference_frames,
                                         (bool) (n_arms - 1), with_guidance);
     }
-    else if(task_id ==6){
+    else if(task_id ==5){
         ROS_DEBUG("Starting new TaskDeformable . ");
         task_ptr   = new TaskDeformable(mesh_files_dir, show_reference_frames,
-                                       (bool) (n_arms - 1), with_guidance);
+                                        (bool) (n_arms - 1), with_guidance);
+
+    }
+    else if(task_id ==6) {
+        ROS_DEBUG("No task assigned yet. ");
     }
 
-    if(task_id >0 && task_id <7) {
+    if(task_ptr) {
         // assign the tool pose pointers
         ros::spinOnce();
         task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
@@ -496,6 +495,7 @@ void OverlayROSConfig::DeleteTask() {
     ros::Rate sleep(50);
     sleep.sleep();
     delete task_ptr;
+    task_ptr = 0;
 }
 
 

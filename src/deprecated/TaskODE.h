@@ -4,7 +4,7 @@
 
 #ifndef ATAR_TASKODE_H
 #define ATAR_TASKODE_H
-#include "VTKTask.h"
+#include "src/ac_overlay_vtk/VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -27,7 +27,7 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkCornerAnnotation.h>
 
-#include "Rendering.h"
+#include "src/ac_overlay_vtk/Rendering.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include <ros/ros.h>
