@@ -321,7 +321,7 @@ void OverlayROSConfig::SetupGraphics() {
     cv::Mat cam_images[2];
     LockAndGetImages(ros::Duration(1), cam_images);
 
-    graphics = new Rendering(false, 2 - (uint) one_window_mode, with_shadows,
+    graphics = new Rendering(ar_mode, 2 - (uint) one_window_mode, with_shadows,
                              offScreen_rendering, windows_position);
 
     // in case camera poses are set as parameters
