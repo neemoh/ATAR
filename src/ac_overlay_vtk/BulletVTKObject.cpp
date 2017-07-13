@@ -20,7 +20,7 @@
 #include "LoadObjGL/LoadMeshFromObj.h"
 //for debug message
 #include "ros/ros.h"
-
+#include "VHACDGen.h"
 
 BulletVTKObject::BulletVTKObject(
         ObjectShape shape,
@@ -33,6 +33,7 @@ BulletVTKObject::BulletVTKObject(
     )
         : object_type_(o_type)
 {
+
 
     vtkSmartPointer<vtkPolyDataMapper> mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -80,7 +81,7 @@ BulletVTKObject::BulletVTKObject(
             collision_shape_ = new btSphereShape(btScalar(B_DIM_SCALE*dimensions[0]));
 
             // calculate volume
-            volume = 4/3*M_PI* pow(B_DIM_SCALE*dimensions[0], 3);
+            volume = 4/3*M_PI* pow(dimensions[0], 3);
 
             // set name
             shape_string = collision_shape_->getName();
@@ -111,7 +112,7 @@ BulletVTKObject::BulletVTKObject(
                     ));
 
             // calculate volume
-            volume = M_PI * pow(B_DIM_SCALE*dimensions[0], 2) * B_DIM_SCALE*dimensions[1];
+            volume = M_PI * pow(dimensions[0], 2) * dimensions[1];
 
             // set name
             shape_string = collision_shape_->getName();
@@ -143,9 +144,9 @@ BulletVTKObject::BulletVTKObject(
                               btScalar(B_DIM_SCALE*dimensions[1]/2),
                               btScalar(B_DIM_SCALE*dimensions[2]/2)));
             // calculate volume
-            volume = B_DIM_SCALE*dimensions[0] *
-                    B_DIM_SCALE*dimensions[1] *
-                    B_DIM_SCALE*dimensions[2];
+            volume = dimensions[0] *
+                    dimensions[1] *
+                    dimensions[2];
 
             // set name
             shape_string = collision_shape_->getName();;
@@ -176,8 +177,8 @@ BulletVTKObject::BulletVTKObject(
                     btScalar(B_DIM_SCALE*dimensions[1]/2));
 
             // calculate volume
-            volume = float(M_PI* pow(B_DIM_SCALE*dimensions[0], 2) *
-                                   B_DIM_SCALE*dimensions[1]/3);
+            volume = float(M_PI* pow(dimensions[0], 2) *
+                                   dimensions[1]/3);
 
             // set name
             shape_string = collision_shape_->getName();;
@@ -189,27 +190,40 @@ BulletVTKObject::BulletVTKObject(
 
             std::string* filepath = static_cast<std::string*>(data);
             ROS_DEBUG("Loading mesh file from: %s", filepath->c_str()) ;
-            //load our obj mesh
 
-            GLInstanceGraphicsShape* glmesh = LoadMeshFromObj(filepath->c_str(), "");
-            ROS_DEBUG("[INFO] Obj loaded: Extracted %d verticed from obj file "
-                              "[%s]\n", glmesh->m_numvertices, filepath->c_str());
+//            DecomposeObj(*filepath);
 
-            const GLInstanceVertex& v = glmesh->m_vertices->at(0);
-            btConvexHullShape* shape = new btConvexHullShape((const btScalar*)(&(v.xyzw[0])),
-                                                             glmesh->m_numvertices,
-                                                             sizeof(GLInstanceVertex));
-
-            btVector3 localScaling(0.001,0.001,0.001);
-            shape->setLocalScaling(localScaling);
+//            //load our obj mesh
+//            GLInstanceGraphicsShape* glmesh = LoadMeshFromObj(filepath->c_str(), "");
+//            ROS_DEBUG("[INFO] Obj loaded: Extracted %d verticed from obj file "
+//                              "[%s]\n", glmesh->m_numvertices, filepath->c_str());
 //
-            // option 1
-//            shape->optimizeConvexHull();
+//            const GLInstanceVertex& v = glmesh->m_vertices->at(0);
+//            btConvexHullShape* shape = new btConvexHullShape((const btScalar*)(&(v.xyzw[0])),
+//                                                             glmesh->m_numvertices,
+//                                                             sizeof(GLInstanceVertex));
+//
+//            btVector3 localScaling(0.001,0.001,0.001);
+//            shape->setLocalScaling(localScaling);
+////
+//            // option 1
+////            shape->optimizeConvexHull();
+//
+//            // option 2
+//            shape->initializePolyhedralFeatures();
 
-            // option 2
-            shape->initializePolyhedralFeatures();
+            collision_shape_ = LoadMeshFromObjs(filepath->c_str(), "");
 
-            collision_shape_ = shape;
+            btVector3 localScaling(B_DIM_SCALE, B_DIM_SCALE, B_DIM_SCALE);
+            collision_shape_->setLocalScaling(localScaling);
+
+
+            btScalar rad;
+            btVector3 center;
+            collision_shape_->getBoundingSphere
+                    (center, rad );
+            std::cout << "rad: "<<rad << " center: " << center.x() << ", "
+             << center.y() << std::endl;
             //            //shape->setMargin(0.001);
             //            m_collisionShapes.push_back(shape);
             //

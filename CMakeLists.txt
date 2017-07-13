@@ -224,6 +224,8 @@ endif()
 if(POLICY CMP0053)
     cmake_policy(SET CMP0053 NEW) # CMake 3.1
 endif()
+SET(GCC_COVERAGE_COMPILE_FLAGS "-fopenmp")
+SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
 
 find_package(VTK REQUIRED)
 vtk_module_config(VTK
@@ -285,7 +287,7 @@ add_executable(
         src/ac_overlay_vtk/VTKTask.h
         ${tasks_src}
         ${tasks_h}
-)
+        src/ac_overlay_vtk/VHACDGen.cpp src/ac_overlay_vtk/VHACDGen.h)
 
 
 target_link_libraries(
@@ -298,6 +300,8 @@ target_link_libraries(
         LinearMath
         LoadObjGL
         BulletSoftBody
+        vhacd
+        pthread
 )
 
 add_executable(

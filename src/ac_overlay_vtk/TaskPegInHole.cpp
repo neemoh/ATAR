@@ -48,7 +48,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     board = new BulletVTKObject(
         ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
     );
-    board->GetActor()->GetProperty()->SetOpacity(0.05);
+//    board->GetActor()->GetProperty()->SetOpacity(0.05);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
     dynamicsWorld->addRigidBody(board->GetBody());
@@ -69,7 +69,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // Create spheres
     int cols = 4;
     int rows = 3;
-    double density = 5000; // kg/m3
+    double density = 50000; // kg/m3
     //stiffnes = 20000;
     //damping = 0.9;
     friction = 2.2;
@@ -88,7 +88,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
             }
             pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
                 0.06,
-                0.01 + dim[1] *1.5* (double)j,
+                0.1 + dim[1] *1.5* (double)j,
                 0, 0, q3, q4};
 
             cylinders[i*rows+j] =
@@ -128,7 +128,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
                 pose = new double[7] {(double)i * 2.2*sides + 0.1,
                     (double)j * 2.2*sides  + 0.05,
-                    (double)k * 4*sides  + 0.005,
+                    (double)k * 4*sides  + 0.5,
                     0, 0, 0, 1};
 
                 std::vector<double> dim = {sides, sides, sides};
@@ -161,26 +161,23 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     //// Create mesh
-    //stiffnes = 1000;
-    //damping= 1;
-    //friction = 1;
-    //
-    //pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
-    //std::vector<double> _dim = {0.002};
-    //BulletVTKObject *mesh;
-    //std::stringstream input_file_dir;
-    //input_file_dir << mesh_files_dir << std::string("monkey.obj");
-    //std::string mesh_file_dir_str = input_file_dir.str();
-    //
-    //mesh = new
-    //    BulletVTKObject(ObjectShape::MESH,
-    //                    ObjectType::DYNAMIC, _dim, pose, 6000,
-    //                    &mesh_file_dir_str,
-    //                    friction);
-    //
-    //dynamicsWorld->addRigidBody(mesh->GetBody());
-    //actors.push_back(mesh->GetActor());
-    //mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
+
+    pose = new double[7] {0.08, 0.06, 0.05, 0.7, 0, 0.7, 0};
+    std::vector<double> _dim = {0.002};
+    BulletVTKObject *mesh;
+    std::stringstream input_file_dir;
+    input_file_dir << mesh_files_dir << std::string("monkey_vhacd.obj");
+    std::string mesh_file_dir_str = input_file_dir.str();
+
+    mesh = new
+        BulletVTKObject(ObjectShape::MESH,
+                        ObjectType::DYNAMIC, _dim, pose, density,
+                        &mesh_file_dir_str,
+                        friction);
+
+    dynamicsWorld->addRigidBody(mesh->GetBody());
+    actors.push_back(mesh->GetActor());
+    mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
 
     // -------------------------------------------------------------------------
     // Create kinematic box
