@@ -224,7 +224,8 @@ BulletVTKObject::BulletVTKObject(
 
             collision_shape_ = LoadCompoundMeshFromObj(*filepath);
 
-            btVector3 localScaling(B_DIM_SCALE, B_DIM_SCALE, B_DIM_SCALE);
+            btVector3 localScaling(B_DIM_SCALE*0.5f, B_DIM_SCALE*0.5f,
+                                   B_DIM_SCALE*0.5f);
             collision_shape_->setLocalScaling(localScaling);
 
 

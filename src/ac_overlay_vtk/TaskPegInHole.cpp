@@ -66,7 +66,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     dynamicsWorld->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
-    // Create spheres
+    // Create cylinders
     int cols = 4;
     int rows = 3;
     double density = 50000; // kg/m3
@@ -128,7 +128,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
                 pose = new double[7] {(double)i * 2.2*sides + 0.1,
                     (double)j * 2.2*sides  + 0.05,
-                    (double)k * 4*sides  + 0.5,
+                    (double)k * 4*sides  + 0.05,
                     0, 0, 0, 1};
 
                 std::vector<double> dim = {sides, sides, sides};
@@ -162,9 +162,9 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     //// Create mesh
 
-    pose = new double[7] {0.08, 0.06, 0.05, 0.7, 0, 0.7, 0};
+    pose = new double[7] {0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
     std::vector<double> _dim = {0.002};
-    BulletVTKObject *mesh;
+//    BulletVTKObject *mesh;
     std::stringstream input_file_dir;
     input_file_dir << mesh_files_dir << std::string("ring.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
@@ -234,9 +234,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
     actors.push_back(task_coordinate_axes);
 
-
-
-}
+    }
 
 
 //------------------------------------------------------------------------------
