@@ -15,7 +15,7 @@
 
 // -----------------------------------------------------------------------------
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
-        : n(node_name), cam_poses_provided_as_params(false), running_task_id
+        : n(node_name), running_task_id
         (0), task_ptr(NULL)
 {
 
@@ -126,11 +126,16 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 
 
     // -------------------------------- CAM POSES ------------------------------
-    // We need to know the pose of the cameras with respect to thetask-space
+    // We need to know the pose of the cameras with respect to the world frame
     // coordinates. If the camera or the markers move the pose should be
     // estimated by a node and here we subscribe to that topic. If on the
-    // other hand no cam/marker motion is involved the fixed pose is read
-    // as a static parameter.
+    // other hand no cam/marker motion is involved the fixed pose of the left
+    // camera is read as a static parameter and the right one is calculated
+    // from the fixed tr hard coded here. If you are not using the dvrk
+    // endoscopic camera you need to estimate the left to rigft cam transform
+    // yourself and put it here:
+    std::vector<double> l_r_cams = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+    conversions::VectorToKDLFrame(l_r_cams,left_cam_to_right_cam_tr);
 
     // we first try to read the poses as parameters and later update the
     // poses if new messages are arrived on the topics
@@ -139,18 +144,18 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     if (n.getParam("/calibrations/world_frame_to_left_cam_frame", temp_vec)) {
         conversions::VectorToKDLFrame(temp_vec, pose_cam[0]);
         conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec_curr[0], cam_tvec_curr[0]);
+        cam_tvec_avg[0] = cam_tvec_curr[0];
+        cam_rvec_avg[0] = cam_rvec_curr[0];
 
-        // right pose as parameter
-        if (n.getParam("/calibrations/world_frame_to_right_cam_frame",
-                       temp_vec)) {
-            conversions::VectorToKDLFrame(temp_vec, pose_cam[1]);
-            conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec_curr[1],
-                                            cam_tvec_curr[1]);
+        // right cam
+        pose_cam[1] = left_cam_to_right_cam_tr * pose_cam[0];
+        conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec_curr[1],
+                                        cam_tvec_curr[1]);
+        cam_tvec_avg[1] = cam_tvec_curr[1];
+        cam_rvec_avg[1] = cam_rvec_curr[1];
 
-            left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
-            found_left_cam_to_right_cam_tr = true;
-            cam_poses_provided_as_params = true;
-        }
+        new_cam_pose[0] = true;
+        new_cam_pose[1] = true;
     }
 
     // now we set up the subscribers
@@ -240,21 +245,50 @@ void OverlayROSConfig::SetupROSandGetParameters() {
         ROS_INFO("Will publish on %s", param_name.str().c_str());
 
         // the transformation from the coordinate frame of the slave (RCM)
-        // to the task coordinate frame.
-        param_name.str("");
-        param_name << (std::string)"/calibrations/world_frame_to_" <<
-                   slave_names[n_arm] << "_frame";
-        std::vector<double> vect_temp = std::vector<double>(7, 0.0);
-        if(n.getParam(param_name.str(), vect_temp)){
-            conversions::VectorToKDLFrame(vect_temp,
-                                          slave_frame_to_world_frame[n_arm]);
-            // param is from task to RCM, we want the inverse
-            slave_frame_to_world_frame[n_arm] =
-                    slave_frame_to_world_frame[n_arm].Inverse();
+        // to the task coordinate frame is needed in AR mode.
+        if(ar_mode) {
+            param_name.str("");
+            param_name << (std::string) "/calibrations/world_frame_to_" <<
+                       slave_names[n_arm] << "_frame";
+            std::vector<double> vect_temp = std::vector<double>(7, 0.0);
+            if (n.getParam(param_name.str(), vect_temp)) {
+                conversions::VectorToKDLFrame(vect_temp,
+                                              slave_frame_to_world_frame[n_arm]);
+                // param is from task to RCM, we want the inverse
+                slave_frame_to_world_frame[n_arm] =
+                        slave_frame_to_world_frame[n_arm].Inverse();
+            } else
+                ROS_INFO("Parameter %s was not found. Arm to world calibration "
+                                 "must be performed.",
+                         param_name.str().c_str());
         }
-        else
-            ROS_INFO("Parameter %s was not found. Arm to world calibration "
-                             "must be performed.", param_name.str().c_str());
+        else{
+            // in VR mode the slaves are the masters, that is, we don't use
+            // the slaves. Instead we read the pose of the masters and to
+            // register the motions correctly we need the transform from the
+            // base of the masters to the console displays (i.e. to camera
+            // images).
+            param_name.str("");
+            param_name << (std::string) "/calibrations/" <<
+                       slave_names[n_arm] << "_frame_to_image_frame";
+            std::vector<double> vect_temp = std::vector<double>(7, 0.0);
+            if (n.getParam(param_name.str(), vect_temp)) {
+                KDL::Frame mtm_to_image;
+                conversions::VectorToKDLFrame(vect_temp, mtm_to_image);
+
+                // param is from task to RCM, we want the inverse
+                slave_frame_to_world_frame[n_arm] = mtm_to_image *
+                                                    pose_cam[0];
+                //make sure translation is null
+                slave_frame_to_world_frame[n_arm].p = KDL::Vector(0.0, 0.0,0.0);
+
+            } else
+                ROS_ERROR("Parameter %s was not found. This is needed in VR "
+                                  "mode.",
+                          param_name.str().c_str());
+
+        }
+
     }
 
     // Publisher for the task state
@@ -305,7 +339,7 @@ void OverlayROSConfig::SetupGraphics() {
     n.getParam("windows_position", windows_position);
 
     // Create the window for the video feed if we publish the images
-    if(publish_overlayed_images) {
+    if (publish_overlayed_images) {
         if (one_window_mode) {
             cv_window_names[0] = "Augmented Stereo";
             cvNamedWindow(cv_window_names[0].c_str(), CV_WINDOW_NORMAL);
@@ -318,8 +352,6 @@ void OverlayROSConfig::SetupGraphics() {
         }
     }
 
-    cv::Mat cam_images[2];
-    LockAndGetImages(ros::Duration(1), cam_images);
 
     graphics = new Rendering(ar_mode, 2 - (uint) one_window_mode, with_shadows,
                              offScreen_rendering, windows_position);
@@ -329,18 +361,27 @@ void OverlayROSConfig::SetupGraphics() {
 
     // set the intrinsics and configure the background image
     graphics->SetCameraIntrinsics(camera_matrix);
-    graphics->ConfigureBackgroundImage(cam_images);
-    graphics->SetEnableBackgroundImage(true);
+
+    // in ar mode we read real camera images and show them as the background
+    // of our rendering
+    if (ar_mode){
+        cv::Mat cam_images[2];
+        LockAndGetImages(ros::Duration(1), cam_images);
+        graphics->ConfigureBackgroundImage(cam_images);
+        graphics->SetEnableBackgroundImage(true);
+    }
+
     graphics->Render();
 
 }
 // -----------------------------------------------------------------------------
 bool OverlayROSConfig::UpdateWorld() {
 
-
     // -------------------------------------------------------------------------
     // Update cam poses if needed
     cv::Vec3d cam_rvec[2];    cv::Vec3d cam_tvec[2];
+    // in AR mode we would like to change the virtual cam poses as the real
+    // camera moves. In VR mode this returns the fixed cam poses only once.
     if(GetNewCameraPoses(cam_rvec, cam_tvec))
         graphics->SetWorldToCameraTransform(cam_rvec, cam_tvec);
 
@@ -364,11 +405,12 @@ bool OverlayROSConfig::UpdateWorld() {
         if(task_ptr)
             task_ptr->UpdateActors();
 
-        if(ar_mode) {
-            // update the camera images and view angle (in case window changes size)
+        if(ar_mode)
+            // update the camera images
             graphics->UpdateBackgroundImage(cam_images);
-            graphics->UpdateCameraViewForActualWindowSize();
-        }
+
+        // update  view angle (in case window changes size)
+        graphics->UpdateCameraViewForActualWindowSize();
 
         // Render!
         graphics->Render();
@@ -556,79 +598,77 @@ bool OverlayROSConfig::GetNewImages( cv::Mat images[]) {
 bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                                          cv::Vec3d cam_tvec_out[2]) {
 
-    // if cam poses are not set as parameters we need to calculate the
-    // transformation between the cameras ONLY ONCE
-    if(!found_left_cam_to_right_cam_tr){
-        ros::Rate rate(10);
-        uint count = 0;
+//    // if cam poses are not set as parameters we need to calculate the
+//    // transformation between the cameras ONLY ONCE
+//    if(!calculated_left_cam_to_right_cam_tr){
+//        ros::Rate rate(10);
+//        uint count = 0;
+//
+//        while(!new_cam_pose[0] && !new_cam_pose[1]){
+//
+//            ros::spinOnce();
+//            rate.sleep();
+//            count++;
+//            if(count / 20 == 0){
+//                ROS_INFO("Waiting for both camera poses to be published");
+//            }
+//            if(count > 100){
+//                ROS_ERROR("Giving up. No camera pose parameter was present and "
+//                                  "poses of both cams was not being published.");
+//                break;
+//            }
+//        }
+//    }
 
-        while(!new_cam_pose[0] && !new_cam_pose[1]){
-
-            ros::spinOnce();
-            rate.sleep();
-            count++;
-            if(count / 20 == 0){
-                ROS_INFO("Waiting for both camera poses to be published");
-            }
-            if(count > 100){
-                ROS_ERROR("Giving up. No camera pose parameter was present and "
-                                  "poses of both cams was not being published.");
-                break;
-            }
-        }
-    }
-
-    if (new_cam_pose[0] && new_cam_pose[1]) {
-
-        if (!found_left_cam_to_right_cam_tr) {
-            left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
-            ROS_INFO("Found left_cam_to_right_cam_tr: px=%f py=%f pz=%f",
-                     left_cam_to_right_cam_tr.p[0],
-                     left_cam_to_right_cam_tr.p[1],
-                     left_cam_to_right_cam_tr.p[2]);
-            found_left_cam_to_right_cam_tr = true;
-        }
-    } else if (new_cam_pose[0] && found_left_cam_to_right_cam_tr) {
+    // if one of the poses is not available estimate the other one through
+    // the left to right fixed transform
+    if (new_cam_pose[0] && !new_cam_pose[1]) {
         pose_cam[1] = left_cam_to_right_cam_tr * pose_cam[0];
         conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec_curr[1],
                                         cam_tvec_curr[1]);
-
-    } else if (new_cam_pose[1] && found_left_cam_to_right_cam_tr) {
+    } else if (!new_cam_pose[0] && new_cam_pose[1]) {
         pose_cam[0] = left_cam_to_right_cam_tr.Inverse() * pose_cam[1];
         conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec_curr[0],
                                         cam_tvec_curr[0]);
     }
 
     double avg_factor;
-    n.param<double>("cam_pose_averaging_factor",
-                    avg_factor, 0.5);
+    n.param<double>("cam_pose_averaging_factor", avg_factor, 0.5);
 
     // populate the out values
     if (new_cam_pose[0] || new_cam_pose[1]) {
 
         for (int k = 0; k < 2; ++k) {
+            if (ar_mode) {
+                // average the position to prevent small jitter when the board
+                // does not have good visibility
+                cam_tvec_avg[k] -= avg_factor * cam_tvec_avg[k];
+                cam_tvec_avg[k] += avg_factor * cam_tvec_curr[k];
 
-            // average the position to prevent small jitter when the board
-            // does not have good visibility
-            cam_tvec_avg[k] -= avg_factor * cam_tvec_avg[k];
-            cam_tvec_avg[k] += avg_factor * cam_tvec_curr[k];
+                // not mathematically legal, but should work...
+                cam_rvec_avg[k] -= avg_factor * cam_rvec_avg[k];
+                cam_rvec_avg[k] += avg_factor * cam_rvec_curr[k];
 
-            // not mathematically legal, but should work...
-            cam_rvec_avg[k] -= avg_factor * cam_rvec_avg[k];
-            cam_rvec_avg[k] += avg_factor * cam_rvec_curr[k];
+                // to prevent jitter due to wrong board pose estimation we discard
+                // poses that are too different from the last pose
+                if ((cv::norm(cam_tvec_avg[k] - cam_tvec_curr[k]) < 0.05)
+                    && (cv::norm(cam_rvec_avg[k] - cam_rvec_curr[k]) < 0.1)) {
 
-            // to prevent jitter due to wrong board pose estimation we discard
-            // poses that are too different from the last pose
-            if( (cv::norm(cam_tvec_avg[k] - cam_tvec_curr[k]) < 0.05)
-                && (cv::norm(cam_rvec_avg[k] - cam_rvec_curr[k]) < 0.1) ) {
-
-                cam_rvec_out[k] = cam_rvec_avg[k];
-                cam_tvec_out[k] = cam_tvec_avg[k];
+                    cam_rvec_out[k] = cam_rvec_avg[k];
+                    cam_tvec_out[k] = cam_tvec_avg[k];
+                    new_cam_pose[k] = false;
+//                    if (k == 1)
+//                        return true;
+                }
+            }
+            else{ // ar_mode
+                // no averaging is needed in VR mode
+                cam_rvec_out[k] = cam_rvec_curr[k];
+                cam_tvec_out[k] = cam_tvec_curr[k];
                 new_cam_pose[k] = false;
-                if(k==1)
-                    return true;
             }
         }
+        return true;
     }
 
     return false;

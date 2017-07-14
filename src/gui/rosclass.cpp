@@ -183,7 +183,7 @@ void RosObj::GetROSParameterValues() {
         // the transformation from the coordinate frame of the slave (RCM) to the task coordinate
         // frame.
         param_name.str("");
-        param_name << (std::string) "/calibrations/task_frame_to_"
+        param_name << (std::string) "/calibrations/world_frame_to_"
                    << slave_names[n_arm] << "_frame";
         if (!n.getParam(param_name.str(), task_frame_to_slave_frame[n_arm]))
             ROS_WARN("Parameter %s was not found.", param_name.str().c_str());

@@ -148,7 +148,6 @@ private:
     KDL::Frame pose_cam[2];
     KDL::Frame pose_current_tool[2];
     double gripper_current[2];
-    bool cam_poses_provided_as_params;
     KDL::Frame slave_frame_to_world_frame[2];
     KDL::Frame left_cam_to_right_cam_tr;
     cv::Vec3d cam_rvec_curr[2];
@@ -157,8 +156,6 @@ private:
     cv::Vec3d cam_tvec_avg[2];
     bool new_image[2] = {false, false};
     bool new_cam_pose[2] = {false, false};;
-    bool found_left_cam_to_right_cam_tr = false;
-
 
     cv::Mat image_from_ros[2];
     uint running_task_id;

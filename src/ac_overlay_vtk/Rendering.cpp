@@ -59,16 +59,16 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
     lights[0] =   vtkSmartPointer<vtkLight>::New();
     lights[1] =   vtkSmartPointer<vtkLight>::New();
 
-    lights[0]->SetPosition(0.08, 0.08, 0.16);
-    lights[0]->SetFocalPoint(0.05, 0.03, 0.05);
+    lights[0]->SetPosition(0.12, 0.08, 0.16);
+    lights[0]->SetFocalPoint(0.11, 0.04, 0.05);
     //lights[0]->SetColor(1.0,1.0,1.0);
     lights[0]->SetPositional(1);
     lights[0]->SetConeAngle(45);
     //lights[0]->SetLightTypeToCameraLight();
     lights[0]->SetSwitch(1);
 
-    lights[1]->SetPosition(0.10, 0.14, 0.13);
-    lights[1]->SetFocalPoint(0.02, 0.05, 0.0);
+    lights[1]->SetPosition(0.11, 0.10, 0.13);
+    lights[1]->SetFocalPoint(0.10, 0.05, 0.01);
     lights[1]->SetColor(1.0,1.0,1.0);
     lights[1]->SetPositional(1);
     lights[1]->SetConeAngle(45);
@@ -149,7 +149,7 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
     background_renderer_[2]->SetLayer(0);
     background_renderer_[2]->SetActiveCamera(background_camera_[1]->camera);
 
-    if(ar_mode_)
+//    if(ar_mode_)
         scene_renderer_[2]->InteractiveOff();
     scene_renderer_[2]->SetLayer(1);
 
@@ -187,6 +187,11 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
             render_window_[0]->SetOffScreenRendering(1);
             render_window_[1]->SetOffScreenRendering(1);
         }
+    }
+
+    // Set render window size if one window the width is double
+    for (int j = 0; j < num_render_windows_; ++j) {
+        render_window_[j]->SetSize((4-num_render_windows_) * 640, 480);
     }
 
 
@@ -360,7 +365,8 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
                                          single_win_size[1]);
 
         // update the background image for each camera
-        SetImageCameraToFaceImage(i, single_win_size);
+        if(ar_mode_)
+            SetImageCameraToFaceImage(i, single_win_size);
     }
 }
 
@@ -370,12 +376,6 @@ void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
 
     int image_width = img[0].size().width;
     int image_height = img[0].size().height;
-
-    // if one window the width is double
-    for (int j = 0; j < num_render_windows_; ++j) {
-        render_window_[j]->SetSize((4-num_render_windows_) * 640,
-                                   480);
-    }
 
     for (int i = 0; i < 2; ++i) {
         assert( img[i].data != NULL );
@@ -430,8 +430,12 @@ Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
         scene_renderer_[0]->AddViewProp(actors[i]);
         scene_renderer_[1]->AddViewProp(actors[i]);
         scene_renderer_[2]->AddViewProp(actors[i]);
+
     }
 
+    scene_renderer_[0]->Modified();
+    scene_renderer_[1]->Modified();
+    scene_renderer_[2]->Modified();
 }
 
 
