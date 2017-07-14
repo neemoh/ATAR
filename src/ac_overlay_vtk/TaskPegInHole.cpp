@@ -166,7 +166,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     std::vector<double> _dim = {0.002};
     BulletVTKObject *mesh;
     std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("monkey_vhacd.obj");
+    input_file_dir << mesh_files_dir << std::string("ring.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
 
     mesh = new

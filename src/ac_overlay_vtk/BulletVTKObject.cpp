@@ -20,7 +20,12 @@
 #include "LoadObjGL/LoadMeshFromObj.h"
 //for debug message
 #include "ros/ros.h"
-#include "VHACDGen.h"
+#include <sys/stat.h>
+
+inline bool FileExists (const std::string& name) {
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
+}
 
 BulletVTKObject::BulletVTKObject(
         ObjectShape shape,
@@ -189,7 +194,12 @@ BulletVTKObject::BulletVTKObject(
         case ObjectShape::MESH : {
 
             std::string* filepath = static_cast<std::string*>(data);
-            ROS_DEBUG("Loading mesh file from: %s", filepath->c_str()) ;
+            if(!FileExists(filepath->c_str())) {
+                ROS_ERROR("Can't open mesh file: %s", filepath->c_str());
+                throw std::runtime_error("Can't open mesh file.");
+            }
+            else
+                ROS_DEBUG("Loading mesh file from: %s", filepath->c_str()) ;
 
 //            DecomposeObj(*filepath);
 
@@ -212,7 +222,7 @@ BulletVTKObject::BulletVTKObject(
 //            // option 2
 //            shape->initializePolyhedralFeatures();
 
-            collision_shape_ = LoadMeshFromObjs(filepath->c_str(), "");
+            collision_shape_ = LoadCompoundMeshFromObj(*filepath);
 
             btVector3 localScaling(B_DIM_SCALE, B_DIM_SCALE, B_DIM_SCALE);
             collision_shape_->setLocalScaling(localScaling);

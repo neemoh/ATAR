@@ -251,6 +251,8 @@ add_library(LoadObjGL
         src/ac_overlay_vtk/LoadObjGL/tiny_obj_loader.cpp
         src/ac_overlay_vtk/LoadObjGL/tiny_obj_loader.cpp
         src/ac_overlay_vtk/LoadObjGL/GLInstanceGraphicsShape.h
+        src/ac_overlay_vtk/LoadObjGL/VHACDGen.cpp
+        src/ac_overlay_vtk/LoadObjGL/VHACDGen.h
 #        src/ac_overlay_vtk/LoadObjGL/GLInstancingRenderer.cpp
 #        src/ac_overlay_vtk/LoadObjGL/GLInstancingRenderer.h
 #        src/ac_overlay_vtk/LoadObjGL/OpenGLInclude.h
@@ -287,7 +289,7 @@ add_executable(
         src/ac_overlay_vtk/VTKTask.h
         ${tasks_src}
         ${tasks_h}
-        src/ac_overlay_vtk/VHACDGen.cpp src/ac_overlay_vtk/VHACDGen.h)
+)
 
 
 target_link_libraries(

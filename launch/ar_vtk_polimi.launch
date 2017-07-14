@@ -1,29 +1,29 @@
 <launch>
-    <arg name="slave_1_name" value="PSM2"/>
-    <arg name="slave_2_name" value="PSM1"/>
+    <arg name="slave_1_name" value="MTMR"/>
+    <arg name="slave_2_name" value="MTML"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
-    <arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>
-    <arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>
-    <arg name= "left_cam_name" value= "ecml" />
-    <arg name= "right_cam_name" value= "ecmr" />
-    <!--<arg name="left_camera_img_topic" value="/image_raw"/>-->
-    <!--<arg name="right_camera_img_topic" value="/image_raw"/>-->
-    <!--<arg name= "left_cam_name" value= "asus_webcam" />-->
-    <!--<arg name= "right_cam_name" value= "asus_webcam" />-->
+    <!--<arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>-->
+    <!--<arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>-->
+    <!--<arg name= "left_cam_name" value= "ecml" />-->
+    <!--<arg name= "right_cam_name" value= "ecmr" />-->
+    <arg name="left_camera_img_topic" value="/image_raw"/>
+    <arg name="right_camera_img_topic" value="/image_raw"/>
+    <arg name= "left_cam_name" value= "asus_webcam" />
+    <arg name= "right_cam_name" value= "asus_webcam" />
     <arg name= "haptic_referesh_rate" value= "500" />-->
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
-        <!--<rosparam command="load"-->
-                  <!--file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />        -->
         <rosparam command="load"
-                  file="$(find atar)/launch/params_charuco_board_8_12_polimi.yaml" />
+                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
+        <!--<rosparam command="load"-->
+                  <!--file="$(find atar)/launch/params_charuco_board_8_12_polimi.yaml" />-->
     </group>
 
-    <!--<node pkg="uvc_camera" type="uvc_camera_node" name="webcam">-->
-    <!--</node>-->
+    <node pkg="uvc_camera" type="uvc_camera_node" name="webcam">
+    </node>
 
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_charuco_left" output="screen" >
@@ -69,7 +69,16 @@
         <param name="master_1_name" value="$(arg master_1_name)"/>
         <param name="master_2_name" value="$(arg master_2_name)"/>
 
-        <!-- About stl_files_dir: The directory of the stl files -->
+        <!-- AR_mode:
+
+         -->
+        <param name= "AR_mode" value= "True" />
+        <!-- show_reference_frames:
+            Use for debug. it reduces frame rate
+        -->
+        <param name= "show_reference_frames" value= "true" />
+        <!-- About stl_files_dir:
+        The directory of the stl files -->
         <param name= "mesh_files_dir" value= "$(find atar)/resources/cads/" />
 
         <!-- About desired_pose_update_frequency:
@@ -84,16 +93,12 @@
         calibration -->
         <param name= "number_of_calibration_points" value= "6" />
 
-        <!-- show_reference_frames:
-            Use for debug. it reduces frame rate
-        -->
-        <param name= "show_reference_frames" value= "true" />
 
         <!--[0-1] weigthed average of the estimated cam pose. lower number
         results in smoother estimation but adds delay. Set 1.0 if you don't
         want averaging.
          -->
-        <param name= "cam_pose_averaging_factor" value= "0.05" />
+        <param name= "cam_pose_averaging_factor" value= "0.5" />
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "enable_guidance" value= "true" />
@@ -105,7 +110,7 @@
         <param name= "one_window_mode" value= "true" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
-        <param name= "with_shadows" value= "true" />
+        <param name= "with_shadows" value= "false" />
 
         <!--If the generated images are to be published on
         ros, to help alleviate the considerable bottleneck of grabbing the
@@ -125,20 +130,20 @@
 	The node generates wrench when receives desired pose, so the loop rate depends on the frequency of the
 	desired pose topic. The sampling_frequency param is for filtering.
     -->
-    <node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">
-        <param name="number_of_arms" value="1"/>
-        <param name="slave_1_name" value="$(arg slave_1_name)"/>
-        <param name="slave_2_name" value="$(arg slave_2_name)"/>
-        <param name="master_1_name" value="$(arg master_1_name)"/>
-        <param name="master_2_name" value="$(arg master_2_name)"/>
-        <param name="max_force" value="3"/>
-        <param name="max_torque" value="0.03"/><!-- 0.03 -->
-        <param name="linear_elastic_coeff" value="1000"/>
-        <param name="linear_damping_coeff" value="10"/>
-        <param name="angular_elastic_coeff" value="0.04"/>
-        <param name="angular_damping_coeff" value="0.002"/>
-        <param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>
-    </node>
+    <!--<node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">-->
+        <!--<param name="number_of_arms" value="1"/>-->
+        <!--<param name="slave_1_name" value="$(arg slave_1_name)"/>-->
+        <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
+        <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
+        <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
+        <!--<param name="max_force" value="3"/>-->
+        <!--<param name="max_torque" value="0.03"/>&lt;!&ndash; 0.03 &ndash;&gt;-->
+        <!--<param name="linear_elastic_coeff" value="1000"/>-->
+        <!--<param name="linear_damping_coeff" value="10"/>-->
+        <!--<param name="angular_elastic_coeff" value="0.04"/>-->
+        <!--<param name="angular_damping_coeff" value="0.002"/>-->
+        <!--<param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>-->
+    <!--</node>-->
 
 
 </launch>

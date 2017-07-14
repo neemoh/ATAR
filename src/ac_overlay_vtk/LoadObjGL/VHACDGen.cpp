@@ -23,13 +23,10 @@
 
 #include "VHACDGen.h"
 #include <algorithm>
-#include <assert.h>
 #include <fstream>
 #include <iomanip>
-
 #include <sstream>
 #include <string.h>
-
 #include "VHACD.h"
 
 using namespace VHACD;
@@ -111,12 +108,12 @@ struct Parameters {
         m_fileNameLog = "log.txt";
     }
 };
+
+
 bool LoadOBJ(const std::string& fileName,  std::vector<float>& points,  std::vector<int>& triangles, IVHACD::IUserLogger& logger);
 bool SaveOBJ(std::ofstream& fout, const double* const& points, const int*
 const& triangles, const unsigned int& nPoints,
              const unsigned int& nTriangles, const Material& material, IVHACD::IUserLogger& logger, int convexPart, int vertexOffset);
-void GetFileExtension(const std::string& fileName, std::string& fileExtension);
-
 
 int DecomposeObj(const std::string file_name)
 {
@@ -156,9 +153,8 @@ int DecomposeObj(const std::string file_name)
 //    params.m_paramsVHACD.m_oclAcceleration          =
 //    params.m_oclPlatformID
 //    params.m_oclDeviceID
-    std::stringstream out_name;
-    out_name << file_name << "_vhacd.obj";
-    params.m_fileNameOut = out_name.str();
+
+    params.m_fileNameOut = AddHACDToName(file_name) ;
 
 
 
@@ -369,6 +365,23 @@ const& triangles, const unsigned int& nPoints,
     else {
         logger.Log("Can't open file\n");
         return false;
+    }
+}
+
+std::string AddHACDToName(const std::string &fileName) {
+
+    size_t last_dot_position = fileName.find_last_of(".");
+
+    if (last_dot_position == std::string::npos) {
+        return("");
+    }
+    else {
+        std::string file_name_no_extension = fileName.substr(0,
+                                                           last_dot_position);
+
+        std::stringstream out_name;
+        out_name << file_name_no_extension << "_hacd.obj";
+        return out_name.str();
     }
 }
 

@@ -3,6 +3,8 @@
 #include "GLInstanceGraphicsShape.h"
 #include <BulletCollision/CollisionShapes/btConvexHullShape.h>
 #include <iostream>
+#include <sys/stat.h>
+#include "src/ac_overlay_vtk/LoadObjGL/VHACDGen.h"
 #include "Bullet3Common/b3HashMap.h"
 #include "Wavefront2GLInstanceGraphicsShape.h"
 
@@ -22,6 +24,12 @@ void b3EnableFileCaching(int enable)
     {
         gCachedObjResults.clear();
     }
+}
+
+
+inline bool FileExists (const std::string& name) {
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
 }
 
 
@@ -68,48 +76,57 @@ GLInstanceGraphicsShape* LoadMeshFromObj(const char* relativeFileName, const cha
 
 
 
-btCompoundShape* LoadMeshFromObjs(const char* relativeFileName, const
-char* materialPrefixPath)
+btCompoundShape* LoadCompoundMeshFromObj(const std::string relativeFileName)
+
 {
+    // If there is no file with the same name ending with _hacd we need to
+    // decompose the mesh
+    if(!FileExists(AddHACDToName(relativeFileName)))
+        if(DecomposeObj(relativeFileName) < 0)
+            return 0;
+    std::string file_name = AddHACDToName(relativeFileName);
+
     B3_PROFILE("LoadMeshFromObj");
     std::vector<tinyobj::shape_t> shapes;
     {
         B3_PROFILE("tinyobj::LoadObj2");
-        std::string  err  = LoadFromCachedOrFromObj(shapes, relativeFileName, materialPrefixPath);
+        std::string  err  = LoadFromCachedOrFromObj(shapes, file_name
+                .c_str(), "");
     }
 
-    {
-        btCompoundShape* compound = new btCompoundShape();
 
-        for (int i = 0; i < shapes.size(); ++i) {
-            std::vector<tinyobj::shape_t> shape = {shapes[i]};
+    btCompoundShape* compound = new btCompoundShape();
 
-            GLInstanceGraphicsShape *gfxShape = btgCreateGraphicsShapeFromWavefrontObj(
-                    shape);
+    for (int i = 0; i < shapes.size(); ++i) {
+        std::vector<tinyobj::shape_t> shape = {shapes[i]};
 
-            // create convex hull
-            const GLInstanceVertex &v = gfxShape->m_vertices->at(0);
-            btConvexHullShape *btCHshape = new btConvexHullShape(
-                    (const btScalar *) (&(v.xyzw[0])),
-                    gfxShape->m_numvertices,
-                    sizeof(GLInstanceVertex));
-            btCHshape->initializePolyhedralFeatures();
-            //calculate the centroid
-            btVector3 centroid;
-            for (int j = 0; j <gfxShape->m_numvertices; ++j) {
-                centroid += btVector3(gfxShape->m_vertices->at(0).xyzw[0],
-                                      gfxShape->m_vertices->at(0).xyzw[1],
-                                      gfxShape->m_vertices->at(0).xyzw[2]);
-            }
-            centroid *= 1.f/(float(gfxShape->m_numvertices) );
-            std::cout << "centroid: " << centroid << std::endl;
-            // add to the compound shape
-            btTransform trans;
-            trans.setIdentity();
-            trans.setOrigin(centroid);
-            compound->addChildShape(trans, btCHshape);
+        GLInstanceGraphicsShape *gfxShape = btgCreateGraphicsShapeFromWavefrontObj(
+                shape);
+
+        // create convex hull
+        const GLInstanceVertex &v = gfxShape->m_vertices->at(0);
+        btConvexHullShape *btCHshape = new btConvexHullShape(
+                (const btScalar *) (&(v.xyzw[0])),
+                gfxShape->m_numvertices,
+                sizeof(GLInstanceVertex));
+        btCHshape->initializePolyhedralFeatures();
+        //calculate the centroid
+        btVector3 centroid;
+        for (int j = 0; j <gfxShape->m_numvertices; ++j) {
+            centroid += btVector3(gfxShape->m_vertices->at(0).xyzw[0],
+                                  gfxShape->m_vertices->at(0).xyzw[1],
+                                  gfxShape->m_vertices->at(0).xyzw[2]);
         }
-
-        return compound;
+        centroid *= 1.f/(float(gfxShape->m_numvertices) );
+        std::cout << "centroid: " << centroid.x() << " " << centroid.y() << ""
+                " " << centroid.z() << std::endl;
+        // add to the compound shape
+        btTransform trans;
+        trans.setIdentity();
+        trans.setOrigin(centroid);
+        compound->addChildShape(trans, btCHshape);
     }
+
+    return compound;
 }
+

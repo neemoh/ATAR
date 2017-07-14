@@ -371,7 +371,7 @@ void OverlayROSConfig::SetupGraphics() {
         graphics->SetEnableBackgroundImage(true);
     }
 
-    graphics->Render();
+//    graphics->Render();
 
 }
 // -----------------------------------------------------------------------------
