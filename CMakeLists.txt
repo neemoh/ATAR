@@ -177,7 +177,6 @@ add_executable(
         stereo_image_view
         src/stereo_image_view/main_stereo_image_view.cpp
 )
-
 add_executable(
         stereo_image_split
         src/stereo_image_view/main_stereo_image_split_TEMPORARY.cpp
@@ -196,11 +195,18 @@ add_executable(
         src/ac_overlay_cv/Drawings.h
 )
 
+
+add_executable(
+        teleop_dummy
+        src/teleop_dummy/main_teleop_dummy.cpp
+)
+
 set(executables
         stereo_image_view
         stereo_image_split
         stereo_usb_cam_publisher
-        ac_overlay_cv)
+        ac_overlay_cv
+        teleop_dummy)
 
 foreach (_ex ${executables})
     target_link_libraries(
