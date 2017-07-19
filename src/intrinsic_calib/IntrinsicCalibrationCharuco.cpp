@@ -225,7 +225,8 @@ void IntrinsicCalibrationCharuco::CameraImageCallback(
     size = charuco_board->getChessboardSize();
 
     if (key == 'c') {
-        if (ids.size() >= (size.height * size.width / 2)) {
+        int num_markers = size.height * size.width / 2;
+        if (ids.size() >= (num_markers*3/4) && ids.size() > 6) { //if 3/4 of the markers are captured
             std::cout << "Frame " << allImgs.size() + 1 << " captured and found "
                       << ids.size() << " markers" << std::endl;
             allCorners.push_back(corners);
