@@ -17,8 +17,8 @@
 //----------------------------------------------------------------------------
 CalibratedCamera::CalibratedCamera()
         : intrinsic_matrix(NULL)
-        , image_width_(512)
-        , image_height_(512)
+        , image_width_(640)
+        , image_height_(480)
         , fx_(1)
         , fy_(1)
         , cx_(0)
