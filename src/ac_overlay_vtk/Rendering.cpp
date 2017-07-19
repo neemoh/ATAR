@@ -147,10 +147,10 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
     background_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
     background_renderer_[2]->InteractiveOff();
     background_renderer_[2]->SetLayer(0);
-    background_renderer_[2]->SetActiveCamera(background_camera_[1]->camera);
+    background_renderer_[2]->SetActiveCamera(background_camera_[0]->camera);
 
 //    if(ar_mode_)
-        scene_renderer_[2]->InteractiveOff();
+    scene_renderer_[2]->InteractiveOff();
     scene_renderer_[2]->SetLayer(1);
 
 
@@ -281,12 +281,12 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
     if (isEnabled)
     {
         if(background_renderer_[2]->GetActors()->GetNumberOfItems() == 0)
-            background_renderer_[2]->AddActor(image_actor_[0]);
+            background_renderer_[2]->AddActor(image_actor_[1]);
     }
     else
     {
         if(background_renderer_[2]->GetActors()->GetNumberOfItems() > 0)
-            background_renderer_[2]->RemoveActor(image_actor_[0]);
+            background_renderer_[2]->RemoveActor(image_actor_[1]);
     }
 }
 

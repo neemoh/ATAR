@@ -107,7 +107,7 @@ private:
     bool with_shadows_;
     bool ar_mode_;
     //cameras
-    CalibratedCamera  *                     background_camera_[3];
+    CalibratedCamera  *                     background_camera_[2];
     CalibratedCamera  *                     scene_camera_[3];
 
     vtkSmartPointer<vtkLight>               lights[2];
