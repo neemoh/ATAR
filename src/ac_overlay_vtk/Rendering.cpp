@@ -365,8 +365,7 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
                                          single_win_size[1]);
 
         // update the background image for each camera
-        if(ar_mode_)
-            SetImageCameraToFaceImage(i, single_win_size);
+        SetImageCameraToFaceImage(i, single_win_size);
     }
 }
 

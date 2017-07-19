@@ -132,10 +132,11 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     // other hand no cam/marker motion is involved the fixed pose of the left
     // camera is read as a static parameter and the right one is calculated
     // from the fixed tr hard coded here. If you are not using the dvrk
-    // endoscopic camera you need to estimate the left to rigft cam transform
+    // endoscopic camera you need to estimate the left to right cam transform
     // yourself and put it here:
-    std::vector<double> l_r_cams = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
-    conversions::VectorToKDLFrame(l_r_cams,left_cam_to_right_cam_tr);
+    std::vector<double> l_r_cams = {-0.00643587, -0.000279893, 0.00321789,
+        0.0148923, -0.00123819, -0.00740819, 0.999861};
+    conversions::VectorToKDLFrame(l_r_cams, left_cam_to_right_cam_tr);
 
     // we first try to read the poses as parameters and later update the
     // poses if new messages are arrived on the topics
@@ -410,6 +411,7 @@ bool OverlayROSConfig::UpdateWorld() {
             graphics->UpdateBackgroundImage(cam_images);
 
         // update  view angle (in case window changes size)
+        if(ar_mode)
         graphics->UpdateCameraViewForActualWindowSize();
 
         // Render!
@@ -632,6 +634,19 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                                         cam_tvec_curr[0]);
     }
 
+    //double x,y,z,w;
+    //left_cam_to_right_cam_tr.M.GetQuaternion(x, y, z, w);
+    //left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
+    //std::cout << "["
+    //          << left_cam_to_right_cam_tr.p.x() << ", "
+    //          << left_cam_to_right_cam_tr.p.y() << ", "
+    //          << left_cam_to_right_cam_tr.p.z() << ", "
+    //          << x << ", "
+    //          << y << ", "
+    //          << z << ", "
+    //          << w << "] "
+    //          << std::endl;
+
     double avg_factor;
     n.param<double>("cam_pose_averaging_factor", avg_factor, 0.5);
 
@@ -665,7 +680,7 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                 // no averaging is needed in VR mode
                 cam_rvec_out[k] = cam_rvec_curr[k];
                 cam_tvec_out[k] = cam_tvec_curr[k];
-                new_cam_pose[k] = false;
+                //new_cam_pose[k] = false;
             }
         }
         return true;
