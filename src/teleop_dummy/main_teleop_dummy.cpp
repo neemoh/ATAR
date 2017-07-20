@@ -3,21 +3,30 @@
 //
 #include <iosfwd>
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/Joy.h>
 #include <kdl/frames.hpp>
 #include <kdl_conversions/kdl_msg.h>
 #include <std_msgs/String.h>
 
-//this node simulates the slaves of the dvrk in a teleop mode
+// This node simulates the slaves of the dvrk in a teleop mode and controls the
+// behavior of the master console to mock that of the dvrk teleoperation mode.
+// At the moment the dvrk does not publish the foot pedals status if the
+// dvrk-console is not run in teleop mode. That's why we run the dvrk-console
+// in a normal teleop mode, but Home the arms through this node (instead of
+// the user interface) so that we can power up only the masters and not the
+// slaves that are not needed here.
+
+
 
 // ------------------------------------- global variables ---------------------------
 bool clutch_pressed;
 bool coag_pressed;
 bool new_coag_msg;
 bool new_clutch_msg;
-KDL::Frame master_pose[2];
 bool new_master_pose[2];
+KDL::Frame master_pose[2];
 std::string master_state[2];
 
 // ------------------------------------- callback functions ---------------------------
@@ -48,11 +57,15 @@ void Master2PoseCurrentCallback(
 void Master1StateCallback(
     const std_msgs::String::ConstPtr &msg){
     master_state[0] = msg->data;
+    ROS_DEBUG( "Master 1 says: %s" , master_state[0].data());
+
 }
 
 void Master2StateCallback(
     const std_msgs::String::ConstPtr &msg){
     master_state[1] = msg->data;
+    ROS_DEBUG( "Master 2 says: %s" , master_state[1].data());
+
 }
 
 // ------------------------------------- Main ---------------------------
@@ -62,6 +75,9 @@ int main(int argc, char * argv[]) {
     std::string ros_node_name = ros::this_node::getName();
     ros::NodeHandle n(ros_node_name);
 
+    if( ros::console::set_logger_level(
+        ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) )
+        ros::console::notifyLoggerLevelsChanged();
 
     // ------------------------------------- Clutches---------------------------
     ros::Subscriber sub_clutch_clutch = n.subscribe(
@@ -104,13 +120,13 @@ int main(int argc, char * argv[]) {
     // ------------ MATERS GET STATE
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[0]
-               << "/get_robot_state";
+               << "/robot_state";
     ros::Subscriber sub_master_1_state =  n.subscribe(param_name.str(), 1, Master1StateCallback);
     ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[1]
-               << "/get_robot_state";
+               << "/robot_state";
     ros::Subscriber sub_master_2_state =  n.subscribe(param_name.str(), 1, Master2StateCallback);
     ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
@@ -149,12 +165,18 @@ int main(int argc, char * argv[]) {
     ros::Rate loop_rate(1000);
 
 
-    ros::Rate loop_rate_slow(10);
+    ros::Rate loop_rate_slow(1);
+    ros::spinOnce();
+
     loop_rate_slow.sleep();
+    ros::spinOnce();
 
     std_msgs::String string_msg;
-    string_msg.data = "Home";
-    pub_master_1_state.publish(string_msg);
+    if(master_state[0].data() != std::string("DVRK_READY")) {
+        string_msg.data = "Home";
+        pub_master_1_state.publish(string_msg);
+    } else
+        ROS_INFO( "Mater 1 is already Homed.");
 
 
     KDL::Vector master_position_at_clutch_instance[2];
@@ -170,7 +192,6 @@ int main(int argc, char * argv[]) {
             if(coag_pressed && !clutch_pressed){
                 string_msg.data = "DVRK_GRAVITY_COMPENSATION";
                 pub_master_1_state.publish(string_msg);
-                ROS_DEBUG(string_msg.data.c_str());
                 master_position_at_clutch_instance[0] = master_pose[0].p;
                 slave_position_at_clutch_instance[0] = slave_pose[0].p;
 
@@ -178,8 +199,6 @@ int main(int argc, char * argv[]) {
 
             if(!coag_pressed){
                 string_msg.data = "DVRK_POSITION_CARTESIAN";
-                pub_master_1_state.publish(string_msg);
-                ROS_DEBUG(string_msg.data.c_str());
             }
         }
         if(new_clutch_msg){
@@ -187,14 +206,13 @@ int main(int argc, char * argv[]) {
 
             if(coag_pressed&& clutch_pressed){
                 string_msg.data = "DVRK_CLUTCH";
-                pub_master_1_state.publish(string_msg);
-                ROS_DEBUG(string_msg.data.c_str());
             }
         }
 
         // incremental slave position
 
         if(new_master_pose[0]) {
+
             new_master_pose[0] = false;
 
             if(coag_pressed && !clutch_pressed){
