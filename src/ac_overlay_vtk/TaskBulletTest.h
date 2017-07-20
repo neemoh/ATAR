@@ -114,6 +114,7 @@ private:
     BulletVTKObject* peg2;
     BulletVTKObject* peg3;
     BulletVTKObject* cubes[4];
+    bool count = 0;
     double* peg_pose1;
     double* peg_pose2;
     double* peg_pose3;

@@ -421,7 +421,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     std::vector<double> dim1 = {sides/2, 3*sides-0.5*sides, 2*sides};
     std::vector<double> dim2 = {2*sides-0.5*sides, sides/2, 2*sides};
 
-    target_pos = {0.12, 0.11, board_dimensions[2]-0.01};
+    target_pos = {0.10, 0.13, board_dimensions[2]/2+sides};
 
     // Create Cube1
 
@@ -495,6 +495,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //KDL::Vector target_position(target_pos[0], target_pos[1], target_pos[2]);
     //target_distance=(target_position - peg_position).Norm();
     //previous_point = peg_position;
+
+    ResetTask();
 }
 
 
@@ -547,25 +549,29 @@ void TaskBulletTest::UpdateActors() {
 
     //--------------------------------
     // Check if the task is completed
+    count=1;
     EndChecking();
 
 }
 
 
 //------------------------------------------------------------------------------
-void TaskBulletTest::EndChecking(){
+void TaskBulletTest::EndChecking() {
     // Check if the pegs are in the correct position.
-        double* peg_position;
-        peg_position = peg1->GetActor()->GetCenter();
-        peg1->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
+    double *peg_position;
+    peg_position = peg1->GetActor()->GetCenter();
+    peg1->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
 
-
-    // check if the first peg is inside the target or fallen
-        if (peg_position[2]<0){
-            out[0]=1;
+    if (count == 1) {
+        // check if the first peg is inside the target or fallen
+        if (peg_position[2] < 0) {
+            out[0] = 1;
 
         }
-        if ((fabs(peg_position[0]-target_pos[0])<=3*sides/2 && fabs(peg_position[1]-target_pos[1])<=3*sides/2) || out[0]==1) {
+        if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
+            && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
+            && fabs((peg_position[2] - target_pos[2]) <= sides))
+            || out[0] == 1) {
 
             // the first peg is in the target! the second peg turns green
             peg2->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
@@ -573,10 +579,13 @@ void TaskBulletTest::EndChecking(){
             // check if the second peg is inside the target or fallen
             peg_position = peg2->GetActor()->GetCenter();
 
-            if (peg_position[2]<0){
-                out[1]=1;
+            if (peg_position[2] < 0) {
+                out[1] = 1;
             }
-            if ((fabs(peg_position[0]-target_pos[0])<=3*sides/2 && fabs(peg_position[1]-target_pos[1])<=3*sides/2 && fabs(peg_position[2]==target_pos[2])<=3*sides) || out[1]==1) {
+            if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
+                && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
+                && fabs(peg_position[2] - target_pos[2]) <= sides)
+                || out[1] == 1) {
 
                 // the second peg is in the target! the third peg turns green
                 peg3->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
@@ -584,10 +593,13 @@ void TaskBulletTest::EndChecking(){
                 // check if the third peg is inside the target or fallen
                 peg_position = peg3->GetActor()->GetCenter();
 
-                if (peg_position[2]<0){
-                    out[2]=1;
+                if (peg_position[2] < 0) {
+                    out[2] = 1;
                 }
-                if ((fabs(peg_position[0]-target_pos[0])<=3*sides/2 && fabs(peg_position[1]-target_pos[1])<=3*sides/2 && fabs(peg_position[2]==target_pos[2])<=3*sides) || out[2]==1) {
+                if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
+                    && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
+                    && fabs(peg_position[2] - target_pos[2]) <= sides)
+                    || out[2] == 1) {
 
                     // the third peg is in the target! the last peg turns green
                     peg4->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
@@ -595,11 +607,17 @@ void TaskBulletTest::EndChecking(){
                     // check if the last peg is inside the target or fallen
                     peg_position = peg4->GetActor()->GetCenter();
 
-                    if (peg_position[2]<0){ out[3]=1;
-                }
-                if ((fabs(peg_position[0]-target_pos[0])<=3*sides/2 && fabs(peg_position[1]-target_pos[1])<=3*sides/2 && fabs(peg_position[2]==target_pos[2])<=3*sides) || out[3]==1) {
-                    std::cout << "daje regaz final" << std::endl;
-                    ResetTask();
+                    if (peg_position[2] < 0) {
+                        out[3] = 1;
+                    }
+                    if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
+                        && fabs(peg_position[1] - target_pos[1])
+                            <= 3 * sides / 2
+                        && fabs(peg_position[2] - target_pos[2]) <= sides)
+                        || out[3] == 1) {
+                        std::cout << "daje regaz final" << std::endl;
+                        ResetTask();
+                    }
                 }
             }
         }
@@ -640,6 +658,8 @@ void TaskBulletTest::ResetTask() {
     // OR DO WE SAVE THEM THROUGH THE NODE REPORTER?
 
     //// reset
+    count=0;
+
     for (int i = 0; i < 4; ++i) {
         out[i]=0;
     }
@@ -663,7 +683,6 @@ void TaskBulletTest::ResetTask() {
     motion_state_ = new BulletVTKMotionState(peg_pose4, peg4->GetActor());
     peg4->GetBody()->setMotionState(motion_state_);
     peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
 }
 
 void TaskBulletTest::ResetCurrentAcquisition() {
