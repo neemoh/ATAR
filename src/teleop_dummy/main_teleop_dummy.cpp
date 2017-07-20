@@ -194,11 +194,11 @@ int main(int argc, char * argv[]) {
                 pub_master_1_state.publish(string_msg);
                 master_position_at_clutch_instance[0] = master_pose[0].p;
                 slave_position_at_clutch_instance[0] = slave_pose[0].p;
-
             }
 
             if(!coag_pressed){
                 string_msg.data = "DVRK_POSITION_CARTESIAN";
+                pub_master_1_state.publish(string_msg);
             }
         }
         if(new_clutch_msg){
@@ -206,6 +206,7 @@ int main(int argc, char * argv[]) {
 
             if(coag_pressed&& clutch_pressed){
                 string_msg.data = "DVRK_CLUTCH";
+                pub_master_1_state.publish(string_msg);
             }
         }
 
