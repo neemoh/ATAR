@@ -497,8 +497,8 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         // starting the task
         ROS_DEBUG("Starting new BuzzWireTask task. ");
         task_ptr   = new TaskBuzzWire(
-                mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
-                with_guidance, haptic_loop_rate, slave_names
+            mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
+            with_guidance, haptic_loop_rate, slave_names, slave_frame_to_world_frame
         );
     }
     else if(task_id ==3){
@@ -640,6 +640,7 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
     double avg_factor;
     n.param<double>("cam_pose_averaging_factor", avg_factor, 0.5);
 
+    // FIXME change to normal averaging with buffer.
     // populate the out values
     if (new_cam_pose[0] || new_cam_pose[1]) {
 
