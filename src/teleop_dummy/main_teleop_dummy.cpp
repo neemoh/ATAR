@@ -201,7 +201,7 @@ int main(int argc, char * argv[]) {
             new_coag_msg = false;
 
             if(coag_pressed && !clutch_pressed){
-                string_msg.data = "DVRK_GRAVITY_COMPENSATION";
+                string_msg.data = "DVRK_EFFORT_CARTESIAN";
                 pub_master_1_state.publish(string_msg);
                 master_position_at_clutch_instance[0] = master_pose[0].p;
                 slave_position_at_clutch_instance[0] = slave_pose[0].p;
