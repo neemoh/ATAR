@@ -160,6 +160,7 @@ int main(int argc, char * argv[]) {
 
     double scaling = 0.2;
     n.getParam("scaling", scaling);
+    ROS_INFO(" Master to slave position scaling: %f", scaling);
 
     // spinning freq, publishing freq will be according to the freq of master poses received
     ros::Rate loop_rate(1000);
@@ -175,9 +176,19 @@ int main(int argc, char * argv[]) {
     if(master_state[0].data() != std::string("DVRK_READY")) {
         string_msg.data = "Home";
         pub_master_1_state.publish(string_msg);
+        ROS_INFO( "Attempting to Home %s", master_names[0].c_str());
     } else
-        ROS_INFO( "Mater 1 is already Homed.");
+        ROS_INFO( "%s is alreade Homed.", master_names[0].c_str());
 
+    // second master arm
+    if(num_arms==2) {
+        if (master_state[1].data() != std::string("DVRK_READY")) {
+            string_msg.data = "Home";
+            pub_master_2_state.publish(string_msg);
+            ROS_INFO( "Attempting to Home %s", master_names[1].c_str());
+        } else
+            ROS_INFO( "%s is alreade Homed.", master_names[1].c_str());
+    }
 
     KDL::Vector master_position_at_clutch_instance[2];
     KDL::Vector slave_position_at_clutch_instance[2];
@@ -194,11 +205,18 @@ int main(int argc, char * argv[]) {
                 pub_master_1_state.publish(string_msg);
                 master_position_at_clutch_instance[0] = master_pose[0].p;
                 slave_position_at_clutch_instance[0] = slave_pose[0].p;
+                if(num_arms==2){
+                    pub_master_2_state.publish(string_msg);
+                    master_position_at_clutch_instance[1] = master_pose[1].p;
+                    slave_position_at_clutch_instance[1] = slave_pose[1].p;
+                }
             }
 
             if(!coag_pressed){
                 string_msg.data = "DVRK_POSITION_CARTESIAN";
                 pub_master_1_state.publish(string_msg);
+                if(num_arms==2)
+                    pub_master_2_state.publish(string_msg);
             }
         }
         if(new_clutch_msg){
@@ -207,24 +225,46 @@ int main(int argc, char * argv[]) {
             if(coag_pressed&& clutch_pressed){
                 string_msg.data = "DVRK_CLUTCH";
                 pub_master_1_state.publish(string_msg);
+                if(num_arms==2)
+                    pub_master_2_state.publish(string_msg);
             }
         }
 
         // incremental slave position
 
         if(new_master_pose[0]) {
-
             new_master_pose[0] = false;
 
+            // if operator present increment the slave position
             if(coag_pressed && !clutch_pressed){
                 slave_pose[0].p = slave_position_at_clutch_instance[0] +
                     scaling * (master_pose[0].p - master_position_at_clutch_instance[0]);
                 slave_pose[0].M = master_pose[0].M;
             }
+
+            //publish pose
             geometry_msgs::PoseStamped pose;
             tf::poseKDLToMsg( slave_pose[0], pose.pose);
             pub_slave_1_pose.publish(pose);
+        }
 
+        if(num_arms==2) {
+            if (new_master_pose[1]) {
+                new_master_pose[1] = false;
+
+                // if operator present increment the slave position
+                if (coag_pressed && !clutch_pressed) {
+                    slave_pose[1].p = slave_position_at_clutch_instance[1] +
+                        scaling * (master_pose[1].p
+                            - master_position_at_clutch_instance[1]);
+                    slave_pose[1].M = master_pose[1].M;
+                }
+                //publish pose
+                geometry_msgs::PoseStamped pose;
+                tf::poseKDLToMsg(slave_pose[1], pose.pose);
+                pub_slave_2_pose.publish(pose);
+
+            }
         }
 
 
