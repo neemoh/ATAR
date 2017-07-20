@@ -1,5 +1,5 @@
 <launch>
-    <arg name="slave_1_name" value="PSM2"/>
+    <arg name="slave_1_name" value="MTMR_DUMMY"/>
     <arg name="slave_2_name" value="MTML_DUMMY"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
@@ -25,21 +25,21 @@
     <!--<node pkg="uvc_camera" type="uvc_camera_node" name="webcam">-->
     <!--</node>-->
 
-    <node pkg="atar" type="extrinsic_calib_charuco"
-          name="extrinsic_charuco_left" output="screen" >
-        <param name="camera_name" value="$(arg left_cam_name)"/>
-        <param name="camera_img_topic"
-               value="$(arg left_camera_img_topic)"/>
-        <param name="show_image" value="false"/>
-    </node>
+    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
+          <!--name="extrinsic_charuco_left" output="screen" >-->
+        <!--<param name="camera_name" value="$(arg left_cam_name)"/>-->
+        <!--<param name="camera_img_topic"-->
+               <!--value="$(arg left_camera_img_topic)"/>-->
+        <!--<param name="show_image" value="false"/>-->
+    <!--</node>-->
 
-    <node pkg="atar" type="extrinsic_calib_charuco"
-          name="extrinsic_charuco_right" output="screen" >
-        <param name="camera_name" value="$(arg right_cam_name)"/>
-        <param name="camera_img_topic"
-               value="$(arg right_camera_img_topic)"/>
-        <param name="show_image" value="false"/>
-    </node>
+    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
+          <!--name="extrinsic_charuco_right" output="screen" >-->
+        <!--<param name="camera_name" value="$(arg right_cam_name)"/>-->
+        <!--<param name="camera_img_topic"-->
+               <!--value="$(arg right_camera_img_topic)"/>-->
+        <!--<param name="show_image" value="false"/>-->
+    <!--</node>-->
 
     <!-- Node recording the data-->
     <node pkg="atar" type="reporter" name="reporter" output="screen">
@@ -62,7 +62,7 @@
        // (for the moment the code generates active constraints for 1 arm only. this will be changed
        // to support the second arm soon.)
         -->
-        <param name="number_of_arms" value="1"/>
+        <param name="number_of_arms" value="2"/>
 
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
@@ -72,7 +72,7 @@
         <!-- AR_mode:
 
          -->
-        <param name= "AR_mode" value= "true" />
+        <param name= "AR_mode" value= "false" />
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
         -->
@@ -124,14 +124,14 @@
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
-    <!--<node pkg="atar" type="teleop_dummy" name="teleop_dummy" output="screen">-->
-        <!--<param name="slave_1_name" value="$(arg slave_1_name)"/>-->
-        <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
-        <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
-        <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
-        <!--<param name="scaling" value="0.2"/>-->
+    <node pkg="atar" type="teleop_dummy" name="teleop_dummy" output="screen">
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
+        <param name="scaling" value="0.2"/>
 
-    <!--</node>-->
+    </node>
 
     <!-- The dvrk_active_constraint_enforcement node generates wrench based on the received desired pose and
         current pose of each master/slave couple.

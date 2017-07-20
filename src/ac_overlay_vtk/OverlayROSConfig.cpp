@@ -134,8 +134,8 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     // from the fixed tr hard coded here. If you are not using the dvrk
     // endoscopic camera you need to estimate the left to right cam transform
     // yourself and put it here:
-    std::vector<double> l_r_cams = {-0.0053877, 0.0006, -0.0009,
-        0.0148923, -0.00123819, -0.00740819, 0.999861};
+    std::vector<double> l_r_cams = {-0.00538475, 0.000299458, -0.000948875,
+        0.0016753, -0.00112252, -0.00358978, 0.999992};
     conversions::VectorToKDLFrame(l_r_cams, left_cam_to_right_cam_tr);
 
     // we first try to read the poses as parameters and later update the
@@ -599,45 +599,12 @@ bool OverlayROSConfig::GetNewImages( cv::Mat images[]) {
 bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                                          cv::Vec3d cam_tvec_out[2]) {
 
-//    // if cam poses are not set as parameters we need to calculate the
-//    // transformation between the cameras ONLY ONCE
-//    if(!calculated_left_cam_to_right_cam_tr){
-//        ros::Rate rate(10);
-//        uint count = 0;
-//
-//        while(!new_cam_pose[0] && !new_cam_pose[1]){
-//
-//            ros::spinOnce();
-//            rate.sleep();
-//            count++;
-//            if(count / 20 == 0){
-//                ROS_INFO("Waiting for both camera poses to be published");
-//            }
-//            if(count > 100){
-//                ROS_ERROR("Giving up. No camera pose parameter was present and "
-//                                  "poses of both cams was not being published.");
-//                break;
-//            }
-//        }
-//    }
-
-    // if one of the poses is not available estimate the other one through
-    // the left to right fixed transform
-    if (new_cam_pose[0] && !new_cam_pose[1]) {
-        pose_cam[1] = left_cam_to_right_cam_tr * pose_cam[0];
-        conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec_curr[1],
-                                        cam_tvec_curr[1]);
-    } else if (!new_cam_pose[0] && new_cam_pose[1]) {
-        pose_cam[0] = left_cam_to_right_cam_tr.Inverse() * pose_cam[1];
-        conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec_curr[0],
-                                        cam_tvec_curr[0]);
-    }
-
     // // estimate left_to_right_cam transform:
+
+    //left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
     //double x,y,z,w;
     //left_cam_to_right_cam_tr.M.GetQuaternion(x, y, z, w);
-    //left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
-    //
+    ////
     //left_cam_to_right_cam_tr_loop_count++;
     //left_cam_to_right_cam_tr_sum_pos+= left_cam_to_right_cam_tr.p;
     //if(left_cam_to_right_cam_tr_loop_count == 200){
@@ -654,6 +621,20 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
     //              << std::endl;
     //    left_cam_to_right_cam_tr_loop_count = 0;
     //}
+
+    // if one of the poses is not available estimate the other one through
+    // the left to right fixed transform
+    if (new_cam_pose[0] && !new_cam_pose[1]) {
+    KDL::Frame pose_camZZ;
+    pose_camZZ = left_cam_to_right_cam_tr * pose_cam[0];
+        conversions::KDLFrameToRvectvec(pose_camZZ, cam_rvec_curr[1],
+                                        cam_tvec_curr[1]);
+    } else if (!new_cam_pose[0] && new_cam_pose[1]) {
+        pose_cam[0] = left_cam_to_right_cam_tr.Inverse() * pose_cam[1];
+        conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec_curr[0],
+                                        cam_tvec_curr[0]);
+    }
+
 
 
     double avg_factor;
