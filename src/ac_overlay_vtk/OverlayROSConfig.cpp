@@ -134,7 +134,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     // from the fixed tr hard coded here. If you are not using the dvrk
     // endoscopic camera you need to estimate the left to right cam transform
     // yourself and put it here:
-    std::vector<double> l_r_cams = {-0.00643587, -0.000279893, 0.00321789,
+    std::vector<double> l_r_cams = {-0.0053877, 0.0006, -0.0009,
         0.0148923, -0.00123819, -0.00740819, 0.999861};
     conversions::VectorToKDLFrame(l_r_cams, left_cam_to_right_cam_tr);
 
@@ -245,6 +245,10 @@ void OverlayROSConfig::SetupROSandGetParameters() {
                         param_name.str().c_str(), 1 );
         ROS_INFO("Will publish on %s", param_name.str().c_str());
 
+        n.param<bool>("AR_mode", ar_mode, false);
+        ROS_INFO("AR mode: %s",
+                 ar_mode ? "true" : "false");
+
         // the transformation from the coordinate frame of the slave (RCM)
         // to the task coordinate frame is needed in AR mode.
         if(ar_mode) {
@@ -311,11 +315,6 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 
 // -----------------------------------------------------------------------------
 void OverlayROSConfig::SetupGraphics() {
-
-
-    n.param<bool>("AR_mode", ar_mode, false);
-    ROS_INFO("AR mode: %s",
-             ar_mode ? "true" : "false");
 
     n.param<bool>("publish_overlayed_images", publish_overlayed_images, true);
     ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
@@ -634,18 +633,28 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                                         cam_tvec_curr[0]);
     }
 
+    // // estimate left_to_right_cam transform:
     //double x,y,z,w;
     //left_cam_to_right_cam_tr.M.GetQuaternion(x, y, z, w);
     //left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
-    //std::cout << "["
-    //          << left_cam_to_right_cam_tr.p.x() << ", "
-    //          << left_cam_to_right_cam_tr.p.y() << ", "
-    //          << left_cam_to_right_cam_tr.p.z() << ", "
-    //          << x << ", "
-    //          << y << ", "
-    //          << z << ", "
-    //          << w << "] "
-    //          << std::endl;
+    //
+    //left_cam_to_right_cam_tr_loop_count++;
+    //left_cam_to_right_cam_tr_sum_pos+= left_cam_to_right_cam_tr.p;
+    //if(left_cam_to_right_cam_tr_loop_count == 200){
+    //    left_cam_to_right_cam_tr_sum_pos=
+    //        left_cam_to_right_cam_tr_sum_pos / double(left_cam_to_right_cam_tr_loop_count);
+    //    std::cout << "estimated laft to right cam tr: {"
+    //              << left_cam_to_right_cam_tr_sum_pos.x() << ", "
+    //              << left_cam_to_right_cam_tr_sum_pos.y() << ", "
+    //              << left_cam_to_right_cam_tr_sum_pos.z() << ", "
+    //              << x << ", "
+    //              << y << ", "
+    //              << z << ", "
+    //              << w << "} "
+    //              << std::endl;
+    //    left_cam_to_right_cam_tr_loop_count = 0;
+    //}
+
 
     double avg_factor;
     n.param<double>("cam_pose_averaging_factor", avg_factor, 0.5);

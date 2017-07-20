@@ -150,6 +150,10 @@ private:
     double gripper_current[2];
     KDL::Frame slave_frame_to_world_frame[2];
     KDL::Frame left_cam_to_right_cam_tr;
+    //// estimate left to right cam trans
+    uint left_cam_to_right_cam_tr_loop_count = 0;
+    KDL::Vector left_cam_to_right_cam_tr_sum_pos;
+
     cv::Vec3d cam_rvec_curr[2];
     cv::Vec3d cam_tvec_curr[2];
     cv::Vec3d cam_rvec_avg[2];

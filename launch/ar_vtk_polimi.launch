@@ -30,7 +30,7 @@
         <param name="camera_name" value="$(arg left_cam_name)"/>
         <param name="camera_img_topic"
                value="$(arg left_camera_img_topic)"/>
-        <param name="show_image" value="true"/>
+        <param name="show_image" value="false"/>
     </node>
 
     <node pkg="atar" type="extrinsic_calib_charuco"
@@ -38,7 +38,7 @@
         <param name="camera_name" value="$(arg right_cam_name)"/>
         <param name="camera_img_topic"
                value="$(arg right_camera_img_topic)"/>
-        <param name="show_image" value="true"/>
+        <param name="show_image" value="false"/>
     </node>
 
     <!-- Node recording the data-->
