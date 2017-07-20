@@ -73,7 +73,8 @@ public:
             const bool num_tools,
             const bool with_guidance,
             const double haptic_loop_rate,
-            const std::string slave_names[]
+            const std::string slave_names[],
+            KDL::Frame *slave_to_world_tr
         );
 
     ~TaskBuzzWire();
@@ -141,6 +142,7 @@ private:
     TaskState task_state;
     std::string stl_files_dir;
     std::string *slave_names;
+    KDL::Frame *slave_frame_to_world_frame_tr;
 
     KDL::Vector idle_point;
     KDL::Vector start_point;

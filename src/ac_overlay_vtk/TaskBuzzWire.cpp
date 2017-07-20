@@ -29,11 +29,13 @@ TaskBuzzWire::TaskBuzzWire(
         const bool biman,
         const bool with_guidance,
         const double haptic_loop_rate,
-        const std::string slave_names_in[]
+        const std::string slave_names_in[],
+        KDL::Frame *slave_to_world_tr
     )
     :
     VTKTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
     stl_files_dir(stl_file_dir),
+    slave_frame_to_world_frame_tr(slave_to_world_tr),
 //        show_ref_frames(show_ref_frames),
 //        bimanual(biman),
 //        with_guidance(with_guidance),
@@ -984,7 +986,12 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
 
             // convert to pose message
             geometry_msgs::PoseStamped pose_msg;
-            tf::poseKDLToMsg(tool_desired_pose_kdl[n_arm], pose_msg.pose);
+            KDL::Frame tool_desired_pose_in_slave_frame;
+            tool_desired_pose_in_slave_frame =
+                slave_frame_to_world_frame_tr->Inverse()*
+            tool_desired_pose_kdl[n_arm];
+
+            tf::poseKDLToMsg(tool_desired_pose_in_slave_frame, pose_msg.pose);
             // fill the header
             pose_msg.header.frame_id = "/task_space";
             pose_msg.header.stamp = ros::Time::now();
