@@ -98,7 +98,7 @@ BulletVTKObject::BulletVTKObject(
             // check if we have all the dimensions
             if (dimensions.size() != 2)
                 throw std::runtime_error("BulletVTKObject CYLINDER shape requires "
-                                                 "a vector of 1 double "
+                                                 "a vector of 2 doubles "
                                                  "as dimensions.");
             // VTK actor_
             vtkSmartPointer<vtkCylinderSource> source =
@@ -228,13 +228,15 @@ BulletVTKObject::BulletVTKObject(
                                    B_DIM_SCALE*0.5f);
             collision_shape_->setLocalScaling(localScaling);
 
+            // set name
+            shape_string = collision_shape_->getName();;
 
-            btScalar rad;
-            btVector3 center;
-            collision_shape_->getBoundingSphere
-                    (center, rad );
-            std::cout << "rad: "<<rad << " center: " << center.x() << ", "
-             << center.y() << std::endl;
+            //btScalar rad;
+            //btVector3 center;
+            //collision_shape_->getBoundingSphere
+            //        (center, rad );
+            //std::cout << "rad: "<<rad << " center: " << center.x() << ", "
+            // << center.y() << std::endl;
             //            //shape->setMargin(0.001);
             //            m_collisionShapes.push_back(shape);
             //
@@ -260,8 +262,15 @@ BulletVTKObject::BulletVTKObject(
 
             vtkSmartPointer<vtkOBJReader> reader =
                     vtkSmartPointer<vtkOBJReader>::New();
+            size_t last_dot_position = filepath->find_last_of(".");
 
-            reader->SetFileName(filepath->c_str());
+                std::string file_name_no_extension = filepath->substr(0,
+                                                                     last_dot_position);
+
+                std::stringstream out_name;
+                out_name << file_name_no_extension << "_hacd.obj";
+
+            reader->SetFileName(out_name.str().c_str());
 
             reader->Update();
             mapper->SetInputConnection(reader->GetOutputPort());
