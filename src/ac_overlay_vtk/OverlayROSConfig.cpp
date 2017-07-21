@@ -12,6 +12,7 @@
 #include "TaskBulletTest.h"
 #include "ControlEvents.h"
 #include "TaskPegInHole.h"
+#include "TaskHook.h"
 
 // -----------------------------------------------------------------------------
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
@@ -519,6 +520,8 @@ void OverlayROSConfig::StartTask(const uint task_id) {
     }
     else if(task_id ==6) {
         ROS_DEBUG("No task assigned yet. ");
+        task_ptr   = new TaskHook(mesh_files_dir, show_reference_frames,
+                                  (bool) (n_arms - 1), with_guidance);
     }
 
     if(task_ptr) {
