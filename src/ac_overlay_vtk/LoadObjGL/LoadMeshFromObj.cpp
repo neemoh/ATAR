@@ -118,8 +118,8 @@ btCompoundShape* LoadCompoundMeshFromObj(const std::string relativeFileName)
                                   gfxShape->m_vertices->at(0).xyzw[2]);
         }
         centroid *= 1.f/(float(gfxShape->m_numvertices) );
-        std::cout << "centroid: " << centroid.x() << " " << centroid.y() << ""
-                " " << centroid.z() << std::endl;
+        //std::cout << "centroid: " << centroid.x() << " " << centroid.y() << ""
+        //        " " << centroid.z() << std::endl;
         // add to the compound shape
         btTransform trans;
         trans.setIdentity();
