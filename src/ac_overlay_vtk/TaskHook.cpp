@@ -16,12 +16,11 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                        const bool with_guidance)
     :
     VTKTask(show_ref_frames, biman, with_guidance, 0),
-    time_last(ros::Time::now())
-{
+    time_last(ros::Time::now()) {
 
     InitBullet();
 
-    BulletVTKObject* board;
+    BulletVTKObject *board;
     // -----------------------
     // -------------------------------------------------------------------------
     // Create a cube for the board
@@ -29,31 +28,31 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     //board_dimensions[0]  = 0.18;
     //board_dimensions[1]  = 0.14;
     //board_dimensions[2]  = 0.1;
+    {
+        board_dimensions[0] = 0.14;
+        board_dimensions[1] = 0.12;
+        board_dimensions[2] = 0.01;
+        //double stiffnes = 1000;
+        //double damping = 20;
+        double friction = 0.5;
 
-    board_dimensions[0]  = 0.28;
-    board_dimensions[1]  = 0.24;
-    board_dimensions[2]  = 0.1;
-    double *pose;
-    //double stiffnes = 1000;
-    //double damping = 20;
-    double friction = 0.5;
+        double pose[7]{
+            - 0.01 + board_dimensions[0]/2,  board_dimensions[1]/2,
+            -board_dimensions[2]/2, 0, 0, 0, 1
+        };
 
-    pose= new double[7] {board_dimensions[0] / 2.45,
-        board_dimensions[1] / 2.78,
-        -board_dimensions[2]/2,
-        0, 0, 0, 1};
-
-    std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
-        board_dimensions[2]};
-    board = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
-    );
+        std::vector<double> dim = {
+            board_dimensions[0], board_dimensions[1], board_dimensions[2]
+        };
+        board = new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
+        );
 //    board->GetActor()->GetProperty()->SetOpacity(0.05);
-    board->GetActor()->GetProperty()->SetColor(0.6, 0.5, 0.5);
+        board->GetActor()->GetProperty()->SetColor(0.6, 0.5, 0.5);
 
-    dynamicsWorld->addRigidBody(board->GetBody());
-    actors.push_back(board->GetActor());
-
+        dynamicsWorld->addRigidBody(board->GetBody());
+        actors.push_back(board->GetActor());
+}
     // -------------------------------------------------------------------------
     // static floor
     // always add a floor in under the workspace of your workd to prevent
@@ -67,54 +66,59 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // Create cylinders
-    int cols = 4;
-    int rows = 1;
-    double density = 50000; // kg/m3
-    friction = 2.2;
-    BulletVTKObject* cylinders[cols*rows];
-    for (int i = 0; i < rows; ++i) {
+    {
+        int cols = 4;
+        int rows = 1;
+        float friction = 2.2;
+        BulletVTKObject *cylinders[cols * rows];
+        for (int i = 0; i < rows; ++i) {
 
-        for (int j = 0; j < cols; ++j) {
+            for (int j = 0; j < cols; ++j) {
 
-            std::vector<double> dim = {0.002, 0.035};
+                std::vector<double> dim = {0.002, 0.035};
 
-            pose = new double[7]{
-                0.03 + (double)j * 0.028,
-                0.09 ,
-                dim[1]/2,
-                0, 0.70711, 0.70711, 0.0};
+                double pose[7] = {
+                    0.03 + (double) j * 0.028, 0.09, dim[1] / 2, 0, 0.70711
+                    , 0.70711, 0.0
+                };
 
-            cylinders[i*rows+j] =
-                new BulletVTKObject(
-                    ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
-                    0.0, NULL, friction
+                cylinders[i * rows + j] =
+                    new BulletVTKObject(
+                        ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
+                        0.0, NULL, friction
+                    );
+                auto ratio = (float) j / (float) cols;
+                cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
+                    0.9 - 0.3 * ratio, 0.4, 0.4 + 0.4 * ratio
                 );
-            delete [] pose;
-            double ratio = (double)i/4.0;
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
+                cylinders[i * rows + j]->GetActor()->GetProperty()->SetSpecular(
+                    0.8
+                );
+                cylinders[i * rows
+                    + j]->GetActor()->GetProperty()->SetSpecularPower(50);
 
-            dynamicsWorld->addRigidBody(cylinders[i*rows+j]->GetBody());
-            actors.push_back(cylinders[i*rows+j]->GetActor());
+                dynamicsWorld->addRigidBody(cylinders[i * rows + j]->GetBody());
+                actors.push_back(cylinders[i * rows + j]->GetActor());
 
+            }
         }
     }
 
-
     // -------------------------------------------------------------------------
     // ROD
-    std::vector<double> rod_dim = {0.002, 0.1};
-    pose = new double[7] {0.10, 0.0, 0.03, 0.70711, 0.70711, 0.0, 0.0};
+    {
+        std::vector<double> rod_dim = {0.002, 0.1};
+        double pose[7] = {0.10, 0.0, 0.03, 0.70711, 0.70711, 0.0, 0.0};
 
-    BulletVTKObject rod = BulletVTKObject(
+        BulletVTKObject rod = BulletVTKObject(
             ObjectShape::CYLINDER, ObjectType::DYNAMIC, rod_dim, pose,
-            0.0, NULL, friction
-        );
-    dynamicsWorld->addRigidBody(rod.GetBody());
-    actors.push_back(rod.GetActor());
-    delete [] pose;
+            0.0, NULL);
+
+        dynamicsWorld->addRigidBody(rod.GetBody());
+        actors.push_back(rod.GetActor());
+        rod.GetActor()->GetProperty()->SetColor(0.3, 0.3, 0.3);
+
+    }
     // -------------------------------------------------------------------------
 
 //    rows = 3;
@@ -160,42 +164,47 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     //// Create mesh
-
-    pose = new double[7] {0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
-    //    BulletVTKObject *mesh;
-    std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("ring.obj");
-    std::string mesh_file_dir_str = input_file_dir.str();
-    density = 20000;
-    ring_mesh = new
-        BulletVTKObject(ObjectShape::MESH,
-                        ObjectType::DYNAMIC, dim, pose, density,
-                        &mesh_file_dir_str,
-                        friction);
-    delete [] pose;
-    dynamicsWorld->addRigidBody(ring_mesh->GetBody());
-    actors.push_back(ring_mesh->GetActor());
-    ring_mesh->GetActor()->GetProperty()->SetColor(4., 0.2, 0.5);
-
+    {
+        std::vector<double> dim; // not used
+        double pose[7]{0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
+        //    BulletVTKObject *mesh;
+        std::stringstream input_file_dir;
+        input_file_dir << mesh_files_dir << std::string("ring.obj");
+        std::string mesh_file_dir_str = input_file_dir.str();
+        float friction = 2.2;
+        float density = 50000;
+        ring_mesh = new
+            BulletVTKObject(
+            ObjectShape::MESH,
+            ObjectType::DYNAMIC, dim, pose, density,
+            &mesh_file_dir_str,
+            friction
+        );
+        dynamicsWorld->addRigidBody(ring_mesh->GetBody());
+        actors.push_back(ring_mesh->GetActor());
+        ring_mesh->GetActor()->GetProperty()->SetColor(.4, 0.2, 0.5);
+    }
     // -------------------------------------------------------------------------
     //// Create smallRING mesh
-    size_t n_rings = 3;
+
+    size_t n_rings = 4;
     BulletVTKObject* rings[n_rings];
-    input_file_dir.str("");
+    std::stringstream input_file_dir;
     input_file_dir << mesh_files_dir << std::string("ring_D2cm_D5mm.obj");
-    mesh_file_dir_str = input_file_dir.str();
+    std::string mesh_file_dir_str = input_file_dir.str();
+    float density = 50000;
 
     for (int l = 0; l < n_rings; ++l) {
 
-        pose = new double[7] {0.07 + (double)l *0.01, 0.0, 0.03, 0.70711,
+        double pose[7]{0.07 + (double)l *0.01, 0.0, 0.03, 0.70711,
             0.70711, 0.0, 0.0};
+
+        std::vector<double> dim; // not used
 
         rings[l] = new
             BulletVTKObject(ObjectShape::MESH,
                             ObjectType::DYNAMIC, dim, pose, density,
-                            &mesh_file_dir_str,
-                            friction);
-        delete [] pose;
+                            &mesh_file_dir_str, 0.5);
         dynamicsWorld->addRigidBody(rings[l]->GetBody());
         actors.push_back(rings[l]->GetActor());
         rings[l]->GetActor()->GetProperty()->SetColor(0., 0.5, 0.6);
@@ -204,30 +213,33 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     //// Create hook mesh
+    {
+        double pose[7]{0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
+        input_file_dir.str("");
+        input_file_dir << mesh_files_dir << std::string("hook.obj");
+        mesh_file_dir_str = input_file_dir.str();
+        std::vector<double> dim; // not used
 
-    pose = new double[7] {0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
-    input_file_dir.str("");
-    input_file_dir << mesh_files_dir << std::string("hook.obj");
-    mesh_file_dir_str = input_file_dir.str();
-
-    hook_mesh = new
-        BulletVTKObject(ObjectShape::MESH,
-                        ObjectType::KINEMATIC, dim, pose, density,
-                        &mesh_file_dir_str,
-                        friction);
-    delete [] pose;
-    dynamicsWorld->addRigidBody(hook_mesh->GetBody());
-    actors.push_back(hook_mesh->GetActor());
-    hook_mesh->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
-
+        hook_mesh = new
+            BulletVTKObject(
+            ObjectShape::MESH,
+            ObjectType::KINEMATIC, dim, pose, density,
+            &mesh_file_dir_str
+        );
+        dynamicsWorld->addRigidBody(hook_mesh->GetBody());
+        actors.push_back(hook_mesh->GetActor());
+        hook_mesh->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
+    }
 
     // -------------------------------------------------------------------------
-    //// Create hook mesh
+    //// Create rod tool
     {
-        std::vector<double> dim = {0.002, 0.03};
+        std::vector<double> dim = {0.0015, 0.04};
+        double pose[7]{0.0, 0.0, 0.0, 0.7, 0, 0.7, 0};
+
         tool_cyl = new BulletVTKObject(
             ObjectShape::CYLINDER, ObjectType::KINEMATIC, dim, pose,
-            0.0, NULL, friction);
+            0.0, NULL);
         dynamicsWorld->addRigidBody(tool_cyl->GetBody());
         actors.push_back(tool_cyl->GetActor());
         tool_cyl->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
@@ -274,12 +286,19 @@ void TaskHook::UpdateActors() {
     //box
     {
         KDL::Frame tool_pose = (*tool_current_pose_kdl[1]);
+        KDL::Frame local_tool_transform;
 
-        KDL::Vector box_posit = tool_pose * KDL::Vector(0.0, 0.0, 0);
+        // locally transform the tool if needed
+        local_tool_transform.p = KDL::Vector(0.0, 0.0, 0);
+        local_tool_transform.M.DoRotY(0);
+        tool_pose = tool_pose * local_tool_transform;
+
+        //KDL::Vector box_posit = tool_pose * KDL::Vector(0.0, 0.0, 0);
 
         double x, y, z, w;
         tool_pose.M.GetQuaternion(x, y, z, w);
-        double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2], x, y, z, w};
+        double box_pose[7] = {tool_pose.p.x(), tool_pose.p.y(), tool_pose.p.z(),
+            x, y, z, w};
         hook_mesh->SetKinematicPose(box_pose);
 
     }
@@ -287,10 +306,19 @@ void TaskHook::UpdateActors() {
     //box
     {
         KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-        KDL::Vector box_posit = tool_pose * KDL::Vector(0.0, 0.0, 0);
+        KDL::Frame local_tool_transform;
+
+        // locally transform the tool if needed
+        local_tool_transform.p = KDL::Vector(0.0, 0.0, 0);
+        local_tool_transform.M.DoRotX(M_PI/2);
+        tool_pose = tool_pose * local_tool_transform;
+
+        //KDL::Vector box_posit = tool_pose * KDL::Vector(0.0, 0.0, 0);
+
         double x, y, z, w;
         tool_pose.M.GetQuaternion(x, y, z, w);
-        double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2], x, y, z, w};
+        double box_pose[7] = {tool_pose.p.x(), tool_pose.p.y(), tool_pose.p.z(),
+            x, y, z, w};
         tool_cyl->SetKinematicPose(box_pose);
 
     }
@@ -406,7 +434,7 @@ void TaskHook::StepDynamicsWorld() {
     double time_step = (ros::Time::now() - time_last).toSec();
 
     // simulation seems more realistic when time_step is halved right now!
-    dynamicsWorld->stepSimulation(btScalar(time_step*0.5), 5);
+    dynamicsWorld->stepSimulation(btScalar(time_step*0.7), 7);
     time_last = ros::Time::now();
 
 //    //print positions of all objects
