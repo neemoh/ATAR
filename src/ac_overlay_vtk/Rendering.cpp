@@ -521,10 +521,10 @@ void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
     vtkSmartPointer<vtkShadowMapBakerPass> shadowsBaker =
             vtkSmartPointer<vtkShadowMapBakerPass>::New();
     shadowsBaker->SetOpaquePass(opaqueCameraPass);
-    shadowsBaker->SetResolution(1024);
+    shadowsBaker->SetResolution(2048);
     // To cancel self-shadowing.
     shadowsBaker->SetPolygonOffsetFactor(2.4f);
-    shadowsBaker->SetPolygonOffsetUnits(10.0f);
+    shadowsBaker->SetPolygonOffsetUnits(5.0f);
 
     vtkSmartPointer<vtkShadowMapPass> shadows =
             vtkSmartPointer<vtkShadowMapPass>::New();
