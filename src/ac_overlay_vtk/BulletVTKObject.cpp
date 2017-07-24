@@ -111,9 +111,9 @@ BulletVTKObject::BulletVTKObject(
 
             // Bullet Shape
             collision_shape_ =
-                    new btCylinderShape(btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
-                                                  btScalar(B_DIM_SCALE*dimensions[1]/2),
-                                                  btScalar(B_DIM_SCALE*dimensions[0])
+                    new btCylinderShape(
+                        btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
+                                  btScalar(B_DIM_SCALE*dimensions[1]/2), 0.0
                     ));
 
             // calculate volume
@@ -221,16 +221,39 @@ BulletVTKObject::BulletVTKObject(
 //
 //            // option 2
 //            shape->initializePolyhedralFeatures();
-
             collision_shape_ = LoadCompoundMeshFromObj(*filepath);
+            //
+            //btTransform tr;
+            //tr.setIdentity();
+            //btVector3 min, max;
+            //collision_shape_->getAabb(tr, min, max);
+            //std::cout << "before min: " << min.x() << " max: " << max.x() << std::endl;
 
             btVector3 localScaling(B_DIM_SCALE*0.5f, B_DIM_SCALE*0.5f,
                                    B_DIM_SCALE*0.5f);
-//            btVector3 localScaling(B_DIM_SCALE, B_DIM_SCALE, B_DIM_SCALE);
+            //btVector3 localScaling(B_DIM_SCALE, B_DIM_SCALE, B_DIM_SCALE);
+            //btVector3 localScaling(0.5f, 0.5f, 0.5f);
             collision_shape_->setLocalScaling(localScaling);
 
             // set name
             shape_string = collision_shape_->getName();;
+
+            //btCompoundShape* cs = (btCompoundShape*)collision_shape_;
+            //
+            //for (int i = 0; i <cs->getNumChildShapes(); ++i) {
+            //    btTransform tr = cs->getChildTransform(i);
+            //
+            //    float x = (tr.getOrigin().x()/B_DIM_SCALE);
+            //    float y = (tr.getOrigin().y()/B_DIM_SCALE);
+            //    float z = (tr.getOrigin().z()/B_DIM_SCALE);
+            //    float orig_dist = (float)sqrt(x*x  + y*y + z*z);
+            //    cs->getChildShape(i)->setMargin(0.02);
+            //
+            //    std::cout << i << ": orig_dist "<< orig_dist <<std::endl;
+            //    std::cout << i << ": margin: " << cs->getChildShape(i)
+            //                                        ->getMargin()/B_DIM_SCALE << std::endl;
+            //
+            //}
 
             //btScalar rad;
             //btVector3 center;
@@ -377,6 +400,7 @@ BulletVTKObject::BulletVTKObject(
         body_->setFriction(btScalar(friction));
         body_->setSpinningFriction(btScalar(0.001));
 
+
         ////set contact parameters
         //body_->setContactStiffnessAndDamping(btScalar(10000),
         //                                     btScalar(0.1));
@@ -387,8 +411,8 @@ BulletVTKObject::BulletVTKObject(
                   << ", mass = " << bt_mass
                   << ", volume = " << volume
                   << ", friction = " << body_->getFriction()
-                  << ", contact_stiffness = " << body_->getContactStiffness()
-                  << ", contact_damping = " << body_->getContactDamping();;
+                  << ", Rolling Friction = " << body_->getRollingFriction()
+                  << ", Spinning Friction = " << body_->getSpinningFriction();
         ROS_DEBUG("Created BulletVTKObject with properties: %s", debug_msg.str()
                 .c_str());
     }

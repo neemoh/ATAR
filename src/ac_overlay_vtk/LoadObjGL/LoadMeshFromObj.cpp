@@ -110,20 +110,21 @@ btCompoundShape* LoadCompoundMeshFromObj(const std::string relativeFileName)
                 gfxShape->m_numvertices,
                 sizeof(GLInstanceVertex));
         btCHshape->initializePolyhedralFeatures();
+        btCHshape->optimizeConvexHull();
 
         //calculate the centroid
         btVector3 centroid(0.0,0.0,0.0);
         for (int j = 0; j <gfxShape->m_numvertices; ++j) {
-            btVector3 vert(gfxShape->m_vertices->at(j).xyzw[0],
+            centroid += btVector3(gfxShape->m_vertices->at(j).xyzw[0],
                                   gfxShape->m_vertices->at(j).xyzw[1],
                                   gfxShape->m_vertices->at(j).xyzw[2]);
-            centroid += vert;
-
         }
 
         centroid = centroid/(float(gfxShape->m_numvertices) );
-//        std::cout << "centroid: " << centroid.x() << " " << centroid.y() << ""
-//                " " << centroid.z() << std::endl;
+
+        //float orig_dist = (float)sqrt(centroid.x()*centroid.x()  +
+        //centroid.y()*centroid.y() + centroid.z()*centroid.z());
+        //std::cout << i << ": centroid_dist "<< orig_dist <<std::endl;
 
         // add to the compound shape
         btTransform trans;
