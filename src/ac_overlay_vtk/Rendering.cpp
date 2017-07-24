@@ -59,21 +59,28 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
     lights[0] =   vtkSmartPointer<vtkLight>::New();
     lights[1] =   vtkSmartPointer<vtkLight>::New();
 
-    lights[0]->SetPosition(0.12, 0.08, 0.16);
-    lights[0]->SetFocalPoint(0.11, 0.04, 0.05);
+    double lights_focal_point[3] {0.07, -0.30, -0.3};
+    double lights_position[3] {0.08, 0.7, 0.7};
+
+    lights[0]->SetPosition(lights_position[0], lights_position[1],
+                           lights_position[2]);
+    lights[0]->SetFocalPoint(lights_focal_point[0], lights_focal_point[1],
+                             lights_focal_point[2]);
     //lights[0]->SetColor(1.0,1.0,1.0);
     lights[0]->SetPositional(1);
-    lights[0]->SetConeAngle(45);
-    //lights[0]->SetLightTypeToCameraLight();
+    lights[0]->SetConeAngle(15);
+    //lights[0]->SetLightTypeToCameraLight( );
+    lights[0]->SetExponent(60);
     lights[0]->SetSwitch(1);
 
-    lights[1]->SetPosition(0.11, 0.10, 0.13);
-    lights[1]->SetFocalPoint(0.10, 0.05, 0.01);
-    lights[1]->SetColor(1.0,1.0,1.0);
+    lights[1]->SetPosition(lights_position[0]+0.02, lights_position[1],
+                           lights_position[2]);
+    lights[1]->SetFocalPoint(lights_focal_point[0], lights_focal_point[1],
+                             lights_focal_point[2]);
     lights[1]->SetPositional(1);
-    lights[1]->SetConeAngle(45);
+    lights[1]->SetConeAngle(15);
     //lights[1]->SetLightTypeToCameraLight();
-    lights[1]->SetExponent(0.5);
+    lights[1]->SetExponent(60);
     lights[1]->SetSwitch(1);
 
 
