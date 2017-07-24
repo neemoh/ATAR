@@ -162,7 +162,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     //// Create mesh
 
-    pose = new double[7] {0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
+    pose = new double[7] {0.09, 0.06, 0.08, 0.7, 0, 0.7, 0};
     std::vector<double> _dim = {0.002};
 //    BulletVTKObject *mesh;
     std::stringstream input_file_dir;

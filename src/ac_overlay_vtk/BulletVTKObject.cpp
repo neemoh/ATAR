@@ -226,6 +226,7 @@ BulletVTKObject::BulletVTKObject(
 
             btVector3 localScaling(B_DIM_SCALE*0.5f, B_DIM_SCALE*0.5f,
                                    B_DIM_SCALE*0.5f);
+//            btVector3 localScaling(B_DIM_SCALE, B_DIM_SCALE, B_DIM_SCALE);
             collision_shape_->setLocalScaling(localScaling);
 
             // set name
@@ -257,20 +258,24 @@ BulletVTKObject::BulletVTKObject(
             //            btRigidBody* body = createRigidBody(mass,startTransform,shape);
 
             // -------------------------------------------------------------------------
-            // VTK
+            // VTK TODO: We have already read the Mesh object, we should use
+            // the vertices from that instead of reading it again with VTK
+            // reader.
 
+            //            // visualize the compund mesh for debug
+            //            size_t last_dot_position = filepath->find_last_of(".");
+            //
+            //                std::string file_name_no_extension = filepath->substr(0,
+            //                                                                     last_dot_position);
+            //
+            //                std::stringstream out_name;
+            //                out_name << file_name_no_extension << "_hacd.obj";
+            //
+            //            reader->SetFileName(out_name.str().c_str());
 
             vtkSmartPointer<vtkOBJReader> reader =
                     vtkSmartPointer<vtkOBJReader>::New();
-            size_t last_dot_position = filepath->find_last_of(".");
-
-                std::string file_name_no_extension = filepath->substr(0,
-                                                                     last_dot_position);
-
-                std::stringstream out_name;
-                out_name << file_name_no_extension << "_hacd.obj";
-
-            reader->SetFileName(out_name.str().c_str());
+            reader->SetFileName(filepath->c_str());
 
             reader->Update();
             mapper->SetInputConnection(reader->GetOutputPort());
