@@ -97,12 +97,11 @@ private:
     std::vector<std::array<double, 3> > sphere_positions;
 
     double board_dimensions[3];
-    BulletVTKObject* kine_box;
-    BulletVTKObject* kine_sphere_0;
-    BulletVTKObject* kine_sphere_1;
+    BulletVTKObject* jaw_links[5];
     btDiscreteDynamicsWorld* dynamics_world;
-    BulletVTKObject *mesh;
+    BulletVTKObject *ring_mesh;
     BulletVTKObject *needle_mesh;
+    std::vector<std::vector<double>> jaw_link_dims;
 
     ros::Time time_last;
     //keep track of the shapes, we release memory at exit.

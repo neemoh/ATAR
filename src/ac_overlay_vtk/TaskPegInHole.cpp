@@ -16,12 +16,11 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
                        const bool with_guidance)
     :
     VTKTask(show_ref_frames, biman, with_guidance, 0),
-    time_last(ros::Time::now())
-{
+    time_last(ros::Time::now()) {
 
     InitBullet();
 
-    BulletVTKObject* board;
+    BulletVTKObject *board;
     // -----------------------
     // -------------------------------------------------------------------------
     // Create a cube for the board
@@ -30,123 +29,130 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     //board_dimensions[1]  = 0.14;
     //board_dimensions[2]  = 0.1;
 
-    board_dimensions[0]  = 0.28;
-    board_dimensions[1]  = 0.24;
-    board_dimensions[2]  = 0.1;
-    double *pose;
+    board_dimensions[0] = 0.14;
+    board_dimensions[1] = 0.12;
+    board_dimensions[2] = 0.01;
     //double stiffnes = 1000;
     //double damping = 20;
-    double friction = 0.5;
+    {
+        double friction = 0.5;
 
-    pose= new double[7] {board_dimensions[0] / 2.45,
-        board_dimensions[1] / 2.78,
-        -board_dimensions[2]/2,
-        0, 0, 0, 1};
+        double pose[7]{
+            board_dimensions[0] / 2.45, board_dimensions[1] / 2.78,
+            -board_dimensions[2] / 2, 0, 0, 0, 1
+        };
 
-    std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
-        board_dimensions[2]};
-    board = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
-    );
+        std::vector<double> dim = {
+            board_dimensions[0], board_dimensions[1], board_dimensions[2]
+        };
+        board = new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL,
+            friction
+        );
 //    board->GetActor()->GetProperty()->SetOpacity(0.05);
-    board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
+        board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
-    dynamics_world->addRigidBody(board->GetBody());
-    actors.push_back(board->GetActor());
-
+        dynamics_world->addRigidBody(board->GetBody());
+        actors.push_back(board->GetActor());
+    }
     // -------------------------------------------------------------------------
     // static floor
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
     double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject* floor= new BulletVTKObject(
+    BulletVTKObject *floor = new BulletVTKObject(
         ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
-        floor_dims, dummy_pose, 0.0, NULL);
+        floor_dims, dummy_pose, 0.0, NULL
+    );
     dynamics_world->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
     // Create cylinders
-    int cols = 4;
-    int rows = 3;
-    double density = 50000; // kg/m3
-    //stiffnes = 20000;
-    //damping = 0.9;
-    friction = 2.2;
-    BulletVTKObject* cylinders[cols*rows];
-    for (int i = 0; i < rows; ++i) {
-
-        for (int j = 0; j < cols; ++j) {
-
-            std::vector<double> dim = {0.003, 0.03};
-
-            double q3 = 0;
-            double q4 = 1;
-            if(j<cols/2){
-                q3 = 0.70711;
-                q4 = 0.70711;
-            }
-            pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
-                0.06,
-                0.1 + dim[1] *1.5* (double)j,
-                0, 0, q3, q4};
-
-            cylinders[i*rows+j] =
-                new BulletVTKObject(
-                    ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
-                    density, NULL, friction
-                );
-            delete [] pose;
-            double ratio = (double)i/4.0;
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-            cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
-
-            dynamics_world->addRigidBody(cylinders[i*rows+j]->GetBody());
-            actors.push_back(cylinders[i*rows+j]->GetActor());
-
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Create cubes
-    rows = 3;
-    cols = 2;
-    int layers = 3;
-    BulletVTKObject* cubes[layers *rows *cols];
-
-    double sides = 0.006;
-    //density = 5; // kg/m3
-    //stiffnes = 20000;
-    //damping = 0.9;
-    //friction = 100.1;
-
-    for (int k = 0; k < layers; ++k) {
+    {
+        uint cols = 4;
+        uint rows = 3;
+        float density = 50000; // kg/m3
+        float friction = 2.2;
+        BulletVTKObject *cylinders[cols * rows];
         for (int i = 0; i < rows; ++i) {
+
             for (int j = 0; j < cols; ++j) {
 
-                pose = new double[7] {(double)i * 2.2*sides + 0.1,
-                    (double)j * 2.2*sides  + 0.05,
-                    (double)k * 4*sides  + 0.05,
-                    0, 0, 0, 1};
+                std::vector<double> dim = {0.003, 0.03};
 
-                std::vector<double> dim = {sides, sides, sides};
-                cubes[i*rows+j] = new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
-                    NULL, friction
+                double q3 = 0;
+                double q4 = 1;
+                if (j < cols / 2) {
+                    q3 = 0.70711;
+                    q4 = 0.70711;
+                }
+                double pose[7]{
+                    (double) i * 4 * dim[0] + (double) j * dim[0] / 2, 0.06, 0.1
+                        + dim[1] * 1.5 * (double) j, 0, 0, q3, q4
+                };
+
+                cylinders[i * rows + j] =
+                    new BulletVTKObject(
+                        ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
+                        density, NULL, friction
+                    );
+                double ratio = (double) i / 4.0;
+                cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
+                    0.6 - 0.2 * ratio, 0.6 - 0.3 * ratio, 0.7 + 0.3 * ratio
                 );
-                delete [] pose;
+                cylinders[i * rows + j]->GetActor()->GetProperty()->SetSpecular(
+                    0.8
+                );
+                cylinders[i * rows
+                    + j]->GetActor()->GetProperty()->SetSpecularPower(50);
 
-                double ratio = (double)i/4.0;
-                cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
-                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
+                dynamics_world->addRigidBody(
+                    cylinders[i * rows + j]->GetBody());
+                actors.push_back(cylinders[i * rows + j]->GetActor());
+
+            }
+        }
+    }
+    // -------------------------------------------------------------------------
+    // Create cubes
+    {
+        uint rows = 3;
+        uint cols = 2;
+        int layers = 3;
+        BulletVTKObject *cubes[layers * rows * cols];
+
+        double sides = 0.006;
+        float density = 50000; // kg/m3
+        float friction = 12;
+
+        for (int k = 0; k < layers; ++k) {
+            for (int i = 0; i < rows; ++i) {
+                for (int j = 0; j < cols; ++j) {
+
+                    double pose[7]{
+                        (double) i * 2.2 * sides + 0.1, (double) j * 2.2 * sides
+                            + 0.05, (double) k * 4 * sides + 0.05, 0, 0, 0, 1
+                    };
+
+                    std::vector<double> dim = {sides, sides, sides};
+                    cubes[i * rows + j] = new BulletVTKObject(
+                        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose,
+                        density,
+                        NULL, friction
+                    );
+                    double ratio = (double) i / 4.0;
+                    cubes[i * rows + j]->GetActor()->GetProperty()->SetColor(
+                        0.6 + 0.1 * ratio, 0.3 - 0.3 * ratio, 0.7 - 0.3 * ratio
+                    );
 
 //                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
 //                        (float) stiffnes, (float) damping);
-                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
-                actors.push_back(cubes[i*rows+j]->GetActor());
+                    dynamics_world->addRigidBody(
+                        cubes[i * rows + j]->GetBody());
+                    actors.push_back(cubes[i * rows + j]->GetActor());
 
+                }
             }
         }
     }
@@ -162,82 +168,99 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     //// Create mesh
     {
-        pose = new double[7]{0.09, 0.06, 0.08, 0.7, 0, 0.7, 0};
+        double pose[7]{0.09, 0.06, 0.08, 0.7, 0, 0.7, 0};
         std::vector<double> _dim = {0.002};
-//    BulletVTKObject *mesh;
-        std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("ring.obj");
-        std::string mesh_file_dir_str = input_file_dir.str();
 
-        needle_mesh = new
-                BulletVTKObject(ObjectShape::MESH,
-                                ObjectType::DYNAMIC, _dim, pose, density,
-                                &mesh_file_dir_str,
-                                friction);
-
-        dynamics_world->addRigidBody(needle_mesh->GetBody());
-        actors.push_back(needle_mesh->GetActor());
-        needle_mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.);
-    }
-
-    {
-        pose = new double[7]{0.07, 0.06, 0.08, 0.7, 0, 0.7, 0};
-        std::vector<double> _dim = {0.002};
-//    BulletVTKObject *mesh;
+        float friction = 3;
+        float density = 50000; // kg/m3
         std::stringstream input_file_dir;
         input_file_dir << mesh_files_dir << std::string("needle_L3cm_d3mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
-        mesh = new
-                BulletVTKObject(ObjectShape::MESH,
-                                ObjectType::DYNAMIC, _dim, pose, density,
-                                &mesh_file_dir_str,
-                                friction);
+        needle_mesh = new
+            BulletVTKObject(
+            ObjectShape::MESH,
+            ObjectType::DYNAMIC, _dim, pose, density,
+            &mesh_file_dir_str,
+            friction
+        );
 
-        dynamics_world->addRigidBody(mesh->GetBody());
-        actors.push_back(mesh->GetActor());
-        mesh->GetActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
+        dynamics_world->addRigidBody(needle_mesh->GetBody());
+        actors.push_back(needle_mesh->GetActor());
+        needle_mesh->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
+    }
+
+    {
+        double pose[7]{0.07, 0.06, 0.08, 0.7, 0, 0.7, 0};
+        std::vector<double> _dim = {0.002};
+
+        float friction = 20;
+        float density = 50000; // kg/m3
+        std::stringstream input_file_dir;
+        input_file_dir << mesh_files_dir << std::string("ring.obj");
+        std::string mesh_file_dir_str = input_file_dir.str();
+
+        ring_mesh = new
+            BulletVTKObject(
+            ObjectShape::MESH,
+            ObjectType::DYNAMIC, _dim, pose, density,
+            &mesh_file_dir_str,
+            friction
+        );
+
+        dynamics_world->addRigidBody(ring_mesh->GetBody());
+        actors.push_back(ring_mesh->GetActor());
+        ring_mesh->GetActor()->GetProperty()->SetColor(0.4f, 0.3f, 0.3f);
+        //ring_mesh->GetBody()->setContactStiffnessAndDamping(5000, 10);
     }
     // -------------------------------------------------------------------------
     // Create kinematic box
     //friction = 100;
-
-    pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
-    std::vector<double> kine_box_c_dim = {0.002, 0.002, 0.01};
-    kine_box =
-        new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_c_dim, pose, 0.0,
-            NULL, friction
-        );
-    dynamics_world->addRigidBody(kine_box->GetBody());
-    actors.push_back(kine_box->GetActor());
-    kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
-
+    {
+        double pose[7]{0, 0, 0, 0, 0, 0, 1};
+        std::vector<double> kine_box_c_dim = {0.002, 0.002, 0.01};
+        float friction = 10;
+        jaw_links[0] =
+            new BulletVTKObject(
+                ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_c_dim, pose,
+                0.0,
+                NULL, friction
+            );
+        dynamics_world->addRigidBody(jaw_links[0]->GetBody());
+        actors.push_back(jaw_links[0]->GetActor());
+        jaw_links[0]->GetActor()->GetProperty()->SetColor(0.6f, 0.2f, 0.3f);
+    }
     // -------------------------------------------------------------------------
-    // Create kinematic sphere
+    // Create kinematic jaw
+    float jaw_density = 0; // kg/m3
+    float jaw_friction = 10;
+    double jaw_pose[7]{0, 0, 0, 0, 0, 0, 1};
+    jaw_link_dims =
+        {   {0.003, 0.003, 0.005}
+          , {0.004, 0.001, 0.009}
+          , {0.004, 0.001, 0.009}
+          , {0.004, 0.001, 0.007}
+          , {0.004, 0.001, 0.007}};
 
-    std::vector<double> kine_box_jaw_dim = {0.005, 0.001 , 0.02};
-    kine_sphere_0 =
-        new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_jaw_dim, pose,
-            0.0, NULL, friction
-        );
-    dynamics_world->addRigidBody(kine_sphere_0->GetBody());
-    actors.push_back(kine_sphere_0->GetActor());
-    kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
-
+   // ----
     // -------------------------------------------------------------------------
-    // Create kinematic sphere
+    // Create kinematic box
+    //friction = 100;
+    {
+        for (int i = 0; i < 5; ++i) {
+            jaw_links[i] =
+                new BulletVTKObject(
+                    ObjectShape::BOX, ObjectType::KINEMATIC, jaw_link_dims[i], jaw_pose,
+                    jaw_density,
+                    NULL, jaw_friction
+                );
+            dynamics_world->addRigidBody(jaw_links[i]->GetBody());
+            actors.push_back(jaw_links[i]->GetActor());
+            jaw_links[i]->GetActor()->GetProperty()->SetColor(0.35f, 0.4f, 0.4f);
+        }
 
-    kine_sphere_1 =
-        new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_jaw_dim, pose,
-            0.0, NULL, friction
-        );
-    delete [] pose;
-    dynamics_world->addRigidBody(kine_sphere_1->GetBody());
-    actors.push_back(kine_sphere_1->GetActor());
-    kine_sphere_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
+    }
+
 
     // -------------------------------------------------------------------------
     // FRAMES
@@ -277,61 +300,85 @@ void TaskPegInHole::UpdateActors() {
     //box
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
 
-    KDL::Vector box_posit = tool_pose * KDL::Vector( 0.0 , 0.0, -0.012);
+    KDL::Vector box_posit = tool_pose * KDL::Vector( 0.0 , 0.0,
+                                                     -jaw_link_dims[0][2]/2);
 
     double x, y, z, w;
     tool_pose.M.GetQuaternion(x,y,z,w);
-    double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
-    kine_box->SetKinematicPose(box_pose);
+    double link0_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
+    jaw_links[0]->SetKinematicPose(link0_pose);
 
 
     //--------------------------------
     // first gripper
     double grip_posit = (*gripper_position[0]);
-    double theta_max=M_PI/6;
+    double theta_min=20*M_PI/180;
+    double theta_max=40*M_PI/180;
     double grip_angle = theta_max*(grip_posit+0.5)/1.55;
+    if(grip_angle<theta_min)
+        grip_angle=theta_min;
 
-    //std:cout<<"Grip"<<grip_posit<<std::endl;
+    KDL::Rotation tool_p_1=tool_pose.M;
+    tool_p_1.DoRotX(-grip_angle);
+    KDL::Vector angular_position_1 = tool_pose.p+ tool_p_1 *
+        KDL::Vector( 0.0, 0.0, jaw_link_dims[1][2]/2);
+    tool_p_1.GetQuaternion(x, y, z, w);
 
-    KDL::Vector gripper_pos = KDL::Vector( 0.0, 0.01*sin(grip_angle), 0.0128-0.01*cos(grip_angle));
-
-    KDL::Rotation tool_p=tool_pose.M;
-
-    tool_p.DoRotX(-grip_angle);
-
-
-    gripper_pos = tool_pose.p + tool_p*gripper_pos;
-
-    tool_p.GetQuaternion(x, y, z, w);
-
-    double sphere_0_pose[7] = {
-        gripper_pos[0],
-        gripper_pos[1],
-        gripper_pos[2],
+    double link2_pose[7] = {
+        angular_position_1[0],
+        angular_position_1[1],
+        angular_position_1[2],
         x, y, z, w};
 
-    kine_sphere_0->SetKinematicPose(sphere_0_pose);
+    jaw_links[1]->SetKinematicPose(link2_pose);
+
+    //--------------------------------
+
+
+    KDL::Rotation tool_p_2=tool_pose.M;
+    tool_p_2.DoRotX(grip_angle);
+    KDL::Vector angular_position_2 = tool_pose.p+ tool_p_2 *
+        KDL::Vector( 0.0, 0.0, jaw_link_dims[2][2]/2);
+    tool_p_2.GetQuaternion(x, y, z, w);
+
+    double link3_pose[7] = {
+        angular_position_2[0],
+        angular_position_2[1],
+        angular_position_2[2],
+        x, y, z, w};
+
+    jaw_links[2]->SetKinematicPose(link3_pose);
 
 
     //--------------------------------
-    // second gripper
 
-    gripper_pos = KDL::Vector( 0.0, 0.01*sin(-grip_angle), 0.0128-0.01*cos(-grip_angle));
+    KDL::Vector linear_position_1  =      tool_pose.p
+        + tool_p_1 * KDL::Vector( 0.0, 0.0, jaw_link_dims[1][2])
+        + tool_pose.M * KDL::Vector( 0.0, 0.0, jaw_link_dims[3][2]/2);
 
-    tool_p=tool_pose.M;
-
-    tool_p.DoRotX(grip_angle);
-    gripper_pos = tool_pose.p+ tool_p*gripper_pos;
-
-    tool_p.GetQuaternion(x, y, z, w);
-
-    double sphere_1_pose[7] = {
-        gripper_pos[0],
-        gripper_pos[1],
-        gripper_pos[2],
+    tool_pose.M.GetQuaternion(x,y,z,w);
+    double link4_pose[7] = {
+        linear_position_1[0],
+        linear_position_1[1],
+        linear_position_1[2],
         x, y, z, w};
 
-    kine_sphere_1->SetKinematicPose(sphere_1_pose);
+    jaw_links[3]->SetKinematicPose(link4_pose);
+
+
+    //--------------------------------
+    KDL::Vector linear_position_2 =tool_pose.p+ tool_p_2*
+        KDL::Vector( 0.0, 0.0, jaw_link_dims[2][2])
+        + tool_pose.M * KDL::Vector( 0.0, 0.0, jaw_link_dims[4][2]/2);
+
+
+    double link5_pose[7] = {
+        linear_position_2[0],
+        linear_position_2[1],
+        linear_position_2[2],
+        x, y, z, w};
+
+    jaw_links[4]->SetKinematicPose(link5_pose);
 
 
     //--------------------------------
