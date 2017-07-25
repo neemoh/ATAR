@@ -102,6 +102,7 @@ private:
     BulletVTKObject* kine_sphere_1;
     btDiscreteDynamicsWorld* dynamics_world;
     BulletVTKObject *mesh;
+    BulletVTKObject *needle_mesh;
 
     ros::Time time_last;
     //keep track of the shapes, we release memory at exit.
