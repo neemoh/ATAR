@@ -92,21 +92,28 @@ public:
 
     void StepDynamicsWorld();
 
+    void UpdateGripperLinksPose(const KDL::Frame pose,
+        const double grip_angle,
+        const std::vector<std::vector<double> > gripper_link_dims,
+                                BulletVTKObject* link_objects[]);
+
 
 private:
     std::vector<std::array<double, 3> > sphere_positions;
 
     double board_dimensions[3];
-    BulletVTKObject* jaw_links[5];
-    btDiscreteDynamicsWorld* dynamics_world;
+    std::vector<std::vector<double>> gripper_link_dims;
+    BulletVTKObject* right_gripper_links[5];
+    BulletVTKObject* left_gripper_links[5];
+
     BulletVTKObject *ring_mesh;
     BulletVTKObject *needle_mesh;
-    std::vector<std::vector<double>> jaw_link_dims;
 
     ros::Time time_last;
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
 //    btAlignedObjectArray<btCollisionShape*> collisionShapes;
+    btDiscreteDynamicsWorld* dynamics_world;
     btSequentialImpulseConstraintSolver* solver;
     btBroadphaseInterface* overlappingPairCache;
     btCollisionDispatcher* dispatcher;

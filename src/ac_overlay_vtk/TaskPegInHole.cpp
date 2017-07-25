@@ -146,8 +146,6 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
                         0.6 + 0.1 * ratio, 0.3 - 0.3 * ratio, 0.7 - 0.3 * ratio
                     );
 
-//                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
-//                        (float) stiffnes, (float) damping);
                     dynamics_world->addRigidBody(
                         cubes[i * rows + j]->GetBody());
                     actors.push_back(cubes[i * rows + j]->GetActor());
@@ -157,16 +155,9 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
         }
     }
 
-    {
-//        std::vector<double> dim = {sides, sides, sides};
-//        cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
-//                                              ObjectType::DYNAMIC, dim,
-//                                              pose, 0.2), stiffnes, damping;
-
-    }
 
     // -------------------------------------------------------------------------
-    //// Create mesh
+    //// Create needle mesh
     {
         double pose[7]{0.09, 0.06, 0.08, 0.7, 0, 0.7, 0};
         std::vector<double> _dim = {0.002};
@@ -174,7 +165,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
         float friction = 3;
         float density = 50000; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("needle_L3cm_d3mm.obj");
+        input_file_dir << mesh_files_dir << std::string("needle_L3cm_d2mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         needle_mesh = new
@@ -190,6 +181,9 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
         needle_mesh->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
     }
 
+
+    // -------------------------------------------------------------------------
+    //// Create ring mesh
     {
         double pose[7]{0.07, 0.06, 0.08, 0.7, 0, 0.7, 0};
         std::vector<double> _dim = {0.002};
@@ -213,50 +207,61 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
         ring_mesh->GetActor()->GetProperty()->SetColor(0.4f, 0.3f, 0.3f);
         //ring_mesh->GetBody()->setContactStiffnessAndDamping(5000, 10);
     }
-    // -------------------------------------------------------------------------
-    // Create kinematic box
-    //friction = 100;
-    {
-        double pose[7]{0, 0, 0, 0, 0, 0, 1};
-        std::vector<double> kine_box_c_dim = {0.002, 0.002, 0.01};
-        float friction = 10;
-        jaw_links[0] =
-            new BulletVTKObject(
-                ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_c_dim, pose,
-                0.0,
-                NULL, friction
-            );
-        dynamics_world->addRigidBody(jaw_links[0]->GetBody());
-        actors.push_back(jaw_links[0]->GetActor());
-        jaw_links[0]->GetActor()->GetProperty()->SetColor(0.6f, 0.2f, 0.3f);
-    }
-    // -------------------------------------------------------------------------
-    // Create kinematic jaw
-    float jaw_density = 0; // kg/m3
-    float jaw_friction = 10;
-    double jaw_pose[7]{0, 0, 0, 0, 0, 0, 1};
-    jaw_link_dims =
-        {   {0.003, 0.003, 0.005}
-          , {0.004, 0.001, 0.009}
-          , {0.004, 0.001, 0.009}
-          , {0.004, 0.001, 0.007}
-          , {0.004, 0.001, 0.007}};
 
-   // ----
     // -------------------------------------------------------------------------
-    // Create kinematic box
-    //friction = 100;
+    // Create kinematic jaw (gripper)
+    //
+    // The gripper is a 5 link mechanism, link 0 is a base link, 1st and 2nd
+    // are angular jaws (like a scissor) so their orientation is related to
+    // the gripper angle of the master, 3rd and 4th change position along one
+    // axis according to the gripper angle, like a clamp. These last links
+    // are used to generate enough normal force for a stable grasping, since
+    // the scissor type links push the objects outwards.
+    // make sure tu set a high friction coefficient for the objects you want
+    // to grasp.
+    // In addition, make sure you limit the gripper angle so that the user
+    // can't press the object too much. Otherwise the injected energy would
+    // be so high that no friction can compensate it.
     {
+    float gripper_density = 0; // kg/m3
+    float gripper_friction = 10;
+    double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
+    gripper_link_dims =
+        {{0.003, 0.003, 0.005}
+         , {0.004, 0.001, 0.009}
+         , {0.004, 0.001, 0.009}
+         , {0.004, 0.001, 0.007}
+         , {0.004, 0.001, 0.007}};
+
+
         for (int i = 0; i < 5; ++i) {
-            jaw_links[i] =
+            right_gripper_links[i] =
                 new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::KINEMATIC, jaw_link_dims[i], jaw_pose,
-                    jaw_density,
-                    NULL, jaw_friction
+                    ObjectShape::BOX, ObjectType::KINEMATIC,
+                    gripper_link_dims[i], gripper_pose,
+                    gripper_density,
+                    NULL, gripper_friction
                 );
-            dynamics_world->addRigidBody(jaw_links[i]->GetBody());
-            actors.push_back(jaw_links[i]->GetActor());
-            jaw_links[i]->GetActor()->GetProperty()->SetColor(0.35f, 0.4f, 0.4f);
+            dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
+            actors.push_back(right_gripper_links[i]->GetActor());
+            right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
+            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
+            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
+        }
+
+        for (int i = 0; i < 5; ++i) {
+            left_gripper_links[i] =
+                new BulletVTKObject(
+                    ObjectShape::BOX, ObjectType::KINEMATIC,
+                    gripper_link_dims[i], gripper_pose,
+                    gripper_density,
+                    NULL, gripper_friction
+                );
+            dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
+            actors.push_back(left_gripper_links[i]->GetActor());
+            left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
+            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
+            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
         }
 
     }
@@ -296,21 +301,9 @@ tool_id) {
 //------------------------------------------------------------------------------
 void TaskPegInHole::UpdateActors() {
 
-    //--------------------------------
-    //box
-    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-
-    KDL::Vector box_posit = tool_pose * KDL::Vector( 0.0 , 0.0,
-                                                     -jaw_link_dims[0][2]/2);
-
-    double x, y, z, w;
-    tool_pose.M.GetQuaternion(x,y,z,w);
-    double link0_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
-    jaw_links[0]->SetKinematicPose(link0_pose);
-
-
-    //--------------------------------
-    // first gripper
+    //-------------------------------- UPDATE RIGHT GRIPPER
+    KDL::Frame grpr_right_pose = (*tool_current_pose_kdl[0]);
+    // map gripper value to an angle
     double grip_posit = (*gripper_position[0]);
     double theta_min=20*M_PI/180;
     double theta_max=40*M_PI/180;
@@ -318,76 +311,25 @@ void TaskPegInHole::UpdateActors() {
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    KDL::Rotation tool_p_1=tool_pose.M;
-    tool_p_1.DoRotX(-grip_angle);
-    KDL::Vector angular_position_1 = tool_pose.p+ tool_p_1 *
-        KDL::Vector( 0.0, 0.0, jaw_link_dims[1][2]/2);
-    tool_p_1.GetQuaternion(x, y, z, w);
+    UpdateGripperLinksPose(grpr_right_pose, grip_angle, gripper_link_dims,
+                           right_gripper_links);
 
-    double link2_pose[7] = {
-        angular_position_1[0],
-        angular_position_1[1],
-        angular_position_1[2],
-        x, y, z, w};
+    //-------------------------------- UPDATE RIGHT GRIPPER
+    KDL::Frame grpr_left_pose = (*tool_current_pose_kdl[1]);
+    // map gripper value to an angle
+    grip_posit = (*gripper_position[1]);
+    grip_angle = theta_max*(grip_posit+0.5)/1.55;
+    if(grip_angle<theta_min)
+        grip_angle=theta_min;
 
-    jaw_links[1]->SetKinematicPose(link2_pose);
-
-    //--------------------------------
-
-
-    KDL::Rotation tool_p_2=tool_pose.M;
-    tool_p_2.DoRotX(grip_angle);
-    KDL::Vector angular_position_2 = tool_pose.p+ tool_p_2 *
-        KDL::Vector( 0.0, 0.0, jaw_link_dims[2][2]/2);
-    tool_p_2.GetQuaternion(x, y, z, w);
-
-    double link3_pose[7] = {
-        angular_position_2[0],
-        angular_position_2[1],
-        angular_position_2[2],
-        x, y, z, w};
-
-    jaw_links[2]->SetKinematicPose(link3_pose);
-
-
-    //--------------------------------
-
-    KDL::Vector linear_position_1  =      tool_pose.p
-        + tool_p_1 * KDL::Vector( 0.0, 0.0, jaw_link_dims[1][2])
-        + tool_pose.M * KDL::Vector( 0.0, 0.0, jaw_link_dims[3][2]/2);
-
-    tool_pose.M.GetQuaternion(x,y,z,w);
-    double link4_pose[7] = {
-        linear_position_1[0],
-        linear_position_1[1],
-        linear_position_1[2],
-        x, y, z, w};
-
-    jaw_links[3]->SetKinematicPose(link4_pose);
-
-
-    //--------------------------------
-    KDL::Vector linear_position_2 =tool_pose.p+ tool_p_2*
-        KDL::Vector( 0.0, 0.0, jaw_link_dims[2][2])
-        + tool_pose.M * KDL::Vector( 0.0, 0.0, jaw_link_dims[4][2]/2);
-
-
-    double link5_pose[7] = {
-        linear_position_2[0],
-        linear_position_2[1],
-        linear_position_2[2],
-        x, y, z, w};
-
-    jaw_links[4]->SetKinematicPose(link5_pose);
-
+    UpdateGripperLinksPose(grpr_left_pose, grip_angle, gripper_link_dims,
+                           left_gripper_links);
 
     //--------------------------------
     // step the world
     StepDynamicsWorld();
 
 }
-
-
 
 
 //------------------------------------------------------------------------------
@@ -477,12 +419,22 @@ void TaskPegInHole::InitBullet() {
     ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
     solver = new btSequentialImpulseConstraintSolver;
 
+
     dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
                                                 overlappingPairCache, solver,
                                                 collisionConfiguration);
 
     dynamics_world->setGravity(btVector3(0, 0, -10));
 
+
+    btContactSolverInfo& info = dynamics_world->getSolverInfo();
+    //optionally set the m_splitImpulsePenetrationThreshold (only used when m_splitImpulse  is enabled)
+    //only enable split impulse position correction when the penetration is
+    // deeper than this m_splitImpulsePenetrationThreshold, otherwise use the
+    // regular velocity/position constraint coupling (Baumgarte).
+    info.m_splitImpulsePenetrationThreshold = -0.02f;
+    info.m_numIterations = 15;
+    info.m_solverMode = SOLVER_USE_2_FRICTION_DIRECTIONS;
 
 }
 
@@ -494,26 +446,6 @@ void TaskPegInHole::StepDynamicsWorld() {
     // simulation seems more realistic when time_step is halved right now!
     dynamics_world->stepSimulation(btScalar(time_step), 60, 1/240.f);
     time_last = ros::Time::now();
-
-//    //print positions of all objects
-//    for (int j = dynamics_world->getNumCollisionObjects() - 1; j >= 0; j--)
-//    {
-//        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[j];
-//        btRigidBody* body_ = btRigidBody::upcast(obj);
-//        btTransform trans;
-//        if (body_ && body_->getMotionState())
-//        {
-//            body_->getMotionState()->getWorldTransform(trans);
-//        }
-//        else
-//        {
-//            trans = obj->getWorldTransform();
-//        }
-//
-//            heights[j] = trans.getOrigin().z();
-//        heights2[j] = actors[j]->GetMatrix()->Element[2][3];
-//    }
-
 }
 
 
@@ -565,6 +497,68 @@ TaskPegInHole::~TaskPegInHole() {
 
     //next line is optional: it will be cleared by the destructor when the array goes out of scope
 //    collisionShapes.clear();
+}
+
+void TaskPegInHole::UpdateGripperLinksPose(const KDL::Frame pose,
+    const double grip_angle,
+    const std::vector<std::vector<double> > gripper_link_dims,
+    BulletVTKObject *link_objects[]
+) {
+    KDL::Frame grpr_links_pose[5];
+
+    //-------------------------------- LINK 0
+    grpr_links_pose[0] = pose;
+    grpr_links_pose[0].p  = grpr_links_pose[0] * KDL::Vector( 0.0 , 0.0,
+                                                              -gripper_link_dims[0][2]/2);
+    double x, y, z, w;
+    pose.M.GetQuaternion(x,y,z,w);
+    double link0_pose[7] = {grpr_links_pose[0].p.x(),
+        grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
+    link_objects[0]->SetKinematicPose(link0_pose);
+
+    //-------------------------------- LINK 1
+    grpr_links_pose[1] = pose;
+    grpr_links_pose[1].M.DoRotX(-grip_angle);
+    grpr_links_pose[1].p =  grpr_links_pose[1] *
+        KDL::Vector( 0.0, 0.0, gripper_link_dims[1][2]/2);
+    grpr_links_pose[1].M.GetQuaternion(x, y, z, w);
+
+    double link2_pose[7] = {grpr_links_pose[1].p.x(),
+        grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
+
+    link_objects[1]->SetKinematicPose(link2_pose);
+
+    //-------------------------------- LINK 2
+    grpr_links_pose[2] = pose;
+    grpr_links_pose[2].M.DoRotX(grip_angle);
+    grpr_links_pose[2].p =  grpr_links_pose[2] *
+        KDL::Vector( 0.0, 0.0, gripper_link_dims[2][2]/2);
+    grpr_links_pose[2].M.GetQuaternion(x, y, z, w);
+
+    double link3_pose[7] = {grpr_links_pose[2].p.x(),
+        grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
+
+    link_objects[2]->SetKinematicPose(link3_pose);
+
+
+    //-------------------------------- LINKS 3 and $
+    for (int i = 3; i < 5; ++i) {
+        // first find the end point of links 1 and 2 and then add half length
+        // of links 3 and 4
+        grpr_links_pose[i] = pose;
+        grpr_links_pose[i].p =
+            grpr_links_pose[i-2] *
+                KDL::Vector(0., 0.,gripper_link_dims[i-2][2]/2)
+                + grpr_links_pose[i].M *
+                    KDL::Vector(0., 0.,gripper_link_dims[i][2]/2);
+
+        grpr_links_pose[i].M.GetQuaternion(x,y,z,w);
+        double link_pose[7] = {grpr_links_pose[i].p.x(),
+            grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
+
+        link_objects[i]->SetKinematicPose(link_pose);
+    }
+
 }
 
 
