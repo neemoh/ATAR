@@ -93,10 +93,9 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
         btVector3(l/4,l/4,l/4),1000);
     sb->m_cfg.viterations=20;
     sb->m_cfg.piterations=20;
-    sb->m_cfg.kPR = 400 /B_DIM_SCALE;
+    sb->m_cfg.kPR = 200 /B_DIM_SCALE;
     sb->setTotalDensity(4000/(B_DIM_SCALE*B_DIM_SCALE));
     sb->setMass(0, 0);
-    std::cout <<   "ddddddddddddddd  " << sb->getTotalMass() << std::endl;  ;
     sb->getCollisionShape()->setMargin(0.08);
 //    sb->generateBendingConstraints(3);
     dynamics_world->addSoftBody(sb);
@@ -456,13 +455,13 @@ void TaskDeformable::StepDynamicsWorld() {
     double time_step = (ros::Time::now() - time_last).toSec();
 
     // simulation seems more realistic when time_step is halved right now!
-    dynamics_world->stepSimulation(btScalar(time_step), 7);
+    dynamics_world->stepSimulation(btScalar(time_step), 60, 1/240.f);
     time_last = ros::Time::now();
 
 //    //print positions of all objects
-//    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+//    for (int j = dynamics_world->getNumCollisionObjects() - 1; j >= 0; j--)
 //    {
-//        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+//        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[j];
 //        btRigidBody* body_ = btRigidBody::upcast(obj);
 //        btTransform trans;
 //        if (body_ && body_->getMotionState())

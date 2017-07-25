@@ -89,7 +89,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //        cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
     //        cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
     //
-    //        dynamicsWorld->addRigidBody(cylinders[i*rows+j]->GetBody());
+    //        dynamics_world->addRigidBody(cylinders[i*rows+j]->GetBody());
     //        actors.push_back(cylinders[i*rows+j]->GetActor());
     //
     //    }
@@ -130,7 +130,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 //
 ////                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
 ////                        (float) stiffnes, (float) damping);
-//                dynamicsWorld->addRigidBody(cubes[i*rows+j]->GetBody());
+//                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
 //                actors.push_back(cubes[i*rows+j]->GetActor());
 //
 //            }
@@ -163,7 +163,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //                    ObjectType::DYNAMIC, _dim, pose, 6000,
     //                    &mesh_file_dir_str,
     //                    friction);
-    //dynamicsWorld->addRigidBody(mesh->GetBody());
+    //dynamics_world->addRigidBody(mesh->GetBody());
     //actors.push_back(mesh->GetActor());
     //mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
 
@@ -208,7 +208,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //                        ObjectType::KINEMATIC, kine_cyl_dim, pose, 10.0,
     //                        NULL, friction, stiffnes, damping);
     //delete [] pose;
-    //dynamicsWorld->addRigidBody(kine_cylinder_1->GetBody());
+    //dynamics_world->addRigidBody(kine_cylinder_1->GetBody());
     //actors.push_back(kine_cylinder_1->GetActor());
     //kine_cylinder_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
@@ -406,7 +406,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //                    &mesh_file_dir_str,
     //                    friction, stiffnes, damping);
     //
-    //dynamicsWorld->addRigidBody(mesh->GetBody());
+    //dynamics_world->addRigidBody(mesh->GetBody());
     //actors.push_back(mesh->GetActor());
     //mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
 
@@ -768,9 +768,9 @@ void TaskBulletTest::StepDynamicsWorld() {
     dynamicsWorld->stepSimulation(btScalar(time_step), 5);
     time_last = ros::Time::now();
 //    //print positions of all objects
-//    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+//    for (int j = dynamics_world->getNumCollisionObjects() - 1; j >= 0; j--)
 //    {
-//        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+//        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[j];
 //        btRigidBody* body_ = btRigidBody::upcast(obj);
 //        btTransform trans;
 //        if (body_ && body_->getMotionState())

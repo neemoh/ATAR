@@ -100,7 +100,7 @@ private:
     BulletVTKObject* kine_box;
     BulletVTKObject* kine_sphere_0;
     BulletVTKObject* kine_sphere_1;
-    btDiscreteDynamicsWorld* dynamicsWorld;
+    btDiscreteDynamicsWorld* dynamics_world;
     BulletVTKObject *mesh;
 
     ros::Time time_last;

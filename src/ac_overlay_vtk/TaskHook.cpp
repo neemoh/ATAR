@@ -154,7 +154,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 //
 ////                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
 ////                        (float) stiffnes, (float) damping);
-//                dynamicsWorld->addRigidBody(cubes[i*rows+j]->GetBody());
+//                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
 //                actors.push_back(cubes[i*rows+j]->GetActor());
 //
 //            }
@@ -432,15 +432,15 @@ void TaskHook::InitBullet() {
 void TaskHook::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
     double time_step = (ros::Time::now() - time_last).toSec();
-
+    // check http://bulletphysics.org/mediawiki-1.5.8/index.php/Stepping_The_World
     // simulation seems more realistic when time_step is halved right now!
-    dynamicsWorld->stepSimulation(btScalar(time_step*0.7), 7);
+    dynamicsWorld->stepSimulation(btScalar(time_step), 60, 1/240.f);
     time_last = ros::Time::now();
 
 //    //print positions of all objects
-//    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+//    for (int j = dynamics_world->getNumCollisionObjects() - 1; j >= 0; j--)
 //    {
-//        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+//        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[j];
 //        btRigidBody* body_ = btRigidBody::upcast(obj);
 //        btTransform trans;
 //        if (body_ && body_->getMotionState())

@@ -51,7 +51,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 //    board->GetActor()->GetProperty()->SetOpacity(0.05);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
-    dynamicsWorld->addRigidBody(board->GetBody());
+    dynamics_world->addRigidBody(board->GetBody());
     actors.push_back(board->GetActor());
 
     // -------------------------------------------------------------------------
@@ -63,7 +63,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     BulletVTKObject* floor= new BulletVTKObject(
         ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
         floor_dims, dummy_pose, 0.0, NULL);
-    dynamicsWorld->addRigidBody(floor->GetBody());
+    dynamics_world->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
     // Create cylinders
@@ -103,7 +103,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
             cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
             cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
 
-            dynamicsWorld->addRigidBody(cylinders[i*rows+j]->GetBody());
+            dynamics_world->addRigidBody(cylinders[i*rows+j]->GetBody());
             actors.push_back(cylinders[i*rows+j]->GetActor());
 
         }
@@ -144,7 +144,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
 //                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
 //                        (float) stiffnes, (float) damping);
-                dynamicsWorld->addRigidBody(cubes[i*rows+j]->GetBody());
+                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
                 actors.push_back(cubes[i*rows+j]->GetActor());
 
             }
@@ -175,7 +175,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
                         &mesh_file_dir_str,
                         friction);
 
-    dynamicsWorld->addRigidBody(mesh->GetBody());
+    dynamics_world->addRigidBody(mesh->GetBody());
     actors.push_back(mesh->GetActor());
     mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
 
@@ -190,7 +190,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
             ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_c_dim, pose, 0.0,
             NULL, friction
         );
-    dynamicsWorld->addRigidBody(kine_box->GetBody());
+    dynamics_world->addRigidBody(kine_box->GetBody());
     actors.push_back(kine_box->GetActor());
     kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
 
@@ -203,7 +203,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
             ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_jaw_dim, pose,
             0.0, NULL, friction
         );
-    dynamicsWorld->addRigidBody(kine_sphere_0->GetBody());
+    dynamics_world->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
     kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
@@ -216,7 +216,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
             0.0, NULL, friction
         );
     delete [] pose;
-    dynamicsWorld->addRigidBody(kine_sphere_1->GetBody());
+    dynamics_world->addRigidBody(kine_sphere_1->GetBody());
     actors.push_back(kine_sphere_1->GetActor());
     kine_sphere_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
@@ -411,11 +411,11 @@ void TaskPegInHole::InitBullet() {
     ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
     solver = new btSequentialImpulseConstraintSolver;
 
-    dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,
+    dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
                                                 overlappingPairCache, solver,
                                                 collisionConfiguration);
 
-    dynamicsWorld->setGravity(btVector3(0, 0, -10));
+    dynamics_world->setGravity(btVector3(0, 0, -10));
 
 
 }
@@ -426,13 +426,13 @@ void TaskPegInHole::StepDynamicsWorld() {
     double time_step = (ros::Time::now() - time_last).toSec();
 
     // simulation seems more realistic when time_step is halved right now!
-    dynamicsWorld->stepSimulation(btScalar(time_step*0.5), 5);
+    dynamics_world->stepSimulation(btScalar(time_step), 60, 1/240.f);
     time_last = ros::Time::now();
 
 //    //print positions of all objects
-//    for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+//    for (int j = dynamics_world->getNumCollisionObjects() - 1; j >= 0; j--)
 //    {
-//        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+//        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[j];
 //        btRigidBody* body_ = btRigidBody::upcast(obj);
 //        btTransform trans;
 //        if (body_ && body_->getMotionState())
@@ -454,17 +454,17 @@ void TaskPegInHole::StepDynamicsWorld() {
 TaskPegInHole::~TaskPegInHole() {
 
     ROS_INFO("Destructing Bullet task: %d",
-             dynamicsWorld->getNumCollisionObjects());
+             dynamics_world->getNumCollisionObjects());
     //remove the rigidbodies from the dynamics world and delete them
-    for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+    for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
     {
-        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];
         btRigidBody* body = btRigidBody::upcast(obj);
         if (body && body->getMotionState())
         {
             delete body->getMotionState();
         }
-        dynamicsWorld->removeCollisionObject(obj);
+        dynamics_world->removeCollisionObject(obj);
         delete obj;
     }
 
@@ -484,7 +484,7 @@ TaskPegInHole::~TaskPegInHole() {
 //    }
 
     //delete dynamics world
-    delete dynamicsWorld;
+    delete dynamics_world;
 
     //delete solver
     delete solver;
