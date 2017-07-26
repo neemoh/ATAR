@@ -325,7 +325,7 @@ TaskBuzzWire::TaskBuzzWire(
     // Create a cube for the floor
     vtkSmartPointer<vtkCubeSource> floor_source =
         vtkSmartPointer<vtkCubeSource>::New();
-    double floor_dimensions[3] = {0.1, 0.07, 0.001};
+    double floor_dimensions[3] = {0.14, 0.12, 0.001};
     floor_source->SetXLength(floor_dimensions[0]);
     floor_source->SetYLength(floor_dimensions[1]);
     floor_source->SetZLength(floor_dimensions[2]);
@@ -336,8 +336,8 @@ TaskBuzzWire::TaskBuzzWire(
     floor_actor->SetMapper(floor_mapper);
     floor_actor->SetPosition(floor_dimensions[0] / 2, floor_dimensions[1] / 2,
                              -floor_dimensions[2]);
-    floor_actor->GetProperty()->SetOpacity(0.3);
-    floor_actor->GetProperty()->SetColor(Colors::Pink);
+    //floor_actor->GetProperty()->SetOpacity(0.3);
+    floor_actor->GetProperty()->SetColor(0.3, 0.3,0.3);
 
     // -------------------------------------------------------------------------
     // Lines
@@ -411,7 +411,7 @@ TaskBuzzWire::TaskBuzzWire(
     actors.push_back(tube_mesh_actor);
     actors.push_back(stand_mesh_actor);
     actors.push_back(lq_mesh_actor);
-    //    actors.push_back(floor_actor);
+        actors.push_back(floor_actor);
     actors.push_back(ring_actor[0]);
     if(bimanual){
         actors.push_back(ring_actor[1]);
