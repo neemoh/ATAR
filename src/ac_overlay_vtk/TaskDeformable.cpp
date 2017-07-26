@@ -40,10 +40,10 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     //board_dimensions[0]  = 0.18;
     //board_dimensions[1]  = 0.14;
     //board_dimensions[2]  = 0.1;
-    float attention_center[3] = {0.08, 0.08, 0.06};
+    float attention_center[3] = {0.07, 0.07, 0.04};
 
-    board_dimensions[0]  = 0.035;
-    board_dimensions[1]  = 0.035;
+    board_dimensions[0]  = 0.04;
+    board_dimensions[1]  = 0.04;
     board_dimensions[2]  = 0.01;
     double friction = 0.1;
 
@@ -93,8 +93,8 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
         btVector3(l/4,l/4,l/4),1000);
     sb->m_cfg.viterations=20;
     sb->m_cfg.piterations=20;
-    sb->m_cfg.kPR = 200 /B_DIM_SCALE;
-    sb->setTotalDensity(4000/(B_DIM_SCALE*B_DIM_SCALE));
+    sb->m_cfg.kPR = 100 /B_DIM_SCALE;
+    sb->setTotalDensity(20000/(B_DIM_SCALE*B_DIM_SCALE));
     sb->setMass(0, 0);
     sb->getCollisionShape()->setMargin(0.08);
 //    sb->generateBendingConstraints(3);
@@ -570,7 +570,7 @@ void TaskDeformable::RenderSoftbody(
     polyData->SetPolys ( triangles );
     mapper->SetInputData(polyData);
     actor->SetMapper(mapper);
-
+    actor->GetProperty()->SetColor(0.1, 0.6, 0.7);
 ////    for(int i=0;i<b->m_links.size();i++)
 //    {
 //        for(int j=0;j<2;j++)

@@ -314,7 +314,7 @@ void TaskPegInHole::UpdateActors() {
     UpdateGripperLinksPose(grpr_right_pose, grip_angle, gripper_link_dims,
                            right_gripper_links);
 
-    //-------------------------------- UPDATE RIGHT GRIPPER
+    //-------------------------------- UPDATE LEFT GRIPPER
     KDL::Frame grpr_left_pose = (*tool_current_pose_kdl[1]);
     // map gripper value to an angle
     grip_posit = (*gripper_position[1]);
