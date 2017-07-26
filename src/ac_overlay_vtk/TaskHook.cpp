@@ -5,10 +5,7 @@
 #include "TaskHook.h"
 
 #include <custom_conversions/Conversions.h>
-#include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
-#include <math.h>
-#define _USE_MATH_DEFINES
 
 
 TaskHook::TaskHook(const std::string mesh_files_dir,
@@ -25,21 +22,16 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     // Create a cube for the board
 
-    //board_dimensions[0]  = 0.18;
-    //board_dimensions[1]  = 0.14;
-    //board_dimensions[2]  = 0.1;
     {
         board_dimensions[0] = 0.14;
         board_dimensions[1] = 0.12;
         board_dimensions[2] = 0.01;
-        //double stiffnes = 1000;
-        //double damping = 20;
+
         double friction = 0.5;
 
         double pose[7]{
             - 0.01 + board_dimensions[0]/2,  board_dimensions[1]/2,
-            -board_dimensions[2]/2, 0, 0, 0, 1
-        };
+            -board_dimensions[2]/2, 0, 0, 0, 1};
 
         std::vector<double> dim = {
             board_dimensions[0], board_dimensions[1], board_dimensions[2]
@@ -47,10 +39,10 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         board = new BulletVTKObject(
             ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
         );
-//    board->GetActor()->GetProperty()->SetOpacity(0.05);
+        //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.6, 0.5, 0.5);
 
-        dynamicsWorld->addRigidBody(board->GetBody());
+        dynamics_world->addRigidBody(board->GetBody());
         actors.push_back(board->GetActor());
 }
     // -------------------------------------------------------------------------
@@ -62,10 +54,10 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     BulletVTKObject* floor= new BulletVTKObject(
         ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
         floor_dims, dummy_pose, 0.0, NULL);
-    dynamicsWorld->addRigidBody(floor->GetBody());
+    dynamics_world->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
-    // Create cylinders
+    // Create destination rods
     {
         int cols = 4;
         int rows = 1;
@@ -78,26 +70,24 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                 std::vector<double> dim = {0.002, 0.035};
 
                 double pose[7] = {
-                    0.03 + (double) j * 0.028, 0.09, dim[1] / 2, 0, 0.70711
+                    0.02 + (double) j * 0.028, 0.09, dim[1] / 2, 0, 0.70711
                     , 0.70711, 0.0
                 };
 
                 cylinders[i * rows + j] =
                     new BulletVTKObject(
                         ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
-                        0.0, NULL, friction
-                    );
+                        0.0, NULL, friction);
+
                 auto ratio = (float) j / (float) cols;
                 cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
-                    0.9 - 0.3 * ratio, 0.4, 0.4 + 0.4 * ratio
-                );
-                cylinders[i * rows + j]->GetActor()->GetProperty()->SetSpecular(
-                    0.8
-                );
-                cylinders[i * rows
-                    + j]->GetActor()->GetProperty()->SetSpecularPower(50);
+                    0.9 - 0.3 * ratio, 0.4, 0.4 + 0.4 * ratio);
+                cylinders[i*rows+j]->GetActor()->GetProperty()
+                                   ->SetSpecular(0.8);
+                cylinders[i*rows+j]->GetActor()->GetProperty()
+                    ->SetSpecularPower(50);
 
-                dynamicsWorld->addRigidBody(cylinders[i * rows + j]->GetBody());
+                dynamics_world->addRigidBody(cylinders[i * rows + j]->GetBody());
                 actors.push_back(cylinders[i * rows + j]->GetActor());
 
             }
@@ -108,117 +98,117 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     // ROD
     {
         std::vector<double> rod_dim = {0.002, 0.1};
-        double pose[7] = {0.10, 0.0, 0.03, 0.70711, 0.70711, 0.0, 0.0};
+        double pose[7] = {0.10, 0.03, 0.03, 0.70711, 0.70711, 0.0, 0.0};
 
         BulletVTKObject rod = BulletVTKObject(
             ObjectShape::CYLINDER, ObjectType::DYNAMIC, rod_dim, pose,
             0.0, NULL);
 
-        dynamicsWorld->addRigidBody(rod.GetBody());
+        dynamics_world->addRigidBody(rod.GetBody());
         actors.push_back(rod.GetActor());
         rod.GetActor()->GetProperty()->SetColor(0.3, 0.3, 0.3);
 
     }
     // -------------------------------------------------------------------------
 
-//    rows = 3;
-//    cols = 2;
-//    int layers = 3;
-//    BulletVTKObject* cubes[layers *rows *cols];
-//
-//    double sides = 0.006;
-//    //density = 5; // kg/m3
-//    //stiffnes = 20000;
-//    //damping = 0.9;
-//    //friction = 100.1;
-//
-//    for (int k = 0; k < layers; ++k) {
-//        for (int i = 0; i < rows; ++i) {
-//            for (int j = 0; j < cols; ++j) {
-//
-//                pose = new double[7] {(double)i * 2.2*sides + 0.1,
-//                    (double)j * 2.2*sides  + 0.05,
-//                    (double)k * 4*sides  + 0.05,
-//                    0, 0, 0, 1};
-//
-//                std::vector<double> dim = {sides, sides, sides};
-//                cubes[i*rows+j] = new BulletVTKObject(
-//                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
-//                    NULL, friction
-//                );
-//                delete [] pose;
-//
-//                double ratio = (double)i/4.0;
-//                cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
-//                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
-//
-////                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
-////                        (float) stiffnes, (float) damping);
-//                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
-//                actors.push_back(cubes[i*rows+j]->GetActor());
-//
-//            }
-//        }
-//    }
-
-
     // -------------------------------------------------------------------------
-    //// Create mesh
+    //// Create smallRING meshes
     {
-        std::vector<double> dim; // not used
-        double pose[7]{0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
-        //    BulletVTKObject *mesh;
+        size_t n_rings = 4;
+        BulletVTKObject *rings[n_rings];
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("ring.obj");
+        input_file_dir << mesh_files_dir << std::string("ring_D2cm_D5mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
-        float friction = 2.2;
         float density = 50000;
-        ring_mesh = new
-            BulletVTKObject(
-            ObjectShape::MESH,
-            ObjectType::DYNAMIC, dim, pose, density,
-            &mesh_file_dir_str,
-            friction
-        );
-        dynamicsWorld->addRigidBody(ring_mesh->GetBody());
-        actors.push_back(ring_mesh->GetActor());
-        ring_mesh->GetActor()->GetProperty()->SetColor(.4, 0.2, 0.5);
+        float friction = 5;
+        for (int l = 0; l < n_rings; ++l) {
+
+            double pose[7]{
+                0.06 + (double) l * 0.01, 0.03, 0.03, 0.70711, 0.70711, 0.0, 0.0
+            };
+
+            std::vector<double> dim; // not used
+
+            rings[l] = new
+                BulletVTKObject(
+                ObjectShape::MESH,
+                ObjectType::DYNAMIC, dim, pose, density,
+                &mesh_file_dir_str, friction
+            );
+            dynamics_world->addRigidBody(rings[l]->GetBody());
+            actors.push_back(rings[l]->GetActor());
+            rings[l]->GetActor()->GetProperty()->SetColor(0., 0.5, 0.6);
+
+        }
     }
-    // -------------------------------------------------------------------------
-    //// Create smallRING mesh
+// -------------------------------------------------------------------------
+    // Create kinematic gripper
+    //
+    // The gripper is a 5 link mechanism, link 0 is a base link, 1st and 2nd
+    // are angular jaws (like a scissor) so their orientation is related to
+    // the gripper angle of the master, 3rd and 4th change position along one
+    // axis according to the gripper angle, like a clamp. These last links
+    // are used to generate enough normal force for a stable grasping, since
+    // the scissor type links push the objects outwards.
+    // make sure tu set a high friction coefficient for the objects you want
+    // to grasp.
+    // In addition, make sure you limit the gripper angle so that the user
+    // can't press the object too much. Otherwise the injected energy would
+    // be so high that no friction can compensate it.
+    {
+        float gripper_density = 0; // kg/m3
+        float gripper_friction = 10;
+        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
+        gripper_link_dims =
+            {{0.003, 0.003, 0.005}
+             , {0.004, 0.001, 0.009}
+             , {0.004, 0.001, 0.009}
+             , {0.004, 0.001, 0.007}
+             , {0.004, 0.001, 0.007}};
 
-    size_t n_rings = 4;
-    BulletVTKObject* rings[n_rings];
-    std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("ring_D2cm_D5mm.obj");
-    std::string mesh_file_dir_str = input_file_dir.str();
-    float density = 50000;
 
-    for (int l = 0; l < n_rings; ++l) {
+        for (int i = 0; i < 5; ++i) {
+            right_gripper_links[i] =
+                new BulletVTKObject(
+                    ObjectShape::BOX, ObjectType::KINEMATIC,
+                    gripper_link_dims[i], gripper_pose,
+                    gripper_density,
+                    NULL, gripper_friction
+                );
+            dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
+            actors.push_back(right_gripper_links[i]->GetActor());
+            right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
+            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
+            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
+        }
 
-        double pose[7]{0.07 + (double)l *0.01, 0.0, 0.03, 0.70711,
-            0.70711, 0.0, 0.0};
-
-        std::vector<double> dim; // not used
-
-        rings[l] = new
-            BulletVTKObject(ObjectShape::MESH,
-                            ObjectType::DYNAMIC, dim, pose, density,
-                            &mesh_file_dir_str, 0.5);
-        dynamicsWorld->addRigidBody(rings[l]->GetBody());
-        actors.push_back(rings[l]->GetActor());
-        rings[l]->GetActor()->GetProperty()->SetColor(0., 0.5, 0.6);
+        //for (int i = 0; i < 5; ++i) {
+        //    left_gripper_links[i] =
+        //        new BulletVTKObject(
+        //            ObjectShape::BOX, ObjectType::KINEMATIC,
+        //            gripper_link_dims[i], gripper_pose,
+        //            gripper_density,
+        //            NULL, gripper_friction
+        //        );
+        //    dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
+        //    actors.push_back(left_gripper_links[i]->GetActor());
+        //    left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
+        //    left_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
+        //    left_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
+        //}
 
     }
+
 
     // -------------------------------------------------------------------------
     //// Create hook mesh
     {
         double pose[7]{0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
-        input_file_dir.str("");
+        std::stringstream input_file_dir;
         input_file_dir << mesh_files_dir << std::string("hook.obj");
-        mesh_file_dir_str = input_file_dir.str();
+        std::string mesh_file_dir_str = input_file_dir.str();
         std::vector<double> dim; // not used
+        float density = 50000;
 
         hook_mesh = new
             BulletVTKObject(
@@ -226,7 +216,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
             ObjectType::KINEMATIC, dim, pose, density,
             &mesh_file_dir_str
         );
-        dynamicsWorld->addRigidBody(hook_mesh->GetBody());
+        dynamics_world->addRigidBody(hook_mesh->GetBody());
         actors.push_back(hook_mesh->GetActor());
         hook_mesh->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
     }
@@ -240,7 +230,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         tool_cyl = new BulletVTKObject(
             ObjectShape::CYLINDER, ObjectType::KINEMATIC, dim, pose,
             0.0, NULL);
-        dynamicsWorld->addRigidBody(tool_cyl->GetBody());
+        dynamics_world->addRigidBody(tool_cyl->GetBody());
         actors.push_back(tool_cyl->GetActor());
         tool_cyl->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
     }
@@ -282,8 +272,41 @@ tool_id) {
 //------------------------------------------------------------------------------
 void TaskHook::UpdateActors() {
 
+    //-------------------------------- UPDATE RIGHT GRIPPER
+    KDL::Frame grpr_right_pose = (*tool_current_pose_kdl[0]);
+    // map gripper value to an angle
+    double grip_posit = (*gripper_position[0]);
+    double theta_min=20*M_PI/180;
+    double theta_max=40*M_PI/180;
+    double grip_angle = theta_max*(grip_posit+0.5)/1.55;
+    if(grip_angle<theta_min)
+        grip_angle=theta_min;
+
+    UpdateGripperLinksPose(grpr_right_pose, grip_angle, gripper_link_dims,
+                           right_gripper_links);
+
     //--------------------------------
-    //box
+    //Update the pose of the rod tool
+    //{
+    //    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
+    //    KDL::Frame local_tool_transform;
+    //
+    //    // locally transform the tool if needed
+    //    local_tool_transform.p = KDL::Vector(0.0, 0.0, 0);
+    //    local_tool_transform.M.DoRotX(M_PI / 2);
+    //    tool_pose = tool_pose * local_tool_transform;
+    //
+    //    //KDL::Vector box_posit = tool_pose * KDL::Vector(0.0, 0.0, 0);
+    //
+    //    double x, y, z, w;
+    //    tool_pose.M.GetQuaternion(x, y, z, w);
+    //    double box_pose[7] = {
+    //        tool_pose.p.x(), tool_pose.p.y(), tool_pose.p.z(), x, y, z, w
+    //    };
+    //    tool_cyl->SetKinematicPose(box_pose);
+    //}
+    //--------------------------------
+    //Update the pose of hook
     {
         KDL::Frame tool_pose = (*tool_current_pose_kdl[1]);
         KDL::Frame local_tool_transform;
@@ -302,26 +325,8 @@ void TaskHook::UpdateActors() {
         hook_mesh->SetKinematicPose(box_pose);
 
     }
-    //--------------------------------
-    //box
-    {
-        KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-        KDL::Frame local_tool_transform;
 
-        // locally transform the tool if needed
-        local_tool_transform.p = KDL::Vector(0.0, 0.0, 0);
-        local_tool_transform.M.DoRotX(M_PI/2);
-        tool_pose = tool_pose * local_tool_transform;
 
-        //KDL::Vector box_posit = tool_pose * KDL::Vector(0.0, 0.0, 0);
-
-        double x, y, z, w;
-        tool_pose.M.GetQuaternion(x, y, z, w);
-        double box_pose[7] = {tool_pose.p.x(), tool_pose.p.y(), tool_pose.p.z(),
-            x, y, z, w};
-        tool_cyl->SetKinematicPose(box_pose);
-
-    }
 
     //--------------------------------
     // step the world
@@ -419,12 +424,20 @@ void TaskHook::InitBullet() {
     ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
     solver = new btSequentialImpulseConstraintSolver;
 
-    dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,
+    dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
                                                 overlappingPairCache, solver,
                                                 collisionConfiguration);
 
-    dynamicsWorld->setGravity(btVector3(0, 0, -10));
+    dynamics_world->setGravity(btVector3(0, 0, -10));
 
+    btContactSolverInfo& info = dynamics_world->getSolverInfo();
+    //optionally set the m_splitImpulsePenetrationThreshold (only used when m_splitImpulse  is enabled)
+    //only enable split impulse position correction when the penetration is
+    // deeper than this m_splitImpulsePenetrationThreshold, otherwise use the
+    // regular velocity/position constraint coupling (Baumgarte).
+    info.m_splitImpulsePenetrationThreshold = -0.02f;
+    info.m_numIterations = 15;
+    info.m_solverMode = SOLVER_USE_2_FRICTION_DIRECTIONS;
 
 }
 
@@ -434,65 +447,30 @@ void TaskHook::StepDynamicsWorld() {
     double time_step = (ros::Time::now() - time_last).toSec();
     // check http://bulletphysics.org/mediawiki-1.5.8/index.php/Stepping_The_World
     // simulation seems more realistic when time_step is halved right now!
-    dynamicsWorld->stepSimulation(btScalar(time_step), 60, 1/240.f);
+    dynamics_world->stepSimulation(btScalar(time_step), 60, 1/240.f);
     time_last = ros::Time::now();
-
-//    //print positions of all objects
-//    for (int j = dynamics_world->getNumCollisionObjects() - 1; j >= 0; j--)
-//    {
-//        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[j];
-//        btRigidBody* body_ = btRigidBody::upcast(obj);
-//        btTransform trans;
-//        if (body_ && body_->getMotionState())
-//        {
-//            body_->getMotionState()->getWorldTransform(trans);
-//        }
-//        else
-//        {
-//            trans = obj->getWorldTransform();
-//        }
-//
-//            heights[j] = trans.getOrigin().z();
-//        heights2[j] = actors[j]->GetMatrix()->Element[2][3];
-//    }
-
 }
 
 
 TaskHook::~TaskHook() {
 
     ROS_INFO("Destructing Bullet task: %d",
-             dynamicsWorld->getNumCollisionObjects());
+             dynamics_world->getNumCollisionObjects());
     //remove the rigidbodies from the dynamics world and delete them
-    for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+    for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
     {
-        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];
         btRigidBody* body = btRigidBody::upcast(obj);
         if (body && body->getMotionState())
         {
             delete body->getMotionState();
         }
-        dynamicsWorld->removeCollisionObject(obj);
+        dynamics_world->removeCollisionObject(obj);
         delete obj;
     }
 
-//    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-//        BulletVTKObject* sphere = spheres[j];
-//        spheres[j] = 0;
-//        delete sphere;
-//    }
-//    //delete collision shapes
-////    for (int j = 0; j < collisionShapes.size(); j++)
-//    for (int j = 0; j < 2; j++) // because we use the same collision shape
-//        // for all spheres
-//    {
-//        btCollisionShape* shape = collisionShapes[j];
-//        collisionShapes[j] = 0;
-//        delete shape;
-//    }
-
     //delete dynamics world
-    delete dynamicsWorld;
+    delete dynamics_world;
 
     //delete solver
     delete solver;
@@ -505,8 +483,69 @@ TaskHook::~TaskHook() {
 
     delete collisionConfiguration;
 
-    //next line is optional: it will be cleared by the destructor when the array goes out of scope
-//    collisionShapes.clear();
+
+}
+
+
+void TaskHook::UpdateGripperLinksPose(const KDL::Frame pose,
+                                           const double grip_angle,
+                                           const std::vector<std::vector<double> > gripper_link_dims,
+                                           BulletVTKObject *link_objects[]) {
+    KDL::Frame grpr_links_pose[5];
+
+    //-------------------------------- LINK 0
+    grpr_links_pose[0] = pose;
+    grpr_links_pose[0].p  = grpr_links_pose[0] * KDL::Vector( 0.0 , 0.0,
+                                                              -gripper_link_dims[0][2]/2);
+    double x, y, z, w;
+    pose.M.GetQuaternion(x,y,z,w);
+    double link0_pose[7] = {grpr_links_pose[0].p.x(),
+        grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
+    link_objects[0]->SetKinematicPose(link0_pose);
+
+    //-------------------------------- LINK 1
+    grpr_links_pose[1] = pose;
+    grpr_links_pose[1].M.DoRotX(-grip_angle);
+    grpr_links_pose[1].p =  grpr_links_pose[1] *
+        KDL::Vector( 0.0, 0.0, gripper_link_dims[1][2]/2);
+    grpr_links_pose[1].M.GetQuaternion(x, y, z, w);
+
+    double link2_pose[7] = {grpr_links_pose[1].p.x(),
+        grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
+
+    link_objects[1]->SetKinematicPose(link2_pose);
+
+    //-------------------------------- LINK 2
+    grpr_links_pose[2] = pose;
+    grpr_links_pose[2].M.DoRotX(grip_angle);
+    grpr_links_pose[2].p =  grpr_links_pose[2] *
+        KDL::Vector( 0.0, 0.0, gripper_link_dims[2][2]/2);
+    grpr_links_pose[2].M.GetQuaternion(x, y, z, w);
+
+    double link3_pose[7] = {grpr_links_pose[2].p.x(),
+        grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
+
+    link_objects[2]->SetKinematicPose(link3_pose);
+
+
+    //-------------------------------- LINKS 3 and $
+    for (int i = 3; i < 5; ++i) {
+        // first find the end point of links 1 and 2 and then add half length
+        // of links 3 and 4
+        grpr_links_pose[i] = pose;
+        grpr_links_pose[i].p =
+            grpr_links_pose[i-2] *
+                KDL::Vector(0., 0.,gripper_link_dims[i-2][2]/2)
+                + grpr_links_pose[i].M *
+                    KDL::Vector(0., 0.,gripper_link_dims[i][2]/2);
+
+        grpr_links_pose[i].M.GetQuaternion(x,y,z,w);
+        double link_pose[7] = {grpr_links_pose[i].p.x(),
+            grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
+
+        link_objects[i]->SetKinematicPose(link_pose);
+    }
+
 }
 
 
