@@ -2,7 +2,7 @@
 // Created by nima on 13/06/17.
 //
 
-#include "TaskPegInHole.h"
+#include "TaskNeedle.h"
 
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
@@ -11,7 +11,7 @@
 #define _USE_MATH_DEFINES
 
 
-TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
+TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
@@ -50,7 +50,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
             friction
         );
 //    board->GetActor()->GetProperty()->SetOpacity(0.05);
-        board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
+        board->GetActor()->GetProperty()->SetColor(0.5, 0.3, 0.1);
 
         dynamics_world->addRigidBody(board->GetBody());
         actors.push_back(board->GetActor());
@@ -67,105 +67,106 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
     );
     dynamics_world->addRigidBody(floor->GetBody());
 
-    // -------------------------------------------------------------------------
-    // Create cylinders
-    {
-        uint cols = 4;
-        uint rows = 3;
-        float density = 50000; // kg/m3
-        float friction = 2.2;
-        BulletVTKObject *cylinders[cols * rows];
-        for (int i = 0; i < rows; ++i) {
-
-            for (int j = 0; j < cols; ++j) {
-
-                std::vector<double> dim = {0.003, 0.03};
-
-                double q3 = 0;
-                double q4 = 1;
-                if (j < cols / 2) {
-                    q3 = 0.70711;
-                    q4 = 0.70711;
-                }
-                double pose[7]{
-                    (double) i * 4 * dim[0] + (double) j * dim[0] / 2, 0.06, 0.1
-                        + dim[1] * 1.5 * (double) j, 0, 0, q3, q4
-                };
-
-                cylinders[i * rows + j] =
-                    new BulletVTKObject(
-                        ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
-                        density, NULL, friction
-                    );
-                double ratio = (double) i / 4.0;
-                cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
-                    0.6 - 0.2 * ratio, 0.6 - 0.3 * ratio, 0.7 + 0.3 * ratio
-                );
-                cylinders[i * rows + j]->GetActor()->GetProperty()->SetSpecular(
-                    0.8
-                );
-                cylinders[i * rows
-                    + j]->GetActor()->GetProperty()->SetSpecularPower(50);
-
-                dynamics_world->addRigidBody(
-                    cylinders[i * rows + j]->GetBody());
-                actors.push_back(cylinders[i * rows + j]->GetActor());
-
-            }
-        }
-    }
-    // -------------------------------------------------------------------------
-    // Create cubes
-    {
-        uint rows = 3;
-        uint cols = 2;
-        int layers = 3;
-        BulletVTKObject *cubes[layers * rows * cols];
-
-        double sides = 0.006;
-        float density = 50000; // kg/m3
-        float friction = 12;
-
-        for (int k = 0; k < layers; ++k) {
-            for (int i = 0; i < rows; ++i) {
-                for (int j = 0; j < cols; ++j) {
-
-                    double pose[7]{
-                        (double) i * 2.2 * sides + 0.1, (double) j * 2.2 * sides
-                            + 0.05, (double) k * 4 * sides + 0.05, 0, 0, 0, 1
-                    };
-
-                    std::vector<double> dim = {sides, sides, sides};
-                    cubes[i * rows + j] = new BulletVTKObject(
-                        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose,
-                        density,
-                        NULL, friction
-                    );
-                    double ratio = (double) i / 4.0;
-                    cubes[i * rows + j]->GetActor()->GetProperty()->SetColor(
-                        0.6 + 0.1 * ratio, 0.3 - 0.3 * ratio, 0.7 - 0.3 * ratio
-                    );
-
-                    dynamics_world->addRigidBody(
-                        cubes[i * rows + j]->GetBody());
-                    actors.push_back(cubes[i * rows + j]->GetActor());
-
-                }
-            }
-        }
-    }
+    //// -------------------------------------------------------------------------
+    //// Create cylinders
+    //{
+    //    uint cols = 4;
+    //    uint rows = 3;
+    //    float density = 50000; // kg/m3
+    //    float friction = 2.2;
+    //    BulletVTKObject *cylinders[cols * rows];
+    //    for (int i = 0; i < rows; ++i) {
+    //
+    //        for (int j = 0; j < cols; ++j) {
+    //
+    //            std::vector<double> dim = {0.003, 0.03};
+    //
+    //            double q3 = 0;
+    //            double q4 = 1;
+    //            if (j < cols / 2) {
+    //                q3 = 0.70711;
+    //                q4 = 0.70711;
+    //            }
+    //            double pose[7]{
+    //                (double) i * 4 * dim[0] + (double) j * dim[0] / 2, 0.06, 0.1
+    //                    + dim[1] * 1.5 * (double) j, 0, 0, q3, q4
+    //            };
+    //
+    //            cylinders[i * rows + j] =
+    //                new BulletVTKObject(
+    //                    ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
+    //                    density, NULL, friction
+    //                );
+    //            double ratio = (double) i / 4.0;
+    //            cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
+    //                0.6 - 0.2 * ratio, 0.6 - 0.3 * ratio, 0.7 + 0.3 * ratio
+    //            );
+    //            cylinders[i * rows + j]->GetActor()->GetProperty()->SetSpecular(
+    //                0.8
+    //            );
+    //            cylinders[i * rows
+    //                + j]->GetActor()->GetProperty()->SetSpecularPower(50);
+    //
+    //            dynamics_world->addRigidBody(
+    //                cylinders[i * rows + j]->GetBody());
+    //            actors.push_back(cylinders[i * rows + j]->GetActor());
+    //
+    //        }
+    //    }
+    //}
+    //// -------------------------------------------------------------------------
+    //// Create cubes
+    //{
+    //    uint rows = 3;
+    //    uint cols = 2;
+    //    int layers = 3;
+    //    BulletVTKObject *cubes[layers * rows * cols];
+    //
+    //    double sides = 0.006;
+    //    float density = 50000; // kg/m3
+    //    float friction = 12;
+    //
+    //    for (int k = 0; k < layers; ++k) {
+    //        for (int i = 0; i < rows; ++i) {
+    //            for (int j = 0; j < cols; ++j) {
+    //
+    //                double pose[7]{
+    //                    (double) i * 2.2 * sides + 0.1, (double) j * 2.2 * sides
+    //                        + 0.05, (double) k * 4 * sides + 0.05, 0, 0, 0, 1
+    //                };
+    //
+    //                std::vector<double> dim = {sides, sides, sides};
+    //                cubes[i * rows + j] = new BulletVTKObject(
+    //                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose,
+    //                    density,
+    //                    NULL, friction
+    //                );
+    //                double ratio = (double) i / 4.0;
+    //                cubes[i * rows + j]->GetActor()->GetProperty()->SetColor(
+    //                    0.6 + 0.1 * ratio, 0.3 - 0.3 * ratio, 0.7 - 0.3 * ratio
+    //                );
+    //
+    //                dynamics_world->addRigidBody(
+    //                    cubes[i * rows + j]->GetBody());
+    //                actors.push_back(cubes[i * rows + j]->GetActor());
+    //
+    //            }
+    //        }
+    //    }
+    //}
 
 
     // -------------------------------------------------------------------------
     //// Create needle mesh
     {
-        double pose[7]{0.09, 0.06, 0.08, 0.7, 0, 0.7, 0};
+        double pose[7]{0.04, 0.06, 0.03, 0.7, 0, 0.7, 0};
         std::vector<double> _dim = {0.002};
 
-        float friction = 3;
-        float density = 50000; // kg/m3
+        float friction = 20;
+        float density = 90000; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("needle_L3cm_d2mm.obj");
+        input_file_dir << mesh_files_dir << std::string("needle_L3cm_d3mm_mesh"
+                                                            ".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         needle_mesh = new
@@ -183,15 +184,64 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
 
     // -------------------------------------------------------------------------
+    //// Create suture plane 1 mesh
+    {
+        double pose[7]{0.055, 0.07, 0.02, 0.5, 0.5, 0.5, 0.5};
+        std::vector<double> _dim = {0.002};
+
+        float friction = 3;
+        float density = 0; // kg/m3
+        std::stringstream input_file_dir;
+        input_file_dir << mesh_files_dir << std::string("suture_plane.obj");
+        std::string mesh_file_dir_str = input_file_dir.str();
+
+        BulletVTKObject suture_plane_1(
+            ObjectShape::MESH,
+            ObjectType::DYNAMIC, _dim, pose, density,
+            &mesh_file_dir_str,
+            friction
+        );
+
+        dynamics_world->addRigidBody(suture_plane_1.GetBody());
+        actors.push_back(suture_plane_1.GetActor());
+        suture_plane_1.GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
+    }
+
+    // -------------------------------------------------------------------------
+    //// Create suture plane 1 mesh
+    {
+        double pose[7]{0.08, 0.07, 0.02, 0.5, 0.5, 0.5, 0.5};
+        std::vector<double> _dim = {0.002};
+
+        float friction = 3;
+        float density = 0; // kg/m3
+        std::stringstream input_file_dir;
+        input_file_dir << mesh_files_dir << std::string("suture_plane.obj");
+        std::string mesh_file_dir_str = input_file_dir.str();
+
+        BulletVTKObject suture_plane_2(
+            ObjectShape::MESH,
+            ObjectType::DYNAMIC, _dim, pose, density,
+            &mesh_file_dir_str,
+            friction
+        );
+
+        dynamics_world->addRigidBody(suture_plane_2.GetBody());
+        actors.push_back(suture_plane_2.GetActor());
+        suture_plane_2.GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
+    }
+
+
+    // -------------------------------------------------------------------------
     //// Create ring mesh
     {
-        double pose[7]{0.07, 0.06, 0.08, 0.7, 0, 0.7, 0};
+        double pose[7]{0.07, 0.02, 0.08, 0.7, 0, 0.7, 0};
         std::vector<double> _dim = {0.002};
 
         float friction = 20;
         float density = 50000; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("ring.obj");
+        input_file_dir << mesh_files_dir << std::string("ring_D2cm_d4mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh = new
@@ -285,7 +335,7 @@ TaskPegInHole::TaskPegInHole(const std::string mesh_files_dir,
 
 
 //------------------------------------------------------------------------------
-void TaskPegInHole::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+void TaskNeedle::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                            const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
@@ -293,19 +343,19 @@ void TaskPegInHole::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 }
 
 
-void TaskPegInHole::SetCurrentGripperpositionPointer(double &grip_position, const int
+void TaskNeedle::SetCurrentGripperpositionPointer(double &grip_position, const int
 tool_id) {
     gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
-void TaskPegInHole::UpdateActors() {
+void TaskNeedle::UpdateActors() {
 
     //-------------------------------- UPDATE RIGHT GRIPPER
     KDL::Frame grpr_right_pose = (*tool_current_pose_kdl[0]);
     // map gripper value to an angle
     double grip_posit = (*gripper_position[0]);
-    double theta_min=20*M_PI/180;
+    double theta_min=14*M_PI/180;
     double theta_max=40*M_PI/180;
     double grip_angle = theta_max*(grip_posit+0.5)/1.55;
     if(grip_angle<theta_min)
@@ -333,36 +383,36 @@ void TaskPegInHole::UpdateActors() {
 
 
 //------------------------------------------------------------------------------
-bool TaskPegInHole::IsACParamChanged() {
+bool TaskNeedle::IsACParamChanged() {
     return false;
 }
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters TaskPegInHole::GetACParameters() {
+custom_msgs::ActiveConstraintParameters TaskNeedle::GetACParameters() {
     custom_msgs::ActiveConstraintParameters msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }
 
 
-custom_msgs::TaskState TaskPegInHole::GetTaskStateMsg() {
+custom_msgs::TaskState TaskNeedle::GetTaskStateMsg() {
     custom_msgs::TaskState task_state_msg;
     return task_state_msg;
 }
 
-void TaskPegInHole::ResetTask() {
+void TaskNeedle::ResetTask() {
     ROS_INFO("Resetting the task.");
 
 }
 
-void TaskPegInHole::ResetCurrentAcquisition() {
+void TaskNeedle::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
 
 }
 
 
-void TaskPegInHole::FindAndPublishDesiredToolPose() {
+void TaskNeedle::FindAndPublishDesiredToolPose() {
 
     ros::Publisher pub_desired[2];
 
@@ -403,7 +453,7 @@ void TaskPegInHole::FindAndPublishDesiredToolPose() {
 
 
 
-void TaskPegInHole::InitBullet() {
+void TaskNeedle::InitBullet() {
 
     ///-----initialization_start-----
 
@@ -439,7 +489,7 @@ void TaskPegInHole::InitBullet() {
 }
 
 
-void TaskPegInHole::StepDynamicsWorld() {
+void TaskNeedle::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
     double time_step = (ros::Time::now() - time_last).toSec();
 
@@ -449,7 +499,7 @@ void TaskPegInHole::StepDynamicsWorld() {
 }
 
 
-TaskPegInHole::~TaskPegInHole() {
+TaskNeedle::~TaskNeedle() {
 
     ROS_INFO("Destructing Bullet task: %d",
              dynamics_world->getNumCollisionObjects());
@@ -499,7 +549,7 @@ TaskPegInHole::~TaskPegInHole() {
 //    collisionShapes.clear();
 }
 
-void TaskPegInHole::UpdateGripperLinksPose(const KDL::Frame pose,
+void TaskNeedle::UpdateGripperLinksPose(const KDL::Frame pose,
     const double grip_angle,
     const std::vector<std::vector<double> > gripper_link_dims,
     BulletVTKObject *link_objects[]

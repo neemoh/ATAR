@@ -2,8 +2,8 @@
 // Created by nima on 13/06/17.
 //
 
-#ifndef ATAR_TASKPEGINHOLE_H
-#define ATAR_TASKPEGINHOLE_H
+#ifndef ATAR_TASKNEEDLE_H
+#define ATAR_TASKNEEDLE_H
 
 
 #include "VTKTask.h"
@@ -42,14 +42,14 @@
 
 
 
-class TaskPegInHole : public VTKTask{
+class TaskNeedle : public VTKTask{
 public:
 
-    TaskPegInHole(const std::string mesh_files_dir,
+    TaskNeedle(const std::string mesh_files_dir,
             const bool show_ref_frames, const bool num_tools,
             const bool with_guidance);
 
-    ~TaskPegInHole();
+    ~TaskNeedle();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -133,4 +133,4 @@ private:
 
 };
 
-#endif //ATAR_TASKPEGINHOLE_H
+#endif //ATAR_TASKNEEDLE_H
