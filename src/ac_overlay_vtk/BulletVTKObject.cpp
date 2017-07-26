@@ -285,19 +285,20 @@ BulletVTKObject::BulletVTKObject(
             // the vertices from that instead of reading it again with VTK
             // reader.
 
-            //            // visualize the compund mesh for debug
-            //            size_t last_dot_position = filepath->find_last_of(".");
-            //
-            //                std::string file_name_no_extension = filepath->substr(0,
-            //                                                                     last_dot_position);
-            //
-            //                std::stringstream out_name;
-            //                out_name << file_name_no_extension << "_hacd.obj";
-            //
-            //            reader->SetFileName(out_name.str().c_str());
-
             vtkSmartPointer<vtkOBJReader> reader =
-                    vtkSmartPointer<vtkOBJReader>::New();
+                vtkSmartPointer<vtkOBJReader>::New();
+            //
+            ////            // visualize the compund mesh for debug
+            //size_t last_dot_position = filepath->find_last_of(".");
+            //
+            //std::string file_name_no_extension = filepath->substr(0,
+            //                                                      last_dot_position);
+            //
+            //std::stringstream out_name;
+            //out_name << file_name_no_extension << "_hacd.obj";
+            //
+            //reader->SetFileName(out_name.str().c_str());
+
             reader->SetFileName(filepath->c_str());
 
             reader->Update();
