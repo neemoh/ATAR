@@ -11,13 +11,12 @@
 #include "TaskDeformable.h"
 #include "TaskBulletTest.h"
 #include "ControlEvents.h"
-#include "TaskPegInHole.h"
+#include "TaskNeedle.h"
 #include "TaskHook.h"
 
 // -----------------------------------------------------------------------------
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
-        : n(node_name), running_task_id
-        (0), task_ptr(NULL)
+        : n(node_name), running_task_id(0), task_ptr(NULL)
 {
 
     // assign the callback functions
@@ -55,10 +54,12 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 
     if (n.getParam("mesh_files_dir", mesh_files_dir)) {
         ROS_INFO("stl files will be loaded from: %s", mesh_files_dir.c_str());
-    } else
+    } else {
         ROS_ERROR(
-                "Parameter '%s' is required. ",
-                n.resolveName("mesh_files_dir").c_str());
+            "Parameter '%s' is required. ",
+            n.resolveName("mesh_files_dir").c_str());
+        all_required_params_found = false;
+    }
 
     // ---------------------------- CAM INTRINSICS  ----------------------------
     // ------- load the intrinsic calibration files
@@ -74,13 +75,14 @@ void OverlayROSConfig::SetupROSandGetParameters() {
              << left_cam_name << "_intrinsics.yaml";
         ReadCameraParameters(path.str(), camera_matrix[0],
                              camera_distortion[0]);
-    } else
+    } else {
         ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n.resolveName("left_cam_name").c_str());
-
+            "Parameter '%s' is required. Place the intrinsic calibration "
+                "file of each camera in ~/.ros/camera_info/ named as "
+                "<cam_name>_intrinsics.yaml",
+            n.resolveName("left_cam_name").c_str());
+        all_required_params_found = false;
+    }
     std::string right_cam_name;
     if (n.getParam("right_cam_name", right_cam_name)) {
         std::stringstream path;
@@ -88,13 +90,14 @@ void OverlayROSConfig::SetupROSandGetParameters() {
              << right_cam_name << "_intrinsics.yaml";
         ReadCameraParameters(path.str(), camera_matrix[1],
                              camera_distortion[1]);
-    } else
+    } else {
         ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n.resolveName("right_cam_name").c_str());
-
+            "Parameter '%s' is required. Place the intrinsic calibration "
+                "file of each camera in ~/.ros/camera_info/ named as "
+                "<cam_name>_intrinsics.yaml",
+            n.resolveName("right_cam_name").c_str());
+        all_required_params_found = false;
+    }
 
     // ------------------------------------- IMAGES ----------------------------
     // Left image subscriber
@@ -288,11 +291,12 @@ void OverlayROSConfig::SetupROSandGetParameters() {
                 //make sure translation is null
                 slave_frame_to_world_frame[n_arm].p = KDL::Vector(0.0, 0.0,0.0);
 
-            } else
+            } else {
                 ROS_ERROR("Parameter %s was not found. This is needed in VR "
-                                  "mode.",
+                              "mode.",
                           param_name.str().c_str());
-
+                all_required_params_found = false;
+            }
         }
 
     }
@@ -310,7 +314,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 
 
     if (!all_required_params_found)
-        throw std::runtime_error("ERROR: some required topics are not set");
+        throw std::runtime_error("ERROR: some required parameters are not set");
 }
 
 
@@ -503,8 +507,8 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         );
     }
     else if(task_id ==3){
-        ROS_DEBUG("Starting new TaskPegInHole. ");
-        task_ptr   = new TaskPegInHole(mesh_files_dir, show_reference_frames,
+        ROS_DEBUG("Starting new TaskNeedle. ");
+        task_ptr   = new TaskNeedle(mesh_files_dir, show_reference_frames,
                                        (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==4){

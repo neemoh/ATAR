@@ -223,17 +223,17 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     //// Create rod tool
-    {
-        std::vector<double> dim = {0.0015, 0.04};
-        double pose[7]{0.0, 0.0, 0.0, 0.7, 0, 0.7, 0};
-
-        tool_cyl = new BulletVTKObject(
-            ObjectShape::CYLINDER, ObjectType::KINEMATIC, dim, pose,
-            0.0, NULL);
-        dynamics_world->addRigidBody(tool_cyl->GetBody());
-        actors.push_back(tool_cyl->GetActor());
-        tool_cyl->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
-    }
+    //{
+    //    std::vector<double> dim = {0.0015, 0.04};
+    //    double pose[7]{0.0, 0.0, 0.0, 0.7, 0, 0.7, 0};
+    //
+    //    tool_cyl = new BulletVTKObject(
+    //        ObjectShape::CYLINDER, ObjectType::KINEMATIC, dim, pose,
+    //        0.0, NULL);
+    //    dynamics_world->addRigidBody(tool_cyl->GetBody());
+    //    actors.push_back(tool_cyl->GetActor());
+    //    tool_cyl->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
+    //}
 
 
 
