@@ -15,7 +15,7 @@ Apart from ROS (Tested with Kinetic), this package needs the following libraries
 and the following packages from my github page:
 * custom_conversions
 * custom_msgs
-* ActiveConstraints
+* active_constraints
 
 ## To compile
 First clone the following packages in your ros workspace and compile them:
@@ -26,5 +26,6 @@ git clone https://github.com/neemoh/active_constraints.git
 catkin build
 ```
 
-Next download VTK compile and install it. [TODO] add details about shadows etc
+Next download VTK compile and install it. 
+TODO: add details about shadows etc
 Then download, compile and install the Bullet physics library. Make sure that you compile the Extra VHACD module and that its headers are in your system paths.
