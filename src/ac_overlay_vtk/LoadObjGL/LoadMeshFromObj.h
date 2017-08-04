@@ -17,7 +17,8 @@ std::string LoadFromCachedOrFromObj(
 GLInstanceGraphicsShape* LoadMeshFromObj(const char* relativeFileName, const char* materialPrefixPath);
 
 // added for compound shapes
-btCompoundShape * LoadCompoundMeshFromObj(const std::string relativeFileName);
+btCompoundShape *LoadCompoundMeshFromObj(const std::string relativeFileName,
+                                         const float scaling);
 
 
 #endif //LOAD_MESH_FROM_OBJ_H
