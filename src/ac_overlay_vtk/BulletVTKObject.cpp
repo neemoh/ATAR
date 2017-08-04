@@ -48,7 +48,7 @@ BulletVTKObject::BulletVTKObject(
 
     switch (shape){
 
-        case ObjectShape::STATICPLANE : {
+        case STATICPLANE : {
             // check if we have all the dimensions
             if (dimensions.size() != 4)
                 throw std::runtime_error("BulletVTKObject STATICPLANE "
@@ -67,7 +67,7 @@ BulletVTKObject::BulletVTKObject(
             break;
         }
 
-        case ObjectShape::SPHERE : {
+        case SPHERE : {
             // check if we have all the dimensions
             if (dimensions.size() != 1)
                 throw std::runtime_error("BulletVTKObject SPHERE shape requires "
@@ -94,7 +94,7 @@ BulletVTKObject::BulletVTKObject(
             break;
         }
 // -------------------------------------------------------------------------
-        case ObjectShape::CYLINDER : {
+        case CYLINDER : {
             // check if we have all the dimensions
             if (dimensions.size() != 2)
                 throw std::runtime_error("BulletVTKObject CYLINDER shape requires "
@@ -125,7 +125,7 @@ BulletVTKObject::BulletVTKObject(
             break;
         }
 
-        case ObjectShape::BOX : {
+        case BOX : {
 
             // check if we have all dimensions
             if (dimensions.size() != 3)
@@ -158,7 +158,7 @@ BulletVTKObject::BulletVTKObject(
 
             break;
         }
-        case ObjectShape::CONE : {
+        case CONE : {
 
             // check if we have all dimensions
             if (dimensions.size() != 2)
@@ -191,7 +191,7 @@ BulletVTKObject::BulletVTKObject(
             break;
         }
 
-        case ObjectShape::MESH : {
+        case MESH : {
 
             std::string* filepath = static_cast<std::string*>(data);
             if(!FileExists(filepath->c_str())) {
@@ -201,84 +201,10 @@ BulletVTKObject::BulletVTKObject(
             else
                 ROS_DEBUG("Loading mesh file from: %s", filepath->c_str()) ;
 
-//            DecomposeObj(*filepath);
-
-//            //load our obj mesh
-//            GLInstanceGraphicsShape* glmesh = LoadMeshFromObj(filepath->c_str(), "");
-//            ROS_DEBUG("[INFO] Obj loaded: Extracted %d verticed from obj file "
-//                              "[%s]\n", glmesh->m_numvertices, filepath->c_str());
-//
-//            const GLInstanceVertex& v = glmesh->m_vertices->at(0);
-//            btConvexHullShape* shape = new btConvexHullShape((const btScalar*)(&(v.xyzw[0])),
-//                                                             glmesh->m_numvertices,
-//                                                             sizeof(GLInstanceVertex));
-//
-//            btVector3 localScaling(0.001,0.001,0.001);
-//            shape->setLocalScaling(localScaling);
-////
-//            // option 1
-////            shape->optimizeConvexHull();
-//
-//            // option 2
-//            shape->initializePolyhedralFeatures();
-            collision_shape_ = LoadCompoundMeshFromObj(*filepath);
-            //
-            //btTransform tr;
-            //tr.setIdentity();
-            //btVector3 min, max;
-            //collision_shape_->getAabb(tr, min, max);
-            //std::cout << "before min: " << min.x() << " max: " << max.x() << std::endl;
-
-            btVector3 localScaling(B_DIM_SCALE*0.5f, B_DIM_SCALE*0.5f,
-                                   B_DIM_SCALE*0.5f);
-            //btVector3 localScaling(B_DIM_SCALE, B_DIM_SCALE, B_DIM_SCALE);
-            //btVector3 localScaling(0.5f, 0.5f, 0.5f);
-            collision_shape_->setLocalScaling(localScaling);
+            collision_shape_ = LoadCompoundMeshFromObj(*filepath, B_DIM_SCALE);
 
             // set name
             shape_string = collision_shape_->getName();;
-
-            //btCompoundShape* cs = (btCompoundShape*)collision_shape_;
-            //
-            //for (int i = 0; i <cs->getNumChildShapes(); ++i) {
-            //    btTransform tr = cs->getChildTransform(i);
-            //
-            //    float x = (tr.getOrigin().x()/B_DIM_SCALE);
-            //    float y = (tr.getOrigin().y()/B_DIM_SCALE);
-            //    float z = (tr.getOrigin().z()/B_DIM_SCALE);
-            //    float orig_dist = (float)sqrt(x*x  + y*y + z*z);
-            //    cs->getChildShape(i)->setMargin(0.02);
-            //
-            //    std::cout << i << ": orig_dist "<< orig_dist <<std::endl;
-            //    std::cout << i << ": margin: " << cs->getChildShape(i)
-            //                                        ->getMargin()/B_DIM_SCALE << std::endl;
-            //
-            //}
-
-            //btScalar rad;
-            //btVector3 center;
-            //collision_shape_->getBoundingSphere
-            //        (center, rad );
-            //std::cout << "rad: "<<rad << " center: " << center.x() << ", "
-            // << center.y() << std::endl;
-            //            //shape->setMargin(0.001);
-            //            m_collisionShapes.push_back(shape);
-            //
-            //            btTransform startTransform;
-            //            startTransform.setIdentity();
-            //
-            //            btScalar	mass(1.f);
-            //            bool isDynamic = (mass != 0.f);
-            //            btVector3 localInertia(0,0,0);
-            //            if (isDynamic)
-            //                shape->calculateLocalInertia(mass,localInertia);
-            //
-            //            float color[4] = {1,1,1,1};
-            //            float orn[4] = {0,0,0,1};
-            //            float pos[4] = {0,3,0,0};
-            //            btVector3 position(pos[0],pos[1],pos[2]);
-            //            startTransform.setOrigin(position);
-            //            btRigidBody* body = createRigidBody(mass,startTransform,shape);
 
             // -------------------------------------------------------------------------
             // VTK TODO: We have already read the Mesh object, we should use

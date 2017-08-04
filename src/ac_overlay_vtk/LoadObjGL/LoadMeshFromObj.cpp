@@ -76,7 +76,8 @@ GLInstanceGraphicsShape* LoadMeshFromObj(const char* relativeFileName, const cha
 
 
 
-btCompoundShape* LoadCompoundMeshFromObj(const std::string relativeFileName)
+btCompoundShape *LoadCompoundMeshFromObj(const std::string relativeFileName,
+                                         const float scaling_factor)
 
 {
     // If there is no file with the same name ending with _hacd we need to
@@ -109,8 +110,10 @@ btCompoundShape* LoadCompoundMeshFromObj(const std::string relativeFileName)
                 (const btScalar *) (&(v.xyzw[0])),
                 gfxShape->m_numvertices,
                 sizeof(GLInstanceVertex));
+        btCHshape->setLocalScaling(btVector3(scaling_factor, scaling_factor, scaling_factor));
         btCHshape->initializePolyhedralFeatures();
         btCHshape->optimizeConvexHull();
+        btCHshape->setMargin(0.0001);
 
         //calculate the centroid
         btVector3 centroid(0.0,0.0,0.0);
