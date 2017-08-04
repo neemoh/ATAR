@@ -9,6 +9,8 @@
 #include <LinearMath/btMotionState.h>
 #include <vtkSmartPointer.h>
 #include <vtkActor.h>
+#include <vtkMatrix4x4.h>
+#include <kdl/frames.hpp>
 
 #define B_DIM_SCALE 20.0f
 //==============================================================================
