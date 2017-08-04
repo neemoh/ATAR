@@ -32,7 +32,6 @@ private:
 
     btSoftBody *body_;
     vtkSmartPointer<vtkActor> actor_;
-    BulletVTKMotionState* motion_state_;
     btCollisionShape* collision_shape_;
 
 };

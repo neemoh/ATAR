@@ -12,6 +12,7 @@
 #include <vtkPoints.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkPolyData.h>
+#include <src/ac_overlay_vtk/LoadObjGL/GLInstanceGraphicsShape.h>
 
 
 inline bool FileExists (const std::string& name) {
@@ -32,37 +33,69 @@ BulletVTKSoftObject::BulletVTKSoftObject(btSoftBodyWorldInfo &world_info,
 
 
 
-//    if(!FileExists(mesh_file_dir.c_str())) {
-//        ROS_ERROR("Can't open mesh file: %s", mesh_file_dir.c_str());
-//        throw std::runtime_error("Can't open mesh file.");
-//    }
-//    else
-//        ROS_DEBUG("Loading mesh file from: %s", mesh_file_dir.c_str()) ;
-//
-//    collision_shape_ = LoadCompoundMeshFromObj(mesh_file_dir, B_DIM_SCALE);
-//
-//    // set name
-//    shape_string = collision_shape_->getName();;
+    if(!FileExists(mesh_file_dir.c_str())) {
+        ROS_ERROR("Can't open mesh file: %s", mesh_file_dir.c_str());
+        throw std::runtime_error("Can't open mesh file.");
+    }
+    else
+        ROS_DEBUG("Loading mesh file from: %s", mesh_file_dir.c_str()) ;
+
+    collision_shape_ = LoadCompoundMeshFromObj(mesh_file_dir, B_DIM_SCALE);
+
+    // set name
+    shape_string = collision_shape_->getName();;
+
+//    const btVector3	h=s*0.5;
+//    const btVector3	c[]={	p+h*btVector3(-1,-1,-1),
+//                                p+h*btVector3(+1,-1,-1),
+//                                p+h*btVector3(-1,+1,-1),
+//                                p+h*btVector3(+1,+1,-1),
+//                                p+h*btVector3(-1,-1,+1),
+//                                p+h*btVector3(+1,-1,+1),
+//                                p+h*btVector3(-1,+1,+1),
+//                                p+h*btVector3(+1,+1,+1)};
+//    btSoftBody*		psb=btSoftBodyHelpers::CreateFromConvexHull(pdemo->m_softBodyWorldInfo,c,8);
+//    psb->generateBendingConstraints(2);
+
+    GLInstanceGraphicsShape* gfxShape = LoadMeshFromObj(mesh_file_dir);
+
+    btVector3 v[gfxShape->m_numvertices];
+    for (int i = 0; i < gfxShape->m_numvertices; ++i) {
+        v[i] = btVector3(gfxShape->m_vertices->at(i).xyzw[0]*B_DIM_SCALE,
+                         gfxShape->m_vertices->at(i).xyzw[1]*B_DIM_SCALE,
+                         gfxShape->m_vertices->at(i).xyzw[2]*B_DIM_SCALE);
+    }
+    body_=btSoftBodyHelpers::CreateFromConvexHull(world_info,
+                                                  v,
+                                                  gfxShape->m_numvertices);
+
+//    btSoftBody::Material*	pm=body_->appendMaterial();
+//    pm->m_kLST				=	0.5;
+//    pm->m_flags				-=	btSoftBody::fMaterial::DebugDraw;
+//    body_->generateBendingConstraints(2,pm);
+    body_->generateBendingConstraints(2);
+    body_->m_cfg.piterations	=	2;
+    body_->m_cfg.kDF			=	0.5;
+    body_->m_cfg.collisions	|=	btSoftBody::fCollision::VF_SS;
+    body_->randomizeConstraints();
+
+    btMatrix3x3	m;
+    m.setEulerZYX(1.f, 0.f, 0.f);
+    body_->transform(btTransform(m,
+                                 btVector3(pose[0]*B_DIM_SCALE,
+                                           pose[1]*B_DIM_SCALE,
+                                           pose[2]*B_DIM_SCALE)));
+//    psb->scale(btVector3(6,6,6));
+    body_->setTotalMass(0.1);
 
 
-    body_ = btSoftBodyHelpers::CreateEllipsoid(
-            world_info,
-            btVector3(pose[0]*B_DIM_SCALE,
-                      pose[1]*B_DIM_SCALE,
-                      pose[2]*B_DIM_SCALE),
-            btVector3(0.01f * B_DIM_SCALE,
-                      0.01f * B_DIM_SCALE,
-                      0.01f * B_DIM_SCALE)
-            ,1000);
-    body_->m_cfg.viterations=20;
-    body_->m_cfg.piterations=20;
-    body_->m_cfg.kPR = 100 /B_DIM_SCALE;
-    body_->setTotalDensity(density/(B_DIM_SCALE*B_DIM_SCALE));
+//    body_->m_cfg.viterations=20;
+//    body_->m_cfg.piterations=20;
+//    body_->m_cfg.kPR = 100 /B_DIM_SCALE;
+//    body_->setTotalDensity(density/(B_DIM_SCALE*B_DIM_SCALE));
 //    sb->setMass(0, 0);
     body_->getCollisionShape()->setMargin(0.08);
 //    sb->generateBendingConstraints(3);
-
-
 
 
 

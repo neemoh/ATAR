@@ -117,7 +117,9 @@ private:
     btCollisionDispatcher* dispatcher;
     btSoftBodyRigidBodyCollisionConfiguration* collisionConfiguration;
 
-    BulletVTKSoftObject * soft_o;
+    BulletVTKSoftObject * soft_o0;
+    BulletVTKSoftObject * soft_o1;
+    BulletVTKSoftObject * soft_o2;
 
     ros::Time time_last;
     btSoftBodyWorldInfo *sb_w_info;

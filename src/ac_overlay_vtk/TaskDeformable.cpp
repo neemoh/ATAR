@@ -42,9 +42,9 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     //board_dimensions[2]  = 0.1;
     float attention_center[3] = {0.07, 0.07, 0.04};
 
-    board_dimensions[0]  = 0.04;
-    board_dimensions[1]  = 0.04;
-    board_dimensions[2]  = 0.01;
+    board_dimensions[0]  = 0.1;
+    board_dimensions[1]  = 0.1;
+    board_dimensions[2]  = 0.02;
     double friction = 0.1;
 
     double board_pose[7] = {attention_center[0] ,
@@ -88,12 +88,31 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     float density = 20000;
     float soft_pose[7] = {attention_center[0], attention_center[1],
-                           attention_center[2], 0.0, 0.0, 0.0, 1.0};
+                           attention_center[2]*2, 0.0, 0.0, 0.0, 1.0};
+    std::stringstream input_file_dir;
+    input_file_dir << mesh_files_dir << std::string("sphere.obj");
+    std::string mesh_file_dir_str = input_file_dir.str();
 
-    soft_o = new BulletVTKSoftObject(*sb_w_info, "", soft_pose,
+    soft_o0 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
                                      density, friction);
-    dynamics_world->addSoftBody(soft_o->GetBody());
-    actors.push_back(soft_o->GetActor());
+    dynamics_world->addSoftBody(soft_o0->GetBody());
+    actors.push_back(soft_o0->GetActor());
+
+    soft_pose[0]+=0.03;
+    soft_pose[2]+=0.05;
+    soft_o1 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
+                                     density, friction);
+    dynamics_world->addSoftBody(soft_o1->GetBody());
+    actors.push_back(soft_o1->GetActor());
+
+
+
+    soft_pose[0]-=0.06;
+    soft_pose[2]+=0.05;
+    soft_o2 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
+                                     density, friction);
+    dynamics_world->addSoftBody(soft_o2->GetBody());
+    actors.push_back(soft_o2->GetActor());
 
 
 
@@ -280,7 +299,9 @@ tool_id) {
 //------------------------------------------------------------------------------
 void TaskDeformable::UpdateActors() {
 
-    soft_o->RenderSoftbody();
+    soft_o0->RenderSoftbody();
+    soft_o1->RenderSoftbody();
+    soft_o2->RenderSoftbody();
     //--------------------------------
     //box
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
