@@ -14,6 +14,8 @@
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkMassProperties.h>
 #include <vtkTriangleFilter.h>
+#include <vtkTriangle.h>
+
 #include <iostream>
 #include <sstream>
 #include "BulletVTKObject.h"
@@ -296,13 +298,13 @@ BulletVTKObject::BulletVTKObject(
 //        body_info.m_restitution = (btScalar) restitution;
 //        body_info.m_friction = (btScalar) friction;
 
-        body_ = new btRigidBody(body_info);
+        rigid_body_ = new btRigidBody(body_info);
 
         // set appropriate flags if the body is kinematic
         if (object_type_ == ObjectType::KINEMATIC) {
-            body_->setCollisionFlags(body_->getCollisionFlags() |
+            rigid_body_->setCollisionFlags(rigid_body_->getCollisionFlags() |
                                      btCollisionObject::CF_KINEMATIC_OBJECT);
-            body_->setActivationState(DISABLE_DEACTIVATION);
+            rigid_body_->setActivationState(DISABLE_DEACTIVATION);
         }
 
 //
@@ -313,19 +315,19 @@ BulletVTKObject::BulletVTKObject(
             shape == ObjectShape::CYLINDER ||
             shape == ObjectShape::BOX
             ){
-            body_->setRollingFriction(btScalar(0.001));
-            body_->setSpinningFriction(btScalar(0.001));
+            rigid_body_->setRollingFriction(btScalar(0.001));
+            rigid_body_->setSpinningFriction(btScalar(0.001));
             //            body_->setAnisotropicFriction
             //                    (collision_shape_->getAnisotropicRollingFrictionDirection
             //                            (),btCollisionObject::CF_ANISOTROPIC_ROLLING_FRICTION);
         }
         else if(shape == ObjectShape::SPHERE) {
-            body_->setRollingFriction(btScalar(0.001));
-            body_->setSpinningFriction(btScalar(0.001));
+            rigid_body_->setRollingFriction(btScalar(0.001));
+            rigid_body_->setSpinningFriction(btScalar(0.001));
         }
 
-        body_->setFriction(btScalar(friction));
-        body_->setSpinningFriction(btScalar(0.001));
+        rigid_body_->setFriction(btScalar(friction));
+        rigid_body_->setSpinningFriction(btScalar(0.001));
 
 
         ////set contact parameters
@@ -337,9 +339,9 @@ BulletVTKObject::BulletVTKObject(
         debug_msg << std::string(" shape = ") << shape_string
                   << ", mass = " << bt_mass
                   << ", volume = " << volume
-                  << ", friction = " << body_->getFriction()
-                  << ", Rolling Friction = " << body_->getRollingFriction()
-                  << ", Spinning Friction = " << body_->getSpinningFriction();
+                  << ", friction = " << rigid_body_->getFriction()
+                  << ", Rolling Friction = " << rigid_body_->getRollingFriction()
+                  << ", Spinning Friction = " << rigid_body_->getSpinningFriction();
         ROS_DEBUG("Created BulletVTKObject with properties: %s", debug_msg.str()
                 .c_str());
     }

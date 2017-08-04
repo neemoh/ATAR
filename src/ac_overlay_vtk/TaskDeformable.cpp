@@ -85,20 +85,15 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 //    sb->m_cfg.viterations = 50;
 //    sb->setTotalMass(1);
 
-    sb=btSoftBodyHelpers::CreateEllipsoid(
-        *sb_w_info,
-        btVector3(attention_center[0]*B_DIM_SCALE,
-                  attention_center[1]*B_DIM_SCALE,
-                  attention_center[2]*B_DIM_SCALE),
-        btVector3(l/4,l/4,l/4),1000);
-    sb->m_cfg.viterations=20;
-    sb->m_cfg.piterations=20;
-    sb->m_cfg.kPR = 100 /B_DIM_SCALE;
-    sb->setTotalDensity(20000/(B_DIM_SCALE*B_DIM_SCALE));
-    sb->setMass(0, 0);
-    sb->getCollisionShape()->setMargin(0.08);
-//    sb->generateBendingConstraints(3);
-    dynamics_world->addSoftBody(sb);
+
+    float density = 20000;
+    float soft_pose[7] = {attention_center[0], attention_center[1],
+                           attention_center[2], 0.0, 0.0, 0.0, 1.0};
+
+    soft_o = new BulletVTKSoftObject(*sb_w_info, "", soft_pose,
+                                     density, friction);
+    dynamics_world->addSoftBody(soft_o->GetBody());
+    actors.push_back(soft_o->GetActor());
 
 
 
@@ -264,21 +259,6 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
 
 
-    // Create a polydata object
-    vtkSmartPointer<vtkPolyData> polyData =
-        vtkSmartPointer<vtkPolyData>::New();
-
-
-
-    // Visualize
-    vtkSmartPointer<vtkPolyDataMapper> mapper =
-        vtkSmartPointer<vtkPolyDataMapper>::New();
-
-    mapper->SetInputData(polyData);
-    def_actor = vtkSmartPointer<vtkActor>::New();
-    def_actor->SetMapper(mapper);
-
-    actors.push_back(def_actor);
 
 }
 
@@ -300,7 +280,7 @@ tool_id) {
 //------------------------------------------------------------------------------
 void TaskDeformable::UpdateActors() {
 
-    RenderSoftbody(sb, def_actor);
+    soft_o->RenderSoftbody();
     //--------------------------------
     //box
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
