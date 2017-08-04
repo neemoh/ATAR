@@ -1,5 +1,5 @@
 //
-// Created by nima on 13/06/17.
+// Created by Andrea on 28/07/2017.
 //
 
 #ifndef ATAR_TASKBULLETTEST_H
@@ -73,7 +73,7 @@ public:
     custom_msgs::TaskState GetTaskStateMsg();
 
     // check if the task is finished
-    void EndChecking();
+    void TaskEvaluation();
 
     // resets the number of repetitions and task state;
     void ResetTask();
@@ -99,6 +99,22 @@ public:
 private:
     std::vector<std::array<double, 3> > sphere_positions;
 
+
+    // quidditch task
+    int rings_number = 4;
+    BulletVTKObject* ring[4];
+    BulletVTKObject* hinge_cyl[4];
+    KDL::Vector ideal_position[4];
+    btHingeConstraint * hinges[4];
+    double* offset;
+    int target = 0;
+    std::vector<double> kine_dim = {0.003, 4*0.007};
+
+    //
+
+    custom_msgs::TaskState task_state_msg;
+
+    std::vector<double> kine_pointer_dim;;
     double board_dimensions[3];
     double peg_dimensions[3];
     double sides;
@@ -106,28 +122,24 @@ private:
     double actual_distance;
     double target_distance;
     ros::Time start_pause;
-    BulletVTKObject* kine_box;
-    BulletVTKObject* kine_scoop;
-    BulletVTKObject* kine_cylinder_1;
-    BulletVTKObject* peg4;
-    BulletVTKObject* peg1;
-    BulletVTKObject* peg2;
-    BulletVTKObject* peg3;
-    BulletVTKObject* cubes[4];
-    bool count = 0;
-    double* peg_pose1;
-    double* peg_pose2;
-    double* peg_pose3;
-    double* peg_pose4;
-    double* peg_p1;
-    double* peg_p2;
-    double* peg_p3;
-    double* peg_p4;
-    BulletVTKMotionState* motion_state_;
-    std::vector<double> target_pos;
-    KDL::Vector previous_point;
+    BulletVTKObject* kine_p;
+    float height=0.035;
     btDiscreteDynamicsWorld* dynamicsWorld;
     ros::Time time_last;
+    float threshold=0.5;
+    double color[3];
+    bool start=0;
+    uint8_t rep = 1;
+    double ACP;
+
+    // Timing
+    double time;
+    ros::Time begin;
+
+    bool cond=0;
+
+    KDL::Vector pointer_posit;
+    KDL::Vector distance;
 
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
@@ -145,7 +157,7 @@ private:
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-    double * gripper_position[2];
+    double *gripper_position[2];
 //    vtkSmartPointer<vtkActor>                       d_board_actor;
 //    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
 

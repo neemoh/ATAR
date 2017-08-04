@@ -70,13 +70,13 @@
         <param name="master_2_name" value="$(arg master_2_name)"/>
 
         <!-- AR_mode:
-
          -->
+
         <param name= "AR_mode" value= "false" />
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
         -->
-        <param name= "show_reference_frames" value= "true" />
+        <param name= "show_reference_frames" value= "false" />
         <!-- About stl_files_dir:
         The directory of the stl files -->
         <param name= "mesh_files_dir" value= "$(find atar)/resources/mesh/" />
@@ -129,7 +129,7 @@
         <param name="master_1_name" value="$(arg master_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_2_name" value="$(arg master_2_name)"/>
-        <param name="scaling" value="0.2"/>
+        <param name="scaling" value="0.5"/>
 
     </node>
 

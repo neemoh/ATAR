@@ -1,5 +1,5 @@
 //
-// Created by nima on 13/06/17.
+// Created by Andrea on 28/07/2017.
 //
 
 #include "TaskBulletTest.h"
@@ -7,6 +7,9 @@
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
+
+double Green[3] {0.0, 0.9, 0.03};
+double Yellow[3] {1.0, 1.0, 0.0};
 
 TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
@@ -20,483 +23,108 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
     InitBullet();
 
-
-
-    BulletVTKObject* board;
-    // -----------------------
-    // -------------------------------------------------------------------------
-    // Create a cube for the board
-
-    //board_dimensions[0]  = 0.18;
-    //board_dimensions[1]  = 0.14;
-    //board_dimensions[2]  = 0.1;
-
-    board_dimensions[0]  = 0.48;
-    board_dimensions[1]  = 0.54;
-    board_dimensions[2]  = 0.05;
     double *pose;
-    double density;
-    double stiffnes = 1000;
-    double damping = 20;
+    double density = 120000;
     double friction = 6;
 
-    pose= new double[7] {board_dimensions[0]/2,
-        board_dimensions[1] / 2,
-        0,
-        0, 0, 0, 1};
+    // -------------------------------------------------------------------------
+    // Create static target objects
 
-    std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
-        board_dimensions[2]};
-    board = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
-    );
-    board->GetActor()->GetProperty()->SetOpacity(0.0);
-    board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
+    offset = new double[rings_number] {0.012, 0.01, 0.011, 0.014};
 
-    dynamicsWorld->addRigidBody(board->GetBody());
-    actors.push_back(board->GetActor());
+    std::vector<double> _dim = {1};
 
+    KDL::Rotation rot;
+    rot.DoRotX(M_PI);
+    rot.DoRotZ(-M_PI/180*105);
+    double x, y, z, w;
+    rot.GetQuaternion(x, y, z, w);
+
+    // rotation of the hinges
+    KDL::Rotation rot1;
+    rot1.DoRotZ(M_PI/180*195);
+    double _x, _y, _z, _w;
+    rot1.GetQuaternion(_x, _y, _z, _w);
+
+    KDL::Vector cam_position(0.118884, 0.27565, 0.14583);
+    KDL::Vector focal_point(-0.04443, -0.57915, -0.413638);
+    KDL::Vector direction = (focal_point-cam_position);
+    direction = direction/direction.Norm();
+
+    kine_pointer_dim = {0.002, 0.002};
+
+    for (int i = 0; i<rings_number; i++){
+
+
+        std::stringstream input_file_dir;
+        input_file_dir << mesh_files_dir << std::string("3Dring")
+                       << i+1 <<std::string(".obj");
+        std::string mesh_file_dir_str = input_file_dir.str();
+
+        KDL::Vector ring_pos;
+        ring_pos = cam_position +  ((double)i* 0.05 + 0.16 +
+            sin((double)i*M_PI/3)*(0.05/4))*direction;
+
+        pose = new double[7] {ring_pos.x(),
+            ring_pos.y(),
+            ring_pos.z(),
+            x, y, z, w};
+
+        ideal_position[i].x(pose[0]);
+        ideal_position[i].y(pose[1]);
+        ideal_position[i].z(pose[2]);
+
+        ring[i] = new BulletVTKObject(ObjectShape::MESH,
+                                      ObjectType::DYNAMIC, _dim, pose, density,
+                                      &mesh_file_dir_str, friction);
+        dynamicsWorld->addRigidBody(ring[i]->GetBody());
+        actors.push_back(ring[i]->GetActor());
+        ring[i]->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
+
+
+        const btVector3 btPivotA(0.f, 0.f, -(0.025f+offset[i])*B_DIM_SCALE);
+        btVector3 btAxisA( 1.0f, 0.0f, 0.0f );
+        ring[i]->GetBody()->setRollingFriction(2);
+        ring[i]->GetBody()->setSpinningFriction(2);
+        hinges[i] = new btHingeConstraint( *ring[i]->GetBody(), btPivotA, btAxisA );
+        hinges[i]->enableAngularMotor(true, 0 , 0.00015);
+        dynamicsWorld->addConstraint(hinges[i]);
+
+        // hinge objects
+        pose = new double[7] {ring_pos.x(),
+            ring_pos.y(),
+            ring_pos.z() + 0.025 + offset[i],
+            _x, _y, _z, _w};
+
+        hinge_cyl[i] = new BulletVTKObject(ObjectShape::CYLINDER,
+                                           ObjectType::DYNAMIC,
+                                           kine_pointer_dim, pose, 0.0, NULL,
+                                           friction);
+
+        dynamicsWorld->addRigidBody(hinge_cyl[i]->GetBody());
+        hinge_cyl[i]->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.5);
+        actors.push_back(hinge_cyl[i]->GetActor());
+    }
+
+    ring[target]->GetActor()->GetProperty()->GetColor(color);
+    ring[target]->GetActor()->GetProperty()->SetColor(Yellow);
 
     // -------------------------------------------------------------------------
-    //// Create spheres
-    //int cols = 4;
-    //int rows = 3;
-    //double density = 7000; // kg/m3
-    //stiffnes = 1000;
-    //damping = 0.1;
-    //friction = 0.2;
-    //BulletVTKObject* cylinders[cols*rows];
-    //for (int i = 0; i < rows; ++i) {
-    //
-    //    for (int j = 0; j < cols; ++j) {
-    //
-    //        std::vector<double> dim = {0.005, 0.05};
-    //
-    //        pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
-    //            0.06,
-    //            0.08 + dim[1] *1.5* (double)j,
-    //            0, 0, 0, 1};
-    //
-    //        cylinders[i*rows+j] =
-    //            new BulletVTKObject(ObjectShape::CYLINDER,
-    //                                ObjectType::DYNAMIC, dim, pose, density,
-    //                                NULL, friction, stiffnes, damping
-    //            );
-    //        delete [] pose;
-    //        double ratio = (double)i/4.0;
-    //        cylinders[i*rows+j]->GetActor()->GetProperty()->SetColor(
-    //            0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
-    //        cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-    //        cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
-    //
-    //        dynamics_world->addRigidBody(cylinders[i*rows+j]->GetBody());
-    //        actors.push_back(cylinders[i*rows+j]->GetActor());
-    //
-    //    }
-    //}
+    // Create kinematic pointer
 
-    // -------------------------------------------------------------------------
-//    // Create cubes
-//    rows = 3;
-//    cols = 2;
-//    int layers = 3;
-//    BulletVTKObject* cubes[layers *rows *cols];
-//
-//    double sides = 0.01;
-//    density = 7000; // kg/m3
-//    stiffnes = 1000;
-//    damping = 5.1;
-//    friction = 0.1;
-//
-//    for (int k = 0; k < layers; ++k) {
-//        for (int i = 0; i < rows; ++i) {
-//            for (int j = 0; j < cols; ++j) {
-//
-//                pose = new double[7] {(double)i * 2.2*sides + 0.1,
-//                    (double)j * 2.2*sides  + 0.05,
-//                    (double)k * 4*sides  + 0.01,
-//                    0, 0, 0, 1};
-//
-//                std::vector<double> dim = {sides, sides, 2*sides};
-//                cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
-//                                                      ObjectType::DYNAMIC, dim,
-//                                                      pose, density, NULL,
-//                                                      friction, stiffnes, damping);
-//                delete [] pose;
-//
-//                double ratio = (double)i/4.0;
-//                cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
-//                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
-//
-////                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
-////                        (float) stiffnes, (float) damping);
-//                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
-//                actors.push_back(cubes[i*rows+j]->GetActor());
-//
-//            }
-//        }
-//    }
-
-//    {
-//        std::vector<double> dim = {sides, sides, sides};
-//        cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
-//                                              ObjectType::DYNAMIC, dim,
-//                                              pose, 0.2), stiffnes, damping;
-//
-//    }
-
-    // -------------------------------------------------------------------------
-    //// Create mesh
-    //stiffnes = 1000;
-    //damping= 1;
-    //friction = 1;
-    //
-    //pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
-    //std::vector<double> _dim = {0.002};
-    //BulletVTKObject *mesh;
-    //std::stringstream input_file_dir;
-    //input_file_dir << mesh_files_dir << std::string("monkey.obj");
-    //std::string mesh_file_dir_str = input_file_dir.str();
-    //
-    //mesh = new
-    //    BulletVTKObject(ObjectShape::MESH,
-    //                    ObjectType::DYNAMIC, _dim, pose, 6000,
-    //                    &mesh_file_dir_str,
-    //                    friction);
-    //dynamics_world->addRigidBody(mesh->GetBody());
-    //actors.push_back(mesh->GetActor());
-    //mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
-
-    // -------------------------------------------------------------------------
-    // Create kinematic box
-
-    stiffnes = 1000;
-    damping= 100;
     friction = 50.1;
 
-
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
-    std::vector<double> kine_box_dim = {0.005, 0.005, 0.02};
-    kine_box =
+    kine_pointer_dim = kine_dim;
+    kine_p=
         new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim, pose, 0.0,
+            ObjectShape::CYLINDER, ObjectType::KINEMATIC, kine_pointer_dim, pose,
+            0.0,
             NULL, friction
         );
-    dynamicsWorld->addRigidBody(kine_box->GetBody());
-    kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
-    actors.push_back(kine_box->GetActor());
-
-
-    // -------------------------------------------------------------------------
-    // Create kinematic scoop
-
-    std::vector<double> kine_scoop_dim = {0.02, 0.0002, 0.02};
-    kine_scoop =
-        new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::KINEMATIC, kine_scoop_dim, pose, 10.0,
-            NULL, friction
-        );
-    dynamicsWorld->addRigidBody(kine_scoop->GetBody());
-    actors.push_back(kine_scoop->GetActor());
-    kine_scoop->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
-
-    // -------------------------------------------------------------------------
-    //// Create kinematic cylinder
-    //     std::vector<double> kine_cyl_dim = {0.01, 0.0002};
-    //kine_cylinder_1 =
-    //    new BulletVTKObject(ObjectShape::CYLINDER,
-    //                        ObjectType::KINEMATIC, kine_cyl_dim, pose, 10.0,
-    //                        NULL, friction, stiffnes, damping);
-    //delete [] pose;
-    //dynamics_world->addRigidBody(kine_cylinder_1->GetBody());
-    //actors.push_back(kine_cylinder_1->GetActor());
-    //kine_cylinder_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
-
-
-    // -------------------------------------------------------------------------
-    // Create pegs and spheres
-
-    peg_dimensions[0]  = 0.008;
-    peg_dimensions[1]  = 0.008;
-    peg_dimensions[2]  = 0.008;
-
-    // Set cubic pegs params
-    density = 12;
-    stiffnes = 1000;
-    damping = 20;
-    friction = 100;
-
-    // Set spheric pegs params
-    double stiffnes_sphere = 10;
-    double damping_sphere = 10;
-    double friction_sphere = 0.2;
-
-    if (peg_type==1){
-        // -------------------------------------------------------------------------
-        // Create sphere 1
-
-        peg_pose1 = new double[7]{
-            0.04, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
-        std::vector<double> peg_SPHERE_dimension = {peg_dimensions[0] / 2};
-
-        peg1 = new BulletVTKObject(
-            ObjectShape::SPHERE, ObjectType::DYNAMIC, peg_SPHERE_dimension,
-            peg_pose1, density, NULL, friction_sphere
-        );
-        peg1->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg1->GetBody());
-        actors.push_back(peg1->GetActor());
-
-
-        // -------------------------------------------------------------------------
-        // Create sphere 2
-
-        peg_pose2 = new double[7]{
-            0.08, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
-
-        peg2 = new BulletVTKObject(
-            ObjectShape::SPHERE, ObjectType::DYNAMIC, peg_SPHERE_dimension,
-            peg_pose2, density, NULL, friction_sphere
-        );
-        peg2->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg2->GetBody());
-        actors.push_back(peg2->GetActor());
-
-        // -------------------------------------------------------------------------
-        // Create sphere 3
-
-        peg_pose3 = new double[7]{
-            0.04, 0.08, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
-
-        peg3 = new BulletVTKObject(
-            ObjectShape::SPHERE, ObjectType::DYNAMIC, peg_SPHERE_dimension,
-            peg_pose3, density, NULL, friction_sphere
-        );
-        peg3->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg3->GetBody());
-        actors.push_back(peg3->GetActor());
-
-        // -------------------------------------------------------------------------
-        // Create sphere 4
-
-        peg_pose4 = new double[7]{
-            0.06, 0.06, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
-        peg4 = new BulletVTKObject(
-            ObjectShape::SPHERE, ObjectType::DYNAMIC, peg_SPHERE_dimension,
-            peg_pose4, density, NULL, friction_sphere
-        );
-        peg4->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg4->GetBody());
-        actors.push_back(peg4->GetActor());
-
-    }
-
-    if (peg_type==0) {
-        // -------------------------------------------------------------------------
-        // Create  cubic peg1
-
-        peg_pose1 = new double[7]{
-            0.0, 0.0, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
-        std::vector<double> peg_dim = {
-            peg_dimensions[0], peg_dimensions[1], peg_dimensions[2]
-        };
-        peg1 = new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim, peg_pose1, density,
-            NULL, friction
-        );
-        peg1->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg1->GetBody());
-        actors.push_back(peg1->GetActor());
-
-
-        // -------------------------------------------------------------------------
-        // Create cubic peg2
-
-        peg_pose2 = new double[7]{
-            0.04, 0.0, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
-        peg2 = new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim, peg_pose2, density,
-            NULL, friction
-        );
-        peg2->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg2->GetBody());
-        actors.push_back(peg2->GetActor());
-
-        // -------------------------------------------------------------------------
-        // Create cubic peg3
-
-        peg_pose3 = new double[7]{
-            0.0, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
-        peg3 = new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim, peg_pose3, density,
-            NULL, friction
-        );
-        peg3->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg3->GetBody());
-        actors.push_back(peg3->GetActor());
-
-        // -------------------------------------------------------------------------
-        // Create cubic peg4
-
-        peg_pose4 = new double[7]{
-            0.02, 0.02, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
-        peg4 = new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim, peg_pose4, density,
-            NULL, friction
-        );
-        peg4->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg4->GetBody());
-        actors.push_back(peg4->GetActor());
-    }
-
-    //// Create a ring (mesh object)
-    //
-    //density=10;
-    //stiffnes = 100;
-    //damping= 20;
-    //friction = 10;
-    //
-    //pose = new double[7] {0.05, 0.01,  0,
-    //    0, 0, 0, 1};
-    //std::vector<double> _dim = {0.002};
-    //BulletVTKObject *mesh;
-    //std::stringstream input_file_dir;
-    //
-    ////to change
-    //input_file_dir << mesh_files_dir << std::string("ring.obj");
-    //
-    //
-    //std::string mesh_file_dir_str = input_file_dir.str();
-    //
-    //mesh = new
-    //    BulletVTKObject(ObjectShape::MESH,
-    //                    ObjectType::DYNAMIC, _dim, pose, density,
-    //                    &mesh_file_dir_str,
-    //                    friction, stiffnes, damping);
-    //
-    //dynamics_world->addRigidBody(mesh->GetBody());
-    //actors.push_back(mesh->GetActor());
-    //mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
-
-
-    // -------------------------------------------------------------------------
-    // Create a static target made of cubes
-
-    sides = peg_dimensions[0]+0.002;
-    stiffnes = 1000;
-    damping = 100;
-    friction = 0.51;
-    std::vector<double> dim1 = {sides/2, 3*sides-0.5*sides, 2*sides};
-    std::vector<double> dim2 = {2*sides-0.5*sides, sides/2, 2*sides};
-
-    target_pos = {0.10, 0.13, board_dimensions[2]/2+sides};
-
-    // Create Cube1
-
-    pose = new double[7] {target_pos[0]+sides, target_pos[1], target_pos[2],
-        0, 0, 0, 1};
-
-    cubes[0] = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose, 0.0, NULL, friction
-    );
-    cubes[0]->GetActor()->GetProperty()->SetColor(
-        0.9, 0.4, 0.1);
-    dynamicsWorld->addRigidBody(cubes[0]->GetBody());
-    actors.push_back(cubes[0]->GetActor());
-
-    // Create Cube2
-
-    pose = new double[7] {target_pos[0], target_pos[1]-sides, target_pos[2],
-        0, 0, 0, 1};
-
-    cubes[1] = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose, 0.0, NULL, friction
-    );
-    cubes[1]->GetActor()->GetProperty()->SetColor(
-        0.9, 0.4, 0.1);
-    dynamicsWorld->addRigidBody(cubes[1]->GetBody());
-    actors.push_back(cubes[1]->GetActor());
-
-    // Create Cube3
-
-    pose = new double[7] {target_pos[0], target_pos[1]+sides, target_pos[2],
-        0, 0, 0, 1};
-
-    cubes[2] = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose, 0.0, NULL, friction
-    );
-    cubes[2]->GetActor()->GetProperty()->SetColor(
-        0.9, 0.4, 0.1);
-    dynamicsWorld->addRigidBody(cubes[2]->GetBody());
-    actors.push_back(cubes[2]->GetActor());
-
-    // Create Cube4
-
-    pose = new double[7] {target_pos[0]-sides, target_pos[1], target_pos[2],
-        0, 0, 0, 1};
-
-    cubes[3] = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose, 0.0, NULL, friction
-    );
-    cubes[3]->GetActor()->GetProperty()->SetColor(
-        0.9, 0.4, 0.1);
-    dynamicsWorld->addRigidBody(cubes[3]->GetBody());
-    actors.push_back(cubes[3]->GetActor());
-
-    // -------------------------------------------------------------------------
-    // FRAMES
-    //vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
-    //    vtkSmartPointer<vtkAxesActor>::New();
-    //
-    //task_coordinate_axes->SetXAxisLabelText("");
-    //task_coordinate_axes->SetYAxisLabelText("");
-    //task_coordinate_axes->SetZAxisLabelText("");
-    //task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
-    //task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-    //
-    //
-    //actors.push_back(task_coordinate_axes);
-
-    // compute the euclidean distance between the peg and the target
-    // (this should be the ideal path)
-    //KDL::Vector peg_position(peg_pose[0], peg_pose[1], peg_pose[2]);
-    //KDL::Vector target_position(target_pos[0], target_pos[1], target_pos[2]);
-    //target_distance=(target_position - peg_position).Norm();
-    //previous_point = peg_position;
-
-    ResetTask();
+    dynamicsWorld->addRigidBody(kine_p->GetBody());
+    kine_p->GetActor()->GetProperty()->SetColor(1.0, 0.1, 0.1);
+    actors.push_back(kine_p->GetActor());
 }
 
 
@@ -517,115 +145,145 @@ tool_id) {
 //------------------------------------------------------------------------------
 void TaskBulletTest::UpdateActors() {
 
-    //--------------------------------
-    //box
+    //-----------------POINTER: update position on the upper plane
+
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
 
-    KDL::Vector box_posit = tool_pose * KDL::Vector( -0.0, -0.0, -0.03+0.01);
-
+    pointer_posit = tool_pose * KDL::Vector( -0.0, -0.0, -0.03+0.01);
+    KDL::Rotation rot;
+    rot.DoRotZ(M_PI/180*105);
     double x, y, z, w;
-    tool_pose.M.GetQuaternion(x,y,z,w);
-    double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
-    kine_box->SetKinematicPose(box_pose);
-
-
-    //--------------------------------
-    //scoop
-    double grip_posit = (*gripper_position[0]);
-
-    KDL::Vector gripper_pos = KDL::Vector( -0.0, -0.0, -0.01+0.01); //previously (4 the cylinder) y=(1+grip_posit)* 0.004
-    gripper_pos = tool_pose * gripper_pos;
-
-    double scoop_pose[7] = {
-        gripper_pos[0],
-        gripper_pos[1],
-        gripper_pos[2],
+    rot.GetQuaternion(x, y, z, w);
+    //double x, y, z, w;
+    //tool_pose.M.GetQuaternion(x,y,z,w);
+    double pointer_pose[7] = {pointer_posit[0], pointer_posit[1], pointer_posit[2],
         x,y,z,w};
-    kine_scoop->SetKinematicPose(scoop_pose);
+    kine_p->SetKinematicPose(pointer_pose);
+
+    //-----------------UPDATE right GRIPPER
+
+    // map gripper value to an angle
+    //double grip_posit = (*gripper_position[0]); //belonging to -0.5 - 1.55 interval
+    //
+    //if(grip_posit >threshold) cond=1;
+    //
+    ////if(grip_posit <threshold && cond==1){
+    ////    cond=0;
+    ////}
 
     //--------------------------------
     // step the world
     StepDynamicsWorld();
 
-    //--------------------------------
-    // Check if the task is completed
-    count=1;
-    EndChecking();
+    TaskEvaluation();
 
 }
 
 
 //------------------------------------------------------------------------------
-void TaskBulletTest::EndChecking() {
-    // Check if the pegs are in the correct position.
-    double *peg_position;
-    peg_position = peg1->GetActor()->GetCenter();
-    peg1->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
+void TaskBulletTest::TaskEvaluation() {
 
-    if (count == 1) {
-        // check if the first peg is inside the target or fallen
-        if (peg_position[2] < 0) {
-            out[0] = 1;
+    //// Compute the distance of the target from the ideal value
+    //target_position = ring[random_ring]->GetActor()->GetCenter();
+    //KDL::Vector id_pos;
+    //id_pos.x(target_position[0]);
+    //id_pos.y(target_position[1]);
+    //id_pos.z(target_position[2]);
+    //distance = id_pos - pointer_posit;
+    //double norm_distance = distance.Norm();
 
-        }
-        if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
-            && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
-            && fabs((peg_position[2] - target_pos[2]) <= sides))
-            || out[0] == 1) {
+    // Find the tool coordinates in the target rf
+    vtkMatrix4x4* ring_rf = vtkMatrix4x4::New();
+    ring[target]->GetActor()->GetMatrix(ring_rf);
+    double transf[4];
+    double actual_posit[4] = {pointer_posit[0], pointer_posit[1],
+        pointer_posit[2], 1};
+    ring_rf->Invert();
+    ring_rf->MultiplyPoint(actual_posit, transf);
+    std::cout << "x:" << transf[0] << "y:" << transf[1] << "z:" << transf[2]
+              << std::endl << kine_dim[2]+1 <<
+                                                                      std::endl;
 
-            // the first peg is in the target! the second peg turns green
-            peg2->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
-
-            // check if the second peg is inside the target or fallen
-            peg_position = peg2->GetActor()->GetCenter();
-
-            if (peg_position[2] < 0) {
-                out[1] = 1;
-            }
-            if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
-                && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
-                && fabs(peg_position[2] - target_pos[2]) <= sides)
-                || out[1] == 1) {
-
-                // the second peg is in the target! the third peg turns green
-                peg3->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
-
-                // check if the third peg is inside the target or fallen
-                peg_position = peg3->GetActor()->GetCenter();
-
-                if (peg_position[2] < 0) {
-                    out[2] = 1;
-                }
-                if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
-                    && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
-                    && fabs(peg_position[2] - target_pos[2]) <= sides)
-                    || out[2] == 1) {
-
-                    // the third peg is in the target! the last peg turns green
-                    peg4->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
-
-                    // check if the last peg is inside the target or fallen
-                    peg_position = peg4->GetActor()->GetCenter();
-
-                    if (peg_position[2] < 0) {
-                        out[3] = 1;
-                    }
-                    if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
-                        && fabs(peg_position[1] - target_pos[1])
-                            <= 3 * sides / 2
-                        && fabs(peg_position[2] - target_pos[2]) <= sides)
-                        || out[3] == 1) {
-                        std::cout << "daje regaz final" << std::endl;
-                        ResetTask();
-                    }
-                }
-            }
-        }
+    // Verify if the tool is crossing the target
+    if (transf[1] >= -kine_dim[2]/2 &&
+        pow(transf[0], 2) + pow(transf[2], 2) <= pow(offset[target], 2)){
+        std::cout << "crossing" << std::endl;
+        ring[target]->GetActor()->GetProperty()->SetColor(Green);
+        //if (transf[2] <= 0){
+        //    ring[target]->GetActor()->GetProperty()->SetColor(color);
+        //    target = rand() % (rings_number) + 1;
+        //    ring[target]->GetActor()->GetProperty()->SetColor(Yellow);
+        //}
     }
+    else ring[target]->GetActor()->GetProperty()->SetColor(Yellow);
+    std::cout << "not crossing" << std::endl;
+
+
+    // Update new ring target saving the actual color of the target and
+    // changing the color of the new one
+    //random_ring = rand() % (rings_number) + 1;
+    //ring[random_ring]->GetActor()->GetProperty()->GetColor(color);
+    //ring[random_ring]->GetActor()->GetProperty()->SetColor(Green);
+
+    //// Computing Area of Correct Placement (ACP), i.e. the fraction of the area
+    //// of the pointer superimposed to the target
+    //
+    //// Need to find theta to define the circular sector
+    //double temp_x = board_dimensions[0] / 2 - fabs(distance.x());
+    //double temp_y = board_dimensions[1] / 2 - fabs(distance.y());
+    //
+    //if (temp_x>(-kine_pointer_dim[0]) && temp_y>(-kine_pointer_dim[0])) {
+    //    double chord_length =
+    //        sqrt(
+    //            pow(sqrt(pow(kine_pointer_dim[0], 2.0) - pow(temp_x, 2.0))
+    //                    +temp_y,2.0) +
+    //            pow(sqrt(pow(kine_pointer_dim[0], 2.0) - pow(temp_y, 2.0))
+    //                    +temp_x,2.0));
+    //    double theta =
+    //        2 * asin((chord_length / (2 * kine_pointer_dim[0])));
+    //    std::cout << "theta: " << theta << std::endl;
+    //    // THETA ALWAYS NAN, DON'T KNOW WHY
+    //
+    //    // Composition of Surfaces
+    //    double Asector = kine_pointer_dim[0]*kine_pointer_dim[0]*theta/2;
+    //    double Arectangle = temp_x * temp_y;
+    //    std::cout << "A rect: " << Arectangle << std::endl;
+    //
+    //    double Atriangle1 = temp_x *
+    //        sqrt(pow(kine_pointer_dim[0], 2.0) - pow(temp_x, 2.0)) / 2;
+    //    std::cout << "A triang1: " << Atriangle1 << std::endl;
+    //
+    //    double Atriangle2 = temp_y *
+    //        sqrt(pow(kine_pointer_dim[0], 2.0) - pow(temp_y, 2.0)) / 2;
+    //    std::cout << "A triang2: " << Atriangle2 << std::endl;
+    //
+    //    double Aoverlap = Asector + Arectangle + Atriangle1 + Atriangle2;
+    //    std::cout << "A overlap: " <<Aoverlap << std::endl;
+    //
+    //    // ACP
+    //    ACP = (Aoverlap / (M_PI * pow(kine_pointer_dim[0], 2.0))) * 100;
+    //} else
+    //    ACP = 0;
+    //
+    //// Cycle accessed only when the task begins (after an initial grip of
+    //// start).
+    //// It generates the message at each trial
+    //if (start==1){
+    //    task_state_msg.task_name = "3D Test";
+    //    time = (ros::Time::now() - begin).toSec();
+    //    task_state_msg.time_stamp = time;
+    //    task_state_msg.number_of_repetition=rep;
+    //    rep = rep + uint8_t (1);
+    //    task_state_msg.error_field_1 = norm_distance;
+    //    task_state_msg.task_state = uint8_t (correct);
+    //    task_state_msg.error_field_2 = ACP;
+    //}
+    //// Initialization
+    //start = 1;
+    //begin = ros::Time::now();
+    //
+    //std::cout << task_state_msg << std::endl;
 }
-
-
-
 
 
 //------------------------------------------------------------------------------
@@ -643,46 +301,12 @@ custom_msgs::ActiveConstraintParameters TaskBulletTest::GetACParameters() {
 
 
 custom_msgs::TaskState TaskBulletTest::GetTaskStateMsg() {
-    custom_msgs::TaskState task_state_msg;
     return task_state_msg;
 }
 
 void TaskBulletTest::ResetTask() {
-
-    // save the measurements and the metrics and reset the initial conditions
-    // to start a new repetition of the task
     ROS_INFO("Repetition completed. Resetting the task.");
 
-    // save metrics
-    // DO WE SAVE THE METRICS IN A PARAMETER?
-    // OR DO WE SAVE THEM THROUGH THE NODE REPORTER?
-
-    //// reset
-    count=0;
-
-    for (int i = 0; i < 4; ++i) {
-        out[i]=0;
-    }
-
-    peg1->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose1));
-    motion_state_ = new BulletVTKMotionState(peg_pose1, peg1->GetActor());
-    peg1->GetBody()->setMotionState(motion_state_);
-    peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-    peg2->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose2));
-    motion_state_ = new BulletVTKMotionState(peg_pose2, peg2->GetActor());
-    peg2->GetBody()->setMotionState(motion_state_);
-    peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-    peg3->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose3));
-    motion_state_ = new BulletVTKMotionState(peg_pose3, peg3->GetActor());
-    peg3->GetBody()->setMotionState(motion_state_);
-    peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-    peg4->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose4));
-    motion_state_ = new BulletVTKMotionState(peg_pose4, peg4->GetActor());
-    peg4->GetBody()->setMotionState(motion_state_);
-    peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 }
 
 void TaskBulletTest::ResetCurrentAcquisition() {
@@ -806,6 +430,10 @@ TaskBulletTest::~TaskBulletTest() {
         delete obj;
     }
 
+    for (int j = 0; j < rings_number; ++j) {
+
+        delete hinges[j];
+    }
 //    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
 //        BulletVTKObject* sphere = spheres[j];
 //        spheres[j] = 0;
