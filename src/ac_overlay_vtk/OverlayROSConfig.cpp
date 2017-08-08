@@ -13,6 +13,7 @@
 #include "ControlEvents.h"
 #include "TaskNeedle.h"
 #include "TaskHook.h"
+#include "TaskSteadyHand.h"
 
 // -----------------------------------------------------------------------------
 OverlayROSConfig::OverlayROSConfig(std::string node_name)
@@ -501,7 +502,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
 
         // starting the task
         ROS_DEBUG("Starting new BuzzWireTask task. ");
-        task_ptr   = new TaskBuzzWire(
+        task_ptr   = new TaskSteadyHand(
             mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
             with_guidance, haptic_loop_rate, slave_names, slave_frame_to_world_frame
         );

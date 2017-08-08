@@ -1,9 +1,9 @@
 //
-// Created by Andrea on 28/07/2017.
+// Created by nima on 13/06/17.
 //
 
-#ifndef ATAR_TASKBULLETTEST_H
-#define ATAR_TASKBULLETTEST_H
+#ifndef ATAR_TASKTEST_H
+#define ATAR_TASKTEST_H
 
 
 #include "VTKTask.h"
@@ -42,14 +42,14 @@
 
 
 
-class TaskBulletTest : public VTKTask{
+class TaskTest : public VTKTask{
 public:
 
-    TaskBulletTest(const std::string mesh_files_dir,
+    TaskTest(const std::string mesh_files_dir,
             const bool show_ref_frames, const bool num_tools,
             const bool with_guidance);
 
-    ~TaskBulletTest();
+    ~TaskTest();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -73,7 +73,7 @@ public:
     custom_msgs::TaskState GetTaskStateMsg();
 
     // check if the task is finished
-    void TaskEvaluation();
+    void EndChecking();
 
     // resets the number of repetitions and task state;
     void ResetTask();
@@ -95,76 +95,39 @@ public:
 
     void StepDynamicsWorld();
 
-    void CheckCrossing();
-
-    void ArrowManager();
-
-    void ExitChecking();
-
 
 private:
-
-    std::vector<double> Green_Arrow = {0.3176, 0.6431, 0.3215};
-    std::vector<double> Green = {0.0, 0.9, 0.03};
-    std::vector<double> Yellow = {1.0, 0.702, 0.0};
-    std::vector<double> Blue = {0.2549, 0.4117, 0.8823};
-
     std::vector<std::array<double, 3> > sphere_positions;
 
-    enum class TaskState: uint8_t {Idle, Entry, Exit};
-
-
-    // Positioning task
-    int planes_number = 3;
-    BulletVTKObject* plane[3];
-    std::vector<double> kine_dim;
-    int index = 0;
-    KDL::Vector cam_position;
-    KDL::Vector focal_point;
-    KDL::Vector direction;
-    KDL::Vector movement;
-    double starting_point = 0.5;
-    double count = 0.0;
-    std::vector<std::vector<double>> colors;
-
-
-    // quidditch task
-    BulletVTKObject* hinge_cyl[4];
-    KDL::Vector ideal_position[4];
-    btHingeConstraint * hinges[4];
-    double* radii;
-    int target;
-    BulletVTKObject* arrow;
-    TaskState task_state;
-    KDL::Vector distance;
-    double threshold=0.005;
-    double transf[4];
-    KDL::Vector arrow_posit;
-    double arrow_x, arrow_y, arrow_z, arrow_w;
-    double var;
-    KDL::Rotation rot;
-
-
-    //
-    custom_msgs::TaskState task_state_msg;
+    double board_dimensions[3];
+    double peg_dimensions[3];
+    double sides;
     bool out[4];
-    BulletVTKObject* kine_p;
-    float height=0.035;
+    double actual_distance;
+    double target_distance;
+    ros::Time start_pause;
+    BulletVTKObject* kine_box;
+    BulletVTKObject* kine_scoop;
+    BulletVTKObject* kine_cylinder_1;
+    BulletVTKObject* peg4;
+    BulletVTKObject* peg1;
+    BulletVTKObject* peg2;
+    BulletVTKObject* peg3;
+    BulletVTKObject* cubes[4];
+    bool count = 0;
+    double* peg_pose1;
+    double* peg_pose2;
+    double* peg_pose3;
+    double* peg_pose4;
+    double* peg_p1;
+    double* peg_p2;
+    double* peg_p3;
+    double* peg_p4;
+    BulletVTKMotionState* motion_state_;
+    std::vector<double> target_pos;
+    KDL::Vector previous_point;
     btDiscreteDynamicsWorld* dynamicsWorld;
     ros::Time time_last;
-
-    //Metrics
-    bool cond=0;
-    bool touch=0;
-    // Timing
-    double time;
-    ros::Time begin;
-    float axes_dist=0;
-
-    unsigned char n_rep=1;
-
-
-    KDL::Vector pointer_posit;
 
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
@@ -182,9 +145,13 @@ private:
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-    double *gripper_position[2];
+    double * gripper_position[2];
+//    vtkSmartPointer<vtkActor>                       d_board_actor;
+//    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
+
+    int peg_type=1; // 1 = spheres, 0= cubes
+
+
 };
 
 #endif //ATAR_TASKBULLETt_H
-
-

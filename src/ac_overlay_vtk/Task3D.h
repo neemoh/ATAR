@@ -42,14 +42,14 @@
 
 
 
-class TaskBulletTest : public VTKTask{
+class Task3D : public VTKTask{
 public:
 
-    TaskBulletTest(const std::string mesh_files_dir,
-            const bool show_ref_frames, const bool num_tools,
-            const bool with_guidance);
+    Task3D(const std::string mesh_files_dir,
+                   const bool show_ref_frames, const bool num_tools,
+                   const bool with_guidance);
 
-    ~TaskBulletTest();
+    ~Task3D();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -103,38 +103,22 @@ public:
 
 
 private:
-
-    std::vector<double> Green_Arrow = {0.3176, 0.6431, 0.3215};
-    std::vector<double> Green = {0.0, 0.9, 0.03};
-    std::vector<double> Yellow = {1.0, 0.702, 0.0};
-    std::vector<double> Blue = {0.2549, 0.4117, 0.8823};
-
     std::vector<std::array<double, 3> > sphere_positions;
 
     enum class TaskState: uint8_t {Idle, Entry, Exit};
 
-
-    // Positioning task
-    int planes_number = 3;
-    BulletVTKObject* plane[3];
-    std::vector<double> kine_dim;
-    int index = 0;
-    KDL::Vector cam_position;
-    KDL::Vector focal_point;
-    KDL::Vector direction;
-    KDL::Vector movement;
-    double starting_point = 0.5;
-    double count = 0.0;
-    std::vector<std::vector<double>> colors;
-
-
     // quidditch task
+    int rings_number = 4;
+    BulletVTKObject* ring[4];
     BulletVTKObject* hinge_cyl[4];
     KDL::Vector ideal_position[4];
     btHingeConstraint * hinges[4];
     double* radii;
     int target;
+    std::vector<double> kine_dim;
     BulletVTKObject* arrow;
+    std::vector<std::vector<int>> index;
+    int path = 0;
     TaskState task_state;
     KDL::Vector distance;
     double threshold=0.005;
@@ -143,15 +127,16 @@ private:
     double arrow_x, arrow_y, arrow_z, arrow_w;
     double var;
     KDL::Rotation rot;
-
-
     //
+
+
     custom_msgs::TaskState task_state_msg;
     bool out[4];
     BulletVTKObject* kine_p;
     float height=0.035;
     btDiscreteDynamicsWorld* dynamicsWorld;
     ros::Time time_last;
+    double color[3];
 
     //Metrics
     bool cond=0;

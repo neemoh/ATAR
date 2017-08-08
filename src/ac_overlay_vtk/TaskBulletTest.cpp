@@ -8,8 +8,7 @@
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 
-double Green[3] {0.0, 0.9, 0.03};
-double Yellow[3] {1.0, 1.0, 0.0};
+
 
 TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
@@ -25,106 +24,106 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
     double *pose;
     double density = 120000;
-    double friction = 6;
+    double friction = 0.5;
+    //std::vector<int> first_path = {1, 3, 2, 0};
+    //std::vector<int> second_path = {3, 1, 0, 2};
+    //std::vector<int> third_path = {2, 1, 0, 3};
+    //index.push_back(first_path);
+    //index.push_back(second_path);
+    //index.push_back(third_path);
+    //target = std::rand() % 3;
+    task_state = TaskState::Idle;
+    cam_position = {0.08884, 0.24565, 0.13583};
+    focal_point = {-0.04443, -0.57915, -0.413638};
+    direction = (focal_point-cam_position);
+    direction = direction/direction.Norm();
+    colors.push_back(Green);
+    colors.push_back(Yellow);
+    colors.push_back(Blue);
 
     // -------------------------------------------------------------------------
     // Create static target objects
 
-    offset = new double[rings_number] {0.012, 0.01, 0.011, 0.014};
-
     std::vector<double> _dim = {1};
-
-    KDL::Rotation rot;
-    rot.DoRotX(M_PI);
-    rot.DoRotZ(-M_PI/180*105);
-    double x, y, z, w;
-    rot.GetQuaternion(x, y, z, w);
-
-    // rotation of the hinges
-    KDL::Rotation rot1;
-    rot1.DoRotZ(M_PI/180*195);
-    double _x, _y, _z, _w;
-    rot1.GetQuaternion(_x, _y, _z, _w);
-
-    KDL::Vector cam_position(0.118884, 0.27565, 0.14583);
-    KDL::Vector focal_point(-0.04443, -0.57915, -0.413638);
-    KDL::Vector direction = (focal_point-cam_position);
-    direction = direction/direction.Norm();
-
-    kine_pointer_dim = {0.002, 0.002};
-
-    for (int i = 0; i<rings_number; i++){
-
+    //
+    //rot.DoRotX(M_PI);
+    //rot.DoRotZ(-M_PI/180*105);
+    //double x, y, z, w;
+    //rot.GetQuaternion(x, y, z, w);
+    //
+    for (int i = 0; i < planes_number; i++) {
 
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("3Dring")
-                       << i+1 <<std::string(".obj");
+        input_file_dir << mesh_files_dir << std::string("arrowplane")
+                       << std::string(".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
-        KDL::Vector ring_pos;
-        ring_pos = cam_position +  ((double)i* 0.05 + 0.16 +
-            sin((double)i*M_PI/3)*(0.05/4))*direction;
+        pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
 
-        pose = new double[7] {ring_pos.x(),
-            ring_pos.y(),
-            ring_pos.z(),
-            x, y, z, w};
-
-        ideal_position[i].x(pose[0]);
-        ideal_position[i].y(pose[1]);
-        ideal_position[i].z(pose[2]);
-
-        ring[i] = new BulletVTKObject(ObjectShape::MESH,
-                                      ObjectType::DYNAMIC, _dim, pose, density,
+        plane[i] = new BulletVTKObject(ObjectShape::MESH,
+                                      ObjectType::DYNAMIC, _dim, pose, 0.0,
                                       &mesh_file_dir_str, friction);
-        dynamicsWorld->addRigidBody(ring[i]->GetBody());
-        actors.push_back(ring[i]->GetActor());
-        ring[i]->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
 
-
-        const btVector3 btPivotA(0.f, 0.f, -(0.025f+offset[i])*B_DIM_SCALE);
-        btVector3 btAxisA( 1.0f, 0.0f, 0.0f );
-        ring[i]->GetBody()->setRollingFriction(2);
-        ring[i]->GetBody()->setSpinningFriction(2);
-        hinges[i] = new btHingeConstraint( *ring[i]->GetBody(), btPivotA, btAxisA );
-        hinges[i]->enableAngularMotor(true, 0 , 0.00015);
-        dynamicsWorld->addConstraint(hinges[i]);
-
-        // hinge objects
-        pose = new double[7] {ring_pos.x(),
-            ring_pos.y(),
-            ring_pos.z() + 0.025 + offset[i],
-            _x, _y, _z, _w};
-
-        hinge_cyl[i] = new BulletVTKObject(ObjectShape::CYLINDER,
-                                           ObjectType::DYNAMIC,
-                                           kine_pointer_dim, pose, 0.0, NULL,
-                                           friction);
-
-        dynamicsWorld->addRigidBody(hinge_cyl[i]->GetBody());
-        hinge_cyl[i]->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.5);
-        actors.push_back(hinge_cyl[i]->GetActor());
+        dynamicsWorld->addRigidBody(plane[i]->GetBody());
+        actors.push_back(plane[i]->GetActor());
+        double colour[3] = {colors[i][0], colors[i][1], colors[i][2]};
+        plane[i]->GetActor()->GetProperty()->SetColor(colour);
+        plane[i]->GetActor()->GetProperty()->SetOpacity(0.0);
     }
+    //
+    //// -------------------------------------------------------------------------
+    //// Arrow for Idle
+    //
+    //std::stringstream input_file_dir;
+    //input_file_dir << mesh_files_dir << std::string("arrow")
+    //               <<std::string(".obj");
+    //std::string mesh_file_dir_str = input_file_dir.str();
+    //
+    //rot.DoRotX(-M_PI/2);
+    //rot.GetQuaternion(arrow_x, arrow_y, arrow_z, arrow_w);
+    //
+    //pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
+    //
+    //arrow = new BulletVTKObject(ObjectShape::MESH,
+    //                              ObjectType::DYNAMIC, _dim, pose, 0.0,
+    //                              &mesh_file_dir_str, friction);
+    //
+    //dynamicsWorld->addRigidBody(arrow->GetBody());
+    //actors.push_back(arrow->GetActor());
+    //arrow->GetActor()->GetProperty()->SetColor(Green_Arrow);
+    //arrow->GetActor()->GetProperty()->SetOpacity(1);
 
-    ring[target]->GetActor()->GetProperty()->GetColor(color);
-    ring[target]->GetActor()->GetProperty()->SetColor(Yellow);
 
     // -------------------------------------------------------------------------
     // Create kinematic pointer
 
-    friction = 50.1;
+    friction = 0.1;
 
-    pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
-    kine_pointer_dim = kine_dim;
+    pointer_posit = cam_position + (0.05 + 0.16)*direction;
+    pose = new double[7] {pointer_posit[0], pointer_posit[1], pointer_posit[2],
+    0, 0, 0, 1};
+    kine_dim = {0.005, 4*0.007};
+
+    std::stringstream input_file_dir;
+    input_file_dir << mesh_files_dir << std::string("orientation_arrow")
+                   << std::string(".obj");
+    std::string mesh_file_dir_str = input_file_dir.str();
+
     kine_p=
         new BulletVTKObject(
-            ObjectShape::CYLINDER, ObjectType::KINEMATIC, kine_pointer_dim, pose,
-            0.0,
-            NULL, friction
-        );
+            ObjectShape::MESH, ObjectType::KINEMATIC, kine_dim, pose,
+            0.0, &mesh_file_dir_str, friction);
+
     dynamicsWorld->addRigidBody(kine_p->GetBody());
-    kine_p->GetActor()->GetProperty()->SetColor(1.0, 0.1, 0.1);
+    kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
     actors.push_back(kine_p->GetActor());
+
+    // Direction of movement
+
+    movement =  {pointer_posit[0] - starting_point*direction[0],
+        pointer_posit[1] - starting_point*direction[1],
+        pointer_posit[2] - starting_point*direction[2] + 0.05};
+    movement = movement/movement.Norm();
 }
 
 
@@ -145,144 +144,233 @@ tool_id) {
 //------------------------------------------------------------------------------
 void TaskBulletTest::UpdateActors() {
 
-    //-----------------POINTER: update position on the upper plane
+    //-----------------POINTER: update position
 
-    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-
-    pointer_posit = tool_pose * KDL::Vector( -0.0, -0.0, -0.03+0.01);
-    KDL::Rotation rot;
-    rot.DoRotZ(M_PI/180*105);
-    double x, y, z, w;
-    rot.GetQuaternion(x, y, z, w);
+    // Tool
+    // KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
+    //
+    //KDL::Vector box_posit = tool_pose * KDL::Vector( -0.0, -0.0, -0.03+0.01);
+    //
     //double x, y, z, w;
     //tool_pose.M.GetQuaternion(x,y,z,w);
-    double pointer_pose[7] = {pointer_posit[0], pointer_posit[1], pointer_posit[2],
-        x,y,z,w};
+    //double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
+    //kine_box->SetKinematicPose(box_pose);
+
+
+    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
+    double x, y, z, w;
+    tool_pose.M.GetQuaternion(x, y, z, w);
+    double pointer_pose[7] = {
+        pointer_posit[0], pointer_posit[1], pointer_posit[2], x, y, z, w
+    };
     kine_p->SetKinematicPose(pointer_pose);
 
-    //-----------------UPDATE right GRIPPER
+    // Move the plane towards the user
+    double pose[7] = {
+        pointer_posit[0] + (starting_point - count) * direction[0],
+        pointer_posit[1] + (starting_point - count) * direction[1],
+        pointer_posit[2] + (starting_point - count) * direction[2],
+        0, 0, 0, 1};
 
-    // map gripper value to an angle
-    //double grip_posit = (*gripper_position[0]); //belonging to -0.5 - 1.55 interval
-    //
-    //if(grip_posit >threshold) cond=1;
-    //
-    ////if(grip_posit <threshold && cond==1){
-    ////    cond=0;
-    ////}
+    plane[index]->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(pose));
+    KDL::Vector point = {pointer_pose[0], pointer_pose[1], pointer_pose[2]};
+    KDL::Vector center = {
+        plane[index]->GetActor()->GetCenter()[0]
+        , plane[index]->GetActor()->GetCenter()[1]
+        , plane[index]->GetActor()->GetCenter()[2]
+    };
+
+    int num = index + 1;
+    if (index == 2)
+        num = 0;
+    double _pose[7] = {
+        pose[0] - (point - cam_position).Norm(),
+        pose[1] - (point - cam_position).Norm(),
+        pose[2] - (point - cam_position).Norm(),
+        0, 0, 0, 1
+        };
+    plane[num]->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(_pose));
+    plane[num]->GetActor()->GetProperty()->SetOpacity(1.0);
+    if (dot(direction, center - point) <= 0.0 &&
+        (center - point).Norm() >= (point - cam_position).Norm()) {
+        //plane[index]->GetActor()->GetProperty()->SetOpacity(0.0);
+        index = index + 1;
+        if (index > 2)
+            index = 0;
+        count = 0;
+    }
+    plane[index]->GetActor()->GetProperty()->SetOpacity(1.0);
+    count = count + 0.005;
 
     //--------------------------------
     // step the world
     StepDynamicsWorld();
 
-    TaskEvaluation();
 
+
+
+
+
+    //if (task_state == TaskState::Idle){
+    //    // Manage the position of the arrow
+    //    ArrowManager();
+    //    axes_dist=0;
+    //}
+    //else{
+    //    // Find the tool coordinates in the target rf
+    //    vtkMatrix4x4* ring_rf = vtkMatrix4x4::New();
+    //    ring[index[target][path]]->GetActor()->GetMatrix(ring_rf);
+    //    double actual_posit[4] = {pointer_posit[0], pointer_posit[1],
+    //        pointer_posit[2], 1};
+    //    ring_rf->Invert();
+    //    ring_rf->MultiplyPoint(actual_posit, transf);
+    //
+    //    if (task_state == TaskState::Entry){
+    //        // Verify if the tool is crossing the target
+    //        CheckCrossing();
+    //    }
+    //    else if (task_state == TaskState::Exit){
+    //
+    //        ExitChecking();
+    //    }
+    //
+    //    TaskEvaluation();
+    //
+    //    // Compute the distance between the cylinder axis and the axis
+    //    // orthogonal to the ring and passing through its center
+    //    axes_dist=(float) sqrt(pow(transf[0], 2) + pow(transf[2], 2));
+    //
+    //
+    //    // Verify if the ring is touched
+    //    if (fabs(ring[index[target][path]]->GetActor()->GetCenter()[0] -
+    //        ideal_position[index[target][path]].x()) >= 0.0005){
+    //        touch = 1;
+    //    }
+    //
+    //}
 }
 
 
 //------------------------------------------------------------------------------
+void TaskBulletTest::ArrowManager() {
+
+
+
+
+
+
+    //ring[index[target][path]]->GetActor()->GetProperty()->SetColor(Yellow);
+    //
+    //KDL::Vector shift(0.0, 0.0, -0.03 + 0.005*sin(var));
+    //arrow_posit = rot*shift;
+    //
+    //double* pose;
+    //pose = new double[7]{arrow_posit[0] + ideal_position[index[target][path]].x(),
+    //    arrow_posit[1] + ideal_position[index[target][path]].y(),
+    //    arrow_posit[2] + ideal_position[index[target][path]].z(),
+    //    arrow_x, arrow_y, arrow_z, arrow_w};
+    //var = var + 0.05;
+    //
+    //arrow->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(pose));
+    //
+    //// Check if the arrow has been approached
+    //double* arrow_position;
+    //arrow_position = arrow->GetActor()->GetCenter();
+    //KDL::Vector arrow_pos;
+    //arrow_pos.x(arrow_position[0]);
+    //arrow_pos.y(arrow_position[1]);
+    //arrow_pos.z(arrow_position[2]);
+    //distance = arrow_pos - pointer_posit;
+    //double norm_distance = distance.Norm();
+    //if (norm_distance <= threshold) {
+    //    task_state = TaskState::Entry;
+    //    begin = ros::Time::now();
+    //    arrow->GetActor()->GetProperty()->SetOpacity(0.0);
+    //    var = 0;
+    //}
+}
+
+
+//------------------------------------------------------------------------------
+void TaskBulletTest::CheckCrossing() {
+
+
+
+
+
+
+    //// Verify if the tool is crossing the target
+    //if (transf[1] >= -kine_dim[1]/2){
+    //cond=1;
+    //}
+    //
+    //// Verify if the tool is crossing the target
+    //if (transf[1] >= 0 && transf[1] <= kine_dim[1]/2 &&
+    //    pow(transf[0], 2) + pow(transf[2], 2) <= pow
+    //        (radii[index[target][path]], 2)){
+    //
+    //    ring[index[target][path]]->GetActor()->GetProperty()->SetColor(Green);
+    //    task_state = TaskState::Exit;
+    //    cond=0;
+    //}
+
+}
+
+//------------------------------------------------------------------------------
 void TaskBulletTest::TaskEvaluation() {
 
-    //// Compute the distance of the target from the ideal value
-    //target_position = ring[random_ring]->GetActor()->GetCenter();
-    //KDL::Vector id_pos;
-    //id_pos.x(target_position[0]);
-    //id_pos.y(target_position[1]);
-    //id_pos.z(target_position[2]);
-    //distance = id_pos - pointer_posit;
-    //double norm_distance = distance.Norm();
 
-    // Find the tool coordinates in the target rf
-    vtkMatrix4x4* ring_rf = vtkMatrix4x4::New();
-    ring[target]->GetActor()->GetMatrix(ring_rf);
-    double transf[4];
-    double actual_posit[4] = {pointer_posit[0], pointer_posit[1],
-        pointer_posit[2], 1};
-    ring_rf->Invert();
-    ring_rf->MultiplyPoint(actual_posit, transf);
-    std::cout << "x:" << transf[0] << "y:" << transf[1] << "z:" << transf[2]
-              << std::endl << kine_dim[2]+1 <<
-                                                                      std::endl;
 
-    // Verify if the tool is crossing the target
-    if (transf[1] >= -kine_dim[2]/2 &&
-        pow(transf[0], 2) + pow(transf[2], 2) <= pow(offset[target], 2)){
-        std::cout << "crossing" << std::endl;
-        ring[target]->GetActor()->GetProperty()->SetColor(Green);
-        //if (transf[2] <= 0){
-        //    ring[target]->GetActor()->GetProperty()->SetColor(color);
-        //    target = rand() % (rings_number) + 1;
-        //    ring[target]->GetActor()->GetProperty()->SetColor(Yellow);
+
+
+    //// Populate the task state message
+    //task_state_msg.task_name = "3D Task";
+    //task_state_msg.task_state = (uint8_t)task_state;
+    //task_state_msg.number_of_repetition = n_rep;
+    //
+    //// ******* TO FINISH!!!!!!!!!! *******
+    ////task_state_msg.error_condition=cond;
+    ////task_state_msg.ring_touch=touch;
+    ////************************************
+    //
+    //task_state_msg.error_field_1 = axes_dist;
+    //
+    //time = (ros::Time::now() - begin).toSec();
+    //task_state_msg.time_stamp = time;
+}
+
+//------------------------------------------------------------------------------
+void TaskBulletTest::ExitChecking() {
+
+
+
+
+
+
+        //if (transf[1] >= -kine_dim[1]/2) {
+        //    if (path == 3){
+        //        ring[index[target][path]]->GetActor()->GetProperty()->SetColor
+        //            (Green);
+        //    }
+        //    else {
+        //        ring[index[target][path
+        //            + 1]]->GetActor()->GetProperty()->SetColor(Yellow);
+        //        ring[index[target][path]]->GetActor()->GetProperty()->SetColor(Green);
+        //    }
         //}
-    }
-    else ring[target]->GetActor()->GetProperty()->SetColor(Yellow);
-    std::cout << "not crossing" << std::endl;
-
-
-    // Update new ring target saving the actual color of the target and
-    // changing the color of the new one
-    //random_ring = rand() % (rings_number) + 1;
-    //ring[random_ring]->GetActor()->GetProperty()->GetColor(color);
-    //ring[random_ring]->GetActor()->GetProperty()->SetColor(Green);
-
-    //// Computing Area of Correct Placement (ACP), i.e. the fraction of the area
-    //// of the pointer superimposed to the target
-    //
-    //// Need to find theta to define the circular sector
-    //double temp_x = board_dimensions[0] / 2 - fabs(distance.x());
-    //double temp_y = board_dimensions[1] / 2 - fabs(distance.y());
-    //
-    //if (temp_x>(-kine_pointer_dim[0]) && temp_y>(-kine_pointer_dim[0])) {
-    //    double chord_length =
-    //        sqrt(
-    //            pow(sqrt(pow(kine_pointer_dim[0], 2.0) - pow(temp_x, 2.0))
-    //                    +temp_y,2.0) +
-    //            pow(sqrt(pow(kine_pointer_dim[0], 2.0) - pow(temp_y, 2.0))
-    //                    +temp_x,2.0));
-    //    double theta =
-    //        2 * asin((chord_length / (2 * kine_pointer_dim[0])));
-    //    std::cout << "theta: " << theta << std::endl;
-    //    // THETA ALWAYS NAN, DON'T KNOW WHY
-    //
-    //    // Composition of Surfaces
-    //    double Asector = kine_pointer_dim[0]*kine_pointer_dim[0]*theta/2;
-    //    double Arectangle = temp_x * temp_y;
-    //    std::cout << "A rect: " << Arectangle << std::endl;
-    //
-    //    double Atriangle1 = temp_x *
-    //        sqrt(pow(kine_pointer_dim[0], 2.0) - pow(temp_x, 2.0)) / 2;
-    //    std::cout << "A triang1: " << Atriangle1 << std::endl;
-    //
-    //    double Atriangle2 = temp_y *
-    //        sqrt(pow(kine_pointer_dim[0], 2.0) - pow(temp_y, 2.0)) / 2;
-    //    std::cout << "A triang2: " << Atriangle2 << std::endl;
-    //
-    //    double Aoverlap = Asector + Arectangle + Atriangle1 + Atriangle2;
-    //    std::cout << "A overlap: " <<Aoverlap << std::endl;
-    //
-    //    // ACP
-    //    ACP = (Aoverlap / (M_PI * pow(kine_pointer_dim[0], 2.0))) * 100;
-    //} else
-    //    ACP = 0;
-    //
-    //// Cycle accessed only when the task begins (after an initial grip of
-    //// start).
-    //// It generates the message at each trial
-    //if (start==1){
-    //    task_state_msg.task_name = "3D Test";
-    //    time = (ros::Time::now() - begin).toSec();
-    //    task_state_msg.time_stamp = time;
-    //    task_state_msg.number_of_repetition=rep;
-    //    rep = rep + uint8_t (1);
-    //    task_state_msg.error_field_1 = norm_distance;
-    //    task_state_msg.task_state = uint8_t (correct);
-    //    task_state_msg.error_field_2 = ACP;
-    //}
-    //// Initialization
-    //start = 1;
-    //begin = ros::Time::now();
-    //
-    //std::cout << task_state_msg << std::endl;
+        //if (transf[1] < -kine_dim[1]/2){
+        //    ring[index[target][path]]->GetActor()->GetProperty()->SetColor(1.0, 1.0, 1.0);
+        //    path = path + 1;
+        //    task_state = TaskState::Entry;
+        //    touch = 0;
+        //    if (path > 3){
+        //        target = std::rand() % 3;
+        //        path = 0;
+        //        task_state = TaskState::Idle;
+        //        n_rep=n_rep+(unsigned char)1;
+        //        arrow->GetActor()->GetProperty()->SetOpacity(1);
+        //    }
+        //}
 }
 
 
@@ -430,10 +518,10 @@ TaskBulletTest::~TaskBulletTest() {
         delete obj;
     }
 
-    for (int j = 0; j < rings_number; ++j) {
-
-        delete hinges[j];
-    }
+    //for (int j = 0; j < rings_number; ++j) {
+    //
+    //    delete hinges[j];
+    //}
 //    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
 //        BulletVTKObject* sphere = spheres[j];
 //        spheres[j] = 0;
