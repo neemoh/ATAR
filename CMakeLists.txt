@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(atar)
 
 #set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -295,7 +295,7 @@ add_executable(
         src/ac_overlay_vtk/VTKTask.h
         ${tasks_src}
         ${tasks_h}
-)
+        src/ac_overlay_vtk/BulletVTKSoftObject.cpp src/ac_overlay_vtk/BulletVTKSoftObject.h)
 
 
 target_link_libraries(

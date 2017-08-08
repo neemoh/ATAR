@@ -58,13 +58,14 @@ std::string LoadFromCachedOrFromObj(
 }
 
 
-GLInstanceGraphicsShape* LoadMeshFromObj(const char* relativeFileName, const char* materialPrefixPath)
+GLInstanceGraphicsShape* LoadMeshFromObj(const std::string relativeFileName)
 {
     B3_PROFILE("LoadMeshFromObj");
     std::vector<tinyobj::shape_t> shapes;
     {
         B3_PROFILE("tinyobj::LoadObj2");
-        std::string  err  = LoadFromCachedOrFromObj(shapes, relativeFileName, materialPrefixPath);
+        std::string  err  = LoadFromCachedOrFromObj(shapes, relativeFileName
+                .c_str(), "");
     }
 
     {

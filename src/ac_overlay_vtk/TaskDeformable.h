@@ -33,6 +33,7 @@
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include "BulletVTKMotionState.h"
+#include "BulletVTKSoftObject.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
@@ -44,6 +45,7 @@
 #include <BulletSoftBody/btSoftBodyHelpers.h>
 #include <BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
 
+#include <memory>
 
 
 class TaskDeformable : public VTKTask{
@@ -114,13 +116,15 @@ private:
     btBroadphaseInterface* overlappingPairCache;
     btCollisionDispatcher* dispatcher;
     btSoftBodyRigidBodyCollisionConfiguration* collisionConfiguration;
-    btSoftBody* sb;
+
+    BulletVTKSoftObject * soft_o0;
+    BulletVTKSoftObject * soft_o1;
+    BulletVTKSoftObject * soft_o2;
+
     ros::Time time_last;
     btSoftBodyWorldInfo *sb_w_info;
     // -------------------------------------------------------------------------
     // graphics
-
-    vtkSmartPointer<vtkActor> def_actor;
 
     // for not we use the same type of active constraint for both arms
     custom_msgs::ActiveConstraintParameters ac_parameters;

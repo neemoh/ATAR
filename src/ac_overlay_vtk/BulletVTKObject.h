@@ -11,12 +11,9 @@
 
 // the pose is array for easy initialization, make sure the size is 7 before
 // passing in! {x, y, z, qx, qy, qz, qw}
-// To get statis objects make a dynamic one with sero mass.
+// To get static objects make a dynamic one with sero mass.
 
-// Bullet meshes can only be used as static colliders (terrain for
-// instance), not for dynamic bodies. For that you should either use Convex
-// Hulls and/or basic shapes to create bodies that resemble your mesh to some
-// extent. Please see ConvexDecomposition demo for that.
+// Meshes are decomposed into approximated compound meshes.
 //
 //IMPORTANT NOTE: We were interested in objects with dimensions in the
 //        order of a few millimiters. It turned out that the bullet simulation
@@ -26,7 +23,7 @@
 enum ObjectType {
     NOPHYSICS,  // Just graphics
     DYNAMIC,    // If density==0.0 object is STATIC
-    KINEMATIC   // Set the pose of the object externally
+    KINEMATIC,   // Set the pose of the object externally
 };
 
 enum ObjectShape {
@@ -52,7 +49,7 @@ public:
 
     ~BulletVTKObject();
 
-    btRigidBody* GetBody() { return body_; }
+    btRigidBody* GetBody() { return rigid_body_; }
 
     vtkSmartPointer<vtkActor> GetActor() { return actor_; };
 
@@ -60,9 +57,8 @@ public:
 
 private:
 
-    static uint num_bulletvtk_objects;
     ObjectType object_type_;
-    btRigidBody* body_;
+    btRigidBody* rigid_body_;
     vtkSmartPointer<vtkActor> actor_;
     BulletVTKMotionState* motion_state_;
     btCollisionShape* collision_shape_;
