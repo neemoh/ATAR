@@ -29,16 +29,10 @@ inline bool FileExists (const std::string& name) {
     return (stat (name.c_str(), &buffer) == 0);
 }
 
-BulletVTKObject::BulletVTKObject(
-        ObjectShape shape,
-        ObjectType o_type,
-        std::vector<double> dimensions,
-        double pose[],
-        double density,
-        void *data,
-        double friction
-    )
-        : object_type_(o_type)
+BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
+                                 std::vector<double> dimensions, double pose[],
+                                 double density, const int id, double friction, void *data)
+        : object_type_(o_type), id_(id)
 {
 
 

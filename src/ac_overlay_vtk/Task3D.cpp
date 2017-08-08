@@ -78,9 +78,9 @@ Task3D::Task3D(const std::string mesh_files_dir,
         ideal_position[i].y(pose[1]);
         ideal_position[i].z(pose[2]);
 
-        ring[i] = new BulletVTKObject(ObjectShape::MESH,
-                                      ObjectType::DYNAMIC, _dim, pose, density,
-                                      &mesh_file_dir_str, friction);
+        ring[i] = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                                      _dim, pose, density, 0, friction,
+                                      &mesh_file_dir_str);
 
         dynamicsWorld->addRigidBody(ring[i]->GetBody());
         actors.push_back(ring[i]->GetActor());
@@ -109,7 +109,8 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
         hinge_cyl[i] = new BulletVTKObject(ObjectShape::MESH,
                                            ObjectType::DYNAMIC, _dim, pose, 0.0,
-                                           &mesh_file_dir_hinge_str, friction);
+                                           0, friction,
+                                           &mesh_file_dir_hinge_str);
 
         dynamicsWorld->addRigidBody(hinge_cyl[i]->GetBody());
         hinge_cyl[i]->GetActor()->GetProperty()->SetColor(0.4, 0.4, 0.4);
@@ -129,9 +130,9 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
 
-    arrow = new BulletVTKObject(ObjectShape::MESH,
-                                ObjectType::DYNAMIC, _dim, pose, 0.0,
-                                &mesh_file_dir_str, friction);
+    arrow = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                pose, 0.0, 0, friction,
+                                &mesh_file_dir_str);
 
     dynamicsWorld->addRigidBody(arrow->GetBody());
     actors.push_back(arrow->GetActor());
@@ -147,11 +148,9 @@ Task3D::Task3D(const std::string mesh_files_dir,
     pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     kine_dim = {0.005, 4*0.007};
     kine_p=
-        new BulletVTKObject(
-            ObjectShape::CYLINDER, ObjectType::KINEMATIC, kine_dim, pose,
-            0.0,
-            NULL, friction
-        );
+            new BulletVTKObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC,
+                                kine_dim, pose, 0.0, 0, friction,
+                                NULL);
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
     actors.push_back(kine_p->GetActor());

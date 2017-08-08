@@ -11,6 +11,24 @@
 #define _USE_MATH_DEFINES
 
 
+bool ContactAddedCallbackBullet(btManifoldPoint& cp,const
+btCollisionObjectWrapper* obj1,int id1,int index1,const btCollisionObjectWrapper* obj2,int id2,int index2)
+{
+    auto obj_p1 = (BulletVTKObject*)obj1->getCollisionObject()
+            ->getUserPointer();
+    auto obj_p2 = (BulletVTKObject*)obj2->getCollisionObject()
+            ->getUserPointer();
+
+    if(obj_p1 && obj_p2) {
+        std::cout << "collision!" << obj_p1->GetId() << "  " << obj_p2->GetId()
+                  << "\n";
+        obj_p1->GetActor()->GetProperty()->SetColor(1., 0.0, 0.0);
+        obj_p2->GetActor()->GetProperty()->SetColor(1., 0.0, 0.0);
+    }
+    return false;
+}
+ContactAddedCallback gContactAddedCallback = ContactAddedCallbackBullet;
+
 TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
@@ -45,15 +63,19 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         std::vector<double> dim = {
             board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
-        board = new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL,
-            friction
-        );
+        board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
+                                    pose, 0.0, 0, friction,
+                                    NULL);
 //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.5, 0.3, 0.1);
 
         dynamics_world->addRigidBody(board->GetBody());
         actors.push_back(board->GetActor());
+        board->GetBody()->
+                setCollisionFlags(board->GetBody()->getCollisionFlags() |
+                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+
+        board->GetBody()->setUserPointer(board);
     }
     // -------------------------------------------------------------------------
     // static floor
@@ -61,10 +83,11 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // objects falling too far and mess things up.
     double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject *floor = new BulletVTKObject(
-        ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
-        floor_dims, dummy_pose, 0.0, NULL
-    );
+    BulletVTKObject *floor = new BulletVTKObject(ObjectShape::STATICPLANE,
+                                                 ObjectType::DYNAMIC,
+                                                 floor_dims, dummy_pose, 0.0, 0,
+                                                 0,
+                                                 NULL);
     dynamics_world->addRigidBody(floor->GetBody());
 
     //// -------------------------------------------------------------------------
@@ -170,16 +193,19 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         std::string mesh_file_dir_str = input_file_dir.str();
 
         needle_mesh = new
-            BulletVTKObject(
-            ObjectShape::MESH,
-            ObjectType::DYNAMIC, _dim, pose, density,
-            &mesh_file_dir_str,
-            friction
-        );
+                BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                pose, density, 1, friction,
+                                &mesh_file_dir_str);
 
         dynamics_world->addRigidBody(needle_mesh->GetBody());
         actors.push_back(needle_mesh->GetActor());
         needle_mesh->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
+
+        needle_mesh->GetBody()->
+                setCollisionFlags(needle_mesh->GetBody()->getCollisionFlags() |
+        btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+
+        needle_mesh->GetBody()->setUserPointer(needle_mesh);
     }
 
 
@@ -195,12 +221,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         input_file_dir << mesh_files_dir << std::string("suture_plane.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
-        BulletVTKObject suture_plane_1(
-            ObjectShape::MESH,
-            ObjectType::DYNAMIC, _dim, pose, density,
-            &mesh_file_dir_str,
-            friction
-        );
+        BulletVTKObject suture_plane_1(ObjectShape::MESH, ObjectType::DYNAMIC,
+                                       _dim, pose, density, 0, friction,
+                                       &mesh_file_dir_str);
 
         dynamics_world->addRigidBody(suture_plane_1.GetBody());
         actors.push_back(suture_plane_1.GetActor());
@@ -219,12 +242,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         input_file_dir << mesh_files_dir << std::string("suture_plane.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
-        BulletVTKObject suture_plane_2(
-            ObjectShape::MESH,
-            ObjectType::DYNAMIC, _dim, pose, density,
-            &mesh_file_dir_str,
-            friction
-        );
+        BulletVTKObject suture_plane_2(ObjectShape::MESH, ObjectType::DYNAMIC,
+                                       _dim, pose, density, 0, friction,
+                                       &mesh_file_dir_str);
 
         dynamics_world->addRigidBody(suture_plane_2.GetBody());
         actors.push_back(suture_plane_2.GetActor());
@@ -245,12 +265,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         std::string mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh = new
-            BulletVTKObject(
-            ObjectShape::MESH,
-            ObjectType::DYNAMIC, _dim, pose, density,
-            &mesh_file_dir_str,
-            friction
-        );
+                BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                pose, density, 0, friction,
+                                &mesh_file_dir_str);
 
         dynamics_world->addRigidBody(ring_mesh->GetBody());
         actors.push_back(ring_mesh->GetActor());
@@ -286,12 +303,10 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
 
         for (int i = 0; i < 5; ++i) {
             right_gripper_links[i] =
-                new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::KINEMATIC,
-                    gripper_link_dims[i], gripper_pose,
-                    gripper_density,
-                    NULL, gripper_friction
-                );
+                    new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                                        gripper_link_dims[i], gripper_pose,
+                                        gripper_density, 0, gripper_friction,
+                                        NULL);
             dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
             actors.push_back(right_gripper_links[i]->GetActor());
             right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
@@ -301,12 +316,10 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
 
         for (int i = 0; i < 5; ++i) {
             left_gripper_links[i] =
-                new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::KINEMATIC,
-                    gripper_link_dims[i], gripper_pose,
-                    gripper_density,
-                    NULL, gripper_friction
-                );
+                    new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                                        gripper_link_dims[i], gripper_pose,
+                                        gripper_density, 0, gripper_friction,
+                                        NULL);
             dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
             actors.push_back(left_gripper_links[i]->GetActor());
             left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
@@ -331,6 +344,11 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
 
     actors.push_back(task_coordinate_axes);
 
+
+    // set user pointer for collision detection
+    for (int j = 0; j < dynamics_world->getNumCollisionObjects() - 1; ++j) {
+
+    }
     }
 
 

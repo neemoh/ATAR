@@ -67,9 +67,9 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
     std::vector<double> dim = {
         board_dimensions[0]*3, board_dimensions[1]*3, board_dimensions[2]
     };
-    board = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
-    );
+    board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
+                                pose, 0.0, 0, friction,
+                                NULL);
     board->GetActor()->GetProperty()->SetOpacity(1.0);
     board->GetActor()->GetProperty()->SetColor(0.2549, 0.4117, 0.8823);
 
@@ -113,10 +113,9 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
             };
 
             chessboard[i * rows + j] =
-                new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL,
-                    friction
-                );
+                    new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
+                                        dim, pose, 0.0, 0, friction,
+                                        NULL);
 
             delete[] pose;
 
@@ -150,12 +149,9 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
         pose = new double[7]{0, 0, 0, 0, 0, 0, 1};
         kine_pointer_dim = {2 * 0.0025};
         kine_p =
-            new BulletVTKObject(
-                ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_pointer_dim,
-                pose,
-                0.0,
-                NULL, friction
-            );
+                new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
+                                    kine_pointer_dim, pose, 0.0, 0, friction,
+                                    NULL);
         dynamicsWorld->addRigidBody(kine_p->GetBody());
         kine_p->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
         actors.push_back(kine_p->GetActor());
