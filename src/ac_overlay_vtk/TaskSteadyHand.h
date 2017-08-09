@@ -156,7 +156,7 @@ private:
 //    bool bimanual;
 //    bool with_guidance;
     SHTaskState task_state;
-    std::string stl_files_dir;
+    std::string mesh_files_dir;
     std::string *slave_names;
     KDL::Frame *slave_frame_to_world_frame_tr;
 
@@ -176,17 +176,17 @@ private:
     // -------------------------------------------------------------------------
     // graphics
     double ring_radius;
-    KDL::Vector ring_center[2];
-    KDL::Vector closest_point_to_ring_center[2];
-    KDL::Vector closest_point_to_radial_point[2];
-    KDL::Vector closest_point_to_grip_point[2];
+    KDL::Frame ring_pose;
+    KDL::Vector closest_point_to_center_point;
+    KDL::Vector closest_point_to_y_point;
+    KDL::Vector closest_point_to_x_point;
 
     // the distance between the center of the ring and the closest point on
     // the wire. This is could be slightly different from the error
     // calculated from the difference of the desired pose and the current
     // pose, though not significantly.
-    double position_error_norm[2];
-    double orientation_error_norm[2];
+    double position_error_norm;
+    double orientation_error_norm;
 
 //    bool show_ref_frames;
 
@@ -234,6 +234,7 @@ private:
 
     BulletVTKObject *ring_mesh[2];
     BulletVTKObject *tube_mesh;
+    BulletVTKObject *tube_mesh_thin;
 
     std::vector<std::vector<double>> gripper_link_dims;
     BulletVTKObject* right_gripper_links[5];
