@@ -11,34 +11,18 @@
 #define _USE_MATH_DEFINES
 
 
-bool ContactAddedCallbackBullet(btManifoldPoint& cp,const
-btCollisionObjectWrapper* obj1,int id1,int index1,const btCollisionObjectWrapper* obj2,int id2,int index2)
-{
-    auto obj_p1 = (BulletVTKObject*)obj1->getCollisionObject()
-            ->getUserPointer();
-    auto obj_p2 = (BulletVTKObject*)obj2->getCollisionObject()
-            ->getUserPointer();
 
-    if(obj_p1 && obj_p2) {
-        std::cout << "collision!" << obj_p1->GetId() << "  " << obj_p2->GetId()
-                  << "\n";
-        obj_p1->GetActor()->GetProperty()->SetColor(1., 0.0, 0.0);
-        obj_p2->GetActor()->GetProperty()->SetColor(1., 0.0, 0.0);
-    }
-    return false;
-}
-ContactAddedCallback gContactAddedCallback = ContactAddedCallbackBullet;
 
 TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
-    :
-    VTKTask(show_ref_frames, biman, with_guidance, 0),
-    time_last(ros::Time::now()) {
+        :
+        VTKTask(show_ref_frames, biman, with_guidance, 0),
+        time_last(ros::Time::now()) {
 
     InitBullet();
 
-    BulletVTKObject *board;
+
     // -----------------------
     // -------------------------------------------------------------------------
     // Create a cube for the board
@@ -56,12 +40,12 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         double friction = 0.5;
 
         double pose[7]{
-            board_dimensions[0] / 2.45, board_dimensions[1] / 2.78,
-            -board_dimensions[2] / 2, 0, 0, 0, 1
+                board_dimensions[0] / 2.45, board_dimensions[1] / 2.78,
+                -board_dimensions[2] / 2, 0, 0, 0, 1
         };
 
         std::vector<double> dim = {
-            board_dimensions[0], board_dimensions[1], board_dimensions[2]
+                board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
         board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
                                     pose, 0.0, 0, friction,
@@ -71,9 +55,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
 
         dynamics_world->addRigidBody(board->GetBody());
         actors.push_back(board->GetActor());
-        board->GetBody()->
-                setCollisionFlags(board->GetBody()->getCollisionFlags() |
-                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+//        board->GetBody()->
+//                setCollisionFlags(board->GetBody()->getCollisionFlags() |
+//                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 
         board->GetBody()->setUserPointer(board);
     }
@@ -182,14 +166,14 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     //// Create needle mesh
     {
-        double pose[7]{0.04, 0.06, 0.03, 0.7, 0, 0.7, 0};
+        double pose[7]{0.04, 0.11, 0.03, 0.7, 0, 0.7, 0};
         std::vector<double> _dim = {0.002};
 
         float friction = 20;
         float density = 90000; // kg/m3
         std::stringstream input_file_dir;
         input_file_dir << mesh_files_dir << std::string("needle_L3cm_d3mm_mesh"
-                                                            ".obj");
+                                                                ".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         needle_mesh = new
@@ -201,9 +185,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         actors.push_back(needle_mesh->GetActor());
         needle_mesh->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
 
-        needle_mesh->GetBody()->
-                setCollisionFlags(needle_mesh->GetBody()->getCollisionFlags() |
-        btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+//        needle_mesh->GetBody()->
+//                setCollisionFlags(needle_mesh->GetBody()->getCollisionFlags() |
+//                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 
         needle_mesh->GetBody()->setUserPointer(needle_mesh);
     }
@@ -290,15 +274,15 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // can't press the object too much. Otherwise the injected energy would
     // be so high that no friction can compensate it.
     {
-    float gripper_density = 0; // kg/m3
-    float gripper_friction = 10;
-    double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
-    gripper_link_dims =
-        {{0.003, 0.003, 0.005}
-         , {0.004, 0.001, 0.009}
-         , {0.004, 0.001, 0.009}
-         , {0.004, 0.001, 0.007}
-         , {0.004, 0.001, 0.007}};
+        float gripper_density = 0; // kg/m3
+        float gripper_friction = 10;
+        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
+        gripper_link_dims =
+                {{0.003, 0.003, 0.005},
+                 {0.004, 0.001, 0.009},
+                 {0.004, 0.001, 0.009},
+                 {0.004, 0.001, 0.007},
+                 {0.004, 0.001, 0.007}};
 
 
         for (int i = 0; i < 5; ++i) {
@@ -309,8 +293,11 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                                         NULL);
             dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
             actors.push_back(right_gripper_links[i]->GetActor());
-            right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
-            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
+            right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,
+                                                                        0.7f,
+                                                                        0.7f);
+            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(
+                    50);
             right_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
         }
 
@@ -322,18 +309,20 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                                         NULL);
             dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
             actors.push_back(left_gripper_links[i]->GetActor());
-            left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
-            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
+            left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,
+                                                                       0.7f,
+                                                                       0.7f);
+            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(
+                    50);
             left_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
         }
 
     }
 
-
     // -------------------------------------------------------------------------
     // FRAMES
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
-        vtkSmartPointer<vtkAxesActor>::New();
+            vtkSmartPointer<vtkAxesActor>::New();
 
     task_coordinate_axes->SetXAxisLabelText("");
     task_coordinate_axes->SetYAxisLabelText("");
@@ -341,15 +330,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
-
     actors.push_back(task_coordinate_axes);
 
-
-    // set user pointer for collision detection
-    for (int j = 0; j < dynamics_world->getNumCollisionObjects() - 1; ++j) {
-
-    }
-    }
+}
 
 
 //------------------------------------------------------------------------------
@@ -368,6 +351,11 @@ tool_id) {
 
 //------------------------------------------------------------------------------
 void TaskNeedle::UpdateActors() {
+//    MyContactResultCallback result;
+//    dynamics_world->contactPairTest(needle_mesh->GetBody(),
+//                                    board->GetBody(),
+//                                    result);
+//    std::cout << "in " << result.connected << std::endl;
 
     //-------------------------------- UPDATE RIGHT GRIPPER
     KDL::Frame grpr_right_pose = (*tool_current_pose_kdl[0]);
@@ -436,10 +424,10 @@ void TaskNeedle::FindAndPublishDesiredToolPose() {
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                             ("/PSM1/tool_pose_desired", 10);
+            ("/PSM1/tool_pose_desired", 10);
     if(bimanual)
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                 ("/PSM2/tool_pose_desired", 10);
+                ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(200);
 
@@ -489,8 +477,8 @@ void TaskNeedle::InitBullet() {
 
 
     dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
-                                                overlappingPairCache, solver,
-                                                collisionConfiguration);
+                                                 overlappingPairCache, solver,
+                                                 collisionConfiguration);
 
     dynamics_world->setGravity(btVector3(0, 0, -10));
 
@@ -568,9 +556,9 @@ TaskNeedle::~TaskNeedle() {
 }
 
 void TaskNeedle::UpdateGripperLinksPose(const KDL::Frame pose,
-    const double grip_angle,
-    const std::vector<std::vector<double> > gripper_link_dims,
-    BulletVTKObject *link_objects[]
+                                        const double grip_angle,
+                                        const std::vector<std::vector<double> > gripper_link_dims,
+                                        BulletVTKObject *link_objects[]
 ) {
     KDL::Frame grpr_links_pose[5];
 
@@ -581,18 +569,18 @@ void TaskNeedle::UpdateGripperLinksPose(const KDL::Frame pose,
     double x, y, z, w;
     pose.M.GetQuaternion(x,y,z,w);
     double link0_pose[7] = {grpr_links_pose[0].p.x(),
-        grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
+                            grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
     link_objects[0]->SetKinematicPose(link0_pose);
 
     //-------------------------------- LINK 1
     grpr_links_pose[1] = pose;
     grpr_links_pose[1].M.DoRotX(-grip_angle);
     grpr_links_pose[1].p =  grpr_links_pose[1] *
-        KDL::Vector( 0.0, 0.0, gripper_link_dims[1][2]/2);
+                            KDL::Vector( 0.0, 0.0, gripper_link_dims[1][2]/2);
     grpr_links_pose[1].M.GetQuaternion(x, y, z, w);
 
     double link2_pose[7] = {grpr_links_pose[1].p.x(),
-        grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
+                            grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
 
     link_objects[1]->SetKinematicPose(link2_pose);
 
@@ -600,11 +588,11 @@ void TaskNeedle::UpdateGripperLinksPose(const KDL::Frame pose,
     grpr_links_pose[2] = pose;
     grpr_links_pose[2].M.DoRotX(grip_angle);
     grpr_links_pose[2].p =  grpr_links_pose[2] *
-        KDL::Vector( 0.0, 0.0, gripper_link_dims[2][2]/2);
+                            KDL::Vector( 0.0, 0.0, gripper_link_dims[2][2]/2);
     grpr_links_pose[2].M.GetQuaternion(x, y, z, w);
 
     double link3_pose[7] = {grpr_links_pose[2].p.x(),
-        grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
+                            grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
 
     link_objects[2]->SetKinematicPose(link3_pose);
 
@@ -615,14 +603,14 @@ void TaskNeedle::UpdateGripperLinksPose(const KDL::Frame pose,
         // of links 3 and 4
         grpr_links_pose[i] = pose;
         grpr_links_pose[i].p =
-            grpr_links_pose[i-2] *
+                grpr_links_pose[i-2] *
                 KDL::Vector(0., 0.,gripper_link_dims[i-2][2]/2)
                 + grpr_links_pose[i].M *
-                    KDL::Vector(0., 0.,gripper_link_dims[i][2]/2);
+                  KDL::Vector(0., 0.,gripper_link_dims[i][2]/2);
 
         grpr_links_pose[i].M.GetQuaternion(x,y,z,w);
         double link_pose[7] = {grpr_links_pose[i].p.x(),
-            grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
+                               grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
 
         link_objects[i]->SetKinematicPose(link_pose);
     }
