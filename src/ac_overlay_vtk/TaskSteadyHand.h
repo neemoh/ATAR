@@ -239,6 +239,8 @@ private:
     BulletVTKObject* right_gripper_links[5];
     BulletVTKObject* left_gripper_links[5];
     BulletVTKObject* supporting_cylinder;
+    BulletVTKObject* arm[2];
+    KDL::Vector rcm[2];
 
     double * gripper_position[2];
 

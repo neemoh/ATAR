@@ -489,13 +489,14 @@ TaskSteadyHand::TaskSteadyHand(
              , {0.002, 0.002, 0.005}};
 
         for (int i = 0; i < 5; ++i) {
-            right_gripper_links[i] =
-                new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::KINEMATIC,
-                    gripper_link_dims[i], gripper_pose,
-                    gripper_density,
-                    NULL, gripper_friction
-                );
+
+                right_gripper_links[i] =
+                    new BulletVTKObject(
+                        ObjectShape::BOX, ObjectType::KINEMATIC,
+                        gripper_link_dims[i], gripper_pose,
+                        gripper_density,
+                        NULL, gripper_friction
+                    );
             dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
             actors.push_back(right_gripper_links[i]->GetActor());
             right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
@@ -505,6 +506,7 @@ TaskSteadyHand::TaskSteadyHand(
             right_gripper_links[i]->GetBody()->setContactStiffnessAndDamping
                 (2000, 100);
         }
+
 
         for (int i = 0; i < 5; ++i) {
             left_gripper_links[i] =
@@ -524,6 +526,31 @@ TaskSteadyHand::TaskSteadyHand(
                 (2000, 100);
         }
 
+        // Cylinders resembling the robotic arms
+
+        KDL::Vector cam_position(0.118884, 0.27565, 0.14583);
+
+        rcm[0] = {cam_position.x() - 0.1, cam_position.y(), cam_position.z()};
+        rcm[1] = {cam_position.x() + 0.1, cam_position.y(), cam_position.z()};
+
+        for (int i = 0; i < 1 + (int)bimanual; ++i) {
+
+            std::vector<double> arm_dim = { 0.002, rcm[i].Norm()*2};
+
+            arm[i] = new BulletVTKObject(
+                ObjectShape::CYLINDER,
+                ObjectType::KINEMATIC, arm_dim, gripper_pose, 0.0,
+                NULL, gripper_friction
+            );
+            dynamics_world->addRigidBody(arm[i]->GetBody());
+            actors.push_back(arm[i]->GetActor());
+            arm[i]->GetActor()->GetProperty()->SetColor(1.0f,0.7f,0.7f);
+            arm[i]->GetActor()->GetProperty()->SetSpecularPower(50);
+            arm[i]->GetActor()->GetProperty()->SetSpecular(0.8);
+            arm[i]->GetActor()->GetProperty()->SetOpacity(1.0);
+
+            arm[i]->GetBody()->setContactStiffnessAndDamping(2000, 100);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -853,8 +880,6 @@ void TaskSteadyHand::UpdateActors() {
         line1_source->Update();
         line2_source->Update();
     }
-
-
 
     //--------------------------------
     // step the world
@@ -1395,7 +1420,7 @@ void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
     link_objects[2]->SetKinematicPose(link3_pose);
 
 
-    //-------------------------------- LINKS 3 and $
+    //-------------------------------- LINKS 3 and 4
     for (int i = 3; i < 5; ++i) {
         // first find the end point of links 1 and 2 and then add half length
         // of links 3 and 4
@@ -1412,6 +1437,34 @@ void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
 
         link_objects[i]->SetKinematicPose(link_pose);
     }
+
+    //------------------------------ ARM
+
+    KDL::Vector shift;
+    for (int i = 0; i < 1 + (int)bimanual; ++i) {
+
+        shift=pose.p-rcm[i];
+
+        double norm;
+        norm=shift.Norm();
+
+        KDL::Frame orientation;
+        orientation.M.UnitX({1,0,0});
+        orientation.M.UnitY(shift);
+        orientation.M.UnitZ(orientation.M.UnitX()*orientation.M.UnitY());
+        orientation.M.UnitX(orientation.M.UnitX()*orientation.M.UnitY());
+        orientation.M.GetQuaternion(x,y,z,w);
+
+        orientation.p= (rcm[i]-fabs(rcm[i].Norm()-norm)*shift/(shift.Norm()));
+
+        double arm_pose[7]={orientation.p.x(),
+            orientation.p.y(),
+            orientation.p.z(),
+            x,y,z,w};
+
+        arm[i]->SetKinematicPose(arm_pose);
+    }
+
 
 }
 
