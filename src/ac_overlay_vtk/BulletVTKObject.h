@@ -37,9 +37,14 @@ enum ObjectShape {
 class BulletVTKObject {
 
 public:
-    BulletVTKObject(ObjectShape shape, ObjectType type,
-                        std::vector<double> dimensions, double pose[],
-                        double density, const int id, double friction, void *data);
+    BulletVTKObject(ObjectShape shape,
+                    ObjectType type,
+                    std::vector<double> dimensions,
+                    double pose[],
+                    double density,
+                    const int id = 0,
+                    double friction = 0.1,
+                    void *data = NULL);
 
     ~BulletVTKObject();
 
