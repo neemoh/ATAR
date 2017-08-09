@@ -313,26 +313,26 @@ TaskSteadyHand::TaskSteadyHand(
     tube_rot.GetQuaternion(qx, qy,qz, qw);
     double pose_tube[7]{base_position[0], base_position[1], base_position[2],
         qx, qy,qz, qw};
-
-    _dim[0] = 0.002;
-    input_file_dir.str("");
-    input_file_dir << mesh_files_dir
-                   << std::string("task_steady_hand_rollercoaster.obj");
-    mesh_file_dir_str = input_file_dir.str();
-
-    friction = 0.001;
-
-    tube_mesh = new
-        BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                        pose_tube, 0.0, 0, friction,
-                        &mesh_file_dir_str);
-
-    dynamics_world->addRigidBody(tube_mesh->GetBody());
-    actors.push_back(tube_mesh->GetActor());
-    tube_mesh->GetActor()->GetProperty()->SetColor(SHColors::Orange);
-    tube_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
-    tube_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
-    //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
+//
+//    _dim[0] = 0.002;
+//    input_file_dir.str("");
+//    input_file_dir << mesh_files_dir
+//                   << std::string("task_steady_hand_rollercoaster.obj");
+//    mesh_file_dir_str = input_file_dir.str();
+//
+//    friction = 0.001;
+//
+//    tube_mesh = new
+//        BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+//                        pose_tube, 0.0, 0, friction,
+//                        &mesh_file_dir_str);
+//
+//    dynamics_world->addRigidBody(tube_mesh->GetBody());
+//    actors.push_back(tube_mesh->GetActor());
+//    tube_mesh->GetActor()->GetProperty()->SetColor(SHColors::Orange);
+//    tube_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
+//    tube_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
+//    //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
 
     // -------------------------------------------------------------------------
     // MESH lq
@@ -387,8 +387,6 @@ TaskSteadyHand::TaskSteadyHand(
     // can't press the object too much. Otherwise the injected energy would
     // be so high that no friction can compensate it.
     {
-        float gripper_density = 0; // kg/m3
-        float gripper_friction = 50;
         double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
         gripper_link_dims =
             {{0.003, 0.003, 0.003}
@@ -397,39 +395,14 @@ TaskSteadyHand::TaskSteadyHand(
              , {0.002, 0.002, 0.005}
              , {0.002, 0.002, 0.005}};
 
-        for (int i = 0; i < 5; ++i) {
+        grippers[0] = new SimpleGripper(gripper_link_dims);
+        grippers[1] = new SimpleGripper(gripper_link_dims);
 
-            right_gripper_links[i] =
-                new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                    gripper_link_dims[i], gripper_pose,
-                                    gripper_density, 0, gripper_friction,
-                                    NULL);
-            dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
-            actors.push_back(right_gripper_links[i]->GetActor());
-            right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
-            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
-            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
-
-            right_gripper_links[i]->GetBody()->setContactStiffnessAndDamping
-                (2000, 100);
+        for (int j = 0; j < 2; ++j) {
+            grippers[j]->AddToWorld(dynamics_world);
+            grippers[j]->AddToActorsVector(actors);
         }
 
-
-        for (int i = 0; i < 5; ++i) {
-            left_gripper_links[i] =
-                new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                    gripper_link_dims[i], gripper_pose,
-                                    gripper_density, 0, gripper_friction,
-                                    NULL);
-            dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
-            actors.push_back(left_gripper_links[i]->GetActor());
-            left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
-            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
-            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
-
-            left_gripper_links[i]->GetBody()->setContactStiffnessAndDamping
-                (2000, 100);
-        }
 
         // Cylinders resembling the robotic arms
 
@@ -545,7 +518,9 @@ void TaskSteadyHand::UpdateActors() {
 
     ring_pose = ring_mesh[0]->GetPose();
 
-
+    if(grippers[0]->IsGraspingObject(dynamics_world, ring_mesh[0]->GetBody()))
+        ring_mesh[0]->GetActor()->GetProperty()->SetColor(1., 0., 0.);
+    
     // -------------------------------------------------------------------------
     // Find closest points and update frames
     for (int k = 0; k < 1 + (int)bimanual; ++k) {
@@ -601,8 +576,7 @@ void TaskSteadyHand::UpdateActors() {
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    UpdateGripperLinksPose(tool_last_pose[0], grip_angle, gripper_link_dims,
-                           right_gripper_links);
+    grippers[0]->SetPoseAndJawAngle(tool_last_pose[0], grip_angle);
 
     //-------------------------------- UPDATE LEFT GRIPPER
     KDL::Frame grpr_left_pose = (*tool_current_pose_kdl[1]);
@@ -612,13 +586,7 @@ void TaskSteadyHand::UpdateActors() {
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    UpdateGripperLinksPose(tool_last_pose[1], grip_angle, gripper_link_dims,
-                           left_gripper_links);
-
-
-
-
-
+    grippers[1]->SetPoseAndJawAngle(tool_last_pose[0], grip_angle);
 
     // -------------------------------------------------------------------------
     // Task logic
