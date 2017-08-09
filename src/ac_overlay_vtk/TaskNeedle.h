@@ -39,6 +39,7 @@
 #include <btBulletDynamicsCommon.h>
 #include "BulletVTKObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
+#include "BulletCollision/CollisionDispatch/btManifoldResult.h"
 
 
 

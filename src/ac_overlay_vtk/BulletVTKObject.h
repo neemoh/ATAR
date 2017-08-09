@@ -37,15 +37,9 @@ enum ObjectShape {
 class BulletVTKObject {
 
 public:
-    BulletVTKObject(
-            ObjectShape shape,
-            ObjectType type,
-            std::vector<double> dimensions,
-            double pose[],
-            double density,
-            void *data,
-            double friction = 0.1
-        );
+    BulletVTKObject(ObjectShape shape, ObjectType type,
+                        std::vector<double> dimensions, double pose[],
+                        double density, const int id, double friction, void *data);
 
     ~BulletVTKObject();
 
@@ -55,8 +49,10 @@ public:
 
     void SetKinematicPose(double pose[]);
 
+    int GetId() {return id_; };
 private:
 
+    int id_;
     ObjectType object_type_;
     btRigidBody* rigid_body_;
     vtkSmartPointer<vtkActor> actor_;

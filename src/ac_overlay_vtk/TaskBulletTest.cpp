@@ -60,9 +60,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
         pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
 
-        plane[i] = new BulletVTKObject(ObjectShape::MESH,
-                                      ObjectType::DYNAMIC, _dim, pose, 0.0,
-                                      &mesh_file_dir_str, friction);
+        plane[i] = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                                       _dim, pose, 0.0, 0, friction,
+                                       &mesh_file_dir_str);
 
         dynamicsWorld->addRigidBody(plane[i]->GetBody());
         actors.push_back(plane[i]->GetActor());
@@ -110,9 +110,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     std::string mesh_file_dir_str = input_file_dir.str();
 
     kine_p=
-        new BulletVTKObject(
-            ObjectShape::MESH, ObjectType::KINEMATIC, kine_dim, pose,
-            0.0, &mesh_file_dir_str, friction);
+            new BulletVTKObject(ObjectShape::MESH, ObjectType::KINEMATIC,
+                                kine_dim, pose, 0.0, 0, friction,
+                                &mesh_file_dir_str);
 
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);

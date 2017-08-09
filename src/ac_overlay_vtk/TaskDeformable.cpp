@@ -27,9 +27,10 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     // objects falling too far and mess things up.
     double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject* floor= new BulletVTKObject(
-        ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
-        floor_dims, dummy_pose, 0.0, NULL);
+    BulletVTKObject* floor= new BulletVTKObject(ObjectShape::STATICPLANE,
+                                                ObjectType::DYNAMIC, floor_dims,
+                                                dummy_pose, 0.0, 0, 0,
+                                                NULL);
     dynamics_world->addRigidBody(floor->GetBody());
 
 
@@ -54,9 +55,10 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
-    BulletVTKObject* board = new BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim, board_pose, 0.0, NULL, friction
-    );
+    BulletVTKObject* board = new BulletVTKObject(ObjectShape::BOX,
+                                                 ObjectType::DYNAMIC, dim,
+                                                 board_pose, 0.0, 0, friction,
+                                                 NULL);
     board->GetActor()->GetProperty()->SetOpacity(1.0);
     board->GetActor()->GetProperty()->SetColor(0.2, 0.3, 0.1);
 
@@ -245,10 +247,9 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     std::vector<double> kine_sph_dim = {0.002};
     kine_sphere_0 =
-        new BulletVTKObject(
-            ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, dummy_pose, 0.0,
-            NULL, friction
-        );
+            new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
+                                kine_sph_dim, dummy_pose, 0.0, 0, friction,
+                                NULL);
     dynamics_world->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
     kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
@@ -257,10 +258,9 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     // Create kinematic sphere
 
     kine_sphere_1 =
-        new BulletVTKObject(
-            ObjectShape::SPHERE, ObjectType::KINEMATIC, kine_sph_dim, dummy_pose, 0.0,
-            NULL, friction
-        );
+            new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
+                                kine_sph_dim, dummy_pose, 0.0, 0, friction,
+                                NULL);
 
     dynamics_world->addRigidBody(kine_sphere_1->GetBody());
     actors.push_back(kine_sphere_1->GetActor());

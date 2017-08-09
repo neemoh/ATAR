@@ -36,9 +36,9 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         std::vector<double> dim = {
             board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
-        board = new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL, friction
-        );
+        board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
+                                    pose, 0.0, 0, friction,
+                                    NULL);
         //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.6, 0.5, 0.5);
 
@@ -51,9 +51,10 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     // objects falling too far and mess things up.
     double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject* floor= new BulletVTKObject(
-        ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
-        floor_dims, dummy_pose, 0.0, NULL);
+    BulletVTKObject* floor= new BulletVTKObject(ObjectShape::STATICPLANE,
+                                                ObjectType::DYNAMIC, floor_dims,
+                                                dummy_pose, 0.0, 0, 0,
+                                                NULL);
     dynamics_world->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
@@ -75,9 +76,10 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                 };
 
                 cylinders[i * rows + j] =
-                    new BulletVTKObject(
-                        ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
-                        0.0, NULL, friction);
+                        new BulletVTKObject(ObjectShape::CYLINDER,
+                                            ObjectType::DYNAMIC, dim, pose, 0.0,
+                                            0, friction,
+                                            NULL);
 
                 auto ratio = (float) j / (float) cols;
                 cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
@@ -100,9 +102,10 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         std::vector<double> rod_dim = {0.002, 0.1};
         double pose[7] = {0.10, 0.03, 0.03, 0.70711, 0.70711, 0.0, 0.0};
 
-        BulletVTKObject rod = BulletVTKObject(
-            ObjectShape::CYLINDER, ObjectType::DYNAMIC, rod_dim, pose,
-            0.0, NULL);
+        BulletVTKObject rod = BulletVTKObject(ObjectShape::CYLINDER,
+                                              ObjectType::DYNAMIC, rod_dim,
+                                              pose, 0.0, 0, 0,
+                                              NULL);
 
         dynamics_world->addRigidBody(rod.GetBody());
         actors.push_back(rod.GetActor());
@@ -130,11 +133,9 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
             std::vector<double> dim; // not used
 
             rings[l] = new
-                BulletVTKObject(
-                ObjectShape::MESH,
-                ObjectType::DYNAMIC, dim, pose, density,
-                &mesh_file_dir_str, friction
-            );
+                    BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, dim,
+                                    pose, density, 0, friction,
+                                    &mesh_file_dir_str);
             dynamics_world->addRigidBody(rings[l]->GetBody());
             actors.push_back(rings[l]->GetActor());
             rings[l]->GetActor()->GetProperty()->SetColor(0., 0.5, 0.6);
@@ -169,12 +170,10 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
         for (int i = 0; i < 5; ++i) {
             right_gripper_links[i] =
-                new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::KINEMATIC,
-                    gripper_link_dims[i], gripper_pose,
-                    gripper_density,
-                    NULL, gripper_friction
-                );
+                    new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                                        gripper_link_dims[i], gripper_pose,
+                                        gripper_density, 0, gripper_friction,
+                                        NULL);
             dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
             actors.push_back(right_gripper_links[i]->GetActor());
             right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
@@ -211,11 +210,9 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         float density = 50000;
 
         hook_mesh = new
-            BulletVTKObject(
-            ObjectShape::MESH,
-            ObjectType::KINEMATIC, dim, pose, density,
-            &mesh_file_dir_str
-        );
+                BulletVTKObject(ObjectShape::MESH, ObjectType::KINEMATIC, dim,
+                                pose, density, 0, 0,
+                                &mesh_file_dir_str);
         dynamics_world->addRigidBody(hook_mesh->GetBody());
         actors.push_back(hook_mesh->GetActor());
         hook_mesh->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);

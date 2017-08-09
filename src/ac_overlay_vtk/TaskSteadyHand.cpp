@@ -60,10 +60,11 @@ TaskSteadyHand::TaskSteadyHand(
     // objects falling too far and mess things up.
     double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject *floor = new BulletVTKObject(
-        ObjectShape::STATICPLANE, ObjectType::DYNAMIC,
-        floor_dims, dummy_pose, 0.0, NULL
-    );
+    BulletVTKObject *floor = new BulletVTKObject(ObjectShape::STATICPLANE,
+                                                 ObjectType::DYNAMIC,
+                                                 floor_dims, dummy_pose, 0.0, 0,
+                                                 0,
+                                                 NULL);
     dynamics_world->addRigidBody(floor->GetBody());
 
 
@@ -84,10 +85,9 @@ TaskSteadyHand::TaskSteadyHand(
         std::vector<double> dim = {
             board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
-        board = new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0, NULL,
-            friction
-        );
+        board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
+                                    pose, 0.0, 0, friction,
+                                    NULL);
         //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.5, 0.3, 0.1);
 
@@ -229,12 +229,9 @@ TaskSteadyHand::TaskSteadyHand(
         mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh[l] = new
-            BulletVTKObject(
-            ObjectShape::MESH,
-            ObjectType::DYNAMIC, _dim, pose, density,
-            &mesh_file_dir_str,
-            friction
-        );
+                BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                pose, density, 0, friction,
+                                &mesh_file_dir_str);
 
         dynamics_world->addRigidBody(ring_mesh[l]->GetBody());
         actors.push_back(ring_mesh[l]->GetActor());
@@ -254,12 +251,9 @@ TaskSteadyHand::TaskSteadyHand(
     friction = 0.005;
 
     supporting_cylinder = new
-        BulletVTKObject(
-        ObjectShape::CYLINDER,
-        ObjectType::DYNAMIC, _dim, pose_cyl, 0.0,
-        &mesh_file_dir_str,
-        friction
-    );
+            BulletVTKObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC, _dim,
+                            pose_cyl, 0.0, 0, friction,
+                            &mesh_file_dir_str);
 
     dynamics_world->addRigidBody(supporting_cylinder->GetBody());
     actors.push_back(supporting_cylinder->GetActor());
@@ -380,12 +374,9 @@ TaskSteadyHand::TaskSteadyHand(
     friction = 0.001;
 
     tube_mesh = new
-        BulletVTKObject(
-        ObjectShape::MESH,
-        ObjectType::DYNAMIC, _dim, pose_tube, 0.0,
-        &mesh_file_dir_str,
-        friction
-    );
+            BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                            pose_tube, 0.0, 0, friction,
+                            &mesh_file_dir_str);
 
     dynamics_world->addRigidBody(tube_mesh->GetBody());
     actors.push_back(tube_mesh->GetActor());
@@ -490,13 +481,11 @@ TaskSteadyHand::TaskSteadyHand(
 
         for (int i = 0; i < 5; ++i) {
 
-                right_gripper_links[i] =
-                    new BulletVTKObject(
-                        ObjectShape::BOX, ObjectType::KINEMATIC,
-                        gripper_link_dims[i], gripper_pose,
-                        gripper_density,
-                        NULL, gripper_friction
-                    );
+            right_gripper_links[i] =
+                new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                                    gripper_link_dims[i], gripper_pose,
+                                    gripper_density, 0, gripper_friction,
+                                    NULL);
             dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
             actors.push_back(right_gripper_links[i]->GetActor());
             right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
@@ -510,12 +499,10 @@ TaskSteadyHand::TaskSteadyHand(
 
         for (int i = 0; i < 5; ++i) {
             left_gripper_links[i] =
-                new BulletVTKObject(
-                    ObjectShape::BOX, ObjectType::KINEMATIC,
-                    gripper_link_dims[i], gripper_pose,
-                    gripper_density,
-                    NULL, gripper_friction
-                );
+                    new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                                        gripper_link_dims[i], gripper_pose,
+                                        gripper_density, 0, gripper_friction,
+                                        NULL);
             dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
             actors.push_back(left_gripper_links[i]->GetActor());
             left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
@@ -539,8 +526,8 @@ TaskSteadyHand::TaskSteadyHand(
 
             arm[i] = new BulletVTKObject(
                 ObjectShape::CYLINDER,
-                ObjectType::KINEMATIC, arm_dim, gripper_pose, 0.0,
-                NULL, gripper_friction
+                ObjectType::KINEMATIC, arm_dim, gripper_pose, 0.0, 0,
+                friction, NULL
             );
             dynamics_world->addRigidBody(arm[i]->GetBody());
             actors.push_back(arm[i]->GetActor());
