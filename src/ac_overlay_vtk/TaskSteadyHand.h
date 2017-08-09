@@ -147,8 +147,10 @@ private:
     void UpdateGripperLinksPose(const KDL::Frame pose,
                                                 const double grip_angle,
                                                 const std::vector<std::vector<double> > gripper_link_dims,
-                                                BulletVTKObject *link_objects[]
+                                                BulletVTKObject *link_objects[],
+                                                bool gripper_side
     );
+
 private:
 
     // -------------------------------------------------------------------------

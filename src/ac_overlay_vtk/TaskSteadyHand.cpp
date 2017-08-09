@@ -139,7 +139,7 @@ TaskSteadyHand::TaskSteadyHand(
 
 
     // -------------------------------------------------------------------------
-    //// Create ring mesh
+    // Create ring mesh
 
     std::vector<double> _dim = {0.002};
 
@@ -435,8 +435,10 @@ TaskSteadyHand::TaskSteadyHand(
 
         KDL::Vector cam_position(0.118884, 0.27565, 0.14583);
 
-        rcm[0] = {cam_position.x() - 0.1, cam_position.y(), cam_position.z()};
-        rcm[1] = {cam_position.x() + 0.1, cam_position.y(), cam_position.z()};
+        rcm[0] = {cam_position.x() - 0.1, cam_position.y(), cam_position.z()
+            + 0.05};
+        rcm[1] = {cam_position.x() + 0.1, cam_position.y(), cam_position.z()
+            + 0.05};
 
         for (int i = 0; i < 1 + (int)bimanual; ++i) {
 
@@ -448,7 +450,7 @@ TaskSteadyHand::TaskSteadyHand(
             );
             dynamics_world->addRigidBody(arm[i]->GetBody());
             actors.push_back(arm[i]->GetActor());
-            arm[i]->GetActor()->GetProperty()->SetColor(1.0f,0.7f,0.7f);
+            arm[i]->GetActor()->GetProperty()->SetColor(1, 1, 1);
             arm[i]->GetActor()->GetProperty()->SetSpecularPower(50);
             arm[i]->GetActor()->GetProperty()->SetSpecular(0.8);
             //arm[i]->GetActor()->GetProperty()->SetOpacity(1.0);
@@ -602,7 +604,9 @@ void TaskSteadyHand::UpdateActors() {
         grip_angle=theta_min;
 
     UpdateGripperLinksPose(tool_last_pose[0], grip_angle, gripper_link_dims,
-                           right_gripper_links);
+                           right_gripper_links, 0);
+
+
 
     //-------------------------------- UPDATE LEFT GRIPPER
     KDL::Frame grpr_left_pose = (*tool_current_pose_kdl[1]);
@@ -613,7 +617,7 @@ void TaskSteadyHand::UpdateActors() {
         grip_angle=theta_min;
 
     UpdateGripperLinksPose(tool_last_pose[1], grip_angle, gripper_link_dims,
-                           left_gripper_links);
+                           left_gripper_links, 1);
 
 
 
@@ -1264,7 +1268,9 @@ void TaskSteadyHand::StepDynamicsWorld() {
 void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
                                             const double grip_angle,
                                             const std::vector<std::vector<double> > gripper_link_dims,
-                                            BulletVTKObject *link_objects[]
+                                            BulletVTKObject *link_objects[],
+                                            bool gripper_side
+
 ) {
     KDL::Frame grpr_links_pose[5];
 
@@ -1323,32 +1329,50 @@ void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
 
     //------------------------------ ARM
 
+    int i = gripper_side;
+
     KDL::Vector shift;
-    for (int i = 0; i < 1 + (int)bimanual; ++i) {
 
-        shift=pose.p-rcm[i];
+    shift = pose.p-rcm[i];
 
-        double norm;
-        norm=shift.Norm();
+    double norm;
+    norm = shift.Norm();
 
+    if (norm > rcm[i].Norm())
+    {
+        double displacement=norm-rcm[i].Norm();
+        displacement = displacement - gripper_link_dims[4][2]/2;
         KDL::Frame orientation;
         orientation.M.UnitX({1,0,0});
-        orientation.M.UnitY(shift);
+        orientation.M.UnitY(shift/shift.Norm());
         orientation.M.UnitZ(orientation.M.UnitX()*orientation.M.UnitY());
-        orientation.M.UnitX(orientation.M.UnitX()*orientation.M.UnitY());
+        orientation.M.UnitX(orientation.M.UnitY()*orientation.M.UnitZ());
         orientation.M.GetQuaternion(x,y,z,w);
 
-        orientation.p= (rcm[i]-fabs(rcm[i].Norm()-norm)*shift/(shift.Norm()));
+        orientation.p= (rcm[i]+displacement*(shift)/shift.Norm());
+        double arm_pose[7]={orientation.p.x(),
+                orientation.p.y(),
+                orientation.p.z(),
+                x,y,z,w};
+        arm[i]->SetKinematicPose(arm_pose);
 
+    } else
+    {
+        double displacement=-norm+rcm[i].Norm();
+        displacement = displacement + gripper_link_dims[4][2]/2;
+        KDL::Frame orientation;
+        orientation.M.UnitX({1,0,0});
+        orientation.M.UnitY(shift/shift.Norm());
+        orientation.M.UnitZ(orientation.M.UnitX()*orientation.M.UnitY());
+        orientation.M.UnitX(orientation.M.UnitY()*orientation.M.UnitZ());
+        orientation.M.GetQuaternion(x,y,z,w);
+        orientation.p= (rcm[i]-displacement*(shift)/shift.Norm());
         double arm_pose[7]={orientation.p.x(),
             orientation.p.y(),
             orientation.p.z(),
             x,y,z,w};
-
         arm[i]->SetKinematicPose(arm_pose);
     }
-
-
 }
 
 TaskSteadyHand::~TaskSteadyHand() {
