@@ -259,10 +259,6 @@ add_library(LoadObjGL
         src/ac_overlay_vtk/LoadObjGL/GLInstanceGraphicsShape.h
         src/ac_overlay_vtk/LoadObjGL/VHACDGen.cpp
         src/ac_overlay_vtk/LoadObjGL/VHACDGen.h
-#        src/ac_overlay_vtk/LoadObjGL/GLInstancingRenderer.cpp
-#        src/ac_overlay_vtk/LoadObjGL/GLInstancingRenderer.h
-#        src/ac_overlay_vtk/LoadObjGL/OpenGLInclude.h
-
         )
 
 target_link_libraries(
@@ -295,7 +291,10 @@ add_executable(
         src/ac_overlay_vtk/VTKTask.h
         ${tasks_src}
         ${tasks_h}
-        src/ac_overlay_vtk/BulletVTKSoftObject.cpp src/ac_overlay_vtk/BulletVTKSoftObject.h)
+        src/ac_overlay_vtk/BulletVTKSoftObject.cpp
+        src/ac_overlay_vtk/BulletVTKSoftObject.h
+        src/ac_overlay_vtk/SimpleGripper.cpp
+        src/ac_overlay_vtk/SimpleGripper.h)
 
 
 target_link_libraries(

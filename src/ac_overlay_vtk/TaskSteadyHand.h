@@ -36,6 +36,7 @@
 
 #include <btBulletDynamicsCommon.h>
 #include "BulletVTKObject.h"
+#include "SimpleGripper.h"
 
 /**
  * \class TaskSteadyHand
@@ -145,12 +146,7 @@ private:
 
 
     void UpdateGripperLinksPose(const KDL::Frame pose,
-                                                const double grip_angle,
-                                                const std::vector<std::vector<double> > gripper_link_dims,
-                                                BulletVTKObject *link_objects[],
-                                                bool gripper_side
-    );
-
+                                int gripper_side);
 private:
 
     // -------------------------------------------------------------------------
@@ -239,8 +235,10 @@ private:
     BulletVTKObject *tube_mesh_thin;
 
     std::vector<std::vector<double>> gripper_link_dims;
-    BulletVTKObject* right_gripper_links[5];
-    BulletVTKObject* left_gripper_links[5];
+//    BulletVTKObject* right_gripper_links[5];
+//    BulletVTKObject* left_gripper_links[5];
+    SimpleGripper * grippers[2];
+
     BulletVTKObject* supporting_cylinder;
     BulletVTKObject* arm[2];
     KDL::Vector rcm[2];

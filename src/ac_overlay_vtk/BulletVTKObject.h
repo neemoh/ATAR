@@ -20,12 +20,14 @@
 //        becomes unstable for such small dimensions. To get around this, the
 //        dimensions of all the bullet related things are multiplied by B_DIM_SCALE.
 
+// -----------------------------------------------------------------------------
 enum ObjectType {
     NOPHYSICS,  // Just graphics
     DYNAMIC,    // If density==0.0 object is STATIC
     KINEMATIC,   // Set the pose of the object externally
 };
 
+// -----------------------------------------------------------------------------
 enum ObjectShape {
     STATICPLANE, //dims = [normal_x, normal_y, normal_z]
     SPHERE,     //dims = [radius]
@@ -34,6 +36,7 @@ enum ObjectShape {
     CONE,       //dims = [radius, height]
     MESH};
 
+// -----------------------------------------------------------------------------
 class BulletVTKObject {
 
 public:
@@ -68,6 +71,39 @@ private:
 
 };
 
+// -----------------------------------------------------------------------------
+// helper functions
+// -----------------------------------------------------------------------------
+//
+
+
+// -----------------------------------------------------------------------------
 vtkSmartPointer<vtkMatrix4x4> PoseVectorToVTKMatrix(double pose[]);
+
+// -----------------------------------------------------------------------------
 KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>);
+
+
+// -----------------------------------------------------------------------------
+// callback for pairwise collision test
+struct MyContactResultCallback : public btCollisionWorld::ContactResultCallback
+{
+    bool connected;
+    btScalar margin;
+    MyContactResultCallback() :connected(false),
+                               margin(0.001f*B_DIM_SCALE) {}
+
+    virtual btScalar addSingleResult(btManifoldPoint& cp,
+                                     const btCollisionObjectWrapper* colObj0Wrap,
+                                     int partId0,int index0,
+                                     const btCollisionObjectWrapper* colObj1Wrap,
+                                     int partId1,int index1){
+        if (cp.getDistance()<=margin)
+            connected = true;
+        return 1.f;
+    }
+};
+
+
+// ----------------------------------------------------------------------------
 #endif //ATAR_BULLETVTKOBJECT_H

@@ -40,7 +40,8 @@
 #include "BulletVTKObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
 #include "BulletCollision/CollisionDispatch/btManifoldResult.h"
-
+#include "BulletCollision/CollisionDispatch/btGhostObject.h"
+#include "BulletCollision/CollisionDispatch/btCollisionWorld.h"
 
 
 class TaskNeedle : public VTKTask{
@@ -101,6 +102,7 @@ public:
 
 private:
     std::vector<std::array<double, 3> > sphere_positions;
+    MyContactResultCallback result;
 
     double board_dimensions[3];
     std::vector<std::vector<double>> gripper_link_dims;
@@ -109,6 +111,7 @@ private:
 
     BulletVTKObject *ring_mesh;
     BulletVTKObject *needle_mesh;
+    BulletVTKObject *board;
 
     ros::Time time_last;
     //keep track of the shapes, we release memory at exit.
@@ -119,7 +122,7 @@ private:
     btBroadphaseInterface* overlappingPairCache;
     btCollisionDispatcher* dispatcher;
     btDefaultCollisionConfiguration* collisionConfiguration;
-
+    btPairCachingGhostObject* ghostObject;
     // -------------------------------------------------------------------------
     // graphics
 

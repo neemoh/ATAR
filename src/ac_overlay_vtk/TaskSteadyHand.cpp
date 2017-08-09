@@ -313,7 +313,7 @@ TaskSteadyHand::TaskSteadyHand(
     tube_rot.GetQuaternion(qx, qy,qz, qw);
     double pose_tube[7]{base_position[0], base_position[1], base_position[2],
         qx, qy,qz, qw};
-
+//
     _dim[0] = 0.002;
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
@@ -387,8 +387,6 @@ TaskSteadyHand::TaskSteadyHand(
     // can't press the object too much. Otherwise the injected energy would
     // be so high that no friction can compensate it.
     {
-        float gripper_density = 0; // kg/m3
-        float gripper_friction = 50;
         double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
         gripper_link_dims =
             {{0.003, 0.003, 0.003}
@@ -397,39 +395,14 @@ TaskSteadyHand::TaskSteadyHand(
              , {0.002, 0.002, 0.005}
              , {0.002, 0.002, 0.005}};
 
-        for (int i = 0; i < 5; ++i) {
+        grippers[0] = new SimpleGripper(gripper_link_dims);
+        grippers[1] = new SimpleGripper(gripper_link_dims);
 
-            right_gripper_links[i] =
-                new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                    gripper_link_dims[i], gripper_pose,
-                                    gripper_density, 0, gripper_friction,
-                                    NULL);
-            dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
-            actors.push_back(right_gripper_links[i]->GetActor());
-            right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
-            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
-            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
-
-            right_gripper_links[i]->GetBody()->setContactStiffnessAndDamping
-                (2000, 100);
+        for (int j = 0; j < 2; ++j) {
+            grippers[j]->AddToWorld(dynamics_world);
+            grippers[j]->AddToActorsVector(actors);
         }
 
-
-        for (int i = 0; i < 5; ++i) {
-            left_gripper_links[i] =
-                new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                    gripper_link_dims[i], gripper_pose,
-                                    gripper_density, 0, gripper_friction,
-                                    NULL);
-            dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
-            actors.push_back(left_gripper_links[i]->GetActor());
-            left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
-            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
-            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
-
-            left_gripper_links[i]->GetBody()->setContactStiffnessAndDamping
-                (2000, 100);
-        }
 
         // Cylinders resembling the robotic arms
 
@@ -547,6 +520,10 @@ void TaskSteadyHand::UpdateActors() {
 
     ring_pose = ring_mesh[0]->GetPose();
 
+    if(grippers[0]->IsGraspingObject(dynamics_world, ring_mesh[0]->GetBody()))
+        ring_mesh[0]->GetActor()->GetProperty()->SetColor(1., 0., 0.);
+    else
+        ring_mesh[0]->GetActor()->GetProperty()->SetColor(SHColors::Turquoise);
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
@@ -603,10 +580,7 @@ void TaskSteadyHand::UpdateActors() {
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    UpdateGripperLinksPose(tool_last_pose[0], grip_angle, gripper_link_dims,
-                           right_gripper_links, 0);
-
-
+    grippers[0]->SetPoseAndJawAngle(tool_last_pose[0], grip_angle);
 
     //-------------------------------- UPDATE LEFT GRIPPER
     KDL::Frame grpr_left_pose = (*tool_current_pose_kdl[1]);
@@ -616,13 +590,11 @@ void TaskSteadyHand::UpdateActors() {
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    UpdateGripperLinksPose(tool_last_pose[1], grip_angle, gripper_link_dims,
-                           left_gripper_links, 1);
+    grippers[1]->SetPoseAndJawAngle(tool_last_pose[1], grip_angle);
 
 
-
-
-
+    UpdateGripperLinksPose(tool_last_pose[0], 0);
+    UpdateGripperLinksPose(tool_last_pose[1], 1);
 
     // -------------------------------------------------------------------------
     // Task logic
@@ -1266,71 +1238,12 @@ void TaskSteadyHand::StepDynamicsWorld() {
 
 
 void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
-                                            const double grip_angle,
-                                            const std::vector<std::vector<double> > gripper_link_dims,
-                                            BulletVTKObject *link_objects[],
-                                            bool gripper_side
-
-) {
-    KDL::Frame grpr_links_pose[5];
-
-    //-------------------------------- LINK 0
-    grpr_links_pose[0] = pose;
-    grpr_links_pose[0].p  = grpr_links_pose[0] * KDL::Vector( 0.0 , 0.0,
-                                                              -gripper_link_dims[0][2]/2);
-    double x, y, z, w;
-    pose.M.GetQuaternion(x,y,z,w);
-    double link0_pose[7] = {grpr_links_pose[0].p.x(),
-        grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
-    link_objects[0]->SetKinematicPose(link0_pose);
-
-    //-------------------------------- LINK 1
-    grpr_links_pose[1] = pose;
-    grpr_links_pose[1].M.DoRotX(-grip_angle);
-    grpr_links_pose[1].p =  grpr_links_pose[1] *
-        KDL::Vector( 0.0, 0.0, gripper_link_dims[1][2]/2);
-    grpr_links_pose[1].M.GetQuaternion(x, y, z, w);
-
-    double link2_pose[7] = {grpr_links_pose[1].p.x(),
-        grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
-
-    link_objects[1]->SetKinematicPose(link2_pose);
-
-    //-------------------------------- LINK 2
-    grpr_links_pose[2] = pose;
-    grpr_links_pose[2].M.DoRotX(grip_angle);
-    grpr_links_pose[2].p =  grpr_links_pose[2] *
-        KDL::Vector( 0.0, 0.0, gripper_link_dims[2][2]/2);
-    grpr_links_pose[2].M.GetQuaternion(x, y, z, w);
-
-    double link3_pose[7] = {grpr_links_pose[2].p.x(),
-        grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
-
-    link_objects[2]->SetKinematicPose(link3_pose);
-
-
-    //-------------------------------- LINKS 3 and 4
-    for (int i = 3; i < 5; ++i) {
-        // first find the end point of links 1 and 2 and then add half length
-        // of links 3 and 4
-        grpr_links_pose[i] = pose;
-        grpr_links_pose[i].p =
-            grpr_links_pose[i-2] *
-                KDL::Vector(0., 0.,gripper_link_dims[i-2][2]/2)
-                + grpr_links_pose[i].M *
-                    KDL::Vector(0., 0.,gripper_link_dims[i][2]/2);
-
-        grpr_links_pose[i].M.GetQuaternion(x,y,z,w);
-        double link_pose[7] = {grpr_links_pose[i].p.x(),
-            grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
-
-        link_objects[i]->SetKinematicPose(link_pose);
-    }
+                                            int gripper_side) {
 
     //------------------------------ ARM
 
     int i = gripper_side;
-
+    double x,y,z,w;
     KDL::Vector shift;
 
     shift = pose.p-rcm[i];
