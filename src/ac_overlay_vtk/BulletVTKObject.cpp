@@ -189,18 +189,21 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
         case MESH : {
 
-            std::string* filepath = static_cast<std::string*>(data);
-            if(!FileExists(filepath->c_str())) {
-                ROS_ERROR("Can't open mesh file: %s", filepath->c_str());
-                throw std::runtime_error("Can't open mesh file.");
-            }
-            else
-                ROS_DEBUG("Loading mesh file from: %s", filepath->c_str()) ;
+            std::string *filepath = static_cast<std::string *>(data);
 
-            collision_shape_ = LoadCompoundMeshFromObj(*filepath, B_DIM_SCALE);
+            if(o_type!=NOPHYSICS) {
+                if (!FileExists(filepath->c_str())) {
+                    ROS_ERROR("Can't open mesh file: %s", filepath->c_str());
+                    throw std::runtime_error("Can't open mesh file.");
+                } else
+                    ROS_DEBUG("Loading mesh file from: %s", filepath->c_str());
 
+                collision_shape_ =
+                    LoadCompoundMeshFromObj(*filepath, B_DIM_SCALE);
+                shape_string = collision_shape_->getName();;
+            } else
+                collision_shape_ = NULL;
             // set name
-            shape_string = collision_shape_->getName();;
 
             // -------------------------------------------------------------------------
             // VTK TODO: We have already read the Mesh object, we should use
@@ -264,7 +267,9 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
     // set up dynamics
     // rigid body_ is dynamic if and only if mass is non zero, otherwise static
 
-    if(object_type_!=NOPHYSICS) {
+    if(object_type_==NOPHYSICS)
+        actor_->SetUserMatrix(PoseVectorToVTKMatrix(pose));
+    else    {
 
         btScalar bt_mass = float(volume * density);
 
@@ -369,6 +374,12 @@ void BulletVTKObject::SetKinematicPose(double *pose) {
     }
 }
 
+KDL::Frame BulletVTKObject::GetPose() {
+    vtkSmartPointer<vtkMatrix4x4> vtk_mat =
+        vtkSmartPointer<vtkMatrix4x4>::New();
+    vtk_mat = actor_->GetMatrix();
+    return VTKMatrixToKDLFrame(vtk_mat);
+}
 
 //------------------------------------------------------------------------------
 vtkSmartPointer<vtkMatrix4x4> PoseVectorToVTKMatrix(double pose[]) {
@@ -388,6 +399,19 @@ vtkSmartPointer<vtkMatrix4x4> PoseVectorToVTKMatrix(double pose[]) {
         out->SetElement(i, 3, k.p[i]);
     }
 
+    return out;
+}
+
+KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>vtk_mat_in) {
+    KDL::Frame out;
+
+    // Convert to VTK matrix.
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            out.M(i,j) = vtk_mat_in->GetElement(i, j);
+        }
+        out.p[i] = vtk_mat_in->GetElement(i, 3);
+    }
     return out;
 }
 

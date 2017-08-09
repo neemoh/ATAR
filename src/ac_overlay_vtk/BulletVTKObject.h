@@ -55,6 +55,8 @@ public:
     void SetKinematicPose(double pose[]);
 
     int GetId() {return id_; };
+
+    KDL::Frame GetPose();
 private:
 
     int id_;
@@ -67,4 +69,5 @@ private:
 };
 
 vtkSmartPointer<vtkMatrix4x4> PoseVectorToVTKMatrix(double pose[]);
+KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>);
 #endif //ATAR_BULLETVTKOBJECT_H
