@@ -194,6 +194,17 @@ int main(int argc, char * argv[]) {
     KDL::Vector slave_position_at_clutch_instance[2];
     KDL::Frame slave_pose[2];
 
+    // get initial tool position
+    std::vector<double> init_tool_position[2]= {{0., 0., 0.} , {0., 0., 0.}};
+    n.getParam("initial_tool_1_position", init_tool_position[0]);
+    n.getParam("initial_tool_2_position", init_tool_position[1]);
+    slave_pose[0].p = KDL::Vector(init_tool_position[0][0],
+                                  init_tool_position[0][1],
+                                  init_tool_position[0][2]);
+    slave_pose[1].p = KDL::Vector(init_tool_position[1][0],
+                                  init_tool_position[1][1],
+                                  init_tool_position[1][2]);
+
     while(ros::ok()){
 
 
