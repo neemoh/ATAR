@@ -25,6 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->button_task_4, SIGNAL(released()), this, SLOT(on_task_4_clicked()) );
     connect(ui->button_task_5, SIGNAL(released()), this, SLOT(on_task_5_clicked()) );
     connect(ui->button_task_6, SIGNAL(released()), this, SLOT(on_task_6_clicked()) );
+    connect(ui->button_task_7, SIGNAL(released()), this, SLOT(on_task_7_clicked()) );
+    connect(ui->button_task_8, SIGNAL(released()), this, SLOT(on_task_8_clicked()) );
 
     connect(ui->button_fullScreen, SIGNAL(released()), this, SLOT(on_full_screen_clicked()) );
 
