@@ -38,6 +38,8 @@
 
 #include <btBulletDynamicsCommon.h>
 #include "BulletVTKObject.h"
+#include "SimpleGripper.h"
+#include "ThreeLinkGripper.h"
 #include <vtkMinimalStandardRandomSequence.h>
 
 
@@ -92,20 +94,16 @@ public:
 
     void StepDynamicsWorld();
 
-    void UpdateGripperLinksPose(const KDL::Frame pose,
-                                          const double grip_angle,
-                                          const std::vector<std::vector<double> > gripper_link_dims,
-                                          BulletVTKObject *link_objects[]);
 private:
-    std::vector<std::array<double, 3> > sphere_positions;
 
     double board_dimensions[3];
 
     std::vector<std::vector<double>> gripper_link_dims;
-    BulletVTKObject* right_gripper_links[5];
-    BulletVTKObject* left_gripper_links[5];
+    SimpleGripper * grippers[1];
+    ThreeLinkGripper* three_gripper;
+    uint counter=0;
+
     BulletVTKObject *hook_mesh;
-    BulletVTKObject *tool_cyl;
 
     ros::Time time_last;
     btDiscreteDynamicsWorld* dynamics_world;
@@ -116,15 +114,12 @@ private:
 
     // -------------------------------------------------------------------------
     // graphics
-
     // for not we use the same type of active constraint for both arms
     custom_msgs::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-    double * gripper_position[2];
-//    vtkSmartPointer<vtkActor>                       d_board_actor;
-//    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
+    double * jaw_position[2];
 
 };
 

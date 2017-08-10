@@ -294,7 +294,7 @@ add_executable(
         src/ac_overlay_vtk/BulletVTKSoftObject.cpp
         src/ac_overlay_vtk/BulletVTKSoftObject.h
         src/ac_overlay_vtk/SimpleGripper.cpp
-        src/ac_overlay_vtk/SimpleGripper.h)
+        src/ac_overlay_vtk/SimpleGripper.h src/ac_overlay_vtk/ThreeLinkGripper.cpp src/ac_overlay_vtk/ThreeLinkGripper.h)
 
 
 target_link_libraries(

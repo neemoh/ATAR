@@ -237,7 +237,7 @@ void TaskClutch::UpdateActors() {
 
     //// map gripper value to an angle
     //double grip_posit =
-    //    (*gripper_position[0]); //belonging to -0.5 - 1.55 interval
+    //    (*jaw_position[0]); //belonging to -0.5 - 1.55 interval
     //
     //if (grip_posit > threshold)
     //    cond = 1;
