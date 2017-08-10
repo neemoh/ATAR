@@ -263,7 +263,7 @@ void TaskHook::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 
 void TaskHook::SetCurrentGripperpositionPointer(double &grip_position, const int
 tool_id) {
-    gripper_position[tool_id] = &grip_position;
+    jaw_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ void TaskHook::UpdateActors() {
     //-------------------------------- UPDATE RIGHT GRIPPER
     KDL::Frame grpr_right_pose = (*tool_current_pose_kdl[0]);
     // map gripper value to an angle
-    double grip_posit = (*gripper_position[0]);
+    double grip_posit = (*jaw_position[0]);
     double theta_min=20*M_PI/180;
     double theta_max=40*M_PI/180;
     double grip_angle = theta_max*(grip_posit+0.5)/1.55;
@@ -469,68 +469,6 @@ TaskHook::~TaskHook() {
 
     delete collisionConfiguration;
 
-
-}
-
-
-void TaskHook::UpdateGripperLinksPose(const KDL::Frame pose,
-                                      const double grip_angle,
-                                      const std::vector<std::vector<double> > gripper_link_dims,
-                                      BulletVTKObject *link_objects[]) {
-    KDL::Frame grpr_links_pose[5];
-
-    //-------------------------------- LINK 0
-    grpr_links_pose[0] = pose;
-    grpr_links_pose[0].p  = grpr_links_pose[0] * KDL::Vector( 0.0 , 0.0,
-                                                              -gripper_link_dims[0][2]/2);
-    double x, y, z, w;
-    pose.M.GetQuaternion(x,y,z,w);
-    double link0_pose[7] = {grpr_links_pose[0].p.x(),
-                            grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
-    link_objects[0]->SetKinematicPose(link0_pose);
-
-    //-------------------------------- LINK 1
-    grpr_links_pose[1] = pose;
-    grpr_links_pose[1].M.DoRotX(-grip_angle);
-    grpr_links_pose[1].p =  grpr_links_pose[1] *
-                            KDL::Vector( 0.0, 0.0, gripper_link_dims[1][2]/2);
-    grpr_links_pose[1].M.GetQuaternion(x, y, z, w);
-
-    double link2_pose[7] = {grpr_links_pose[1].p.x(),
-                            grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
-
-    link_objects[1]->SetKinematicPose(link2_pose);
-
-    //-------------------------------- LINK 2
-    grpr_links_pose[2] = pose;
-    grpr_links_pose[2].M.DoRotX(grip_angle);
-    grpr_links_pose[2].p =  grpr_links_pose[2] *
-                            KDL::Vector( 0.0, 0.0, gripper_link_dims[2][2]/2);
-    grpr_links_pose[2].M.GetQuaternion(x, y, z, w);
-
-    double link3_pose[7] = {grpr_links_pose[2].p.x(),
-                            grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
-
-    link_objects[2]->SetKinematicPose(link3_pose);
-
-
-    //-------------------------------- LINKS 3 and $
-    for (int i = 3; i < 5; ++i) {
-        // first find the end point of links 1 and 2 and then add half length
-        // of links 3 and 4
-        grpr_links_pose[i] = pose;
-        grpr_links_pose[i].p =
-                grpr_links_pose[i-2] *
-                KDL::Vector(0., 0.,gripper_link_dims[i-2][2]/2)
-                + grpr_links_pose[i].M *
-                  KDL::Vector(0., 0.,gripper_link_dims[i][2]/2);
-
-        grpr_links_pose[i].M.GetQuaternion(x,y,z,w);
-        double link_pose[7] = {grpr_links_pose[i].p.x(),
-                               grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
-
-        link_objects[i]->SetKinematicPose(link_pose);
-    }
 
 }
 

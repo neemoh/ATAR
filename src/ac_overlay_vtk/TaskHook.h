@@ -94,10 +94,6 @@ public:
 
     void StepDynamicsWorld();
 
-    void UpdateGripperLinksPose(const KDL::Frame pose,
-                                          const double grip_angle,
-                                          const std::vector<std::vector<double> > gripper_link_dims,
-                                          BulletVTKObject *link_objects[]);
 private:
 
     double board_dimensions[3];
@@ -105,10 +101,10 @@ private:
     std::vector<std::vector<double>> gripper_link_dims;
     SimpleGripper * grippers[1];
     ThreeLinkGripper* three_gripper;
+    uint counter=0;
 
     BulletVTKObject *hook_mesh;
 
-    uint counter=0;
     ros::Time time_last;
     btDiscreteDynamicsWorld* dynamics_world;
     btSequentialImpulseConstraintSolver* solver;
@@ -123,7 +119,7 @@ private:
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-    double * gripper_position[2];
+    double * jaw_position[2];
 
 };
 
