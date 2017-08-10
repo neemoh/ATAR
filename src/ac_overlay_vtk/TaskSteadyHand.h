@@ -233,6 +233,7 @@ private:
     BulletVTKObject *ring_mesh[2];
     BulletVTKObject *tube_mesh;
     BulletVTKObject *tube_mesh_thin;
+    BulletVTKObject *stand_mesh;
 
     std::vector<std::vector<double>> gripper_link_dims;
 //    BulletVTKObject* right_gripper_links[5];

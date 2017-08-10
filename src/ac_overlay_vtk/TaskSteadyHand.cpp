@@ -137,67 +137,6 @@ TaskSteadyHand::TaskSteadyHand(
         actors.push_back(board->GetActor());
     }
 
-
-    // -------------------------------------------------------------------------
-    // Create ring mesh
-
-    std::vector<double> _dim = {0.002};
-
-    float friction = 50;
-    float density = 50000; // kg/m3
-    std::stringstream input_file_dir;
-    //input_file_dir << stl_file_dir << std::string("task_steady_hand_ring.obj");
-    //std::string mesh_file_dir_str = input_file_dir.str();
-    std::string mesh_file_dir_str;
-
-    KDL::Rotation cyl_rot(KDL::Rotation::RotZ(30.0/180.0*M_PI)
-                              //*KDL::Rotation::RotX(M_PI/2)
-                              *KDL::Rotation::RotZ(M_PI/2));
-    double cx, cy,cz, cw;
-    cyl_rot.GetQuaternion(cx, cy, cz, cw);
-
-    for (int l = 0; l < 1 + (int) bimanual; ++l) {
-
-        double pose[7]{0.025-l*0.01, 0.034-l*0.008, 0.025, cx, cy, cz, cw};
-
-        input_file_dir.str("");
-        input_file_dir << stl_file_dir << std::string("task_steady_hand_ring0")
-                       << std::string(".obj");
-        mesh_file_dir_str = input_file_dir.str();
-
-        ring_mesh[l] = new
-            BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                            pose, density, 0, friction,
-                            &mesh_file_dir_str);
-
-        dynamics_world->addRigidBody(ring_mesh[l]->GetBody());
-        actors.push_back(ring_mesh[l]->GetActor());
-        ring_mesh[l]->GetActor()->GetProperty()->SetColor(SHColors::Turquoise);
-        ring_mesh[l]->GetActor()->GetProperty()->SetSpecular(0.7);
-
-        ring_mesh[l]->GetBody()->setContactStiffnessAndDamping(2000, 100);
-    }
-
-    // -------------------------------------------------------------------------
-    // Cylinder supporting the rings in starting position
-
-    double pose_cyl[7]{0.02, 0.03, 0.02,
-        cx, cy, cz, cw};
-
-    _dim = {0.002, 0.04};
-    friction = 0.005;
-
-    supporting_cylinder = new
-        BulletVTKObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC, _dim,
-                        pose_cyl, 0.0, 0, friction,
-                        &mesh_file_dir_str);
-
-    dynamics_world->addRigidBody(supporting_cylinder->GetBody());
-    actors.push_back(supporting_cylinder->GetActor());
-    supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::Orange);
-    supporting_cylinder->GetActor()->GetProperty()->SetSpecular(0.7);
-
-
     // -------------------------------------------------------------------------
     // Destination ring
     ring_radius = 0.00475;
@@ -253,7 +192,7 @@ TaskSteadyHand::TaskSteadyHand(
 
     // hard coding the position of of the destinations
     // if the base is rotated the destinations will not be valid anymore...
-    KDL::Vector base_position = KDL::Vector(0.095, 0.09, 0.025);
+    KDL::Vector base_position = KDL::Vector(0.095, 0.06, 0.025);
     idle_point  = base_position + KDL::Vector(-0.056, -0.034, 0.004);
     start_point  = base_position + KDL::Vector(-0.048, -0.029, 0.005);
     end_point  = base_position + KDL::Vector(-0.016, -0.017, 0.028);
@@ -264,6 +203,9 @@ TaskSteadyHand::TaskSteadyHand(
 
     // -------------------------------------------------------------------------
     // Stand MESH hq
+
+    std::stringstream input_file_dir;
+    std::string mesh_file_dir_str;
     input_file_dir.str("");
     input_file_dir << mesh_files_dir << std::string("task1_4_stand.STL");
 
@@ -306,21 +248,23 @@ TaskSteadyHand::TaskSteadyHand(
     // MESH hq is for rendering and lq is for generating
     // active constraints
 
-    KDL::Rotation tube_rot(KDL::Rotation::RotZ(30.0/180.0*M_PI)
+    KDL::Rotation tube_rot(KDL::Rotation::RotZ(10.0/180.0*M_PI)
                                *KDL::Rotation::RotX(M_PI/2)
                                *KDL::Rotation::RotZ(M_PI));
+
+    std::vector<double> _dim;
     double qx, qy,qz, qw;
     tube_rot.GetQuaternion(qx, qy,qz, qw);
     double pose_tube[7]{base_position[0], base_position[1], base_position[2],
         qx, qy,qz, qw};
-//
-    _dim[0] = 0.002;
+
+    _dim = {0.002};
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
-                   << std::string("task_steady_hand_rollercoaster.obj");
+                   << std::string("task_steady_hand_mesh.obj");
     mesh_file_dir_str = input_file_dir.str();
 
-    friction = 0.001;
+    double friction = 0.001;
 
     tube_mesh = new
         BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
@@ -338,7 +282,7 @@ TaskSteadyHand::TaskSteadyHand(
     // MESH lq
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
-                   << std::string("task_steady_hand_rollercoaster_thin.obj");
+                   << std::string("task_steady_hand_mesh_thin.obj");
     mesh_file_dir_str = input_file_dir.str();
 
     tube_mesh_thin = new
@@ -371,6 +315,59 @@ TaskSteadyHand::TaskSteadyHand(
     line2_actor->SetMapper(line2_mapper);
     line2_actor->GetProperty()->SetLineWidth(3);
     //line2_actor->GetProperty()->SetOpacity(0.8);
+
+    // -------------------------------------------------------------------------
+    // Cylinder supporting the rings in starting position
+
+    double cx, cy,cz, cw;
+    KDL::Rotation cyl_rot(KDL::Rotation::RotZ(30.0/180.0*M_PI)
+                              //*KDL::Rotation::RotX(M_PI/2)
+                              *KDL::Rotation::RotZ(M_PI/2));
+    cyl_rot.GetQuaternion(cx, cy, cz, cw);
+    double pose_cyl[7]{0.02, 0.03, 0.02,
+        cx, cy, cz, cw};
+
+    _dim = {0.002, 0.04};
+    friction = 0.005;
+
+    supporting_cylinder = new
+        BulletVTKObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC, _dim,
+                        pose_cyl, 0.0, 0, friction);
+
+    dynamics_world->addRigidBody(supporting_cylinder->GetBody());
+    actors.push_back(supporting_cylinder->GetActor());
+    supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::Orange);
+    supporting_cylinder->GetActor()->GetProperty()->SetSpecular(0.7);
+
+    // -------------------------------------------------------------------------
+    // Create ring mesh
+
+    _dim = {0.002};
+
+    friction = 50;
+    double density = 50000; // kg/m3
+
+    for (int l = 0; l < 1 + (int) bimanual; ++l) {
+
+        double pose[7]{0.025-l*0.01, 0.034-l*0.008, 0.025, cx, cy, cz, cw};
+
+        input_file_dir.str("");
+        input_file_dir << stl_file_dir << std::string("task_steady_hand_ring0")
+                       << std::string(".obj");
+        mesh_file_dir_str = input_file_dir.str();
+
+        ring_mesh[l] = new
+            BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                            pose, density, 0, friction,
+                            &mesh_file_dir_str);
+
+        dynamics_world->addRigidBody(ring_mesh[l]->GetBody());
+        actors.push_back(ring_mesh[l]->GetActor());
+        ring_mesh[l]->GetActor()->GetProperty()->SetColor(SHColors::Turquoise);
+        ring_mesh[l]->GetActor()->GetProperty()->SetSpecular(0.7);
+
+        ring_mesh[l]->GetBody()->setContactStiffnessAndDamping(2000, 100);
+    }
 
     // -------------------------------------------------------------------------
     // Create kinematic jaw (gripper)
