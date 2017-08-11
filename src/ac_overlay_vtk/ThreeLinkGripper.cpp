@@ -14,7 +14,7 @@ ThreeLinkGripper::ThreeLinkGripper(
     assert(("Three link gripper needs a vector of 3 for dimensions",
             link_dims_.size()==3));
 
-    float gripper_density = 100000; // kg/m3
+    float gripper_density = 500000; // kg/m3
     float gripper_friction = 50;
     {
         double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
@@ -37,7 +37,7 @@ ThreeLinkGripper::ThreeLinkGripper(
                 new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                     link_dims_[1], gripper_pose,
                                     gripper_density, 1, gripper_friction);
-        gripper_links[1]->GetActor()->GetProperty()->SetColor(0.0f, 0.7f,
+        gripper_links[1]->GetActor()->GetProperty()->SetColor(0.65f, 0.7f,
                                                               0.7f);
         gripper_links[1]->GetBody()->setContactStiffnessAndDamping(2000, 100);
     }
@@ -57,9 +57,11 @@ ThreeLinkGripper::ThreeLinkGripper(
     auto half_length_link0 = (float)link_dims_[0][2]/2.f * B_DIM_SCALE;
     auto half_length_jaw = (float)link_dims_[1][2]/2.f * B_DIM_SCALE;
     auto half_width_jaw = (float)link_dims_[1][1]/2.f * B_DIM_SCALE;
-    const btVector3 pivot_link0(0.f, 0.f, half_length_link0*1.15f);
-    const btVector3 pivot_jaw_1(0.f, 2*half_width_jaw, -half_length_jaw*1.15f);
-    const btVector3 pivot_jaw_2(0.f,-2*half_width_jaw,  -half_length_jaw*1.15f);
+    const btVector3 pivot_link0(0.f, 0.f, half_length_link0*1.2f);
+    const btVector3 pivot_jaw_1(0.f, 1.2*half_width_jaw,
+                                -half_length_jaw*1.5f);
+    const btVector3 pivot_jaw_2(0.f,-1.2*half_width_jaw,
+                                -half_length_jaw*1.5f);
 
     btVector3 btAxisA( 1.0f, 0.f, 0.0f );
 
@@ -68,7 +70,7 @@ ThreeLinkGripper::ThreeLinkGripper(
             *gripper_links[1]->GetBody(),
             pivot_link0, pivot_jaw_1, btAxisA, btAxisA );
     hinges[0]->enableMotor(true);
-    hinges[0]->setMaxMotorImpulse(2);
+    hinges[0]->setMaxMotorImpulse(200);
 //    hinges[0]->setLimit(0, M_PI/4);
 
     hinges[1] = new btHingeConstraint(
@@ -76,7 +78,7 @@ ThreeLinkGripper::ThreeLinkGripper(
             *gripper_links[2]->GetBody(),
             pivot_link0, pivot_jaw_2, btAxisA, btAxisA );
     hinges[1]->enableMotor(true);
-    hinges[1]->setMaxMotorImpulse(2);
+    hinges[1]->setMaxMotorImpulse(200);
 }
 
 void ThreeLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
@@ -106,7 +108,7 @@ void ThreeLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
 
 //    gripper_links[1]->SetKinematicPose(link2_pose);
 
-    hinges[0]->setMotorTarget(-grip_angle, 0.033);
+    hinges[0]->setMotorTarget(-grip_angle, 0.05);
     //-------------------------------- LINK 2
     grpr_links_pose[2] = pose;
     grpr_links_pose[2].M.DoRotX(grip_angle);
@@ -118,7 +120,7 @@ void ThreeLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
                             grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
 
 //    gripper_links[2]->SetKinematicPose(link3_pose);
-    hinges[1]->setMotorTarget(grip_angle, 0.033);
+    hinges[1]->setMotorTarget(grip_angle, 0.05);
 
 
 //    //-------------------------------- LINKS 3 and 4
@@ -166,11 +168,11 @@ bool ThreeLinkGripper::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
                                         btCollisionObject *obj) {
 
     MyContactResultCallback result0, result1;
-    bt_world->contactPairTest(gripper_links[3]->GetBody(),
+    bt_world->contactPairTest(gripper_links[1]->GetBody(),
                               obj, result0);
     bool jaw1 = result0.connected;
 
-    bt_world->contactPairTest(gripper_links[4]->GetBody(),
+    bt_world->contactPairTest(gripper_links[2]->GetBody(),
                               obj, result1);
     bool jaw2 = result1.connected;
 
