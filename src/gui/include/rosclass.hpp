@@ -190,7 +190,7 @@ public:
 
     ros::Subscriber * subscriber_master_joint_state;
 
-    ros::Subscriber * master_current_gripper;
+    ros::Subscriber * subscriber_master_current_gripper;
 
     ros::Subscriber * subscriber_master_twist;
     ros::Subscriber * subscriber_slave_twist;

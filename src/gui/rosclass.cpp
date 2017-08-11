@@ -80,6 +80,7 @@ void RosObj::GetROSParameterValues() {
     subscriber_slave_pose_desired = new ros::Subscriber[n_arms];
     subscriber_slave_twist = new ros::Subscriber[n_arms];
     subscriber_master_joint_state = new ros::Subscriber[n_arms];
+    subscriber_master_current_gripper = new ros::Subscriber[n_arms];
     subscriber_master_twist = new ros::Subscriber[n_arms];
     subscriber_master_wrench = new ros::Subscriber[n_arms];
     subscriber_ac_params = new ros::Subscriber[n_arms];
@@ -140,16 +141,24 @@ void RosObj::GetROSParameterValues() {
                  param_name.str().c_str());
 
 
-        //  master's twist
+        //  master's joint state
         param_name.str("");
         param_name << std::string("/dvrk/") << master_names[n_arm]
-                   << "/joint_state";
+                   << "/state_joint_current";
         subscriber_master_joint_state[n_arm]
                 = n.subscribe(param_name.str(), 1
-                , master_twist_callbacks[n_arm], this);
+                , master_joint_state_callbacks[n_arm], this);
 
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
+
+        //  master's gripper
+        param_name.str("");
+        param_name << std::string("/dvrk/") <<master_names[n_arm]
+                   << "/gripper_position_current";
+        subscriber_master_current_gripper[n_arm] =
+                n.subscribe(param_name.str(), 1, gripper_callbacks[n_arm], this);
+        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
 
 
         //  master's twist
@@ -466,6 +475,7 @@ void RosObj::OpenRecordingFile(std::string filename){
                 << ", master_joint_state.position[4]"
                 << ", master_joint_state.position[5]"
                 << ", master_joint_state.position[6]"
+                << ", master_joint_state.position[7]"
 
                 << ", gripper_position"
 
@@ -512,7 +522,8 @@ void RosObj::run(){
         ros::Time begin = ros::Time::now();
 
         // decided to record the data only when the task state is 1.
-        if(recording && new_task_state_msg && task_state.task_state==1 ){
+//        if(recording && new_task_state_msg && task_state.task_state==1 ){
+        if(recording ){
 
             new_task_state_msg = false;
 
@@ -562,6 +573,7 @@ void RosObj::run(){
                 data.push_back(master_joint_state[j].position[4]);
                 data.push_back(master_joint_state[j].position[5]);
                 data.push_back(master_joint_state[j].position[6]);
+                data.push_back(master_joint_state[j].position[7]);
 
                 data.push_back(gripper_position[j]);
 
