@@ -5,19 +5,22 @@
 #include <vector>
 #include <string>
 #include <stdio.h>
-#include <ros/ros.h>
-#include <std_msgs/Char.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <sensor_msgs/Image.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/Wrench.h>
-#include <sensor_msgs/Joy.h>
-#include <std_msgs/Char.h>
-#include <opencv2/core.hpp>
-#include <QtCore>
 #include <fstream>
 #include <iostream>
+
+#include <ros/ros.h>
+#include <std_msgs/Char.h>
+#include <std_msgs/Float32.h>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/Joy.h>
+#include <sensor_msgs/JointState.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/Wrench.h>
+
+#include <opencv2/core.hpp>
+#include <QtCore>
 
 #include <custom_msgs/ActiveConstraintParameters.h>
 #include <custom_msgs/TaskState.h>
@@ -40,6 +43,12 @@ public:
 
     void Slave0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg);
     void Slave1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg);
+
+    void Master0JointStateCallback(const sensor_msgs::JointStateConstPtr &msg);
+    void Master1JointStateCallback(const sensor_msgs::JointStateConstPtr &msg);
+
+    void Master1GripperCallback(const std_msgs::Float32::ConstPtr &msg);
+    void Master2GripperCallback(const std_msgs::Float32::ConstPtr &msg);
 
     void Master0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg);
     void Master1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg);
@@ -65,7 +74,8 @@ public:
     void OpenRecordingFile(std::string filename);
     void CloseRecordingFile();
     void StartRecording() {recording = true;}
-    void StopRecording() {recording = false;}
+    void PauseRecording() {recording = false;}
+    bool IsRecording() {return recording;}
 
 
     void run();
@@ -109,6 +119,12 @@ private:
     void (RosObj::*slave_twist_callbacks[2])
             (const geometry_msgs::TwistStampedConstPtr &msg);
 
+    void (RosObj::*master_joint_state_callbacks[2])
+            (const sensor_msgs::JointStateConstPtr &msg);
+
+    void (RosObj::*gripper_callbacks[2])
+            (const std_msgs::Float32::ConstPtr &msg);
+
     void (RosObj::*master_twist_callbacks[2])
             (const geometry_msgs::TwistStampedConstPtr &msg);
 
@@ -127,7 +143,8 @@ public:
     double ros_freq;
 
     std::string node_name;
-
+    std::string slave_names[2];
+    std::string master_names[2];
     cv::Mat image_msg;
 
     // NOTE: 0 stands for left and 1 for right;
@@ -138,6 +155,12 @@ public:
     geometry_msgs::Pose slave_desired_pose[2];
 
     geometry_msgs::Pose master_current_pose[2];
+
+    // joint states
+    sensor_msgs::JointState master_joint_state[2];
+
+    // gripper
+    double gripper_position[2];
 
     // twists
     geometry_msgs::Twist slave_twist[2];
@@ -165,6 +188,10 @@ public:
     ros::Subscriber * subscriber_slave_pose_desired;
     ros::Subscriber * subscriber_master_pose_current;
 
+    ros::Subscriber * subscriber_master_joint_state;
+
+    ros::Subscriber * master_current_gripper;
+
     ros::Subscriber * subscriber_master_twist;
     ros::Subscriber * subscriber_slave_twist;
     ros::Subscriber * subscriber_master_wrench;
@@ -176,7 +203,7 @@ public:
     ros::Subscriber subscriber_foot_pedal_coag;
     ros::Subscriber subscriber_foot_pedal_clutch;
 
-    ros::Publisher publisher_recording_events;
+    ros::Publisher publisher_control_events;
 };
 
 

@@ -47,6 +47,7 @@ private slots:
     void on_stop_released();
 
     void on_record_clicked();
+    void on_pause_clicked();
     void on_button_repeat_clicked();
 
     void on_button_reset_clicked();

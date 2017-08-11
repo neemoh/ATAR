@@ -7,7 +7,7 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "demo_node");
+  ros::init(argc, argv, "reporter");
 
   QApplication a(argc, argv);
   MainWindow w;

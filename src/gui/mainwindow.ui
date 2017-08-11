@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>573</width>
-    <height>406</height>
+    <width>559</width>
+    <height>381</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,11 +17,14 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>140</y>
+      <x>290</x>
+      <y>20</y>
       <width>261</width>
-      <height>251</height>
+      <height>231</height>
      </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>true</bool>
     </property>
     <property name="title">
      <string>Tasks</string>
@@ -37,6 +40,10 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">
+</string>
        </property>
        <property name="text">
         <string>Task 1</string>
@@ -94,6 +101,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>Task 4</string>
@@ -187,74 +197,87 @@
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>290</x>
-      <y>20</y>
+      <x>20</x>
+      <y>120</y>
       <width>261</width>
-      <height>131</height>
+      <height>111</height>
      </rect>
     </property>
     <property name="title">
      <string>Recording</string>
     </property>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QPushButton" name="record">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>90</y>
-       <width>241</width>
+       <y>70</y>
+       <width>61</width>
        <height>31</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <widget class="QPushButton" name="record">
-        <property name="styleSheet">
-         <string notr="true">#record:checked{
+     <property name="styleSheet">
+      <string notr="true">#record:checked{
 color:rgb(255, 0, 4);
 background-color: red;
 }
 	
 </string>
-        </property>
-        <property name="text">
-         <string>Record</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="stop">
-        <property name="text">
-         <string>Stop</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     </property>
+     <property name="text">
+      <string>Record</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
     </widget>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QPushButton" name="pause_button">
      <property name="geometry">
       <rect>
-       <x>12</x>
-       <y>33</y>
-       <width>241</width>
-       <height>52</height>
+       <x>80</x>
+       <y>70</y>
+       <width>101</width>
+       <height>31</height>
       </rect>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QLineEdit" name="lineEdit">
-        <property name="styleSheet">
-         <string notr="true">#file_name{
-background-color: red
+     <property name="styleSheet">
+      <string notr="true">#pause_button:checked{
+color:rgb(255, 0, 0);
 }</string>
-        </property>
+     </property>
+     <property name="text">
+      <string>Pause</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="stop">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>70</y>
+       <width>61</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Stop</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>241</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="label">
         <property name="text">
          <string>File Name:</string>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -274,7 +297,7 @@ background-color: red
       <x>20</x>
       <y>20</y>
       <width>261</width>
-      <height>111</height>
+      <height>91</height>
      </rect>
     </property>
     <property name="title">
@@ -283,7 +306,7 @@ background-color: red
     <widget class="QLineEdit" name="line_edit_num_repetitions">
      <property name="geometry">
       <rect>
-       <x>13</x>
+       <x>10</x>
        <y>30</y>
        <width>81</width>
        <height>21</height>
@@ -299,8 +322,8 @@ background-color: red
     <widget class="QLineEdit" name="line_edit_duration">
      <property name="geometry">
       <rect>
-       <x>13</x>
-       <y>58</y>
+       <x>10</x>
+       <y>60</y>
        <width>81</width>
        <height>22</height>
       </rect>
@@ -325,14 +348,14 @@ background-color: red
       <item>
        <widget class="QPushButton" name="button_repeat">
         <property name="text">
-         <string>Repeat Last Acquisition</string>
+         <string>Repeat Last Acq.</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="button_reset">
         <property name="text">
-         <string>ResetTask Task</string>
+         <string>ResetTask</string>
         </property>
        </widget>
       </item>
@@ -342,8 +365,8 @@ background-color: red
    <widget class="QGroupBox" name="groupBox_4">
     <property name="geometry">
      <rect>
-      <x>290</x>
-      <y>160</y>
+      <x>20</x>
+      <y>240</y>
       <width>261</width>
       <height>111</height>
      </rect>
@@ -394,9 +417,9 @@ background-color: red
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>80</y>
-       <width>81</width>
-       <height>21</height>
+       <y>70</y>
+       <width>101</width>
+       <height>31</height>
       </rect>
      </property>
      <property name="text">
@@ -416,14 +439,21 @@ background-color: red
       <string>Shadows</string>
      </property>
     </widget>
+    <zorder>button_calib_arm1</zorder>
+    <zorder>button_calib_arm2</zorder>
+    <zorder>checkBox_pub_imgs</zorder>
+    <zorder>button_fullScreen</zorder>
+    <zorder>checkBox_shadows</zorder>
+    <zorder>groupBox_2</zorder>
+    <zorder>groupBox</zorder>
    </widget>
    <widget class="QPushButton" name="button_exit">
     <property name="geometry">
      <rect>
-      <x>290</x>
-      <y>300</y>
-      <width>261</width>
-      <height>81</height>
+      <x>300</x>
+      <y>270</y>
+      <width>241</width>
+      <height>71</height>
      </rect>
     </property>
     <property name="text">
