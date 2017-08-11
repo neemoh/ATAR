@@ -192,7 +192,7 @@ TaskSteadyHand::TaskSteadyHand(
 
     // hard coding the position of of the destinations
     // if the base is rotated the destinations will not be valid anymore...
-    KDL::Vector base_position = KDL::Vector(0.095, 0.06, 0.025);
+    KDL::Vector base_position = KDL::Vector(0.11, 0.06, 0.025);
     idle_point  = base_position + KDL::Vector(-0.056, -0.034, 0.004);
     start_point  = base_position + KDL::Vector(-0.048, -0.029, 0.005);
     end_point  = base_position + KDL::Vector(-0.016, -0.017, 0.028);
@@ -207,64 +207,54 @@ TaskSteadyHand::TaskSteadyHand(
     std::stringstream input_file_dir;
     std::string mesh_file_dir_str;
     input_file_dir.str("");
-    input_file_dir << mesh_files_dir << std::string("task1_4_stand.STL");
+    input_file_dir << mesh_files_dir << std::string("task1_4_stand.obj");
+    mesh_file_dir_str = input_file_dir.str();
 
-    vtkSmartPointer<vtkSTLReader> stand_mesh_reader =
-        vtkSmartPointer<vtkSTLReader>::New();
-    ROS_DEBUG("Loading stl file from: %s", input_file_dir.str().c_str());
-    stand_mesh_reader->SetFileName(input_file_dir.str().c_str());
-    stand_mesh_reader->Update();
+    // Define the rotation of the tube mesh
+    KDL::Rotation tube_rot(KDL::Rotation::RotX(M_PI/2) *
+        KDL::Rotation::RotY(-M_PI/2));
 
-    // transform
-    vtkSmartPointer<vtkTransform> stand_transform =
-        vtkSmartPointer<vtkTransform>::New();
+    // The stand object orientation follows the orientation of the tube
+    KDL::Rotation stand_rot(KDL::Rotation::RotZ(45.*M_PI/180.)*
+    KDL::Rotation::RotX(M_PI)*tube_rot);
 
-    stand_transform->Translate(base_position[0], base_position[1],
-                               base_position[2]);
-    stand_transform->RotateX(180);
-    stand_transform->RotateZ(150);
+    double qx, qy,qz, qw;
+    stand_rot.GetQuaternion(qx, qy,qz, qw);
+    double stand_pose[7] = {base_position[0],
+        base_position[1],
+        base_position[2],
+        qx, qy, qz, qw};
 
-    vtkSmartPointer<vtkTransformPolyDataFilter> stand_mesh_transformFilter =
-        vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    stand_mesh_transformFilter->SetInputConnection(
-        stand_mesh_reader->GetOutputPort());
-    stand_mesh_transformFilter->SetTransform(stand_transform);
-    stand_mesh_transformFilter->Update();
+    std::vector<double> _dim;
+    double friction = 0.001;
 
+    stand_mesh = new
+        BulletVTKObject( ObjectShape::MESH, ObjectType ::DYNAMIC, _dim,
+                        stand_pose, 0.0, 0, friction, &mesh_file_dir_str);
 
-    vtkSmartPointer<vtkPolyDataMapper> stand_mesh_mapper =
-        vtkSmartPointer<vtkPolyDataMapper>::New();
-    stand_mesh_mapper->SetInputConnection(
-        stand_mesh_transformFilter->GetOutputPort());
-
-    vtkSmartPointer<vtkActor> stand_mesh_actor =
-        vtkSmartPointer<vtkActor>::New();
-    stand_mesh_actor->SetMapper(stand_mesh_mapper);
-    stand_mesh_actor->GetProperty()->SetColor(SHColors::Gray);
-    //    stand_mesh_actor->GetProperty()->SetSpecular(0.8);
-
+    dynamics_world->addRigidBody(stand_mesh->GetBody());
+    actors.push_back(stand_mesh->GetActor());
+    stand_mesh->GetActor()->GetProperty()->SetColor(SHColors::Gray);
+    //stand_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
+    //stand_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
+    //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
 
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for generating
     // active constraints
 
-    KDL::Rotation tube_rot(KDL::Rotation::RotZ(10.0/180.0*M_PI)
-                               *KDL::Rotation::RotX(M_PI/2)
-                               *KDL::Rotation::RotZ(M_PI));
-
-    std::vector<double> _dim;
-    double qx, qy,qz, qw;
     tube_rot.GetQuaternion(qx, qy,qz, qw);
+
     double pose_tube[7]{base_position[0], base_position[1], base_position[2],
         qx, qy,qz, qw};
 
     _dim = {0.002};
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
-                   << std::string("task_steady_hand_mesh.obj");
+                   << std::string("steady_hand_mesh_3.obj");
     mesh_file_dir_str = input_file_dir.str();
 
-    double friction = 0.001;
+    friction = 0.001;
 
     tube_mesh = new
         BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
@@ -282,7 +272,7 @@ TaskSteadyHand::TaskSteadyHand(
     // MESH lq
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
-                   << std::string("task_steady_hand_mesh_thin.obj");
+                   << std::string("steady_hand_mesh_3_thin.obj");
     mesh_file_dir_str = input_file_dir.str();
 
     tube_mesh_thin = new
@@ -317,17 +307,22 @@ TaskSteadyHand::TaskSteadyHand(
     //line2_actor->GetProperty()->SetOpacity(0.8);
 
     // -------------------------------------------------------------------------
-    // Cylinder supporting the rings in starting position
+    // Closing cylinder
 
-    double cx, cy,cz, cw;
-    KDL::Rotation cyl_rot(KDL::Rotation::RotZ(30.0/180.0*M_PI)
-                              //*KDL::Rotation::RotX(M_PI/2)
-                              *KDL::Rotation::RotZ(M_PI/2));
-    cyl_rot.GetQuaternion(cx, cy, cz, cw);
-    double pose_cyl[7]{0.02, 0.03, 0.02,
-        cx, cy, cz, cw};
+    KDL::Vector distance(0.013116, -0.097892, 0);
+    KDL::Frame tube_pose;
+    tube_pose.M = tube_rot*KDL::Rotation::RotX(-M_PI/2);
+    tube_pose.p = base_position;
+    distance = tube_pose*distance;
+    KDL::Rotation cyl_rot;
+    cyl_rot.UnitX({1, 0, 0});
+    cyl_rot.UnitY({0, 0, -1});
+    cyl_rot.UnitZ({0, 1, 0});
+    cyl_rot.GetQuaternion(qx, qy, qz, qw);
+    double pose_cyl[7]{distance.x(), distance.y(), distance.z(),
+        qx, qy, qz, qw};
 
-    _dim = {0.002, 0.04};
+    _dim = {0.0015, 0.01};
     friction = 0.005;
 
     supporting_cylinder = new
@@ -349,10 +344,10 @@ TaskSteadyHand::TaskSteadyHand(
 
     for (int l = 0; l < 1 + (int) bimanual; ++l) {
 
-        double pose[7]{0.025-l*0.01, 0.034-l*0.008, 0.025, cx, cy, cz, cw};
+        double pose[7]{0.025-l*0.01, 0.034-l*0.008, 0.025, qx, qy, qz, qw};
 
         input_file_dir.str("");
-        input_file_dir << stl_file_dir << std::string("task_steady_hand_ring0")
+        input_file_dir << stl_file_dir << std::string("task_steady_hand_ring2")
                        << std::string(".obj");
         mesh_file_dir_str = input_file_dir.str();
 
@@ -387,13 +382,11 @@ TaskSteadyHand::TaskSteadyHand(
         double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
         gripper_link_dims =
             {{0.003, 0.003, 0.003}
-             , {0.002, 0.001, 0.007}
-             , {0.002, 0.001, 0.007}
-             , {0.002, 0.002, 0.005}
-             , {0.002, 0.002, 0.005}};
+             , {0.002, 0.002, 0.007}
+             , {0.002, 0.002, 0.007}};
 
-        grippers[0] = new SimpleGripper(gripper_link_dims);
-        grippers[1] = new SimpleGripper(gripper_link_dims);
+        grippers[0] = new ThreeLinkGripper(gripper_link_dims);
+        grippers[1] = new ThreeLinkGripper(gripper_link_dims);
 
         for (int j = 0; j < 2; ++j) {
             grippers[j]->AddToWorld(dynamics_world);
@@ -478,7 +471,7 @@ TaskSteadyHand::TaskSteadyHand(
         }
     }
 
-    actors.push_back(stand_mesh_actor);
+    //actors.push_back(stand_mesh_actor);
     //actors.push_back(lq_mesh_actor);
     if(bimanual){
         actors.push_back(line1_actor);
@@ -571,7 +564,7 @@ void TaskSteadyHand::UpdateActors() {
     //-------------------------------- UPDATE RIGHT GRIPPER
     // map gripper value to an angle
     double grip_posit = (*gripper_position[0]);
-    double theta_min=14*M_PI/180;
+    double theta_min=0*M_PI/180;
     double theta_max=40*M_PI/180;
     double grip_angle = theta_max*(grip_posit+0.5)/1.55;
     if(grip_angle<theta_min)
@@ -1251,7 +1244,7 @@ void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
     if (norm > rcm[i].Norm())
     {
         double displacement=norm-rcm[i].Norm();
-        displacement = displacement - gripper_link_dims[4][2]/2;
+        displacement = displacement - 4*gripper_link_dims[2][2]/2;
         KDL::Frame orientation;
         orientation.M.UnitX({1,0,0});
         orientation.M.UnitY(shift/shift.Norm());
@@ -1269,7 +1262,7 @@ void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
     } else
     {
         double displacement=-norm+rcm[i].Norm();
-        displacement = displacement + gripper_link_dims[4][2]/2;
+        displacement = displacement + 4*gripper_link_dims[2][2]/2;
         KDL::Frame orientation;
         orientation.M.UnitX({1,0,0});
         orientation.M.UnitY(shift/shift.Norm());

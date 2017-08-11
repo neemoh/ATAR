@@ -37,7 +37,7 @@
 #include <btBulletDynamicsCommon.h>
 #include "BulletVTKObject.h"
 #include "SimpleGripper.h"
-
+#include "ThreeLinkGripper.h"
 /**
  * \class TaskSteadyHand
  * \brief This is a class that generates graphics and logic for a simple ring
@@ -238,7 +238,7 @@ private:
     std::vector<std::vector<double>> gripper_link_dims;
 //    BulletVTKObject* right_gripper_links[5];
 //    BulletVTKObject* left_gripper_links[5];
-    SimpleGripper * grippers[2];
+    ThreeLinkGripper * grippers[2];
 
     BulletVTKObject* supporting_cylinder;
     BulletVTKObject* arm[2];

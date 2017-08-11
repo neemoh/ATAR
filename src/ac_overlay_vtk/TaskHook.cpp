@@ -274,13 +274,13 @@ void TaskHook::UpdateActors() {
     KDL::Frame grpr_right_pose = (*tool_current_pose_kdl[0]);
     // map gripper value to an angle
     double grip_posit = (*jaw_position[0]);
-    double theta_min=20*M_PI/180;
+    double theta_min=0*M_PI/180;
     double theta_max=40*M_PI/180;
     double grip_angle = theta_max*(grip_posit+0.5)/1.55;
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    grippers[0]->SetPoseAndJawAngle(grpr_right_pose, grip_angle);
+    //grippers[0]->SetPoseAndJawAngle(grpr_right_pose, grip_angle);
 
     double y = 0.05 * sin(M_PI*(double)counter/50.);
     counter++;
@@ -289,7 +289,7 @@ void TaskHook::UpdateActors() {
     th_gripper_pose.p = KDL::Vector(0.03 + y , 0.03 , 0.01);
     th_gripper_pose.M.DoRotY(M_PI/2);
     th_gripper_pose.M.DoRotZ(M_PI/2);
-    three_gripper->SetPoseAndJawAngle(th_gripper_pose, grip_angle_1);
+    three_gripper->SetPoseAndJawAngle(grpr_right_pose, grip_angle);
 
 
     //Update the pose of hook
