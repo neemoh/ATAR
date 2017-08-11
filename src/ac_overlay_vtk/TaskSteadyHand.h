@@ -230,7 +230,7 @@ private:
     BulletVTKObject *stand_mesh;
 
     std::vector<std::vector<double>> gripper_link_dims;
-    SimpleGripper * grippers[2];
+    ThreeLinkGripper * grippers[2];
 
     BulletVTKObject* supporting_cylinder;
     BulletVTKObject* arm[2];

@@ -22,8 +22,8 @@
                   file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
     </group>
 
-    <node pkg="uvc_camera" type="uvc_camera_node" name="webcam">
-    </node>
+    <!--<node pkg="uvc_camera" type="uvc_camera_node" name="webcam">-->
+    <!--</node>-->
 
     <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
           <!--name="extrinsic_charuco_left" output="screen" >-->
@@ -43,6 +43,13 @@
 
     <!-- Node recording the data-->
     <node pkg="atar" type="reporter" name="reporter" output="screen">
+
+        <!--records data at the frequency of task_state topic-->
+        <param name="number_of_arms" value="2"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
     </node>
 
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
