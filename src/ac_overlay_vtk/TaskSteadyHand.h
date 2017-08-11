@@ -224,13 +224,15 @@ private:
     btCollisionDispatcher* dispatcher;
     btDefaultCollisionConfiguration* collisionConfiguration;
 
-    BulletVTKObject *ring_mesh[2];
+    int ring_num = 6;
+    BulletVTKObject *ring_mesh[6];
     BulletVTKObject *tube_mesh;
     BulletVTKObject *tube_mesh_thin;
     BulletVTKObject *stand_mesh;
+    KDL::Vector dir;
 
     std::vector<std::vector<double>> gripper_link_dims;
-    SimpleGripper * grippers[2];
+    ThreeLinkGripper * grippers[2];
 
     BulletVTKObject* supporting_cylinder;
     BulletVTKObject* arm[2];
