@@ -43,15 +43,12 @@ TaskSteadyHand::TaskSteadyHand(
     destination_ring_counter(0),
     ac_params_changed(true),
     task_state(SHTaskState::Idle),
-    number_of_repetition(0),
     n_score_history(10),
-    time_last(ros::Time::now())
-{
+    time_last(ros::Time::now()) {
 
     InitBullet();
 
-
-    slave_names = new std::string[bimanual+1];
+    slave_names = new std::string[bimanual + 1];
 
     *slave_names = *slave_names_in;
 
@@ -80,14 +77,13 @@ TaskSteadyHand::TaskSteadyHand(
     tool_desired_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
     tool_current_pose[0] = vtkSmartPointer<vtkMatrix4x4>::New();
 
-    if(bimanual){
+    if (bimanual) {
         tool_current_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
         tool_desired_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
         tool_current_pose[1] = vtkSmartPointer<vtkMatrix4x4>::New();
     }
 
-
-    destination_ring_actor= vtkSmartPointer<vtkActor>::New();
+    destination_ring_actor = vtkSmartPointer<vtkActor>::New();
 
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 
@@ -107,30 +103,35 @@ TaskSteadyHand::TaskSteadyHand(
     // objects falling too far and mess things up.
     double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject *floor = new BulletVTKObject(ObjectShape::STATICPLANE,
-                                                 ObjectType::DYNAMIC,
-                                                 floor_dims, dummy_pose, 0.0, 0,
-                                                 0,
-                                                 NULL);
+    BulletVTKObject *floor = new BulletVTKObject(
+        ObjectShape::STATICPLANE,
+        ObjectType::DYNAMIC,
+        floor_dims, dummy_pose, 0.0, 0,
+        0,
+        NULL
+    );
     dynamics_world->addRigidBody(floor->GetBody());
-
 
     BulletVTKObject *board;
     // -------------------------------------------------------------------------
     // Create a cube for the board
     {
         double friction = 0.005;
-        double board_dimensions[3]  = {0.14, 0.12, 0.01};
+        double board_dimensions[3] = {0.14, 0.12, 0.01};
 
         double pose[7]{
             board_dimensions[0] / 2.45, board_dimensions[1] / 2.78,
-            -board_dimensions[2] / 2, 0, 0, 0, 1};
+            -board_dimensions[2] / 2, 0, 0, 0, 1
+        };
 
         std::vector<double> dim = {
-            board_dimensions[0], board_dimensions[1], board_dimensions[2]};
-        board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
-                                    pose, 0.0, 0, friction,
-                                    NULL);
+            board_dimensions[0], board_dimensions[1], board_dimensions[2]
+        };
+        board = new BulletVTKObject(
+            ObjectShape::BOX, ObjectType::DYNAMIC, dim,
+            pose, 0.0, 0, friction,
+            NULL
+        );
         board->GetActor()->GetProperty()->SetColor(0.5, 0.5, 0.6);
 
         dynamics_world->addRigidBody(board->GetBody());
@@ -146,7 +147,8 @@ TaskSteadyHand::TaskSteadyHand(
     vtkSmartPointer<vtkParametricTorus> parametricObject =
         vtkSmartPointer<vtkParametricTorus>::New();
     parametricObject->SetCrossSectionRadius(
-        ring_cross_section_radius / source_scales);
+        ring_cross_section_radius / source_scales
+    );
     parametricObject->SetRingRadius(ring_radius / source_scales);
 
     vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource =
@@ -176,7 +178,7 @@ TaskSteadyHand::TaskSteadyHand(
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
-    for (int k = 0; k < 1 + (int)bimanual; ++k) {
+    for (int k = 0; k < 1 + (int) bimanual; ++k) {
         tool_current_frame_axes[k]->SetXAxisLabelText("");
         tool_current_frame_axes[k]->SetYAxisLabelText("");
         tool_current_frame_axes[k]->SetZAxisLabelText("");
@@ -193,7 +195,7 @@ TaskSteadyHand::TaskSteadyHand(
     // hard coding the position of of the destinations
     // if the base is rotated the destinations will not be valid anymore...
     KDL::Vector base_position = KDL::Vector(0.11, 0.06, 0.025);
-    idle_point  = base_position + KDL::Vector(-0.056, -0.034, 0.004);
+    idle_point = base_position + KDL::Vector(-0.056, -0.034, 0.004);
 
     // -------------------------------------------------------------------------
     // Stand MESH hq
@@ -201,34 +203,39 @@ TaskSteadyHand::TaskSteadyHand(
     std::stringstream input_file_dir;
     std::string mesh_file_dir_str;
     input_file_dir.str("");
-    input_file_dir << mesh_files_dir << std::string("task_steady_hand_stand.obj");
+    input_file_dir << mesh_files_dir
+                   << std::string("task_steady_hand_stand.obj");
     mesh_file_dir_str = input_file_dir.str();
 
     // Define the rotation of the tube mesh
-    KDL::Rotation tube_rot(KDL::Rotation::RotX(M_PI/2) *
-        KDL::Rotation::RotY(-M_PI/2));
+    KDL::Rotation tube_rot(
+        KDL::Rotation::RotX(M_PI / 2) *
+            KDL::Rotation::RotY(-M_PI / 2));
     KDL::Frame tube_pose;
-    tube_pose.M = tube_rot*KDL::Rotation::RotX(-M_PI/2);
+    tube_pose.M = tube_rot * KDL::Rotation::RotX(-M_PI / 2);
     tube_pose.p = base_position;
 
     // The stand object orientation follows the orientation of the tube
-    KDL::Rotation stand_rot(KDL::Rotation::RotZ(45.*M_PI/180.)*
-                            KDL::Rotation::RotX(M_PI)*
-                            tube_rot);
+    KDL::Rotation stand_rot(
+        KDL::Rotation::RotZ(45. * M_PI / 180.) *
+            KDL::Rotation::RotX(M_PI) *
+            tube_rot
+    );
 
-    double qx, qy,qz, qw;
-    stand_rot.GetQuaternion(qx, qy,qz, qw);
-    double stand_pose[7] = {base_position[0],
-        base_position[1],
-        base_position[2],
-        qx, qy, qz, qw};
+    double qx, qy, qz, qw;
+    stand_rot.GetQuaternion(qx, qy, qz, qw);
+    double stand_pose[7] = {
+        base_position[0], base_position[1], base_position[2], qx, qy, qz, qw
+    };
 
     std::vector<double> _dim;
     double friction = 0.001;
 
     stand_mesh = new
-        BulletVTKObject( ObjectShape::MESH, ObjectType ::DYNAMIC, _dim,
-                        stand_pose, 0.0, 0, friction, &mesh_file_dir_str);
+        BulletVTKObject(
+        ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+        stand_pose, 0.0, 0, friction, &mesh_file_dir_str
+    );
 
     dynamics_world->addRigidBody(stand_mesh->GetBody());
     actors.push_back(stand_mesh->GetActor());
@@ -241,31 +248,65 @@ TaskSteadyHand::TaskSteadyHand(
     // MESH hq is for rendering and lq is for generating
     // active constraints
 
-    tube_rot.GetQuaternion(qx, qy,qz, qw);
-
-    double pose_tube[7]{base_position[0], base_position[1], base_position[2],
-        qx, qy,qz, qw};
-
-    _dim = {0.002};
-    input_file_dir.str("");
-    input_file_dir << mesh_files_dir
-                   << std::string("steady_hand_mesh_3.obj");
-    mesh_file_dir_str = input_file_dir.str();
-
-    friction = 0.001;
-
-    tube_mesh = new
-        BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                        pose_tube, 0.0, 0, friction,
-                        &mesh_file_dir_str);
-
-    dynamics_world->addRigidBody(tube_mesh->GetBody());
-    actors.push_back(tube_mesh->GetActor());
-    tube_mesh->GetActor()->GetProperty()->SetColor(SHColors::Orange);
-    tube_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
-    tube_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
+    //tube_rot.GetQuaternion(qx, qy,qz, qw);
+    //
+    //double pose_tube[7]{base_position[0], base_position[1], base_position[2],
+    //    qx, qy,qz, qw};
+    //
+    //_dim = {0.002};
+    //input_file_dir.str("");
+    //input_file_dir << mesh_files_dir
+    //               << std::string("steady_hand_mesh_whole.obj");
+    //mesh_file_dir_str = input_file_dir.str();
+    //
+    //friction = 0.001;
+    //
+    //tube_mesh = new
+    //    BulletVTKObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim,
+    //                    pose_tube, 0.0, 0, friction,
+    //                    &mesh_file_dir_str);
+    //
+    //dynamics_world->addRigidBody(tube_mesh->GetBody());
+    //actors.push_back(tube_mesh->GetActor());
+    //tube_mesh->GetActor()->GetProperty()->SetColor(SHColors::Orange);
+    //tube_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
+    //tube_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
     //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
 
+
+    // -------------------------------------------------------------------------
+    // MESH hq is for rendering and lq is for generating
+    // active constraints
+    tube_rot.GetQuaternion(qx, qy, qz, qw);
+
+    double pose_tube[7]{
+        base_position[0], base_position[1], base_position[2], qx, qy, qz, qw
+    };
+
+    _dim = {0.002};
+    for (int m = 0; m <3; ++m) {
+
+        input_file_dir.str("");
+        input_file_dir << mesh_files_dir
+                       << std::string("steady_hand_mesh_part") << m+1 << ".obj";
+        mesh_file_dir_str = input_file_dir.str();
+
+        friction = 0.001;
+
+        tube_meshes[m] = new
+            BulletVTKObject(
+            ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+            pose_tube, 0.0, 0, friction,
+            &mesh_file_dir_str
+        );
+
+        dynamics_world->addRigidBody(tube_meshes[m]->GetBody());
+        actors.push_back(tube_meshes[m]->GetActor());
+        tube_meshes[m]->GetActor()->GetProperty()->SetColor(SHColors::Orange);
+        tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(0.8);
+        tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(80);
+        //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
+    }
     // -------------------------------------------------------------------------
     // MESH lq
     input_file_dir.str("");
@@ -515,7 +556,7 @@ tool_id) {
 void TaskSteadyHand::UpdateActors() {
 
 
-    ring_pose = ring_mesh[0]->GetPose();
+    ring_pose = ring_mesh[ring_in_action]->GetPose();
 
     // check if any of the grippers have grasped the ring in action
     for (int i = 0; i < 2; ++i) {
@@ -600,8 +641,14 @@ void TaskSteadyHand::UpdateActors() {
     // -------------------------------------------------------------------------
     // Task logic
     // -------------------------------------------------------------------------
-    double positioning_tolerance = 0.003;
+    double positioning_tolerance = 0.006;
     KDL::Vector destination_ring_position;
+
+    // first run
+    if (task_state == SHTaskState::Idle) {
+       destination_ring_position = start_point;
+    } else
+        destination_ring_position = end_point;
 
 
     // when the active constraints is suddenly enabled the tool makes some
@@ -627,18 +674,17 @@ void TaskSteadyHand::UpdateActors() {
     if (task_state == SHTaskState::Idle
         && ( (position_error_norm< 0.001 && ac_parameters.active == 1)
             ||
-                (!with_guidance && (ring_pose.p - start_point).Norm() <
-                    positioning_tolerance)  ))
+                (!with_guidance && (ring_pose.p - start_point).x()>0.0 )  ))
     {
+        std::cout << " transition to start" << std::endl;
         task_state = SHTaskState::ToEndPoint;
         destination_ring_actor->RotateY(90);
-
         //increment the repetition number
-        number_of_repetition ++;
         // save starting time
         start_time = ros::Time::now();
         // reset score related vars
         ResetOnGoingEvaluation();
+        destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
     }
 
     //    // If the tool reaches the end point the user needs to go back to
@@ -686,19 +732,27 @@ void TaskSteadyHand::UpdateActors() {
             (ring_pose.p - end_point).Norm() <
                 positioning_tolerance)
     {
+        std::cout << " transition to finish" << std::endl;
+
         task_state = SHTaskState::Idle;
         destination_ring_actor->RotateY(-90);
         //Reset tube color
-        tube_mesh->GetActor()->GetProperty()->SetColor(SHColors::Orange);
+        for (int i = 0; i < 3; ++i) {
+            tube_meshes[i]->GetActor()->GetProperty()->SetColor
+                (SHColors::Orange);
+        }
         supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::Orange);
-        ring_in_action = ring_in_action + 1;
+        ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
+            (SHColors::Turquoise);
+
+        ring_in_action +=  1;
 
         // ---------- ADDED --------------
         // calculate and save the score of this repetition
         CalculateAndSaveError();
 
-            ac_parameters.active = 0;
-            ac_params_changed = true;
+        ac_parameters.active = 0;
+        ac_params_changed = true;
 
         // save starting time
         start_time = ros::Time::now();
@@ -706,26 +760,25 @@ void TaskSteadyHand::UpdateActors() {
         ResetOnGoingEvaluation();
         //------------------------------
 
+        destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
     }
 
     // update the position of the ring according to the state we're in.
-    if (task_state == SHTaskState::Idle) {
-        destination_ring_position = start_point;
-        destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
-
-    //} else if (task_state == SHTaskState::ToStartPoint) {
-    //    destination_ring_position = start_point;
-    //    destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
-
-    } else if (task_state == SHTaskState::ToEndPoint) {
-        destination_ring_position = end_point;
-        destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
-
-    //} else if (task_state == SHTaskState::RepetitionComplete) {
-    //    destination_ring_position = idle_point;
-    //    destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
-
-    }
+    //if (task_state == SHTaskState::Idle) {
+    //
+    //
+    ////} else if (task_state == SHTaskState::ToStartPoint) {
+    ////    destination_ring_position = start_point;
+    ////    destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
+    //
+    //} else if (task_state == SHTaskState::ToEndPoint) {
+    //
+    //
+    ////} else if (task_state == SHTaskState::RepetitionComplete) {
+    ////    destination_ring_position = idle_point;
+    ////    destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
+    //
+    //}
 
     // show the destination to the user
     double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
@@ -743,7 +796,7 @@ void TaskSteadyHand::UpdateActors() {
     // Populate the task state message
     task_state_msg.task_name = "BuzzWire";
     task_state_msg.task_state = (uint8_t)task_state;
-    task_state_msg.number_of_repetition = number_of_repetition;
+    task_state_msg.number_of_repetition = ring_in_action+1;
     if (task_state == SHTaskState::ToEndPoint){
         //|| task_state == SHTaskState::ToStartPoint) {
 
@@ -1006,12 +1059,15 @@ void TaskSteadyHand::UpdateTubeColor() {
 //                                                0.1);
     if(task_state== SHTaskState::ToEndPoint){
         //|| task_state== SHTaskState::ToStartPoint){
-        tube_mesh->GetActor()->GetProperty()->SetColor(0.9,
-                                                       0.5- 0.4*(error_ratio-0.3),
-                                                       0.1);
+        for (int i = 0; i < 3; ++i) {
+            tube_meshes[i]->GetActor()->GetProperty()->SetColor(0.9,
+                                                                0.5- 0.4*(error_ratio-0.3),
+                                                                0.1);
+        }
         supporting_cylinder->GetActor()->GetProperty()->SetColor(0.9,
-                                                   0.5- 0.4*(error_ratio-0.3),
-                                                   0.1);}
+                                                                 0.5- 0.4*(error_ratio-0.3),
+                                                                 0.1);
+    }
 
 }
 
@@ -1021,7 +1077,7 @@ custom_msgs::TaskState TaskSteadyHand::GetTaskStateMsg() {
 
 void TaskSteadyHand::ResetTask() {
     ROS_INFO("Resetting the task.");
-    number_of_repetition = 0;
+    ring_in_action = 0;
     //task_state = SHTaskState::RepetitionComplete
     // -----------ADDED-----------------------
     task_state = SHTaskState::Idle;
@@ -1035,8 +1091,8 @@ void TaskSteadyHand::ResetCurrentAcquisition() {
     if(task_state== SHTaskState::ToEndPoint){
     //|| task_state == SHTaskState::ToStartPoint){
         ResetOnGoingEvaluation();
-        if(number_of_repetition>0)
-            number_of_repetition--;
+        if(ring_in_action>0)
+            ring_in_action--;
         //task_state = SHTaskState::RepetitionComplete;
         // -----------ADDED-----------------------
         task_state = SHTaskState::Idle;

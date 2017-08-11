@@ -164,7 +164,6 @@ private:
     KDL::Vector start_point;
     KDL::Vector end_point;
     custom_msgs::TaskState task_state_msg;
-    uint8_t number_of_repetition;
     ros::Time start_time;
     double posit_error_sum;
     double orient_error_sum;
@@ -226,7 +225,7 @@ private:
 
     int ring_num = 6;
     BulletVTKObject *ring_mesh[6];
-    BulletVTKObject *tube_mesh;
+    BulletVTKObject *tube_meshes[3];
     BulletVTKObject *tube_mesh_thin;
     BulletVTKObject *stand_mesh;
     KDL::Vector dir;
