@@ -207,7 +207,7 @@ TaskSteadyHand::TaskSteadyHand(
     std::stringstream input_file_dir;
     std::string mesh_file_dir_str;
     input_file_dir.str("");
-    input_file_dir << mesh_files_dir << std::string("task1_4_stand.obj");
+    input_file_dir << mesh_files_dir << std::string("task_steady_hand_stand.obj");
     mesh_file_dir_str = input_file_dir.str();
 
     // Define the rotation of the tube mesh
