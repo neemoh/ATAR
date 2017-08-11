@@ -510,10 +510,19 @@ void TaskSteadyHand::UpdateActors() {
 
     ring_pose = ring_mesh[0]->GetPose();
 
-    if(grippers[0]->IsGraspingObject(dynamics_world, ring_mesh[0]->GetBody()))
-        ring_mesh[0]->GetActor()->GetProperty()->SetColor(1., 0., 0.);
+    // check if any of the grippers have grasped the ring in action
+    for (int i = 0; i < 2; ++i) {
+        gripper_in_contact[i] = grippers[i]->IsGraspingObject(dynamics_world,
+                                          ring_mesh[ring_in_action]->GetBody());
+    }
+
+    // change the color of the grasped ring
+    if (gripper_in_contact[0] || gripper_in_contact[1])
+        ring_mesh[ring_in_action]->GetActor()->GetProperty()
+                ->SetColor(1.,0.,0.);
     else
-        ring_mesh[0]->GetActor()->GetProperty()->SetColor(SHColors::Turquoise);
+        ring_mesh[ring_in_action]->GetActor()->GetProperty()
+                ->SetColor(SHColors::Turquoise);
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
@@ -544,8 +553,6 @@ void TaskSteadyHand::UpdateActors() {
         ring_mesh[0]->SetKinematicPose(pose_array);
     }
 
-//    ring_guides_mesh_actor->SetUserMatrix(tool_current_pose[0]);
-
 
     vtkSmartPointer<vtkMatrix4x4> tool_desired_pose[2];
 
@@ -556,9 +563,6 @@ void TaskSteadyHand::UpdateActors() {
                                             tool_desired_pose[k]);
         tool_desired_frame_axes[k]->SetUserMatrix(tool_desired_pose[k]);
     }
-
-
-
 
 
     //-------------------------------- UPDATE RIGHT GRIPPER
@@ -761,34 +765,37 @@ void TaskSteadyHand::UpdateActors() {
 
 
 //------------------------------------------------------------------------------
-void TaskSteadyHand::CalculatedDesiredToolPose() {
+void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
+                                               const KDL::Frame tool_pose,
+                                               KDL::Frame &desired_tool_pose) {
     // NOTE: All the closest points are on the wire mesh
 
     //---------------------------------------------------------------------
     // Find the desired orientation
     // We use two vectors to estimate the tangent of the direction of the
-    // wire. One is from the grip point (current tool tip) to its closest
-    // point on the wire and the other is from a point on the side of the
-    // ring (90 deg from the grip point). The estimated tangent is the
-    // cross product of these two (after normalization). This is just a
-    // quick the non-ideal approximation.
+    // tube. Assuming that the ref frame of the ring is on the center of its
+    // circle and and the circle lie on the x-y plane.
+    // Imagine two points on the inner circle of the ring such that one
+    // point is put on the intersection of the x axis of the ring with its
+    // inner circle and the other point is simillar but along the y axis.
+    // The estimated tangent is the cross product of the two vectors
+    // connecting these points to their corresponding closest point on the
+    // surface of the thin tube (after normalization). This is just a quick
+    // and non-ideal approximation.
     // Note that we could have used the central point instead of the tool
     // point but that vector gets pretty small and unstable when we're
     // close to the desired pose.
-    // WHen I added the second tool things got a little bit messy!
-    // Since I had to rotate the sing for 90 degrees the diserd axes
-    // were different for each ring and it ended up with too many
-    // hardcoded transforms, I will hopefully clean this out later. TODO
 
-    //for (int k = 0; k < 1 + (int)bimanual; ++k) {
+    // Another important thing to note here is that we want to apply the
+    // guidance force to the tool at the end (and not the ring). so we find
+    // the transformation that would take the current ring pose to the
+    // desired one and add that to the current pose of the tool.
+
 
     // Note that to find the closest point to the mesh, we need to take the
     // points to the local reference farame of the mesh object
     // So we need the its pose and inv
     KDL::Frame mesh_pose_inv = tube_mesh_thin->GetPose().Inverse();
-
-    // make a copy of the current pose
-    KDL::Frame tool_current_pose = *tool_current_pose_kdl[0];
 
     // ----------------------- FIRST CLOSEST POINT
     //Find the closest cell to the the central point
@@ -807,7 +814,7 @@ void TaskSteadyHand::CalculatedDesiredToolPose() {
     cellLocator->FindClosestPoint(ring_central_point_in_mesh_local, closest_point,
                                   cell_id, subId, closestPointDist2);
     // take the closest point to the current pose of the object
-    closest_point_to_center_point = tube_mesh_thin->GetPose() *
+    KDL::Vector closest_point_to_center_point = tube_mesh_thin->GetPose() *
         KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
 
     // ----------------------- SECOND CLOSEST POINT
@@ -824,7 +831,7 @@ void TaskSteadyHand::CalculatedDesiredToolPose() {
     cellLocator->FindClosestPoint(radial_x_point_in_mesh_local, closest_point,
                                   cell_id, subId, closestPointDist2);
     // take the closest point to the current pose of the object
-    closest_point_to_x_point = tube_mesh_thin->GetPose() *
+    KDL::Vector closest_point_to_x_point = tube_mesh_thin->GetPose() *
         KDL::Vector(closest_point[0],closest_point[1],closest_point[2]);
 
     // ----------------------- THIRD CLOSEST POINT
@@ -841,7 +848,7 @@ void TaskSteadyHand::CalculatedDesiredToolPose() {
     cellLocator->FindClosestPoint(radial_y_point_in_mesh_local, closest_point,
                                   cell_id, subId, closestPointDist2);
     // take the closest point to the current pose of the object
-    closest_point_to_y_point = tube_mesh_thin->GetPose() *
+    KDL::Vector closest_point_to_y_point = tube_mesh_thin->GetPose() *
         KDL::Vector(closest_point[0],closest_point[1],closest_point[2]);
 
 
@@ -862,17 +869,16 @@ void TaskSteadyHand::CalculatedDesiredToolPose() {
         // of the thin tube is negligible
         ring_tranform_to_its_desired_pose.p = ring_center_to_cp;
 
-
-        KDL::Vector radial_to_cp =
-            closest_point_to_y_point - radial_y_point_kdl;
-
         KDL::Vector desired_z, desired_y, desired_x;
 
-        KDL::Vector grip_to_cp = closest_point_to_x_point -
-            radial_x_point_kdl;
+        KDL::Vector point_y_to_cp =
+                closest_point_to_y_point - radial_y_point_kdl;
 
-        desired_z = grip_to_cp / grip_to_cp.Norm();
-        desired_x = -radial_to_cp / radial_to_cp.Norm();
+        KDL::Vector point_x_to_cp =
+                closest_point_to_x_point - radial_x_point_kdl;
+
+        desired_z = point_x_to_cp / point_x_to_cp.Norm();
+        desired_x = -point_y_to_cp / point_y_to_cp.Norm();
         desired_y = desired_z * desired_x;
 
         // make sure axes are perpendicular and normal
@@ -882,37 +888,34 @@ void TaskSteadyHand::CalculatedDesiredToolPose() {
         desired_z = desired_x * desired_y;
         desired_z = desired_z / desired_z.Norm();
 
-        ring_tranform_to_its_desired_pose.M = KDL::Rotation(desired_x, desired_y,
-                                                            desired_z);
+        ring_tranform_to_its_desired_pose.M =
+                KDL::Rotation(desired_x, desired_y, desired_z)
+                * ring_pose.M.Inverse();
 
         // we add the displacement that would take the ring to it's desired
         // pose to the current pose of the tool;
-
-        tool_desired_pose_kdl[0].p =
-            tool_current_pose.p + ring_tranform_to_its_desired_pose.p;
-        //tool_desired_pose_kdl[0].M =
-        //    ring_tranform_to_its_desired_pose.M * tool_current_pose.M;
-        tool_desired_pose_kdl[0].M = tool_current_pose.M;
+        desired_tool_pose.p =
+                ring_tranform_to_its_desired_pose.p + tool_pose.p;
+        desired_tool_pose.M =
+                ring_tranform_to_its_desired_pose.M * tool_pose.M;
 
         //------------------------------------------------------------------
         // Calculate errors
-        position_error_norm = ring_center_to_cp.Norm();
+        position_error_norm = ring_tranform_to_its_desired_pose.p.Norm();
         KDL::Vector rpy;
-        (tool_desired_pose_kdl[0].M *
-            (tool_current_pose).M.Inverse() ).GetRPY(rpy[0],
+        ring_tranform_to_its_desired_pose.M.GetRPY(rpy[0],
                                                      rpy[1],
                                                      rpy[2]);
         orientation_error_norm = rpy.Norm();
 
-
     } else {
-        tool_desired_pose_kdl[0] = tool_current_pose;
+        desired_tool_pose = tool_pose;
         // due to the delay in teleop loop this will create some wrneches if
         // the guidance is still active
     }
 
 
-    // draw the connection lines in bimanual case
+    // draw the connection lines for debug
     line1_source->SetPoint1(ring_pose.p[0],
                             ring_pose.p[1],
                             ring_pose.p[2]);
@@ -1067,7 +1070,8 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         //}
 
 
-        CalculatedDesiredToolPose();
+        CalculatedDesiredToolPose(ring_pose,  *tool_current_pose_kdl[0],
+                                  tool_desired_pose_kdl[0]);
 
         // publish desired poses
         for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {

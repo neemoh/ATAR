@@ -96,7 +96,9 @@ public:
     void UpdateActors();
 
     // calculates the desired tool pose
-    void CalculatedDesiredToolPose();
+    void CalculatedDesiredToolPose(const KDL::Frame ring_pose,
+                                   const KDL::Frame tool_pose,
+                                   KDL::Frame &desired_tool_pose);
 
     // returns the status of the change of the ac_param
     bool IsACParamChanged();
@@ -175,18 +177,14 @@ private:
     // graphics
     double ring_radius;
     KDL::Frame ring_pose;
-    KDL::Vector closest_point_to_center_point;
-    KDL::Vector closest_point_to_y_point;
-    KDL::Vector closest_point_to_x_point;
-
+    uint ring_in_action = 0;
+    bool gripper_in_contact[2] ={false, false};
     // the distance between the center of the ring and the closest point on
     // the wire. This is could be slightly different from the error
     // calculated from the difference of the desired pose and the current
     // pose, though not significantly.
     double position_error_norm;
     double orientation_error_norm;
-
-//    bool show_ref_frames;
 
     // for not we use the same type of active constraint for both arms
     bool ac_params_changed;
@@ -199,7 +197,6 @@ private:
     uint destination_ring_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
 
-//    std::vector<vtkSmartPointer<vtkProp>>           actors;
 
     // actors that are updated during the task
     vtkSmartPointer<vtkActor>                       destination_ring_actor;
@@ -215,9 +212,6 @@ private:
     vtkSmartPointer<vtkLineSource>                  line2_source;
     vtkSmartPointer<vtkActor>                       line1_actor;
     vtkSmartPointer<vtkActor>                       line2_actor;
-//    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
-//    vtkSmartPointer<vtkActor>                       destination_cone_actor;
-//    vtkSmartPointer<vtkActor>                       tube_mesh_actor ;
 
     vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
 
@@ -236,9 +230,7 @@ private:
     BulletVTKObject *stand_mesh;
 
     std::vector<std::vector<double>> gripper_link_dims;
-//    BulletVTKObject* right_gripper_links[5];
-//    BulletVTKObject* left_gripper_links[5];
-    ThreeLinkGripper * grippers[2];
+    SimpleGripper * grippers[2];
 
     BulletVTKObject* supporting_cylinder;
     BulletVTKObject* arm[2];
