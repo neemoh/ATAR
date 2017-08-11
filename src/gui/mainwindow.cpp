@@ -6,9 +6,9 @@
 #include "../ac_overlay_vtk/ControlEvents.h"
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    ros_obj(this, "ros_reporter")
+        QMainWindow(parent),
+        ui(new Ui::MainWindow),
+        ros_obj(this, ros::this_node::getName())
 {
     ui->setupUi(this);
 
@@ -36,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->button_calib_arm2, SIGNAL(released()), this, SLOT(on_calib_arm2_clicked()) );
 
     connect(ui->button_exit, SIGNAL(released()), this, SLOT(on_exit_clicked()) );
+
+    connect(ui->pause_button, SIGNAL(released()), this, SLOT(on_pause_clicked()) );
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
@@ -69,7 +71,7 @@ void MainWindow::on_task_1_clicked(){
     qDebug() <<"clicked task 1";
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK1;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 }
 
 void MainWindow::on_task_2_clicked(){
@@ -77,7 +79,7 @@ void MainWindow::on_task_2_clicked(){
     qDebug() <<"clicked task 2";
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK2;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 }
 
 void MainWindow::on_task_3_clicked(){
@@ -85,7 +87,7 @@ void MainWindow::on_task_3_clicked(){
     qDebug() << "clicked task 3";
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK3;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 }
 
 
@@ -94,7 +96,7 @@ void MainWindow::on_task_4_clicked(){
     qDebug() << "clicked task 4";
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK4;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 }
 
 void MainWindow::on_task_5_clicked()
@@ -103,7 +105,7 @@ void MainWindow::on_task_5_clicked()
     qDebug() << "clicked task 5";
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK5;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
 }
 
@@ -114,7 +116,7 @@ void MainWindow::on_task_6_clicked()
     qDebug() << "clicked task 6";
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK6;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
 }
 
@@ -125,7 +127,7 @@ void MainWindow::on_task_7_clicked()
     qDebug() << "clicked task 7";
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK7;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
 }
 
@@ -136,7 +138,7 @@ void MainWindow::on_task_8_clicked()
     qDebug() << "clicked task 8";
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK8;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
 }
 
@@ -145,7 +147,7 @@ void MainWindow::on_full_screen_clicked(){
 
     std_msgs::Int8 msg;
     msg.data =  CE_TOGGLE_FULLSCREEN;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
 }
 
@@ -159,20 +161,20 @@ void MainWindow::on_pub_imgs_state_changed(bool state){
     else
         msg.data =  CE_PUBLISH_IMGS_OFF;
 
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 }
 
 void MainWindow::on_calib_arm1_clicked(){
     std_msgs::Int8 msg;
     msg.data =  CE_CALIB_ARM1;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
 }
 
 void MainWindow::on_calib_arm2_clicked(){
     std_msgs::Int8 msg;
     msg.data =  CE_CALIB_ARM2;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
 }
 
@@ -182,7 +184,7 @@ void MainWindow::on_exit_clicked(){
 
     std_msgs::Int8 msg;
     msg.data =  CE_EXIT;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
     ros_obj.CleanUpAndQuit();
     close();
@@ -202,11 +204,32 @@ void MainWindow::on_record_clicked()
         //  qDebug() << ui->file_name->text();
         ros_obj.OpenRecordingFile(filename);
         ui->file_name->setDisabled(true);
+        ui->record->setText("Recording");
         ros_obj.StartRecording();
+        ui->record->setEnabled(false);
         qDebug() << "Started recording." ;
-
     }
+}
 
+
+void MainWindow::on_pause_clicked()
+{
+    if(ui->record->isChecked()){
+        if(ros_obj.IsRecording()) {
+            ros_obj.PauseRecording();
+            ui->pause_button->setText("Continue");
+            ui->record->setEnabled(false);
+            qDebug() << "Paused recording." ;
+        }
+        else{
+            ros_obj.StartRecording();
+            ui->pause_button->setText("Pause");
+            ui->record->setEnabled(true);
+            qDebug() << "Continued recording." ;
+        }
+    }
+    else
+        ui->pause_button->setChecked(false);
 
 }
 
@@ -214,9 +237,14 @@ void MainWindow::on_record_clicked()
 void MainWindow::on_stop_released()
 {
     qDebug() << "Stopping the recording." ;
-    ros_obj.StopRecording();
+    ros_obj.PauseRecording();
     ros_obj.CloseRecordingFile();
+    ui->record->setEnabled(true);
     ui->record->setChecked(false);
+    ui->record->setText("Record");
+    ui->pause_button->setText("Pause");
+    ui->pause_button->setChecked(false);
+
     ui->file_name->setDisabled(false);
 
     //  QPalette pal = ui->record->palette();
@@ -231,14 +259,14 @@ void MainWindow::on_button_repeat_clicked()
     // TODO IS THIS NEEDED?
     std_msgs::Int8 msg;
     msg.data =  CE_RESET_TASK;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 }
 
 void MainWindow::on_button_reset_clicked()
 {
     std_msgs::Int8 msg;
     msg.data =  CE_RESET_TASK;
-    ros_obj.publisher_recording_events.publish(msg);
+    ros_obj.publisher_control_events.publish(msg);
 
 }
 
