@@ -19,6 +19,7 @@ double Gold[3] {1.0, 0.84, 0.0};
 double Green[3] {0.0, 0.9, 0.03};
 double Pink[3] {1.0, 0.0, 1.0};
 double Orange[3] {0.9, 0.4, 0.1};
+double Orange2[3] {0.7, 0.2, 0.05};
 double Gray [3] {0.4, 0.4, 0.4};
 double Turquoise[3]	{0.25, 0.88, 0.82};
 double DeepPink[3] {1.0, 0.08, 0.58};
@@ -161,10 +162,10 @@ TaskSteadyHand::TaskSteadyHand(
     destination_ring_mapper->SetInputConnection(
         parametricFunctionSource->GetOutputPort());
     destination_ring_actor->SetMapper(destination_ring_mapper);
-    destination_ring_actor->SetScale(0.004);
+    destination_ring_actor->SetScale(0.002);
     destination_ring_actor->RotateX(90);
     destination_ring_actor->RotateY(-45);
-    destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
+    destination_ring_actor->GetProperty()->SetColor(SHColors::OrangeRed);
     //destination_ring_actor->GetProperty()->SetOpacity(0.5);
 
     // -------------------------------------------------------------------------
@@ -284,14 +285,19 @@ TaskSteadyHand::TaskSteadyHand(
     };
 
     _dim = {0.002};
-    for (int m = 0; m <3; ++m) {
+    for (int m = 0; m <2; ++m) {
 
         input_file_dir.str("");
+//        input_file_dir << mesh_files_dir
+//                       << std::string("tube_half_mesh.obj");
         input_file_dir << mesh_files_dir
-                       << std::string("steady_hand_mesh_part") << m+1 << ".obj";
+                       << std::string("tube_half_mesh") << m+1 << ".obj";
         mesh_file_dir_str = input_file_dir.str();
 
         friction = 0.001;
+
+        pose_tube[0] -= (double)m*0.092;
+//        pose_tube[1] -= (double)m*0.092;
 
         tube_meshes[m] = new
             BulletVTKObject(
@@ -302,17 +308,18 @@ TaskSteadyHand::TaskSteadyHand(
 
         dynamics_world->addRigidBody(tube_meshes[m]->GetBody());
         actors.push_back(tube_meshes[m]->GetActor());
-        tube_meshes[m]->GetActor()->GetProperty()->SetColor(SHColors::Orange);
+        tube_meshes[m]->GetActor()->GetProperty()->SetColor(SHColors::Orange2);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(0.8);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(80);
-        //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
+//        tube_meshes[m]->GetActor()->GetProperty()->SetOpacity(0.1);
     }
     // -------------------------------------------------------------------------
     // MESH lq
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
-                   << std::string("steady_hand_mesh_3_thin.obj");
+                   << std::string("tube_whole.obj");
     mesh_file_dir_str = input_file_dir.str();
+    pose_tube[0] += 0.092;
 
     tube_mesh_thin = new
         BulletVTKObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim,
@@ -348,27 +355,25 @@ TaskSteadyHand::TaskSteadyHand(
     // -------------------------------------------------------------------------
     // Closing cylinder
 
-    KDL::Vector distance(0.013116, -0.097892, 0);
-    distance = tube_pose*distance;
     KDL::Frame cyl_pose;
-    cyl_pose.M = KDL::Rotation::RotZ(M_PI/4)*tube_pose.M;
-    cyl_pose.p = distance;
+    cyl_pose.M = KDL::Rotation::RotZ(40./180.*M_PI)*tube_pose.M;
+    cyl_pose.p = tube_pose*KDL::Vector(0.0, -0.092, 0);
     dir = cyl_pose.M.UnitY();
     cyl_pose.M.GetQuaternion(qx, qy, qz, qw);
 
     double pose_cyl[7]{cyl_pose.p.x(), cyl_pose.p.y(), cyl_pose.p.z(),
         qx, qy, qz, qw};
 
-    _dim = {0.007, 0.001};
+    _dim = {0.006, 0.002};
     friction = 0.005;
 
     supporting_cylinder = new
         BulletVTKObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC, _dim,
-                        pose_cyl, 0.0, 0, friction);
+                        pose_cyl, 0.0);
 
     dynamics_world->addRigidBody(supporting_cylinder->GetBody());
     actors.push_back(supporting_cylinder->GetActor());
-    supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::Orange);
+    supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::Orange2);
     supporting_cylinder->GetActor()->GetProperty()->SetSpecular(0.7);
 
     // -------------------------------------------------------------------------
@@ -379,7 +384,7 @@ TaskSteadyHand::TaskSteadyHand(
     friction = 50;
     double density = 50000; // kg/m3
 
-    double step = 0.004;
+    double step = 0.002;
 
     for (int l = 0; l < ring_num; ++l) {
 
@@ -389,7 +394,7 @@ TaskSteadyHand::TaskSteadyHand(
             qx, qy, qz, qw};
 
         input_file_dir.str("");
-        input_file_dir <<mesh_file_dir << std::string("task_steady_hand_ring2.obj");
+        input_file_dir <<mesh_file_dir << std::string("torus.obj");
         mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh[ring_num - l -1] = new
@@ -405,7 +410,7 @@ TaskSteadyHand::TaskSteadyHand(
         ring_mesh[ring_num - l -1]->GetBody()->setContactStiffnessAndDamping(2000, 100);
     }
 
-    start_point  = cyl_pose.p + ring_num * step *dir;
+    start_point  = cyl_pose.p + (ring_num + 6) * step *dir;
     end_point = {0.015, 0.004, 0};
     KDL::Frame T;
     T.M = stand_rot * KDL::Rotation::RotX(M_PI/2);
@@ -688,7 +693,7 @@ void TaskSteadyHand::UpdateActors() {
         start_time = ros::Time::now();
         // reset score related vars
         ResetOnGoingEvaluation();
-        destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
+//        destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
     }
 
     //    // If the tool reaches the end point the user needs to go back to
@@ -741,11 +746,11 @@ void TaskSteadyHand::UpdateActors() {
         task_state = SHTaskState::Idle;
         destination_ring_actor->RotateY(-90);
         //Reset tube color
-        for (int i = 0; i < 3; ++i) {
-            tube_meshes[i]->GetActor()->GetProperty()->SetColor
-                (SHColors::Orange);
-        }
-        supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::Orange);
+//        for (int i = 0; i < 3; ++i) {
+//            tube_meshes[i]->GetActor()->GetProperty()->SetColor
+//                (SHColors::Orange);
+//        }
+        supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::OrangeRed);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
             (SHColors::Turquoise);
 
@@ -764,7 +769,7 @@ void TaskSteadyHand::UpdateActors() {
         ResetOnGoingEvaluation();
         //------------------------------
 
-        destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
+//        destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
     }
 
     // update the position of the ring according to the state we're in.
@@ -787,7 +792,7 @@ void TaskSteadyHand::UpdateActors() {
     // show the destination to the user
     double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
     destination_ring_counter++;
-    destination_ring_actor->SetScale(0.006 + 0.001*dt);
+    destination_ring_actor->SetScale(0.003 + 0.001*dt);
 
     destination_ring_actor->SetPosition(destination_ring_position[0],
                                         destination_ring_position[1],
@@ -1063,14 +1068,14 @@ void TaskSteadyHand::UpdateTubeColor() {
 //                                                0.1);
     if(task_state== SHTaskState::ToEndPoint){
         //|| task_state== SHTaskState::ToStartPoint){
-        for (int i = 0; i < 3; ++i) {
-            tube_meshes[i]->GetActor()->GetProperty()->SetColor(0.9,
-                                                                0.5- 0.4*(error_ratio-0.3),
-                                                                0.1);
-        }
-        supporting_cylinder->GetActor()->GetProperty()->SetColor(0.9,
-                                                                 0.5- 0.4*(error_ratio-0.3),
-                                                                 0.1);
+//        for (int i = 0; i < 3; ++i) {
+//            tube_meshes[i]->GetActor()->GetProperty()->SetColor(0.9,
+//                                                                0.5- 0.4*(error_ratio-0.3),
+//                                                                0.1);
+//        }
+//        supporting_cylinder->GetActor()->GetProperty()->SetColor(0.9,
+//                                                                 0.5- 0.4*(error_ratio-0.3),
+//                                                                 0.1);
     }
 
 }
