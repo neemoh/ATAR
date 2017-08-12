@@ -38,6 +38,7 @@
 #include "BulletVTKObject.h"
 #include "SimpleGripper.h"
 #include "ThreeLinkGripper.h"
+#include "Forceps.h"
 /**
  * \class TaskSteadyHand
  * \brief This is a class that generates graphics and logic for a simple ring
@@ -70,7 +71,7 @@ class TaskSteadyHand : public VTKTask{
 public:
 
     TaskSteadyHand(
-            const std::string stl_files_dir,
+            const std::string mesh_file_dir,
             const bool show_ref_frames,
             const bool num_tools,
             const bool with_guidance,
@@ -231,7 +232,7 @@ private:
     KDL::Vector dir;
 
     std::vector<std::vector<double>> gripper_link_dims;
-    ThreeLinkGripper * grippers[2];
+    Forceps * grippers[2];
 
     BulletVTKObject* supporting_cylinder;
     BulletVTKObject* arm[2];

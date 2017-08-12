@@ -25,7 +25,7 @@ double DeepPink[3] {1.0, 0.08, 0.58};
 };
 
 TaskSteadyHand::TaskSteadyHand(
-    const std::string stl_file_dir,
+    const std::string mesh_file_dir,
     const bool show_ref_frames,
     const bool biman,
     const bool with_guidance,
@@ -35,7 +35,7 @@ TaskSteadyHand::TaskSteadyHand(
 )
     :
     VTKTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
-    mesh_files_dir(stl_file_dir),
+    mesh_files_dir(mesh_file_dir),
     slave_frame_to_world_frame_tr(slave_to_world_tr),
 //        show_ref_frames(show_ref_frames),
 //        bimanual(biman),
@@ -389,7 +389,7 @@ TaskSteadyHand::TaskSteadyHand(
             qx, qy, qz, qw};
 
         input_file_dir.str("");
-        input_file_dir << stl_file_dir << std::string("task_steady_hand_ring2.obj");
+        input_file_dir <<mesh_file_dir << std::string("task_steady_hand_ring2.obj");
         mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh[ring_num - l -1] = new
@@ -423,9 +423,7 @@ TaskSteadyHand::TaskSteadyHand(
     // the scissor type links push the objects outwards.
     // make sure tu set a high friction coefficient for the objects you want
     // to grasp.
-    // In addition, make sure you limit the gripper angle so that the user
-    // can't press the object too much. Otherwise the injected energy would
-    // be so high that no friction can compensate it.
+
     {
         double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
         gripper_link_dims =
@@ -433,8 +431,8 @@ TaskSteadyHand::TaskSteadyHand(
              , {0.002, 0.002, 0.007}
              , {0.002, 0.002, 0.007}};
 
-        grippers[0] = new ThreeLinkGripper(gripper_link_dims);
-        grippers[1] = new ThreeLinkGripper(gripper_link_dims);
+        grippers[0] = new Forceps(mesh_file_dir);
+        grippers[1] = new Forceps(mesh_file_dir);
 
         for (int j = 0; j < 2; ++j) {
             grippers[j]->AddToWorld(dynamics_world);
@@ -622,6 +620,12 @@ void TaskSteadyHand::UpdateActors() {
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
+    //KDL::Frame temp_pose;
+    //double dx = sin(2 * M_PI * double(destination_ring_counter) / 50);
+    //
+    //temp_pose.p = KDL::Vector(0.09 + dx*0.02, 0.15, 0.09);
+    //temp_pose.M.DoRotY(M_PI);
+    //temp_pose.M.DoRotZ(M_PI/2);
     grippers[0]->SetPoseAndJawAngle(tool_last_pose[0], grip_angle);
 
     //-------------------------------- UPDATE LEFT GRIPPER
