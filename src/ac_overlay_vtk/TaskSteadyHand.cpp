@@ -19,6 +19,7 @@ double Gold[3] {1.0, 0.84, 0.0};
 double Green[3] {0.0, 0.9, 0.03};
 double Pink[3] {1.0, 0.0, 1.0};
 double Orange[3] {0.9, 0.4, 0.1};
+double Orange1[3] {0.9, 0.5, 0.05};
 double Orange2[3] {0.7, 0.2, 0.05};
 double Gray [3] {0.4, 0.4, 0.4};
 double Turquoise[3]	{0.25, 0.88, 0.82};
@@ -118,10 +119,10 @@ TaskSteadyHand::TaskSteadyHand(
     // Create a cube for the board
     {
         double friction = 0.005;
-        double board_dimensions[3] = {0.14, 0.12, 0.01};
+        double board_dimensions[3] = {0.18, 0.132, 0.008};
 
         double pose[7]{
-            board_dimensions[0] / 2.45, board_dimensions[1] / 2.78,
+            board_dimensions[0] / 3, board_dimensions[1] / 2,
             -board_dimensions[2] / 2, 0, 0, 0, 1
         };
 
@@ -133,7 +134,7 @@ TaskSteadyHand::TaskSteadyHand(
             pose, 0.0, 0, friction,
             NULL
         );
-        board->GetActor()->GetProperty()->SetColor(0.5, 0.5, 0.6);
+        board->GetActor()->GetProperty()->SetColor(0.3, 0.3, 0.3);
 
         dynamics_world->addRigidBody(board->GetBody());
         actors.push_back(board->GetActor());
@@ -141,7 +142,7 @@ TaskSteadyHand::TaskSteadyHand(
 
     // -------------------------------------------------------------------------
     // Destination ring
-    ring_radius = 0.00475;
+    ring_radius = 0.005;
     double ring_cross_section_radius = 0.0005;
     double source_scales = 0.006;
 
@@ -384,7 +385,7 @@ TaskSteadyHand::TaskSteadyHand(
     friction = 50;
     double density = 50000; // kg/m3
 
-    double step = 0.002;
+    double step = 0.003;
 
     for (int l = 0; l < ring_num; ++l) {
 
@@ -407,10 +408,13 @@ TaskSteadyHand::TaskSteadyHand(
         ring_mesh[ring_num - l -1]->GetActor()->GetProperty()->SetColor(SHColors::Turquoise);
         ring_mesh[ring_num - l -1]->GetActor()->GetProperty()->SetSpecular(0.7);
 
-        ring_mesh[ring_num - l -1]->GetBody()->setContactStiffnessAndDamping(2000, 100);
+        ring_mesh[ring_num - l -1]->GetBody()->setContactStiffnessAndDamping
+            (4000, 50);
+        ring_mesh[ring_num - l -1]->GetBody()->setRollingFriction(btScalar(0.001));
+        ring_mesh[ring_num - l -1]->GetBody()->setSpinningFriction(btScalar(0.001));
     }
 
-    start_point  = cyl_pose.p + (ring_num + 6) * step *dir;
+    start_point  = cyl_pose.p + (ring_num + 3) * step *dir;
     end_point = {0.015, 0.004, 0};
     KDL::Frame T;
     T.M = stand_rot * KDL::Rotation::RotX(M_PI/2);
@@ -505,8 +509,8 @@ TaskSteadyHand::TaskSteadyHand(
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
         actor->GetProperty()->SetColor(SHColors::Gray);
-        actor->SetPosition(0.09- (double)i * 0.006, 0.132 - (double)i * 0.0003,
-                           0.01);
+        actor->SetPosition(0.09- (double)i * 0.006, 0.12 + (double)i * 0.0001,
+                           0.005);
         score_sphere_actors.push_back(actor);
     }
 
@@ -564,16 +568,16 @@ void TaskSteadyHand::UpdateActors() {
     // check if any of the grippers have grasped the ring in action
     for (int i = 0; i < 2; ++i) {
         gripper_in_contact[i] = grippers[i]->IsGraspingObject(dynamics_world,
-                                          ring_mesh[ring_in_action]->GetBody());
+                                                              ring_mesh[ring_in_action]->GetBody());
     }
 
-    // change the color of the grasped ring
-    if (gripper_in_contact[0] || gripper_in_contact[1])
-        ring_mesh[ring_in_action]->GetActor()->GetProperty()
-                ->SetColor(1.,0.,0.);
-    else
-        ring_mesh[ring_in_action]->GetActor()->GetProperty()
-                ->SetColor(SHColors::Green);
+    //// change the color of the grasped ring
+    //if (gripper_in_contact[0] || gripper_in_contact[1])
+    //    ring_mesh[ring_in_action]->GetActor()->GetProperty()
+    //            ->SetColor(1.,0.,0.);
+    //else
+    //    ring_mesh[ring_in_action]->GetActor()->GetProperty()
+    //            ->SetColor(SHColors::Green);
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
@@ -643,9 +647,8 @@ void TaskSteadyHand::UpdateActors() {
 
     grippers[1]->SetPoseAndJawAngle(tool_last_pose[1], grip_angle);
 
-
-    UpdateGripperLinksPose(tool_last_pose[0], 0);
-    UpdateGripperLinksPose(tool_last_pose[1], 1);
+    UpdateToolRodsPose(tool_last_pose[0], 0);
+    UpdateToolRodsPose(tool_last_pose[1], 1);
 
     // -------------------------------------------------------------------------
     // Task logic
@@ -655,7 +658,9 @@ void TaskSteadyHand::UpdateActors() {
 
     // first run
     if (task_state == SHTaskState::Idle) {
-       destination_ring_position = start_point;
+        destination_ring_position = start_point;
+        ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
+            (SHColors::Orange1);
     } else
         destination_ring_position = end_point;
 
@@ -694,52 +699,20 @@ void TaskSteadyHand::UpdateActors() {
         // reset score related vars
         ResetOnGoingEvaluation();
 //        destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
+        ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
+            (SHColors::Orange1);
     }
 
-    //    // If the tool reaches the end point the user needs to go back to
-    //    // the starting point. This counts as a separate repetition of the task
-    //else if (task_state == SHTaskState::ToEndPoint &&
-    //    (ring_pose.p - end_point).Norm() <
-    //        positioning_tolerance) {
-    //    task_state = SHTaskState::ToStartPoint;
-    //    destination_ring_actor->RotateY(90);
-    //
-    //    //increment the repetition number
-    //    number_of_repetition++;
-
-        //// calculate and save the score of this repetition
-        //CalculateAndSaveError();
-        //
-        //// save starting time
-        //start_time = ros::Time::now();
-        //// reset score related vars
-        //ResetOnGoingEvaluation();
-
-    //}
-    //    // If the tool reaches the start point while in ToStartPoint state,
-    //    // we can mark the task complete
-    //else if (task_state == SHTaskState::ToStartPoint &&
-    //    (ring_pose.p - start_point).Norm() <
-    //        positioning_tolerance) {
-    //    task_state = SHTaskState::RepetitionComplete;
-    //    destination_ring_actor->RotateY(-90);
-    //
-    //    // calculate and save the score of this repetition
-    //    CalculateAndSaveError();
-    //
-    //    ac_parameters.active = 0;
-    //    ac_params_changed = true;
-    //}
 
         // User needs to get away from the starting point to switch to idle
         // and in case another repetition is to be performed, the user can
         // flag that by going to the starting position again
-    //else if (task_state == SHTaskState::RepetitionComplete &&
-    //    (ring_pose.p - idle_point).Norm() <
-    //        positioning_tolerance)
+        //else if (task_state == SHTaskState::RepetitionComplete &&
+        //    (ring_pose.p - idle_point).Norm() <
+        //        positioning_tolerance)
     else if (task_state == SHTaskState::ToEndPoint &&
-            (ring_pose.p - end_point).Norm() <
-                positioning_tolerance)
+        (ring_pose.p - end_point).Norm() <
+            positioning_tolerance)
     {
         std::cout << " transition to finish" << std::endl;
 
@@ -792,7 +765,7 @@ void TaskSteadyHand::UpdateActors() {
     // show the destination to the user
     double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
     destination_ring_counter++;
-    destination_ring_actor->SetScale(0.003 + 0.001*dt);
+    destination_ring_actor->SetScale(0.002 + 0.0004*dt);
 
     destination_ring_actor->SetPosition(destination_ring_position[0],
                                         destination_ring_position[1],
@@ -973,10 +946,10 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
         KDL::Vector desired_z, desired_y, desired_x;
 
         KDL::Vector point_y_to_cp =
-                closest_point_to_y_point - radial_y_point_kdl;
+            closest_point_to_y_point - radial_y_point_kdl;
 
         KDL::Vector point_x_to_cp =
-                closest_point_to_x_point - radial_x_point_kdl;
+            closest_point_to_x_point - radial_x_point_kdl;
 
         desired_z = point_x_to_cp / point_x_to_cp.Norm();
         desired_x = -point_y_to_cp / point_y_to_cp.Norm();
@@ -990,23 +963,23 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
         desired_z = desired_z / desired_z.Norm();
 
         ring_tranform_to_its_desired_pose.M =
-                KDL::Rotation(desired_x, desired_y, desired_z)
+            KDL::Rotation(desired_x, desired_y, desired_z)
                 * ring_pose.M.Inverse();
 
         // we add the displacement that would take the ring to it's desired
         // pose to the current pose of the tool;
         desired_tool_pose.p =
-                ring_tranform_to_its_desired_pose.p + tool_pose.p;
+            ring_tranform_to_its_desired_pose.p + tool_pose.p;
         desired_tool_pose.M =
-                ring_tranform_to_its_desired_pose.M * tool_pose.M;
+            ring_tranform_to_its_desired_pose.M * tool_pose.M;
 
         //------------------------------------------------------------------
         // Calculate errors
         position_error_norm = ring_tranform_to_its_desired_pose.p.Norm();
         KDL::Vector rpy;
         ring_tranform_to_its_desired_pose.M.GetRPY(rpy[0],
-                                                     rpy[1],
-                                                     rpy[2]);
+                                                   rpy[1],
+                                                   rpy[2]);
         orientation_error_norm = rpy.Norm();
 
     } else {
@@ -1056,8 +1029,10 @@ void TaskSteadyHand::UpdateTubeColor() {
     double max_orient_error = 0.3;
     // orientation error is tricky to perceive, so we weigh it half the
     // position error
-    double error_ratio = ( (orientation_error_norm / max_orient_error)
-        + 2* (position_error_norm / max_pos_error)) /3;
+    //double error_ratio = ( (orientation_error_norm / max_orient_error)
+    //    + 2* (position_error_norm / max_pos_error)) /3;
+
+    double error_ratio = (position_error_norm / max_pos_error);
 
     if (error_ratio > 1.3)
         error_ratio = 1.3;
@@ -1073,9 +1048,9 @@ void TaskSteadyHand::UpdateTubeColor() {
 //                                                                0.5- 0.4*(error_ratio-0.3),
 //                                                                0.1);
 //        }
-//        supporting_cylinder->GetActor()->GetProperty()->SetColor(0.9,
-//                                                                 0.5- 0.4*(error_ratio-0.3),
-//                                                                 0.1);
+        ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor(0.9,
+                                                                       0.5- 0.4*(error_ratio-0.3),
+                                                                       0.1);
     }
 
 }
@@ -1098,7 +1073,7 @@ void TaskSteadyHand::ResetTask() {
 void TaskSteadyHand::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
     if(task_state== SHTaskState::ToEndPoint){
-    //|| task_state == SHTaskState::ToStartPoint){
+        //|| task_state == SHTaskState::ToStartPoint){
         ResetOnGoingEvaluation();
         if(ring_in_action>0)
             ring_in_action--;
@@ -1342,8 +1317,10 @@ void TaskSteadyHand::StepDynamicsWorld() {
 }
 
 
-void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
-                                            int gripper_side) {
+void TaskSteadyHand::UpdateToolRodsPose(
+    const KDL::Frame pose,
+    int gripper_side
+) {
 
     //------------------------------ ARM
 
@@ -1369,9 +1346,9 @@ void TaskSteadyHand::UpdateGripperLinksPose(const KDL::Frame pose,
 
         orientation.p= (rcm[i]+displacement*(shift)/shift.Norm());
         double arm_pose[7]={orientation.p.x(),
-                orientation.p.y(),
-                orientation.p.z(),
-                x,y,z,w};
+            orientation.p.y(),
+            orientation.p.z(),
+            x,y,z,w};
         arm[i]->SetKinematicPose(arm_pose);
 
     } else

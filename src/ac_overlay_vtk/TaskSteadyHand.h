@@ -148,8 +148,10 @@ private:
     void StepDynamicsWorld();
 
 
-    void UpdateGripperLinksPose(const KDL::Frame pose,
-                                int gripper_side);
+    void UpdateToolRodsPose(
+        const KDL::Frame pose,
+        int gripper_side
+    );
 private:
 
     // -------------------------------------------------------------------------

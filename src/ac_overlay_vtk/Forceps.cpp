@@ -56,7 +56,7 @@ Forceps::Forceps(
                                 &mesh_file_dir_str);
         gripper_links[2]->GetActor()->GetProperty()->SetColor(0.65f, 0.7f,
                                                               0.7f);
-        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(2000, 100);
+        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(1000, 200);
     }
 
     auto jaws_axis_offset = -0.001 * B_DIM_SCALE;
