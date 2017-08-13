@@ -6,63 +6,88 @@
 #include <vtkProperty.h>
 #include <sstream>
 
-Forceps::Forceps(
-    const std::string mesh_dir
-)
+Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
         : num_links_(3)
 {
+
+    auto jaws_axis_y_offset = -0.001f;
+    auto link0_axis_z_offset = 0.008f;
 
     link_dims_.push_back({0.003, 0.003, 0.003});
     float gripper_density = 500000; // kg/m3
     float gripper_friction = 50;
+
+    double qx, qy, qz, qw;
+    init_pose.M.GetQuaternion(qx, qy, qz, qw);
+
+    // create the kinematic link
     {
-        double gripper_pose[7]{0.09, 0.15, 0.09, 0, 0, 0, 1};
+        double gripper_pose[7]{init_pose.p[0], init_pose.p[1],
+                               init_pose.p[2], qx, qy, qz, qw};
 
 
         gripper_links[0] =
                 new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
                                     link_dims_[0], gripper_pose,
-                                    gripper_density, 0);
-        gripper_links[0]->GetActor()->GetProperty()->SetColor(0.65f, 0.7f,
+                                    0.0, 0);
+        gripper_links[0]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f,
                                                               0.7f);
-        gripper_links[0]->GetBody()->setContactStiffnessAndDamping(2000, 100);
     }
 
     std::stringstream input_file_dir;
     input_file_dir << mesh_dir
                    << std::string("jaw.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
-    {
-        double gripper_pose[7]{0.09, 0.15, 0.09, 0, 0, 1, 0};
 
+
+    // create jaw 1
+    {
+
+        auto gripper_pose_position = init_pose*KDL::Vector(0.f,
+                                                           -jaws_axis_y_offset,
+                                                           -link0_axis_z_offset);
+        double gripper_pose[7]{gripper_pose_position.x(),
+                               gripper_pose_position.y(),
+                               gripper_pose_position.z(),
+                               qx, qy, qz, qw};
 
         gripper_links[1] =
                 new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
                                     link_dims_[0], gripper_pose,
                                     gripper_density, 1, gripper_friction,
                                     &mesh_file_dir_str);
-        gripper_links[1]->GetActor()->GetProperty()->SetColor(0.f, 0.7f,
-                                                              0.7f);
-        gripper_links[1]->GetBody()->setContactStiffnessAndDamping(2000, 100);
+        gripper_links[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
+        gripper_links[1]->GetBody()->setContactStiffnessAndDamping(1000, 100);
     }
 
+    // create jaw 2
     {
-        double gripper_pose[7]{0.09, 0.15, 0.09, 0, 0, 0, 1};
 
+        auto gripper_pose_position =
+                init_pose*KDL::Vector(0.f, jaws_axis_y_offset,
+                                      -link0_axis_z_offset);
+        KDL::Rotation jaw_2_rot;
+        jaw_2_rot.DoRotZ(M_PI);
+        jaw_2_rot = init_pose.M * jaw_2_rot;
+        jaw_2_rot.GetQuaternion(qx, qy, qz, qw);
+
+        double gripper_pose[7]{gripper_pose_position.x(),
+                               gripper_pose_position.y(),
+                               gripper_pose_position.z(),
+                               qx, qy, qz, qw};
         gripper_links[2] =
             new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
                                 link_dims_[0], gripper_pose,
                                 gripper_density, 1, gripper_friction,
                                 &mesh_file_dir_str);
-        gripper_links[2]->GetActor()->GetProperty()->SetColor(0.65f, 0.7f,
-                                                              0.7f);
-        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(1000, 200);
+        gripper_links[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
+        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(1000, 100);
     }
 
-    auto jaws_axis_offset = -0.001 * B_DIM_SCALE;
-    const btVector3 pivot_link0(0.f, 0.f,  0.008f  * B_DIM_SCALE);
-    const btVector3 pivot_jaw_1(0.f, jaws_axis_offset, 0.f);
-    const btVector3 pivot_jaw_2(0.f, jaws_axis_offset, 0.f);
+
+    const btVector3 pivot_link0(0.f, 0.f, link0_axis_z_offset  * B_DIM_SCALE);
+    const btVector3 pivot_jaw_1(0.f, jaws_axis_y_offset* B_DIM_SCALE, 0.f);
+    const btVector3 pivot_jaw_2(0.f, jaws_axis_y_offset* B_DIM_SCALE, 0.f);
 
     btVector3 btAxisA( 1.0f, 0.f, 0.0f );
     btVector3 btAxisB( 0.0f, -1.f, 0.f );
@@ -99,50 +124,10 @@ void Forceps::SetPoseAndJawAngle(const KDL::Frame pose,
                             grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
     gripper_links[0]->SetKinematicPose(link0_pose);
 
-    //-------------------------------- LINK 1
-    //grpr_links_pose[1] = pose;
-    //grpr_links_pose[1].M.DoRotX(-grip_angle);
-    //grpr_links_pose[1].p =  grpr_links_pose[1] *
-    //                        KDL::Vector( 0.0, 0.0, link_dims_[1][2]/2);
-    //grpr_links_pose[1].M.GetQuaternion(x, y, z, w);
-    //
-    //double link2_pose[7] = {grpr_links_pose[1].p.x(),
-    //                        grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
-
-//    gripper_links[1]->SetKinematicPose(link2_pose);
-
     hinges[0]->setMotorTarget(grip_angle, 0.05);
-    //-------------------------------- LINK 2
-    //grpr_links_pose[2] = pose;
-    //grpr_links_pose[2].M.DoRotX(grip_angle);
-    //grpr_links_pose[2].p =  grpr_links_pose[2] *
-    //                        KDL::Vector( 0.0, 0.0, link_dims_[2][2]/2);
-    //grpr_links_pose[2].M.GetQuaternion(x, y, z, w);
-    //
-    //double link3_pose[7] = {grpr_links_pose[2].p.x(),
-    //                        grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
 
-//    gripper_links[2]->SetKinematicPose(link3_pose);
     hinges[1]->setMotorTarget(-grip_angle, 0.05);
 
-
-//    //-------------------------------- LINKS 3 and 4
-//    for (int i = 3; i < 5; ++i) {
-//        // first find the end point of links 1 and 2 and then add half length
-//        // of links 3 and 4
-//        grpr_links_pose[i] = pose;
-//        grpr_links_pose[i].p =
-//                grpr_links_pose[i-2] *
-//                KDL::Vector(0., 0.,link_dims_[i-2][2]/2)
-//                + grpr_links_pose[i].M *
-//                  KDL::Vector(0., 0.,link_dims_[i][2]/2);
-//
-//        grpr_links_pose[i].M.GetQuaternion(x,y,z,w);
-//        double link_pose[7] = {grpr_links_pose[i].p.x(),
-//                               grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
-//
-//        gripper_links[i]->SetKinematicPose(link_pose);
-//    }
 
 
 }

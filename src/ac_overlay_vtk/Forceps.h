@@ -11,7 +11,7 @@
 class Forceps {
 
 public:
-    Forceps(const std::string mesh_dir);
+    Forceps(const std::string mesh_dir, const KDL::Frame init_pose);
 
     void SetPoseAndJawAngle(const KDL::Frame pose,
                             const double grip_angle);
