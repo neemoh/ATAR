@@ -292,7 +292,7 @@ TaskSteadyHand::TaskSteadyHand(
 //        input_file_dir << mesh_files_dir
 //                       << std::string("tube_half_mesh.obj");
         input_file_dir << mesh_files_dir
-                       << std::string("tube_half_mesh") << m+1 << ".obj";
+                       << std::string("tube_half_mesh") << m+1 <<"_bis.obj";
         mesh_file_dir_str = input_file_dir.str();
 
         friction = 0.001;
