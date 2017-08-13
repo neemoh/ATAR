@@ -232,6 +232,9 @@ private:
     BulletVTKObject *tube_mesh_thin;
     BulletVTKObject *stand_mesh;
     KDL::Vector dir;
+    // ADDED
+    BulletVTKObject *trans_cyl;
+    // -----
 
     std::vector<std::vector<double>> gripper_link_dims;
     Forceps * grippers[2];

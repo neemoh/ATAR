@@ -297,7 +297,10 @@ TaskSteadyHand::TaskSteadyHand(
 
         friction = 0.001;
 
-        pose_tube[0] -= (double)m*0.092;
+        pose_tube[0] -= (double)m*0.08;
+        // ADDED -----------------------
+        pose_tube[2] += (double)m*0.034;
+        // -----------------------------
 //        pose_tube[1] -= (double)m*0.092;
 
         tube_meshes[m] = new
@@ -321,6 +324,10 @@ TaskSteadyHand::TaskSteadyHand(
                    << std::string("tube_whole.obj");
     mesh_file_dir_str = input_file_dir.str();
     pose_tube[0] += 0.092;
+
+    // ADDED -----------
+     pose_tube[2] += 0.05;
+    // -----------------
 
     tube_mesh_thin = new
         BulletVTKObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim,
@@ -358,7 +365,7 @@ TaskSteadyHand::TaskSteadyHand(
 
     KDL::Frame cyl_pose;
     cyl_pose.M = KDL::Rotation::RotZ(40./180.*M_PI)*tube_pose.M;
-    cyl_pose.p = tube_pose*KDL::Vector(0.0, -0.092, 0);
+    cyl_pose.p = tube_pose*KDL::Vector(0.0, -0.092, 0.015); // ADDED Z
     dir = cyl_pose.M.UnitY();
     cyl_pose.M.GetQuaternion(qx, qy, qz, qw);
 
@@ -395,7 +402,8 @@ TaskSteadyHand::TaskSteadyHand(
             qx, qy, qz, qw};
 
         input_file_dir.str("");
-        input_file_dir <<mesh_file_dir << std::string("torus.obj");
+        input_file_dir <<mesh_file_dir << std::string("torus"
+                                                          ".obj");
         mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh[ring_num - l -1] = new
@@ -420,6 +428,26 @@ TaskSteadyHand::TaskSteadyHand(
     T.M = stand_rot * KDL::Rotation::RotX(M_PI/2);
     T.p = base_position;
     end_point  = T * end_point;
+
+    //// ADDED CYLINDER ----------------------------------------------------------
+    //
+    //_dim = {0.0008, 0.0147};
+    //friction = 0.001;
+    //KDL::Rotation rot(KDL::Rotation::RotX(M_PI/2));
+    //rot.GetQuaternion(qx, qy, qz, qw);
+    //double poser[7] = {0.11 - 0.046, 0.06 + 0.055, 0.025 + 0.042,
+    //    qx, qy, qz, qw};
+    //
+    //trans_cyl = new BulletVTKObject(ObjectShape::CYLINDER,
+    //                                ObjectType::DYNAMIC, _dim, poser, 0.0,
+    //                                0, friction, NULL);
+    //
+    //dynamics_world->addRigidBody(trans_cyl->GetBody());
+    //actors.push_back(trans_cyl->GetActor());
+    //trans_cyl->GetActor()->GetProperty()->SetColor(SHColors::Orange2);
+    //trans_cyl->GetActor()->GetProperty()->SetSpecular(0.7);
+
+    // -------------------------------------------------------------------------
 
     // -------------------------------------------------------------------------
     // Create kinematic jaw (gripper)
