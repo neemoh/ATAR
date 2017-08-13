@@ -77,12 +77,10 @@ TaskSteadyHand::TaskSteadyHand(
 
     tool_current_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
     tool_desired_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
-    tool_current_pose[0] = vtkSmartPointer<vtkMatrix4x4>::New();
 
     if (bimanual) {
         tool_current_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
         tool_desired_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
-        tool_current_pose[1] = vtkSmartPointer<vtkMatrix4x4>::New();
     }
 
     destination_ring_actor = vtkSmartPointer<vtkActor>::New();
@@ -462,14 +460,14 @@ TaskSteadyHand::TaskSteadyHand(
     // to grasp.
 
     {
-        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
-        gripper_link_dims =
-            {{0.003, 0.003, 0.003}
-             , {0.002, 0.002, 0.007}
-             , {0.002, 0.002, 0.007}};
 
-        grippers[0] = new Forceps(mesh_file_dir);
-        grippers[1] = new Forceps(mesh_file_dir);
+        KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
+        forceps_pose.M.DoRotZ(M_PI/2);
+//        forceps_pose.M.DoRotX(M_PI/4);
+
+        grippers[0] = new Forceps(mesh_file_dir, forceps_pose);
+        forceps_pose.p.x(0.07);
+        grippers[1] = new Forceps(mesh_file_dir, forceps_pose);
 
         for (int j = 0; j < 2; ++j) {
             grippers[j]->AddToWorld(dynamics_world);
@@ -485,7 +483,7 @@ TaskSteadyHand::TaskSteadyHand(
             + 0.05};
         rcm[1] = {cam_position.x() + 0.1, cam_position.y(), cam_position.z()
             + 0.05};
-
+        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
         for (int i = 0; i < 1 + (int)bimanual; ++i) {
 
             std::vector<double> arm_dim = { 0.002, rcm[i].Norm()*2};
@@ -579,7 +577,7 @@ TaskSteadyHand::TaskSteadyHand(
 void TaskSteadyHand::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                                const int tool_id) {
 
-    tool_current_pose_kdl[tool_id] = &tool_pose;
+    tool_current_pose_ptr[tool_id] = &tool_pose;
 
 }
 
@@ -609,32 +607,24 @@ void TaskSteadyHand::UpdateActors() {
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
-    for (int k = 0; k < 1 + (int)bimanual; ++k) {
-
-        // -------------
-        // the noise in the pose measurements of the tool made the rendered
-        // shadows behave unexpectedly, to fix it we do a 1 step moving
-        // averqge of the position of the tool before applying it to the ring
-
-        vtkSmartPointer<vtkMatrix4x4>   tool_pose_filt = vtkSmartPointer<vtkMatrix4x4>::New();
-        KDL::Frame tool_current_kdl = *tool_current_pose_kdl[k];
-
-        KDL::Frame tool_current_filt_kdl = tool_current_kdl;
-        tool_current_filt_kdl.p = 0.5*(tool_last_pose[k].p + tool_current_kdl.p);
-
-        VTKConversions::KDLFrameToVTKMatrix(tool_current_filt_kdl, tool_pose_filt);
-        tool_last_pose[k] = *tool_current_pose_kdl[k];
-        // -------------
-
-        // setting the transformations
-        tool_current_frame_axes[k]->SetUserMatrix(tool_pose_filt);
-        //ring_actor[k]->SetUserMatrix(tool_pose_filt);
-        std::vector<double> pose(7, 0.0);
-        conversions::KDLFrameToVector(tool_current_filt_kdl, pose);
-        double pose_array[7] = {pose[0], pose[1], pose[2], pose[3], pose[4],
-            pose[5], pose[6]};
-        ring_mesh[0]->SetKinematicPose(pose_array);
-    }
+//    for (int k = 0; k < 1 + (int)bimanual; ++k) {
+//
+//        // -------------
+//        // the noise in the pose measurements of the tool made the rendered
+//        // shadows behave unexpectedly, to fix it we do a 1 step moving
+//        // averqge of the position of the tool before applying it to the ring
+//
+//        vtkSmartPointer<vtkMatrix4x4>   tool_pose_filt = vtkSmartPointer<vtkMatrix4x4>::New();
+//
+//        KDL::Frame tool_current_filt_kdl = tool_current_pose[k];
+//        tool_current_filt_kdl.p = 0.5*(tool_last_pose[k].p + tool_current_pose[k].p);
+//
+//        VTKConversions::KDLFrameToVTKMatrix(tool_current_filt_kdl, tool_pose_filt);
+//        tool_current_frame_axes[k]->SetUserMatrix(tool_pose_filt);
+//
+//        tool_last_pose[k] = tool_current_pose[k];
+//        // -------------
+//    }
 
 
     vtkSmartPointer<vtkMatrix4x4> tool_desired_pose[2];
@@ -663,20 +653,19 @@ void TaskSteadyHand::UpdateActors() {
     //temp_pose.p = KDL::Vector(0.09 + dx*0.02, 0.15, 0.09);
     //temp_pose.M.DoRotY(M_PI);
     //temp_pose.M.DoRotZ(M_PI/2);
-    grippers[0]->SetPoseAndJawAngle(tool_last_pose[0], grip_angle);
+    grippers[0]->SetPoseAndJawAngle(tool_current_pose[0], grip_angle);
 
     //-------------------------------- UPDATE LEFT GRIPPER
-    KDL::Frame grpr_left_pose = (*tool_current_pose_kdl[1]);
     // map gripper value to an angle
     grip_posit = (*gripper_position[1]);
     grip_angle = theta_max*(grip_posit+0.5)/1.55;
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    grippers[1]->SetPoseAndJawAngle(tool_last_pose[1], grip_angle);
+    grippers[1]->SetPoseAndJawAngle(tool_current_pose[1], grip_angle);
 
-    UpdateToolRodsPose(tool_last_pose[0], 0);
-    UpdateToolRodsPose(tool_last_pose[1], 1);
+    UpdateToolRodsPose(tool_current_pose[0], 0);
+    UpdateToolRodsPose(tool_current_pose[1], 1);
 
     // -------------------------------------------------------------------------
     // Task logic
@@ -868,8 +857,7 @@ void TaskSteadyHand::UpdateActors() {
 
 //------------------------------------------------------------------------------
 void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
-                                               const KDL::Frame tool_pose,
-                                               KDL::Frame &desired_tool_pose) {
+                                               KDL::Frame &transform_to_desired_ring_pose) {
     // NOTE: All the closest points are on the wire mesh
 
     //---------------------------------------------------------------------
@@ -958,7 +946,6 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
     // the thin mesh
     KDL::Vector ring_center_to_cp = closest_point_to_center_point - ring_pose.p;
 
-    KDL::Frame ring_tranform_to_its_desired_pose;
     // desired pose only when the ring is close to the wire.if it is too
     // far we don't want fixtures
     if (ring_center_to_cp.Norm() < 5 * ring_radius) {
@@ -969,7 +956,7 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
         //---------------------------------------------------------------------
         // Find the desired position of the ring assuming that the length
         // of the thin tube is negligible
-        ring_tranform_to_its_desired_pose.p = ring_center_to_cp;
+        transform_to_desired_ring_pose.p = ring_center_to_cp;
 
         KDL::Vector desired_z, desired_y, desired_x;
 
@@ -990,46 +977,42 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
         desired_z = desired_x * desired_y;
         desired_z = desired_z / desired_z.Norm();
 
-        ring_tranform_to_its_desired_pose.M =
+        transform_to_desired_ring_pose.M =
             KDL::Rotation(desired_x, desired_y, desired_z)
                 * ring_pose.M.Inverse();
 
-        // we add the displacement that would take the ring to it's desired
-        // pose to the current pose of the tool;
-        desired_tool_pose.p =
-            ring_tranform_to_its_desired_pose.p + tool_pose.p;
-        desired_tool_pose.M =
-            ring_tranform_to_its_desired_pose.M * tool_pose.M;
+
 
         //------------------------------------------------------------------
         // Calculate errors
-        position_error_norm = ring_tranform_to_its_desired_pose.p.Norm();
+        position_error_norm = transform_to_desired_ring_pose.p.Norm();
         KDL::Vector rpy;
-        ring_tranform_to_its_desired_pose.M.GetRPY(rpy[0],
+        transform_to_desired_ring_pose.M.GetRPY(rpy[0],
                                                    rpy[1],
                                                    rpy[2]);
         orientation_error_norm = rpy.Norm();
 
+        // draw the connection lines for debug
+        line1_source->SetPoint1(ring_pose.p[0],
+                                ring_pose.p[1],
+                                ring_pose.p[2]);
+        line1_source->SetPoint2(closest_point_to_center_point[0],
+                                closest_point_to_center_point[1],
+                                closest_point_to_center_point[2]);
+        line2_source->SetPoint1(radial_y_point_kdl[0],
+                                radial_y_point_kdl[1],
+                                radial_y_point_kdl[2]);
+        line2_source->SetPoint2(closest_point_to_y_point[0],
+                                closest_point_to_y_point[1],
+                                closest_point_to_y_point[2]);
+
     } else {
-        desired_tool_pose = tool_pose;
+        transform_to_desired_ring_pose = KDL::Frame();
         // due to the delay in teleop loop this will create some wrneches if
         // the guidance is still active
     }
 
 
-    // draw the connection lines for debug
-    line1_source->SetPoint1(ring_pose.p[0],
-                            ring_pose.p[1],
-                            ring_pose.p[2]);
-    line1_source->SetPoint2(closest_point_to_center_point[0],
-                            closest_point_to_center_point[1],
-                            closest_point_to_center_point[2]);
-    line2_source->SetPoint1(radial_y_point_kdl[0],
-                            radial_y_point_kdl[1],
-                            radial_y_point_kdl[2]);
-    line2_source->SetPoint2(closest_point_to_y_point[0],
-                            closest_point_to_y_point[1],
-                            closest_point_to_y_point[2]);
 
 
 }
@@ -1168,27 +1151,35 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
 
     while (ros::ok())
     {
-        VTKConversions::KDLFrameToVTKMatrix(*tool_current_pose_kdl[0],
-                                            tool_current_pose[0]);
+
         // find the center of the ring
-        double ring_position[3];
-        ring_mesh[0]->GetActor()->GetPosition(ring_position);
-        //ring_center[0] = KDL::Vector(ring_position[0], ring_position[1],
-        //                             ring_position[2]);
-        //
-        //if(bimanual){
-        //    VTKConversions::KDLFrameToVTKMatrix(*tool_current_pose_kdl[1],
-        //                                        tool_current_pose[1]);
-        //    ring_center[1] = *tool_current_pose_kdl[1] *
-        //        KDL::Vector(0.0, ring_radius, 0.0);
-        //}
+//        double ring_position[3];
+//        ring_mesh[0]->GetActor()->GetPosition(ring_position);
+        tool_current_pose[0] = *tool_current_pose_ptr[0];
+        tool_current_pose[1] = *tool_current_pose_ptr[1];
 
-
-        CalculatedDesiredToolPose(ring_pose,  *tool_current_pose_kdl[0],
-                                  tool_desired_pose_kdl[0]);
+        KDL::Frame transform_to_desired_ring_pose;
+        CalculatedDesiredToolPose(ring_pose, transform_to_desired_ring_pose);
 
         // publish desired poses
         for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
+
+            if(gripper_in_contact[n_arm]) {
+                // here find trhe desired tool pose if it is in contact with
+                // the ring
+
+                // we add the displacement that would take the ring to it's desired
+                // pose to the current pose of the tool;
+                tool_desired_pose_kdl[n_arm].p =
+                        transform_to_desired_ring_pose.p +
+                                tool_current_pose[n_arm].p;
+                tool_desired_pose_kdl[n_arm].M =
+                        transform_to_desired_ring_pose.M *
+                                tool_current_pose[n_arm].M;
+            }
+            else {
+                tool_desired_pose_kdl[n_arm]= tool_current_pose[n_arm];
+            }
 
             // convert to pose message
             geometry_msgs::PoseStamped pose_msg;
@@ -1199,7 +1190,7 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
 
             tf::poseKDLToMsg(tool_desired_pose_in_slave_frame, pose_msg.pose);
             // fill the header
-            pose_msg.header.frame_id = "/task_space";
+            pose_msg.header.frame_id = "/slave_frame";
             pose_msg.header.stamp = ros::Time::now();
             // publish
             pub_desired[n_arm].publish(pose_msg);
@@ -1364,7 +1355,7 @@ void TaskSteadyHand::UpdateToolRodsPose(
     if (norm > rcm[i].Norm())
     {
         double displacement=norm-rcm[i].Norm();
-        displacement = displacement - 4*gripper_link_dims[2][2]/2;
+        displacement = displacement - 4* 0.002/2;
         KDL::Frame orientation;
         orientation.M.UnitX({1,0,0});
         orientation.M.UnitY(shift/shift.Norm());
@@ -1382,7 +1373,7 @@ void TaskSteadyHand::UpdateToolRodsPose(
     } else
     {
         double displacement=-norm+rcm[i].Norm();
-        displacement = displacement + 4*gripper_link_dims[2][2]/2;
+        displacement = displacement + 4* 0.002/2;
         KDL::Frame orientation;
         orientation.M.UnitX({1,0,0});
         orientation.M.UnitY(shift/shift.Norm());

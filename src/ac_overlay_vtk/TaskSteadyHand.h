@@ -98,7 +98,6 @@ public:
 
     // calculates the desired tool pose
     void CalculatedDesiredToolPose(const KDL::Frame ring_pose,
-                                   const KDL::Frame tool_pose,
                                    KDL::Frame &desired_tool_pose);
 
     // returns the status of the change of the ac_param
@@ -193,11 +192,12 @@ private:
     custom_msgs::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl[2];
-    KDL::Frame *tool_current_pose_kdl[2];
-    KDL::Frame tool_last_pose[2];
+    KDL::Frame *tool_current_pose_ptr[2];
+    KDL::Frame tool_current_pose[2];
+//    KDL::Frame tool_last_pose[2];
 
     uint destination_ring_counter;
-    vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
+//    vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
 
 
     // actors that are updated during the task
@@ -236,7 +236,7 @@ private:
     BulletVTKObject *trans_cyl;
     // -----
 
-    std::vector<std::vector<double>> gripper_link_dims;
+//    std::vector<std::vector<double>> gripper_link_dims;
     Forceps * grippers[2];
 
     BulletVTKObject* supporting_cylinder;
