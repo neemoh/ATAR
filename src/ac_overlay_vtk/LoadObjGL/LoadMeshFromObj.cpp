@@ -114,7 +114,7 @@ btCompoundShape *LoadCompoundMeshFromObj(const std::string relativeFileName,
         btCHshape->setLocalScaling(btVector3(scaling_factor, scaling_factor, scaling_factor));
         btCHshape->initializePolyhedralFeatures();
         btCHshape->optimizeConvexHull();
-        btCHshape->setMargin(0.0001);
+        btCHshape->setMargin(0.0);
 
         //calculate the centroid
         btVector3 centroid(0.0,0.0,0.0);
