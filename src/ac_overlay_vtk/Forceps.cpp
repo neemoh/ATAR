@@ -11,9 +11,9 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
 {
 
     auto jaws_axis_y_offset = -0.001f;
-    auto link0_axis_z_offset = 0.008f;
+    auto link0_axis_z_offset = 0.004f;
 
-    link_dims_.push_back({0.003, 0.003, 0.003});
+    link_dims_.push_back({0.001, 0.003, 0.003});
     float gripper_density = 500000; // kg/m3
     float gripper_friction = 50;
 

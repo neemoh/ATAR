@@ -237,7 +237,7 @@ private:
     // -----
 
 //    std::vector<std::vector<double>> gripper_link_dims;
-    Forceps * grippers[2];
+    Forceps * forceps[2];
 
     BulletVTKObject* supporting_cylinder;
     BulletVTKObject* arm[2];

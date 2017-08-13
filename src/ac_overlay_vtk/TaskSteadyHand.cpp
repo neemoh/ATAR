@@ -46,7 +46,8 @@ TaskSteadyHand::TaskSteadyHand(
     ac_params_changed(true),
     task_state(SHTaskState::Idle),
     n_score_history(10),
-    time_last(ros::Time::now()) {
+    time_last(ros::Time::now())
+{
 
     InitBullet();
 
@@ -70,7 +71,9 @@ TaskSteadyHand::TaskSteadyHand(
     ac_parameters.angular_elastic_coeff = 0.04;
     ac_parameters.angular_damping_coeff = 0.002;
 
-
+    // prevent tools from hitting things at the initializiation
+    tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);
+    tool_current_pose[1].p = KDL::Vector(0.1, 0.2, 0.1);
     // -------------------------------------------------------------------------
     //  INITIALIZING GRAPHICS ACTORS
     // -------------------------------------------------------------------------
@@ -244,35 +247,6 @@ TaskSteadyHand::TaskSteadyHand(
     //stand_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
     //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
 
-    // -------------------------------------------------------------------------
-    // MESH hq is for rendering and lq is for generating
-    // active constraints
-
-    //tube_rot.GetQuaternion(qx, qy,qz, qw);
-    //
-    //double pose_tube[7]{base_position[0], base_position[1], base_position[2],
-    //    qx, qy,qz, qw};
-    //
-    //_dim = {0.002};
-    //input_file_dir.str("");
-    //input_file_dir << mesh_files_dir
-    //               << std::string("steady_hand_mesh_whole.obj");
-    //mesh_file_dir_str = input_file_dir.str();
-    //
-    //friction = 0.001;
-    //
-    //tube_mesh = new
-    //    BulletVTKObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim,
-    //                    pose_tube, 0.0, 0, friction,
-    //                    &mesh_file_dir_str);
-    //
-    //dynamics_world->addRigidBody(tube_mesh->GetBody());
-    //actors.push_back(tube_mesh->GetActor());
-    //tube_mesh->GetActor()->GetProperty()->SetColor(SHColors::Orange);
-    //tube_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
-    //tube_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
-    //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
-
 
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for generating
@@ -290,7 +264,7 @@ TaskSteadyHand::TaskSteadyHand(
 //        input_file_dir << mesh_files_dir
 //                       << std::string("tube_half_mesh.obj");
         input_file_dir << mesh_files_dir
-                       << std::string("tube_half_mesh") << m+1 <<"_bis.obj";
+                       << std::string("tube_half_mesh") << m+1 <<".obj";
         mesh_file_dir_str = input_file_dir.str();
 
         friction = 0.001;
@@ -363,7 +337,7 @@ TaskSteadyHand::TaskSteadyHand(
 
     KDL::Frame cyl_pose;
     cyl_pose.M = KDL::Rotation::RotZ(40./180.*M_PI)*tube_pose.M;
-    cyl_pose.p = tube_pose*KDL::Vector(0.0, -0.092, 0.015); // ADDED Z
+    cyl_pose.p = tube_pose*KDL::Vector(0.0, -0.08, 0.034); // ADDED Z
     dir = cyl_pose.M.UnitY();
     cyl_pose.M.GetQuaternion(qx, qy, qz, qw);
 
@@ -371,7 +345,6 @@ TaskSteadyHand::TaskSteadyHand(
         qx, qy, qz, qw};
 
     _dim = {0.006, 0.002};
-    friction = 0.005;
 
     supporting_cylinder = new
         BulletVTKObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC, _dim,
@@ -448,30 +421,19 @@ TaskSteadyHand::TaskSteadyHand(
     // -------------------------------------------------------------------------
 
     // -------------------------------------------------------------------------
-    // Create kinematic jaw (gripper)
-    //
-    // The gripper is a 5 link mechanism, link 0 is a base link, 1st and 2nd
-    // are angular jaws (like a scissor) so their orientation is related to
-    // the gripper angle of the master, 3rd and 4th change position along one
-    // axis according to the gripper angle, like a clamp. These last links
-    // are used to generate enough normal force for a stable grasping, since
-    // the scissor type links push the objects outwards.
-    // make sure tu set a high friction coefficient for the objects you want
-    // to grasp.
+    // Create Forceps
 
     {
 
         KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
         forceps_pose.M.DoRotZ(M_PI/2);
-//        forceps_pose.M.DoRotX(M_PI/4);
-
-        grippers[0] = new Forceps(mesh_file_dir, forceps_pose);
+        forceps[0] = new Forceps(mesh_file_dir, forceps_pose);
         forceps_pose.p.x(0.07);
-        grippers[1] = new Forceps(mesh_file_dir, forceps_pose);
+        forceps[1] = new Forceps(mesh_file_dir, forceps_pose);
 
         for (int j = 0; j < 2; ++j) {
-            grippers[j]->AddToWorld(dynamics_world);
-            grippers[j]->AddToActorsVector(actors);
+            forceps[j]->AddToWorld(dynamics_world);
+            forceps[j]->AddToActorsVector(actors);
         }
 
 
@@ -483,7 +445,7 @@ TaskSteadyHand::TaskSteadyHand(
             + 0.05};
         rcm[1] = {cam_position.x() + 0.1, cam_position.y(), cam_position.z()
             + 0.05};
-        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
+        double gripper_pose[7]{0.04, 0.2, 0.1, 0, 0, 0, 1};
         for (int i = 0; i < 1 + (int)bimanual; ++i) {
 
             std::vector<double> arm_dim = { 0.002, rcm[i].Norm()*2};
@@ -591,9 +553,9 @@ void TaskSteadyHand::UpdateActors() {
 
     ring_pose = ring_mesh[ring_in_action]->GetPose();
 
-    // check if any of the grippers have grasped the ring in action
+    // check if any of the forceps have grasped the ring in action
     for (int i = 0; i < 2; ++i) {
-        gripper_in_contact[i] = grippers[i]->IsGraspingObject(dynamics_world,
+        gripper_in_contact[i] = forceps[i]->IsGraspingObject(dynamics_world,
                                                               ring_mesh[ring_in_action]->GetBody());
     }
 
@@ -653,7 +615,7 @@ void TaskSteadyHand::UpdateActors() {
     //temp_pose.p = KDL::Vector(0.09 + dx*0.02, 0.15, 0.09);
     //temp_pose.M.DoRotY(M_PI);
     //temp_pose.M.DoRotZ(M_PI/2);
-    grippers[0]->SetPoseAndJawAngle(tool_current_pose[0], grip_angle);
+    forceps[0]->SetPoseAndJawAngle(tool_current_pose[0], grip_angle);
 
     //-------------------------------- UPDATE LEFT GRIPPER
     // map gripper value to an angle
@@ -662,7 +624,7 @@ void TaskSteadyHand::UpdateActors() {
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    grippers[1]->SetPoseAndJawAngle(tool_current_pose[1], grip_angle);
+    forceps[1]->SetPoseAndJawAngle(tool_current_pose[1], grip_angle);
 
     UpdateToolRodsPose(tool_current_pose[0], 0);
     UpdateToolRodsPose(tool_current_pose[1], 1);
