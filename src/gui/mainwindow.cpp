@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->button_task_7, SIGNAL(released()), this, SLOT(on_task_7_clicked()) );
     connect(ui->button_task_8, SIGNAL(released()), this, SLOT(on_task_8_clicked()) );
 
-    connect(ui->button_fullScreen, SIGNAL(released()), this, SLOT(on_full_screen_clicked()) );
+    connect(ui->button_home_masters, SIGNAL(released()), this, SLOT(on_home_masters_clicked()) );
 
     connect(ui->checkBox_pub_imgs, SIGNAL(toggled(bool)), this, SLOT(on_pub_imgs_state_changed(bool)) );
 
@@ -36,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->button_calib_arm2, SIGNAL(released()), this, SLOT(on_calib_arm2_clicked()) );
 
     connect(ui->button_exit, SIGNAL(released()), this, SLOT(on_exit_clicked()) );
+
+    connect(ui->button_kill_core, SIGNAL(released()), this, SLOT(on_kill_core_clicked()) );
 
     connect(ui->pause_button, SIGNAL(released()), this, SLOT(on_pause_clicked()) );
 
@@ -143,10 +145,10 @@ void MainWindow::on_task_8_clicked()
 }
 
 
-void MainWindow::on_full_screen_clicked(){
+void MainWindow::on_home_masters_clicked(){
 
     std_msgs::Int8 msg;
-    msg.data =  CE_TOGGLE_FULLSCREEN;
+    msg.data =  CE_HOME_MASTERS;
     ros_obj.publisher_control_events.publish(msg);
 
 }
@@ -178,6 +180,16 @@ void MainWindow::on_calib_arm2_clicked(){
 
 }
 
+
+void MainWindow::on_kill_core_clicked(){
+
+    ROS_INFO("Exiting...");
+
+    std_msgs::Int8 msg;
+    msg.data =  CE_EXIT;
+    ros_obj.publisher_control_events.publish(msg);
+
+}
 void MainWindow::on_exit_clicked(){
 
     ROS_INFO("Exiting...");

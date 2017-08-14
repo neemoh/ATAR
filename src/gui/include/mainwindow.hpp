@@ -36,13 +36,14 @@ private slots:
     void on_task_7_clicked();
     void on_task_8_clicked();
 
-    void on_full_screen_clicked();
+    void on_home_masters_clicked();
     void on_pub_imgs_state_changed(bool state);
 
     void on_calib_arm1_clicked();
     void on_calib_arm2_clicked();
 
     void on_exit_clicked();
+    void on_kill_core_clicked();
 
     void on_stop_released();
 

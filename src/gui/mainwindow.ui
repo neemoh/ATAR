@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>559</width>
-    <height>381</height>
+    <width>558</width>
+    <height>390</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -42,8 +42,7 @@
         </sizepolicy>
        </property>
        <property name="styleSheet">
-        <string notr="true">
-</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>Task 1</string>
@@ -264,7 +263,7 @@ color:rgb(255, 0, 0);
       <string>Stop</string>
      </property>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -368,38 +367,12 @@ color:rgb(255, 0, 0);
       <x>20</x>
       <y>240</y>
       <width>261</width>
-      <height>111</height>
+      <height>131</height>
      </rect>
     </property>
     <property name="title">
      <string>Options</string>
     </property>
-    <widget class="QPushButton" name="button_calib_arm1">
-     <property name="geometry">
-      <rect>
-       <x>140</x>
-       <y>30</y>
-       <width>111</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Calibrate Arm 1</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="button_calib_arm2">
-     <property name="geometry">
-      <rect>
-       <x>140</x>
-       <y>70</y>
-       <width>111</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Calibrate Arm 2</string>
-     </property>
-    </widget>
     <widget class="QCheckBox" name="checkBox_pub_imgs">
      <property name="geometry">
       <rect>
@@ -411,19 +384,6 @@ color:rgb(255, 0, 0);
      </property>
      <property name="text">
       <string>Publish Imgs</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="button_fullScreen">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>70</y>
-       <width>101</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>FullScreen</string>
      </property>
     </widget>
     <widget class="QCheckBox" name="checkBox_shadows">
@@ -439,25 +399,82 @@ color:rgb(255, 0, 0);
       <string>Shadows</string>
      </property>
     </widget>
-    <zorder>button_calib_arm1</zorder>
-    <zorder>button_calib_arm2</zorder>
-    <zorder>checkBox_pub_imgs</zorder>
-    <zorder>button_fullScreen</zorder>
-    <zorder>checkBox_shadows</zorder>
-    <zorder>groupBox_2</zorder>
-    <zorder>groupBox</zorder>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>30</y>
+       <width>121</width>
+       <height>81</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QPushButton" name="button_home_masters">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Home Masters</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="button_calib_arm1">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Calibrate Arm 1</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="button_calib_arm2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Calibrate Arm 2</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
    <widget class="QPushButton" name="button_exit">
     <property name="geometry">
      <rect>
-      <x>300</x>
+      <x>410</x>
       <y>270</y>
-      <width>241</width>
+      <width>131</width>
       <height>71</height>
      </rect>
     </property>
     <property name="text">
      <string>EXIT</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_kill_core">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>270</y>
+      <width>91</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Kill Core</string>
     </property>
    </widget>
   </widget>

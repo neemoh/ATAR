@@ -309,7 +309,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
 
     subscriber_control_events = n.subscribe(
-            "/control_events", 1, &OverlayROSConfig::ControlEventsCallback,
+            "/atar/control_events", 1, &OverlayROSConfig::ControlEventsCallback,
             this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /control_events");
 

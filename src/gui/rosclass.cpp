@@ -236,7 +236,7 @@ void RosObj::GetROSParameterValues() {
 
     //publisher
     publisher_control_events = n.advertise<std_msgs::Int8>
-            ("/control_events", 1);
+            ("/atar/control_events", 1);
     ROS_INFO("Will publish on /control_events");
 
 

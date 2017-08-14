@@ -9,6 +9,8 @@
 #include <kdl/frames.hpp>
 #include <kdl_conversions/kdl_msg.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Int8.h>
+#include <src/ac_overlay_vtk/ControlEvents.h>
 
 // This node simulates the slaves of the dvrk in a teleop mode and controls the
 // behavior of the master console to mock that of the dvrk teleoperation mode.
@@ -28,7 +30,7 @@ bool new_clutch_msg;
 bool new_master_pose[2];
 KDL::Frame master_pose[2];
 std::string master_state[2];
-
+bool home_masters = true;
 // ------------------------------------- callback functions ---------------------------
 void ClutchCallback(const sensor_msgs::JoyConstPtr & msg){
     clutch_pressed = (bool)msg->buttons[0];
@@ -67,6 +69,24 @@ void Master2StateCallback(
     ROS_DEBUG( "Master 2 says: %s" , master_state[1].data());
 
 }
+
+void ControlEventsCallback(const std_msgs::Int8ConstPtr
+                                             &msg) {
+
+    int8_t control_event = msg->data;
+    ROS_DEBUG("Received control event %d", control_event);
+
+    switch(control_event){
+    case CE_HOME_MASTERS:
+        home_masters = true;
+        break;
+
+    default:
+        break;
+    }
+
+}
+
 
 // ------------------------------------- Main ---------------------------
 int main(int argc, char * argv[]) {
@@ -108,26 +128,30 @@ int main(int argc, char * argv[]) {
     std::stringstream param_name;
     param_name << std::string("/dvrk/") << master_names[0]
                << "/position_cartesian_current";
-    ros::Subscriber sub_master_1_current_pose =  n.subscribe(param_name.str(), 1, Master1PoseCurrentCallback);
+    ros::Subscriber sub_master_1_current_pose =  n.subscribe(param_name.str(),
+                                                             1, Master1PoseCurrentCallback);
     ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[1]
                << "/position_cartesian_current";
-    ros::Subscriber sub_master_2_current_pose =  n.subscribe(param_name.str(), 1, Master2PoseCurrentCallback);
+    ros::Subscriber sub_master_2_current_pose =  n.subscribe(param_name.str(),
+                                                             1, Master2PoseCurrentCallback);
     ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
     // ------------ MATERS GET STATE
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[0]
                << "/robot_state";
-    ros::Subscriber sub_master_1_state =  n.subscribe(param_name.str(), 1, Master1StateCallback);
+    ros::Subscriber sub_master_1_state =  n.subscribe(param_name.str(),
+                                                      1, Master1StateCallback);
     ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[1]
                << "/robot_state";
-    ros::Subscriber sub_master_2_state =  n.subscribe(param_name.str(), 1, Master2StateCallback);
+    ros::Subscriber sub_master_2_state =  n.subscribe(param_name.str(),
+                                                      1, Master2StateCallback);
     ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
 
@@ -157,6 +181,11 @@ int main(int argc, char * argv[]) {
                << "/position_cartesian_current";
     ros::Publisher pub_slave_2_pose = n.advertise<geometry_msgs::PoseStamped>(param_name.str(), 2);
     ROS_INFO("[PUBLISHERS] Will publish to %s", param_name.str().c_str());
+
+
+    // ------------ subscribe to control events that come from the GUI
+    ros::Subscriber sub_control_events = n.subscribe("/atar/control_events", 1,
+                                                     ControlEventsCallback);
 
     double scaling = 0.2;
     n.getParam("scaling", scaling);
@@ -207,6 +236,25 @@ int main(int argc, char * argv[]) {
 
     while(ros::ok()){
 
+        if(home_masters){
+            home_masters = false;
+            std_msgs::String string_msg;
+            string_msg.data = "Home";
+
+            if(master_state[0].data() != std::string("DVRK_READY")) {
+                pub_master_1_state.publish(string_msg);
+                ROS_INFO( "Attempting to Home %s", master_names[0].c_str());
+            } else
+                ROS_INFO( "%s is alreade Homed.", master_names[0].c_str());
+            // second master arm
+            if(num_arms==2) {
+                if (master_state[1].data() != std::string("DVRK_READY")) {
+                    pub_master_2_state.publish(string_msg);
+                    ROS_INFO( "Attempting to Home %s", master_names[1].c_str());
+                } else
+                    ROS_INFO( "%s is alreade Homed.", master_names[1].c_str());
+            }
+        }
 
         if(new_coag_msg || new_clutch_msg){
             new_coag_msg = false;
