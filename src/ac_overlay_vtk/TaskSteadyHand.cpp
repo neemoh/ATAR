@@ -4,27 +4,9 @@
 
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
-#include <vtkConeSource.h>
 #include <boost/thread/thread.hpp>
-#include <geometry_msgs/PoseStamped.h>
-#include <kdl_conversions/kdl_msg.h>
 #include "TaskSteadyHand.h"
-#include <kdl/frames.hpp>
-#include <vtkOBJReader.h>
 
-namespace SHColors {
-double Red[3] {1.0, 0.1, 0.03};
-double OrangeRed[3] {1.0, 0.27, 0.03};
-double Gold[3] {1.0, 0.84, 0.0};
-double Green[3] {0.0, 0.9, 0.03};
-double Pink[3] {1.0, 0.0, 1.0};
-double Orange[3] {0.9, 0.4, 0.1};
-double Orange1[3] {0.9, 0.5, 0.05};
-double Orange2[3] {0.7, 0.2, 0.05};
-double Gray [3] {0.4, 0.4, 0.4};
-double Turquoise[3]	{0.25, 0.88, 0.82};
-double DeepPink[3] {1.0, 0.08, 0.58};
-};
 
 TaskSteadyHand::TaskSteadyHand(
     const std::string mesh_file_dir,
@@ -33,15 +15,11 @@ TaskSteadyHand::TaskSteadyHand(
     const bool with_guidance,
     const double haptic_loop_rate,
     const std::string slave_names_in[],
-    KDL::Frame *slave_to_world_tr
-)
+    KDL::Frame *slave_to_world_tr)
     :
     VTKTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
     mesh_files_dir(mesh_file_dir),
     slave_frame_to_world_frame_tr(slave_to_world_tr),
-//        show_ref_frames(show_ref_frames),
-//        bimanual(biman),
-//        with_guidance(with_guidance),
     destination_ring_counter(0),
     ac_params_changed(true),
     task_state(SHTaskState::Idle),
@@ -132,10 +110,8 @@ TaskSteadyHand::TaskSteadyHand(
         };
         board = new BulletVTKObject(
             ObjectShape::BOX, ObjectType::DYNAMIC, dim,
-            pose, 0.0, 0, friction,
-            NULL
-        );
-        board->GetActor()->GetProperty()->SetColor(0.3, 0.3, 0.3);
+            pose, 0.0, 0, friction);
+        board->GetActor()->GetProperty()->SetColor(colors.GrayDark);
 
         dynamics_world->addRigidBody(board->GetBody());
         actors.push_back(board->GetActor());
@@ -167,7 +143,7 @@ TaskSteadyHand::TaskSteadyHand(
     destination_ring_actor->SetScale(0.002);
     destination_ring_actor->RotateX(90);
     destination_ring_actor->RotateY(-45);
-    destination_ring_actor->GetProperty()->SetColor(SHColors::OrangeRed);
+    destination_ring_actor->GetProperty()->SetColor(colors.OrangeRed);
     //destination_ring_actor->GetProperty()->SetOpacity(0.5);
 
     // -------------------------------------------------------------------------
@@ -222,8 +198,7 @@ TaskSteadyHand::TaskSteadyHand(
     KDL::Rotation stand_rot(
         KDL::Rotation::RotZ(45. * M_PI / 180.) *
             KDL::Rotation::RotX(M_PI) *
-            tube_rot
-    );
+            tube_rot);
 
     double qx, qy, qz, qw;
     stand_rot.GetQuaternion(qx, qy, qz, qw);
@@ -233,20 +208,17 @@ TaskSteadyHand::TaskSteadyHand(
 
     std::vector<double> _dim;
     double friction = 0.001;
-
     stand_mesh = new
         BulletVTKObject(
         ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-        stand_pose, 0.0, 0, friction, &mesh_file_dir_str
-    );
+        stand_pose, 0.0, 0, friction, &mesh_file_dir_str);
 
     dynamics_world->addRigidBody(stand_mesh->GetBody());
     actors.push_back(stand_mesh->GetActor());
-    stand_mesh->GetActor()->GetProperty()->SetColor(SHColors::Gray);
+    stand_mesh->GetActor()->GetProperty()->SetColor(colors.GrayLight);
     //stand_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
     //stand_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
     //tube_mesh->GetActor()->GetProperty()->SetOpacity(0.1);
-
 
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for generating
@@ -254,58 +226,36 @@ TaskSteadyHand::TaskSteadyHand(
     tube_rot.GetQuaternion(qx, qy, qz, qw);
 
     double pose_tube[7]{
-        base_position[0], base_position[1], base_position[2], qx, qy, qz, qw
-    };
+        base_position[0], base_position[1], base_position[2], qx, qy, qz, qw};
 
-    _dim = {0.002};
-    for (int m = 0; m <2; ++m) {
+    for (int m = 0; m <4; ++m) {
 
         input_file_dir.str("");
-//        input_file_dir << mesh_files_dir
-//                       << std::string("tube_half_mesh.obj");
         input_file_dir << mesh_files_dir
-                       << std::string("tube_half_mesh") << m+1 <<".obj";
+                       << std::string("tube_quarter_mesh") << m+1 <<".obj";
         mesh_file_dir_str = input_file_dir.str();
-
-        friction = 0.001;
-
-        pose_tube[0] -= (double)m*0.08;
-        // ADDED -----------------------
-        pose_tube[2] += (double)m*0.034;
-        // -----------------------------
-//        pose_tube[1] -= (double)m*0.092;
 
         tube_meshes[m] = new
             BulletVTKObject(
-            ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-            pose_tube, 0.0, 0, friction,
-            &mesh_file_dir_str
-        );
+            ObjectShape::MESH, ObjectType::DYNAMIC, {},
+            pose_tube, 0.0, 0, friction, &mesh_file_dir_str);
 
         dynamics_world->addRigidBody(tube_meshes[m]->GetBody());
         actors.push_back(tube_meshes[m]->GetActor());
-        tube_meshes[m]->GetActor()->GetProperty()->SetColor(SHColors::Orange2);
+        tube_meshes[m]->GetActor()->GetProperty()->SetColor(colors.Coral);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(0.8);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(80);
 //        tube_meshes[m]->GetActor()->GetProperty()->SetOpacity(0.1);
     }
     // -------------------------------------------------------------------------
-    // MESH lq
+    // MESH thin
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
-                   << std::string("tube_whole.obj");
+                   << std::string("tube_whole_thin.obj");
     mesh_file_dir_str = input_file_dir.str();
-    pose_tube[0] += 0.092;
-
-    // ADDED -----------
-     pose_tube[2] += 0.05;
-    // -----------------
-
     tube_mesh_thin = new
         BulletVTKObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim,
-                        pose_tube, 0.0, 0, friction,
-                        &mesh_file_dir_str);
-
+                        pose_tube, 0.0, 0, friction, &mesh_file_dir_str);
     actors.push_back(tube_mesh_thin->GetActor());
 
     //// TODO: Locally transform the mesh so that in the findDesiredPose we
@@ -315,6 +265,28 @@ TaskSteadyHand::TaskSteadyHand(
     cellLocator->SetDataSet(tube_mesh_thin->GetActor()->GetMapper()->GetInput());
     cellLocator->BuildLocator();
 
+
+    // -------------------------------------------------------------------------
+    // Closing cylinder
+    KDL::Frame cyl_pose;
+    cyl_pose.M = KDL::Rotation::RotZ(40./180.*M_PI)*tube_pose.M;
+    cyl_pose.p = tube_pose*KDL::Vector(0.0, -0.08, 0.034); // ADDED Z
+    dir = cyl_pose.M.UnitY();
+    cyl_pose.M.GetQuaternion(qx, qy, qz, qw);
+
+    double pose_cyl[7]{cyl_pose.p.x(), cyl_pose.p.y(), cyl_pose.p.z(),
+        qx, qy, qz, qw};
+
+    _dim = {0.006, 0.002};
+
+    closing_cylinder = new
+        BulletVTKObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC, _dim,
+                        pose_cyl, 0.0);
+
+    dynamics_world->addRigidBody(closing_cylinder->GetBody());
+    actors.push_back(closing_cylinder->GetActor());
+    closing_cylinder->GetActor()->GetProperty()->SetColor(colors.Coral);
+    closing_cylinder->GetActor()->GetProperty()->SetSpecular(0.7);
 
     // -------------------------------------------------------------------------
     // Lines
@@ -333,36 +305,9 @@ TaskSteadyHand::TaskSteadyHand(
     //line2_actor->GetProperty()->SetOpacity(0.8);
 
     // -------------------------------------------------------------------------
-    // Closing cylinder
-
-    KDL::Frame cyl_pose;
-    cyl_pose.M = KDL::Rotation::RotZ(40./180.*M_PI)*tube_pose.M;
-    cyl_pose.p = tube_pose*KDL::Vector(0.0, -0.08, 0.034); // ADDED Z
-    dir = cyl_pose.M.UnitY();
-    cyl_pose.M.GetQuaternion(qx, qy, qz, qw);
-
-    double pose_cyl[7]{cyl_pose.p.x(), cyl_pose.p.y(), cyl_pose.p.z(),
-        qx, qy, qz, qw};
-
-    _dim = {0.006, 0.002};
-
-    supporting_cylinder = new
-        BulletVTKObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC, _dim,
-                        pose_cyl, 0.0);
-
-    dynamics_world->addRigidBody(supporting_cylinder->GetBody());
-    actors.push_back(supporting_cylinder->GetActor());
-    supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::Orange2);
-    supporting_cylinder->GetActor()->GetProperty()->SetSpecular(0.7);
-
-    // -------------------------------------------------------------------------
-    // Create ring mesh
-
-    _dim = {0.002};
-
+    // Create ring meshes
     friction = 50;
     double density = 50000; // kg/m3
-
     double step = 0.003;
 
     for (int l = 0; l < ring_num; ++l) {
@@ -373,58 +318,31 @@ TaskSteadyHand::TaskSteadyHand(
             qx, qy, qz, qw};
 
         input_file_dir.str("");
-        input_file_dir <<mesh_file_dir << std::string("torus"
-                                                          ".obj");
+        input_file_dir <<mesh_file_dir << std::string("torus.obj");
         mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh[ring_num - l -1] = new
-            BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+            BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, {},
                             pose, density, 0, friction,
                             &mesh_file_dir_str);
 
         dynamics_world->addRigidBody(ring_mesh[ring_num - l -1]->GetBody());
         actors.push_back(ring_mesh[ring_num - l -1]->GetActor());
-        ring_mesh[ring_num - l -1]->GetActor()->GetProperty()->SetColor(SHColors::Turquoise);
-        ring_mesh[ring_num - l -1]->GetActor()->GetProperty()->SetSpecular(0.7);
-
-        ring_mesh[ring_num - l -1]->GetBody()->setContactStiffnessAndDamping
-            (4000, 50);
-        ring_mesh[ring_num - l -1]->GetBody()->setRollingFriction(btScalar(0.001));
-        ring_mesh[ring_num - l -1]->GetBody()->setSpinningFriction(btScalar(0.001));
+        ring_mesh[ring_num-l-1]->GetActor()->GetProperty()->SetColor(colors.Turquoise);
+        ring_mesh[ring_num-l-1]->GetBody()->setContactStiffnessAndDamping
+            (2000, 100);
+        ring_mesh[ring_num-l-1]->GetBody()->setRollingFriction(btScalar(0.01));
+        ring_mesh[ring_num-l-1]->GetBody()->setSpinningFriction(btScalar(0.01));
     }
 
     start_point  = cyl_pose.p + (ring_num + 3) * step *dir;
     end_point = {0.015, 0.004, 0};
-    KDL::Frame T;
-    T.M = stand_rot * KDL::Rotation::RotX(M_PI/2);
-    T.p = base_position;
+    KDL::Frame T (stand_rot * KDL::Rotation::RotX(M_PI/2), base_position);
     end_point  = T * end_point;
-
-    //// ADDED CYLINDER ----------------------------------------------------------
-    //
-    //_dim = {0.0008, 0.0147};
-    //friction = 0.001;
-    //KDL::Rotation rot(KDL::Rotation::RotX(M_PI/2));
-    //rot.GetQuaternion(qx, qy, qz, qw);
-    //double poser[7] = {0.11 - 0.046, 0.06 + 0.055, 0.025 + 0.042,
-    //    qx, qy, qz, qw};
-    //
-    //trans_cyl = new BulletVTKObject(ObjectShape::CYLINDER,
-    //                                ObjectType::DYNAMIC, _dim, poser, 0.0,
-    //                                0, friction, NULL);
-    //
-    //dynamics_world->addRigidBody(trans_cyl->GetBody());
-    //actors.push_back(trans_cyl->GetActor());
-    //trans_cyl->GetActor()->GetProperty()->SetColor(SHColors::Orange2);
-    //trans_cyl->GetActor()->GetProperty()->SetSpecular(0.7);
-
-    // -------------------------------------------------------------------------
 
     // -------------------------------------------------------------------------
     // Create Forceps
-
     {
-
         KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
         forceps_pose.M.DoRotZ(M_PI/2);
         forceps[0] = new Forceps(mesh_file_dir, forceps_pose);
@@ -435,32 +353,26 @@ TaskSteadyHand::TaskSteadyHand(
             forceps[j]->AddToWorld(dynamics_world);
             forceps[j]->AddToActorsVector(actors);
         }
+    }
 
+    // -------------------------------------------------------------------------
+    // Create tool rods
+    {
+        // Cylinders resembling the PSM rods
+        KDL::Vector cam_posit(0.118884, 0.27565, 0.14583);
 
-        // Cylinders resembling the robotic arms
+        rcm[0] = {cam_posit.x()-0.1, cam_posit.y(), cam_posit.z()+ 0.05};
+        rcm[1] = {cam_posit.x()+0.1, cam_posit.y(), cam_posit.z()+ 0.05};
 
-        KDL::Vector cam_position(0.118884, 0.27565, 0.14583);
-
-        rcm[0] = {cam_position.x() - 0.1, cam_position.y(), cam_position.z()
-            + 0.05};
-        rcm[1] = {cam_position.x() + 0.1, cam_position.y(), cam_position.z()
-            + 0.05};
         double gripper_pose[7]{0.04, 0.2, 0.1, 0, 0, 0, 1};
         for (int i = 0; i < 1 + (int)bimanual; ++i) {
-
             std::vector<double> arm_dim = { 0.002, rcm[i].Norm()*2};
-
             arm[i] = new BulletVTKObject(
                 ObjectShape::CYLINDER,
-                ObjectType::KINEMATIC, arm_dim, gripper_pose, 0.0
-            );
+                ObjectType::KINEMATIC, arm_dim, gripper_pose, 0.0);
             dynamics_world->addRigidBody(arm[i]->GetBody());
             actors.push_back(arm[i]->GetActor());
-            arm[i]->GetActor()->GetProperty()->SetColor(1, 1, 1);
-            arm[i]->GetActor()->GetProperty()->SetSpecularPower(50);
-            arm[i]->GetActor()->GetProperty()->SetSpecular(0.8);
-            //arm[i]->GetActor()->GetProperty()->SetOpacity(1.0);
-
+            arm[i]->GetActor()->GetProperty()->SetColor(colors.Black);
             arm[i]->GetBody()->setContactStiffnessAndDamping(2000, 100);
         }
     }
@@ -496,7 +408,7 @@ TaskSteadyHand::TaskSteadyHand(
 
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
-        actor->GetProperty()->SetColor(SHColors::Gray);
+        actor->GetProperty()->SetColor(colors.GrayDark);
         actor->SetPosition(0.09- (double)i * 0.006, 0.12 + (double)i * 0.0001,
                            0.005);
         score_sphere_actors.push_back(actor);
@@ -565,7 +477,7 @@ void TaskSteadyHand::UpdateActors() {
     //            ->SetColor(1.,0.,0.);
     //else
     //    ring_mesh[ring_in_action]->GetActor()->GetProperty()
-    //            ->SetColor(SHColors::Green);
+    //            ->SetColor(Colors::Green);
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
@@ -639,7 +551,7 @@ void TaskSteadyHand::UpdateActors() {
     if (task_state == SHTaskState::Idle) {
         destination_ring_position = start_point;
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
-            (SHColors::Orange1);
+            (colors.Orange);
     } else
         destination_ring_position = end_point;
 
@@ -677,9 +589,9 @@ void TaskSteadyHand::UpdateActors() {
         start_time = ros::Time::now();
         // reset score related vars
         ResetOnGoingEvaluation();
-//        destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
+//        destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
-            (SHColors::Orange1);
+            (colors.Orange);
     }
 
 
@@ -700,11 +612,11 @@ void TaskSteadyHand::UpdateActors() {
         //Reset tube color
 //        for (int i = 0; i < 3; ++i) {
 //            tube_meshes[i]->GetActor()->GetProperty()->SetColor
-//                (SHColors::Orange);
+//                (Colors::Orange);
 //        }
-        supporting_cylinder->GetActor()->GetProperty()->SetColor(SHColors::OrangeRed);
+        closing_cylinder->GetActor()->GetProperty()->SetColor(colors.OrangeRed);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
-            (SHColors::Turquoise);
+            (colors.Turquoise);
 
         ring_in_action +=  1;
 
@@ -721,7 +633,7 @@ void TaskSteadyHand::UpdateActors() {
         ResetOnGoingEvaluation();
         //------------------------------
 
-//        destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
+//        destination_ring_actor->GetProperty()->SetColor(Colors::Green);
     }
 
     // update the position of the ring according to the state we're in.
@@ -730,14 +642,14 @@ void TaskSteadyHand::UpdateActors() {
     //
     ////} else if (task_state == SHTaskState::ToStartPoint) {
     ////    destination_ring_position = start_point;
-    ////    destination_ring_actor->GetProperty()->SetColor(SHColors::DeepPink);
+    ////    destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
     //
     //} else if (task_state == SHTaskState::ToEndPoint) {
     //
     //
     ////} else if (task_state == SHTaskState::RepetitionComplete) {
     ////    destination_ring_position = idle_point;
-    ////    destination_ring_actor->GetProperty()->SetColor(SHColors::Green);
+    ////    destination_ring_actor->GetProperty()->SetColor(Colors::Green);
     //
     //}
 
@@ -1015,15 +927,10 @@ void TaskSteadyHand::UpdateTubeColor() {
 //    score_sphere_actors->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
 //                                                0.1);
     if(task_state== SHTaskState::ToEndPoint){
-        //|| task_state== SHTaskState::ToStartPoint){
-//        for (int i = 0; i < 3; ++i) {
-//            tube_meshes[i]->GetActor()->GetProperty()->SetColor(0.9,
-//                                                                0.5- 0.4*(error_ratio-0.3),
-//                                                                0.1);
-//        }
-        ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor(0.9,
-                                                                       0.5- 0.4*(error_ratio-0.3),
-                                                                       0.1);
+        ring_mesh[ring_in_action]->GetActor()->GetProperty()
+                                 ->SetColor(colors.Orange[0],
+                                            colors.Orange[1]- 0.4*(error_ratio-0.3),
+                                            colors.Orange[2]);
     }
 
 }
@@ -1219,14 +1126,14 @@ double * TaskSteadyHand::GetScoreColor(const double score) {
 
     //decide the color
     if(score > 90){
-        return SHColors::Green;
+        return colors.Green;
     }
     else if (score > 80)
-        return SHColors::Gold;
+        return colors.Gold;
     else if(score > 60)
-        return SHColors::Orange;
+        return colors.Orange;
     else
-        return SHColors::Red;
+        return colors.Red;
 
 }
 
@@ -1243,7 +1150,7 @@ void TaskSteadyHand::ResetScoreHistory() {
 
     // reset colors to gray
     for (int i = 0; i < n_score_history; ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(SHColors::Gray);
+        score_sphere_actors[i]->GetProperty()->SetColor(colors.GrayDark);
 
     }
 

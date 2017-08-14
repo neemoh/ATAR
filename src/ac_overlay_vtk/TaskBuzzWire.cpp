@@ -9,19 +9,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <kdl_conversions/kdl_msg.h>
 #include "TaskBuzzWire.h"
-
-
-namespace Colors {
-double Red[3] {1.0, 0.1, 0.03};
-double OrangeRed[3] {1.0, 0.27, 0.03};
-double Gold[3] {1.0, 0.84, 0.0};
-double Green[3] {0.0, 0.9, 0.03};
-double Pink[3] {1.0, 0.0, 1.0};
-double Orange[3] {0.9, 0.4, 0.1};
-double Gray [3] {0.4, 0.4, 0.4};
-double Turquoise[3]	{0.25, 0.88, 0.82};
-double DeepPink[3] {1.0, 0.08, 0.58};
-};
+#include "Colors.hpp"
 
 TaskBuzzWire::TaskBuzzWire(
         const std::string stl_file_dir,
@@ -151,7 +139,7 @@ TaskBuzzWire::TaskBuzzWire(
 
         ring_actor[k]->SetMapper(ring_mapper[k]);
         ring_actor[k]->SetScale(source_scales);
-        ring_actor[k]->GetProperty()->SetColor(Colors::Turquoise);
+        ring_actor[k]->GetProperty()->SetColor(colors.Turquoise);
         ring_actor[k]->GetProperty()->SetSpecular(0.7);
     }
 
@@ -166,7 +154,7 @@ TaskBuzzWire::TaskBuzzWire(
     destination_ring_actor->SetScale(0.004);
     destination_ring_actor->RotateX(90);
     destination_ring_actor->RotateY(-60);
-    destination_ring_actor->GetProperty()->SetColor(Colors::Green);
+    destination_ring_actor->GetProperty()->SetColor(colors.Green);
     //destination_ring_actor->GetProperty()->SetOpacity(0.5);
 
     // -------------------------------------------------------------------------
@@ -244,7 +232,7 @@ TaskBuzzWire::TaskBuzzWire(
     vtkSmartPointer<vtkActor> stand_mesh_actor =
         vtkSmartPointer<vtkActor>::New();
     stand_mesh_actor->SetMapper(stand_mesh_mapper);
-    stand_mesh_actor->GetProperty()->SetColor(Colors::Gray);
+    stand_mesh_actor->GetProperty()->SetColor(colors.GrayDark);
     //    stand_mesh_actor->GetProperty()->SetSpecular(0.8);
 
 
@@ -277,7 +265,7 @@ TaskBuzzWire::TaskBuzzWire(
         hq_mesh_transformFilter->GetOutputPort());
 
     tube_mesh_actor->SetMapper(hq_mesh_mapper);
-    tube_mesh_actor->GetProperty()->SetColor(Colors::Orange);
+    tube_mesh_actor->GetProperty()->SetColor(colors.Orange);
     tube_mesh_actor->GetProperty()->SetSpecular(0.8);
     tube_mesh_actor->GetProperty()->SetSpecularPower(80);
         //tube_mesh_actor->GetProperty()->SetOpacity(0.5);
@@ -390,7 +378,7 @@ TaskBuzzWire::TaskBuzzWire(
 
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
-        actor->GetProperty()->SetColor(Colors::Gray);
+        actor->GetProperty()->SetColor(colors.GrayDark);
         actor->SetPosition(0.09- (double)i * 0.006, 0.132 - (double)i * 0.0003,
                            0.01);
         score_sphere_actors.push_back(actor);
@@ -565,18 +553,18 @@ void TaskBuzzWire::UpdateActors() {
     // update the position of the cone according to the state we're in.
     if (task_state == TaskState::Idle) {
         destination_ring_position = start_point;
-        destination_ring_actor->GetProperty()->SetColor(Colors::Green);
+        destination_ring_actor->GetProperty()->SetColor(colors.Green);
 
     } else if (task_state == TaskState::ToStartPoint) {
         destination_ring_position = start_point;
-        destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
+        destination_ring_actor->GetProperty()->SetColor(colors.DeepPink);
 
     } else if (task_state == TaskState::ToEndPoint) {
         destination_ring_position = end_point;
-        destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
+        destination_ring_actor->GetProperty()->SetColor(colors.DeepPink);
     } else if (task_state == TaskState::RepetitionComplete) {
         destination_ring_position = idle_point;
-        destination_ring_actor->GetProperty()->SetColor(Colors::Green);
+        destination_ring_actor->GetProperty()->SetColor(colors.Green);
 
     }
 
@@ -1060,14 +1048,14 @@ double * TaskBuzzWire::GetScoreColor(const double score) {
 
     //decide the color
     if(score > 90){
-        return Colors::Green;
+        return colors.Green;
     }
     else if (score > 80)
-        return Colors::Gold;
+        return colors.Gold;
     else if(score > 60)
-        return Colors::Orange;
+        return colors.Orange;
     else
-        return Colors::Red;
+        return colors.Red;
 
 }
 
@@ -1084,7 +1072,7 @@ void TaskBuzzWire::ResetScoreHistory() {
 
     // reset colors to gray
     for (int i = 0; i < n_score_history; ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(Colors::Gray);
+        score_sphere_actors[i]->GetProperty()->SetColor(colors.GrayDark);
 
     }
 

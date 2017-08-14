@@ -299,7 +299,7 @@ add_executable(
         src/ac_overlay_vtk/ThreeLinkGripper.h
         src/ac_overlay_vtk/Forceps.cpp
         src/ac_overlay_vtk/Forceps.h
-)
+        src/ac_overlay_vtk/Colors.hpp)
 
 
 target_link_libraries(

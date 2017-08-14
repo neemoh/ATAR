@@ -39,6 +39,8 @@
 #include "SimpleGripper.h"
 #include "ThreeLinkGripper.h"
 #include "Forceps.h"
+#include "Colors.hpp"
+
 /**
  * \class TaskSteadyHand
  * \brief This is a class that generates graphics and logic for a simple ring
@@ -161,6 +163,7 @@ private:
     std::string mesh_files_dir;
     std::string *slave_names;
     KDL::Frame *slave_frame_to_world_frame_tr;
+    Colors colors;
 
     KDL::Vector idle_point;
     KDL::Vector start_point;
@@ -239,7 +242,7 @@ private:
 //    std::vector<std::vector<double>> gripper_link_dims;
     Forceps * forceps[2];
 
-    BulletVTKObject* supporting_cylinder;
+    BulletVTKObject* closing_cylinder;
     BulletVTKObject* arm[2];
     KDL::Vector rcm[2];
 

@@ -33,6 +33,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Bool.h>
+#include "Colors.hpp"
 
 
 
@@ -152,6 +153,7 @@ private:
     ros::Time start_time;
     double posit_error_sum;
     double orient_error_sum;
+    Colors colors;
 
     double posit_error_max;
     uint sample_count;
