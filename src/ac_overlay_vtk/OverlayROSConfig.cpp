@@ -691,11 +691,11 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
 
 // -----------------------------------------------------------------------------
 void OverlayROSConfig::PublishACtiveConstraintParameters(
-        const custom_msgs::ActiveConstraintParameters &ac_params) {
+        const custom_msgs::ActiveConstraintParameters ac_params[2]) {
 
-    publisher_ac_params[0].publish(ac_params);
+    publisher_ac_params[0].publish(ac_params[0]);
     if(n_arms==2)
-        publisher_ac_params[0].publish(ac_params);
+        publisher_ac_params[1].publish(ac_params[1]);
 }
 
 // -----------------------------------------------------------------------------

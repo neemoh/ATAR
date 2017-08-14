@@ -68,7 +68,7 @@ private:
 
     // publishes the active constraint parameters
     void PublishACtiveConstraintParameters(
-            const custom_msgs::ActiveConstraintParameters &);
+            const custom_msgs::ActiveConstraintParameters params[2]);
 
     // publishes the active constraint parameters
     void PublishTaskState(custom_msgs::TaskState msg);

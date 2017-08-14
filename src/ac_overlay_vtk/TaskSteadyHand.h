@@ -36,8 +36,6 @@
 
 #include <btBulletDynamicsCommon.h>
 #include "BulletVTKObject.h"
-#include "SimpleGripper.h"
-#include "ThreeLinkGripper.h"
 #include "Forceps.h"
 #include "Colors.hpp"
 
@@ -65,7 +63,7 @@
  */
 
 
-enum class SHTaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
+enum class SHTaskState: uint8_t {Idle, OnGoing, ToStartPoint,
     RepetitionComplete};
 
 
@@ -106,7 +104,7 @@ public:
     bool IsACParamChanged();
 
     // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters GetACParameters();
+    custom_msgs::ActiveConstraintParameters* GetACParameters();
 
     custom_msgs::TaskState GetTaskStateMsg();
 
@@ -148,6 +146,10 @@ private:
 
     void StepDynamicsWorld();
 
+    void UpdateCurrentAndDesiredReferenceFrames(
+        const KDL::Frame current_pose[2],
+        const KDL::Frame desired_pose[2]
+    );
 
     void UpdateToolRodsPose(
         const KDL::Frame pose,
@@ -190,11 +192,10 @@ private:
     double position_error_norm;
     double orientation_error_norm;
 
-    // for not we use the same type of active constraint for both arms
     bool ac_params_changed;
-    custom_msgs::ActiveConstraintParameters ac_parameters;
+    custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
-    KDL::Frame tool_desired_pose_kdl[2];
+    KDL::Frame tool_desired_pose[2];
     KDL::Frame *tool_current_pose_ptr[2];
     KDL::Frame tool_current_pose[2];
 //    KDL::Frame tool_last_pose[2];

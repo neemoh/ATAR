@@ -330,8 +330,8 @@ bool TaskHook::IsACParamChanged() {
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters TaskHook::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters msg;
+custom_msgs::ActiveConstraintParameters * TaskHook::GetACParameters() {
+    custom_msgs::ActiveConstraintParameters* msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }

@@ -91,7 +91,7 @@ public:
     bool IsACParamChanged();
 
     // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters GetACParameters();
+    custom_msgs::ActiveConstraintParameters * GetACParameters();
 
     custom_msgs::TaskState GetTaskStateMsg();
 

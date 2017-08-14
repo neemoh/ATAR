@@ -839,11 +839,11 @@ bool TaskBuzzWire::IsACParamChanged() {
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters TaskBuzzWire::GetACParameters() {
+custom_msgs::ActiveConstraintParameters * TaskBuzzWire::GetACParameters() {
 
     ac_params_changed = false;
     // assuming once we read it we can consider it unchanged
-    return ac_parameters;
+    return &ac_parameters;
 }
 
 

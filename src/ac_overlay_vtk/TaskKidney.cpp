@@ -615,11 +615,11 @@ bool TaskKidney::IsACParamChanged() {
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters TaskKidney::GetACParameters() {
+custom_msgs::ActiveConstraintParameters * TaskKidney::GetACParameters() {
 
     ac_params_changed = false;
     // assuming once we read it we can consider it unchanged
-    return ac_parameters;
+    return &ac_parameters;
 }
 
 

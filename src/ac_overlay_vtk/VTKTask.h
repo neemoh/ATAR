@@ -74,7 +74,7 @@ public:
 
 
     // returns the ac parameters
-    virtual custom_msgs::ActiveConstraintParameters GetACParameters(){};
+    virtual custom_msgs::ActiveConstraintParameters * GetACParameters(){};
 
     virtual void FindAndPublishDesiredToolPose() = 0;
 

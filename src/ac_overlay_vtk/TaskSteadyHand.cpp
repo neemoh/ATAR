@@ -38,16 +38,16 @@ TaskSteadyHand::TaskSteadyHand(
     // -------------------------------------------------------------------------
     // these parameters could be set as ros parameters too but since
     // they change during the task I am hard coding them here.
-    ac_parameters.method = 0; // 0 for visco/elastic
-    ac_parameters.active = 0;
+    ac_parameters[0].method = 0; // 0 for visco/elastic
+    ac_parameters[0].active = 0;
 
-    ac_parameters.max_force = 4.0;
-    ac_parameters.linear_elastic_coeff = 1000.0;
-    ac_parameters.linear_damping_coeff = 10.0;
+    ac_parameters[0].max_force = 4.0;
+    ac_parameters[0].linear_elastic_coeff = 1000.0;
+    ac_parameters[0].linear_damping_coeff = 10.0;
 
-    ac_parameters.max_torque = 0.03;
-    ac_parameters.angular_elastic_coeff = 0.04;
-    ac_parameters.angular_damping_coeff = 0.002;
+    ac_parameters[0].max_torque = 0.03;
+    ac_parameters[0].angular_elastic_coeff = 0.04;
+    ac_parameters[0].angular_damping_coeff = 0.002;
 
     // prevent tools from hitting things at the initializiation
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);
@@ -59,10 +59,10 @@ TaskSteadyHand::TaskSteadyHand(
     tool_current_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
     tool_desired_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
 
-    if (bimanual) {
-        tool_current_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
-        tool_desired_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
-    }
+    //if (bimanual) {
+    //    tool_current_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
+    //    tool_desired_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
+    //}
 
     destination_ring_actor = vtkSmartPointer<vtkActor>::New();
 
@@ -148,28 +148,46 @@ TaskSteadyHand::TaskSteadyHand(
 
     // -------------------------------------------------------------------------
     // FRAMES
-    vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
-        vtkSmartPointer<vtkAxesActor>::New();
+    //vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
+    //    vtkSmartPointer<vtkAxesActor>::New();
+    //
+    //task_coordinate_axes->SetXAxisLabelText("");
+    //task_coordinate_axes->SetYAxisLabelText("");
+    //task_coordinate_axes->SetZAxisLabelText("");
+    //task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
+    //task_coordinate_axes->SetShaftType(vtkAxesActor::LINE_SHAFT);
+    //task_coordinate_axes->SetTipType(vtkAxesActor::SPHERE_TIP);
 
-    task_coordinate_axes->SetXAxisLabelText("");
-    task_coordinate_axes->SetYAxisLabelText("");
-    task_coordinate_axes->SetZAxisLabelText("");
-    task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
-    task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-
-    for (int k = 0; k < 1 + (int) bimanual; ++k) {
+    //for (int k = 0; k < 1 + (int) bimanual; ++k) {
+    for (int k = 0; k < 1 ; ++k) {
         tool_current_frame_axes[k]->SetXAxisLabelText("");
         tool_current_frame_axes[k]->SetYAxisLabelText("");
         tool_current_frame_axes[k]->SetZAxisLabelText("");
         tool_current_frame_axes[k]->SetTotalLength(0.007, 0.007, 0.007);
-        tool_current_frame_axes[k]->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
+        tool_current_frame_axes[k]->SetShaftType(vtkAxesActor::LINE_SHAFT);
+        tool_current_frame_axes[k]->SetTipType(vtkAxesActor::SPHERE_TIP);
 
         tool_desired_frame_axes[k]->SetXAxisLabelText("");
         tool_desired_frame_axes[k]->SetYAxisLabelText("");
         tool_desired_frame_axes[k]->SetZAxisLabelText("");
         tool_desired_frame_axes[k]->SetTotalLength(0.007, 0.007, 0.007);
-        tool_desired_frame_axes[k]->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
+        tool_desired_frame_axes[k]->SetShaftType(vtkAxesActor::LINE_SHAFT);
+        tool_desired_frame_axes[k]->SetTipType(vtkAxesActor::SPHERE_TIP);
     }
+
+
+    // -------------------------------------------------------------------------
+    // Add all actors to a vector
+    if (show_ref_frames) {
+        //actors.push_back(task_coordinate_axes);
+        //
+        //for (int k = 0; k < 1 + (int)bimanual; ++k) {
+        for (int k = 0; k < 1 ; ++k) {
+            actors.push_back(tool_current_frame_axes[k]);
+            actors.push_back(tool_desired_frame_axes[k]);
+        }
+    }
+
 
     // hard coding the position of of the destinations
     // if the base is rotated the destinations will not be valid anymore...
@@ -243,8 +261,9 @@ TaskSteadyHand::TaskSteadyHand(
         dynamics_world->addRigidBody(tube_meshes[m]->GetBody());
         actors.push_back(tube_meshes[m]->GetActor());
         tube_meshes[m]->GetActor()->GetProperty()->SetColor(colors.Coral);
-        tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(0.8);
-        tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(80);
+        tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(1);
+        tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(100);
+        tube_meshes[m]->GetActor()->GetProperty()->SetSpecularColor(colors.White);
 //        tube_meshes[m]->GetActor()->GetProperty()->SetOpacity(0.1);
     }
     // -------------------------------------------------------------------------
@@ -286,7 +305,9 @@ TaskSteadyHand::TaskSteadyHand(
     dynamics_world->addRigidBody(closing_cylinder->GetBody());
     actors.push_back(closing_cylinder->GetActor());
     closing_cylinder->GetActor()->GetProperty()->SetColor(colors.Coral);
-    closing_cylinder->GetActor()->GetProperty()->SetSpecular(0.7);
+    //closing_cylinder->GetActor()->GetProperty()->SetSpecular(1);
+    //closing_cylinder->GetActor()->GetProperty()->SetSpecularPower(100);
+    //closing_cylinder->GetActor()->GetProperty()->SetSpecularColor(colors.White);
 
     // -------------------------------------------------------------------------
     // Lines
@@ -295,6 +316,8 @@ TaskSteadyHand::TaskSteadyHand(
     line1_mapper->SetInputConnection(line1_source->GetOutputPort());
     line1_actor->SetMapper(line1_mapper);
     line1_actor->GetProperty()->SetLineWidth(3);
+    line1_actor->GetProperty()->SetColor(colors.Coral);
+
     //line1_actor->GetProperty()->SetOpacity(0.8);
 
     vtkSmartPointer<vtkPolyDataMapper> line2_mapper =
@@ -309,6 +332,9 @@ TaskSteadyHand::TaskSteadyHand(
     friction = 50;
     double density = 50000; // kg/m3
     double step = 0.003;
+
+    KDL::Rotation rings_orient = cyl_pose.M * KDL::Rotation::RotX(M_PI/2);
+    rings_orient.GetQuaternion(qx, qy, qz, qw);
 
     for (int l = 0; l < ring_num; ++l) {
 
@@ -373,6 +399,7 @@ TaskSteadyHand::TaskSteadyHand(
             dynamics_world->addRigidBody(arm[i]->GetBody());
             actors.push_back(arm[i]->GetActor());
             arm[i]->GetActor()->GetProperty()->SetColor(colors.Black);
+            arm[i]->GetActor()->GetProperty()->SetOpacity(0.1);
             arm[i]->GetBody()->setContactStiffnessAndDamping(2000, 100);
         }
     }
@@ -415,16 +442,7 @@ TaskSteadyHand::TaskSteadyHand(
     }
 
 
-    // -------------------------------------------------------------------------
-    // Add all actors to a vector
-    if (show_ref_frames) {
-        actors.push_back(task_coordinate_axes);
 
-        for (int k = 0; k < 1 + (int)bimanual; ++k) {
-            actors.push_back(tool_current_frame_axes[k]);
-            actors.push_back(tool_desired_frame_axes[k]);
-        }
-    }
 
     //actors.push_back(stand_mesh_actor);
     //actors.push_back(lq_mesh_actor);
@@ -450,9 +468,7 @@ TaskSteadyHand::TaskSteadyHand(
 //------------------------------------------------------------------------------
 void TaskSteadyHand::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                                const int tool_id) {
-
     tool_current_pose_ptr[tool_id] = &tool_pose;
-
 }
 
 void TaskSteadyHand::SetCurrentGripperpositionPointer(double &grip_position, const int
@@ -468,7 +484,7 @@ void TaskSteadyHand::UpdateActors() {
     // check if any of the forceps have grasped the ring in action
     for (int i = 0; i < 2; ++i) {
         gripper_in_contact[i] = forceps[i]->IsGraspingObject(dynamics_world,
-                                                              ring_mesh[ring_in_action]->GetBody());
+                                                             ring_mesh[ring_in_action]->GetBody());
     }
 
     //// change the color of the grasped ring
@@ -501,16 +517,8 @@ void TaskSteadyHand::UpdateActors() {
 //    }
 
 
-    vtkSmartPointer<vtkMatrix4x4> tool_desired_pose[2];
-
-    for (int k = 0; k < 1 + (int)bimanual; ++k) {
-        tool_desired_pose[k] =
-            vtkSmartPointer<vtkMatrix4x4>::New();
-        VTKConversions::KDLFrameToVTKMatrix(tool_desired_pose_kdl[k],
-                                            tool_desired_pose[k]);
-        tool_desired_frame_axes[k]->SetUserMatrix(tool_desired_pose[k]);
-    }
-
+    UpdateCurrentAndDesiredReferenceFrames(tool_current_pose,
+                                           tool_desired_pose);
 
     //-------------------------------- UPDATE RIGHT GRIPPER
     // map gripper value to an angle
@@ -523,10 +531,10 @@ void TaskSteadyHand::UpdateActors() {
 
     //KDL::Frame temp_pose;
     //double dx = sin(2 * M_PI * double(destination_ring_counter) / 50);
-    //
     //temp_pose.p = KDL::Vector(0.09 + dx*0.02, 0.15, 0.09);
     //temp_pose.M.DoRotY(M_PI);
     //temp_pose.M.DoRotZ(M_PI/2);
+
     forceps[0]->SetPoseAndJawAngle(tool_current_pose[0], grip_angle);
 
     //-------------------------------- UPDATE LEFT GRIPPER
@@ -561,47 +569,38 @@ void TaskSteadyHand::UpdateActors() {
     // beginning of the error, data we first activate the active constraint
     // and wait till the error is small before we start the task.
     //
-    // First: if the tool is placed close to the starting point while being idle
-    // we enable the active constraint.
-    if (task_state == SHTaskState::Idle && with_guidance &&
-        (ring_pose.p - start_point).Norm() <
-            positioning_tolerance) {
-        // Make sure the active constraint is inactive
-        if (ac_parameters.active == 0) {
-            ac_parameters.active = 1;
-            ac_params_changed = true;
-        }
-    }
+    //// First: if the tool is placed close to the starting point while being idle
+    //// we enable the active constraint.
+    //if (task_state == SHTaskState::Idle && with_guidance &&
+    //    (ring_pose.p - start_point).Norm() <
+    //        positioning_tolerance) {
+    //    // Make sure the active constraint is inactive
+    //    if (ac_parameters.active == 0) {
+    //        ac_parameters.active = 1;
+    //        ac_params_changed = true;
+    //    }
+    //}
 
     // then when the error is small we start the task.
     // if guidance is off, then we don't need a restriction on the error
     // sorry it is totally unreadable!
+
     if (task_state == SHTaskState::Idle
-        && ( (position_error_norm< 0.001 && ac_parameters.active == 1)
-            ||
-                (!with_guidance && (ring_pose.p - start_point).x()>0.0 )  ))
+        && (!with_guidance && (ring_pose.p - start_point).x() > 0.0 ))
     {
         std::cout << " transition to start" << std::endl;
-        task_state = SHTaskState::ToEndPoint;
+        task_state = SHTaskState::OnGoing;
         destination_ring_actor->RotateY(90);
         //increment the repetition number
         // save starting time
         start_time = ros::Time::now();
         // reset score related vars
         ResetOnGoingEvaluation();
-//        destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
             (colors.Orange);
     }
 
-
-        // User needs to get away from the starting point to switch to idle
-        // and in case another repetition is to be performed, the user can
-        // flag that by going to the starting position again
-        //else if (task_state == SHTaskState::RepetitionComplete &&
-        //    (ring_pose.p - idle_point).Norm() <
-        //        positioning_tolerance)
-    else if (task_state == SHTaskState::ToEndPoint &&
+    else if (task_state == SHTaskState::OnGoing &&
         (ring_pose.p - end_point).Norm() <
             positioning_tolerance)
     {
@@ -609,49 +608,37 @@ void TaskSteadyHand::UpdateActors() {
 
         task_state = SHTaskState::Idle;
         destination_ring_actor->RotateY(-90);
-        //Reset tube color
-//        for (int i = 0; i < 3; ++i) {
-//            tube_meshes[i]->GetActor()->GetProperty()->SetColor
-//                (Colors::Orange);
-//        }
         closing_cylinder->GetActor()->GetProperty()->SetColor(colors.OrangeRed);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
             (colors.Turquoise);
 
         ring_in_action +=  1;
 
-        // ---------- ADDED --------------
         // calculate and save the score of this repetition
         CalculateAndSaveError();
 
-        ac_parameters.active = 0;
-        ac_params_changed = true;
 
         // save starting time
         start_time = ros::Time::now();
+
         // reset score related vars
         ResetOnGoingEvaluation();
-        //------------------------------
-
-//        destination_ring_actor->GetProperty()->SetColor(Colors::Green);
     }
 
-    // update the position of the ring according to the state we're in.
-    //if (task_state == SHTaskState::Idle) {
-    //
-    //
-    ////} else if (task_state == SHTaskState::ToStartPoint) {
-    ////    destination_ring_position = start_point;
-    ////    destination_ring_actor->GetProperty()->SetColor(Colors::DeepPink);
-    //
-    //} else if (task_state == SHTaskState::ToEndPoint) {
-    //
-    //
-    ////} else if (task_state == SHTaskState::RepetitionComplete) {
-    ////    destination_ring_position = idle_point;
-    ////    destination_ring_actor->GetProperty()->SetColor(Colors::Green);
-    //
-    //}
+    // active constraint activation
+    if(task_state == SHTaskState::OnGoing){
+        for (int i = 0; i < 2; ++i) {
+            if(gripper_in_contact[i] && !ac_parameters[i].active){
+                ac_parameters[i].active = 1;
+                ac_params_changed = true;
+            }
+            else if(!gripper_in_contact[i] && ac_parameters[i].active){
+                ac_parameters[i].active = 0;
+                ac_params_changed = true;
+            }
+
+        }
+    }
 
     // show the destination to the user
     double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
@@ -667,29 +654,20 @@ void TaskSteadyHand::UpdateActors() {
     UpdateTubeColor();
 
     // Populate the task state message
-    task_state_msg.task_name = "BuzzWire";
+    task_state_msg.task_name = "SteadyHand";
     task_state_msg.task_state = (uint8_t)task_state;
-    task_state_msg.number_of_repetition = ring_in_action+1;
-    if (task_state == SHTaskState::ToEndPoint){
-        //|| task_state == SHTaskState::ToStartPoint) {
+    task_state_msg.number_of_repetition = uchar(ring_in_action+1);
+    if (task_state == SHTaskState::OnGoing) {
 
         task_state_msg.time_stamp = (ros::Time::now() - start_time).toSec();
         task_state_msg.error_field_1 = position_error_norm;
         task_state_msg.error_field_1 = orientation_error_norm;
-//        if(bimanual)
-//            task_state_msg.error_field_2 = position_error_norm[1];
+        //      if(bimanual)
+        //          task_state_msg.error_field_2 = position_error_norm[1];
 
         // calculate score to show to user
-        if (bimanual) {
-            posit_error_sum +=
-                0.5 * (position_error_norm);
-            orient_error_sum +=
-                0.5 *(orientation_error_norm);
-        }
-        else {
-            posit_error_sum += position_error_norm;
-            orient_error_sum += orientation_error_norm;
-        }
+        posit_error_sum += position_error_norm;
+        orient_error_sum += orientation_error_norm;
 
         if(posit_error_max < position_error_norm)
             posit_error_max = position_error_norm;
@@ -701,23 +679,6 @@ void TaskSteadyHand::UpdateActors() {
         task_state_msg.error_field_1 = 0.0;
         task_state_msg.error_field_2 = 0.0;
     }
-
-
-    //if(bimanual) {
-    //    // change connection lines colors according to ring1 to ring2's distance
-    //    //double rings_distance = (ring_center[1] - ring_center[0]).Norm();
-    //    double ideal_distance = 0.007;
-    //    double error_ratio = 3 * fabs(rings_distance - ideal_distance)
-    //        / ideal_distance;
-    //    if (error_ratio > 1.0)
-    //        error_ratio = 1.0;
-    //    line1_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
-    //                                         0.9 - 0.7 * error_ratio);
-    //    line2_actor->GetProperty()->SetColor(0.9, 0.9 - 0.7 * error_ratio,
-    //                                         0.9 - 0.7 * error_ratio);
-    //    line1_source->Update();
-    //    line2_source->Update();
-    //}
 
     //--------------------------------
     // step the world
@@ -801,7 +762,7 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
     // ----------------------- THIRD CLOSEST POINT
     //Find the closest cell to the radial tool point
     KDL::Vector radial_y_point_kdl = ring_pose *
-        KDL::Vector(0., 0., ring_radius);
+        KDL::Vector(0., ring_radius, 0.f);
     KDL::Vector radial_y_point_in_mesh_local_kdl = mesh_pose_inv*radial_y_point_kdl;
 
     double radial_y_point_in_mesh_local[3] = {radial_y_point_in_mesh_local_kdl[0],
@@ -840,16 +801,16 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
         KDL::Vector point_x_to_cp =
             closest_point_to_x_point - radial_x_point_kdl;
 
-        desired_z = point_x_to_cp / point_x_to_cp.Norm();
-        desired_x = -point_y_to_cp / point_y_to_cp.Norm();
-        desired_y = desired_z * desired_x;
+        desired_x = -point_x_to_cp / point_x_to_cp.Norm();
+        desired_y = -point_y_to_cp / point_y_to_cp.Norm();
+        desired_z = desired_x * desired_y;
 
         // make sure axes are perpendicular and normal
-        desired_y = desired_y / desired_y.Norm();
+        desired_z = desired_z / desired_z.Norm();
         desired_x = desired_y * desired_z;
         desired_x = desired_x / desired_x.Norm();
-        desired_z = desired_x * desired_y;
-        desired_z = desired_z / desired_z.Norm();
+        desired_y = desired_z * desired_x;
+        desired_y = desired_y / desired_y.Norm();
 
         transform_to_desired_ring_pose.M =
             KDL::Rotation(desired_x, desired_y, desired_z)
@@ -862,17 +823,17 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
         position_error_norm = transform_to_desired_ring_pose.p.Norm();
         KDL::Vector rpy;
         transform_to_desired_ring_pose.M.GetRPY(rpy[0],
-                                                   rpy[1],
-                                                   rpy[2]);
+                                                rpy[1],
+                                                rpy[2]);
         orientation_error_norm = rpy.Norm();
 
         // draw the connection lines for debug
-        line1_source->SetPoint1(ring_pose.p[0],
-                                ring_pose.p[1],
-                                ring_pose.p[2]);
-        line1_source->SetPoint2(closest_point_to_center_point[0],
-                                closest_point_to_center_point[1],
-                                closest_point_to_center_point[2]);
+        line1_source->SetPoint1(radial_x_point_kdl[0],
+                                radial_x_point_kdl[1],
+                                radial_x_point_kdl[2]);
+        line1_source->SetPoint2(closest_point_to_x_point[0],
+                                closest_point_to_x_point[1],
+                                closest_point_to_x_point[2]);
         line2_source->SetPoint1(radial_y_point_kdl[0],
                                 radial_y_point_kdl[1],
                                 radial_y_point_kdl[2]);
@@ -899,7 +860,7 @@ bool TaskSteadyHand::IsACParamChanged() {
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters TaskSteadyHand::GetACParameters() {
+custom_msgs::ActiveConstraintParameters* TaskSteadyHand::GetACParameters() {
 
     ac_params_changed = false;
     // assuming once we read it we can consider it unchanged
@@ -926,7 +887,7 @@ void TaskSteadyHand::UpdateTubeColor() {
 
 //    score_sphere_actors->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
 //                                                0.1);
-    if(task_state== SHTaskState::ToEndPoint){
+    if(task_state== SHTaskState::OnGoing){
         ring_mesh[ring_in_action]->GetActor()->GetProperty()
                                  ->SetColor(colors.Orange[0],
                                             colors.Orange[1]- 0.4*(error_ratio-0.3),
@@ -952,7 +913,7 @@ void TaskSteadyHand::ResetTask() {
 
 void TaskSteadyHand::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
-    if(task_state== SHTaskState::ToEndPoint){
+    if(task_state== SHTaskState::OnGoing){
         //|| task_state == SHTaskState::ToStartPoint){
         ResetOnGoingEvaluation();
         if(ring_in_action>0)
@@ -994,21 +955,21 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
     pub_wrench_abs[0].publish(wrench_body_orientation_absolute);
     ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
 
-    if(bimanual) {
-        //getting the name of the arms
-        param_name.str("");
-        param_name << std::string("/") << slave_names[1] << "/tool_pose_desired";
-        pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                 (param_name.str(), 10);
-        ROS_INFO("Will publish on %s", param_name.str().c_str());
+    //if(bimanual) {
+    //getting the name of the arms
+    param_name.str("");
+    param_name << std::string("/") << slave_names[1] << "/tool_pose_desired";
+    pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
+                             (param_name.str(), 10);
+    ROS_INFO("Will publish on %s", param_name.str().c_str());
 
-        // make sure the masters are in wrench absolute orientation
-        // assuming MTMR is always used
-        master_topic = "/dvrk/MTML/set_wrench_body_orientation_absolute";
-        pub_wrench_abs[1] = node->advertise<std_msgs::Bool>(master_topic.c_str(), 1);
-        pub_wrench_abs[1].publish(wrench_body_orientation_absolute);
-        ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
-    }
+    // make sure the masters are in wrench absolute orientation
+    // assuming MTMR is always used
+    master_topic = "/dvrk/MTML/set_wrench_body_orientation_absolute";
+    pub_wrench_abs[1] = node->advertise<std_msgs::Bool>(master_topic.c_str(), 1);
+    pub_wrench_abs[1].publish(wrench_body_orientation_absolute);
+    ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
+    //}
 
 
     ros::Rate loop_rate(haptic_loop_rate);
@@ -1039,15 +1000,16 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
 
                 // we add the displacement that would take the ring to it's desired
                 // pose to the current pose of the tool;
-                tool_desired_pose_kdl[n_arm].p =
-                        transform_to_desired_ring_pose.p +
-                                tool_current_pose[n_arm].p;
-                tool_desired_pose_kdl[n_arm].M =
-                        transform_to_desired_ring_pose.M *
-                                tool_current_pose[n_arm].M;
+                tool_desired_pose[n_arm].p =
+                    transform_to_desired_ring_pose.p +
+                        tool_current_pose[n_arm].p;
+                tool_desired_pose[n_arm].M =
+                    transform_to_desired_ring_pose.M *
+                        tool_current_pose[n_arm].M;
+
             }
             else {
-                tool_desired_pose_kdl[n_arm]= tool_current_pose[n_arm];
+                tool_desired_pose[n_arm]= tool_current_pose[n_arm];
             }
 
             // convert to pose message
@@ -1055,7 +1017,7 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
             KDL::Frame tool_desired_pose_in_slave_frame;
             tool_desired_pose_in_slave_frame =
                 slave_frame_to_world_frame_tr->Inverse()*
-                    tool_desired_pose_kdl[n_arm];
+                    tool_desired_pose[n_arm];
 
             tf::poseKDLToMsg(tool_desired_pose_in_slave_frame, pose_msg.pose);
             // fill the header
@@ -1274,6 +1236,29 @@ TaskSteadyHand::~TaskSteadyHand() {
         }
         dynamics_world->removeCollisionObject(obj);
         delete obj;
+    }
+
+}
+
+void TaskSteadyHand::UpdateCurrentAndDesiredReferenceFrames(
+    const KDL::Frame current_pose[2],
+    const KDL::Frame desired_pose[2]
+) {
+
+    vtkSmartPointer<vtkMatrix4x4> tool_desired_pose_vtk[2];
+    vtkSmartPointer<vtkMatrix4x4> tool_current_pose_vtk[2];
+
+    //for (int k = 0; k < 1 + (int)bimanual; ++k) {
+    for (int k = 0; k < 1 ; ++k) {
+        tool_desired_pose_vtk[k] = vtkSmartPointer<vtkMatrix4x4>::New();
+        VTKConversions::KDLFrameToVTKMatrix(desired_pose[k],
+                                            tool_desired_pose_vtk[k]);
+        tool_desired_frame_axes[k]->SetUserMatrix(tool_desired_pose_vtk[k]);
+
+        tool_current_pose_vtk[k] = vtkSmartPointer<vtkMatrix4x4>::New();
+        VTKConversions::KDLFrameToVTKMatrix(current_pose[k],
+                                            tool_current_pose_vtk[k]);
+        tool_current_frame_axes[k]->SetUserMatrix(tool_current_pose_vtk[k]);
     }
 
 }

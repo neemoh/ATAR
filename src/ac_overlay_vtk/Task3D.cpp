@@ -346,8 +346,8 @@ bool Task3D::IsACParamChanged() {
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters Task3D::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters msg;
+custom_msgs::ActiveConstraintParameters * Task3D::GetACParameters() {
+    custom_msgs::ActiveConstraintParameters *msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }

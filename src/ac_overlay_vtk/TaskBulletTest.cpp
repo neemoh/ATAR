@@ -381,8 +381,8 @@ bool TaskBulletTest::IsACParamChanged() {
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters TaskBulletTest::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters msg;
+custom_msgs::ActiveConstraintParameters* TaskBulletTest::GetACParameters() {
+    custom_msgs::ActiveConstraintParameters *msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }
