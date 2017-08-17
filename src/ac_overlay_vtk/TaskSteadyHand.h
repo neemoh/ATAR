@@ -183,6 +183,9 @@ private:
     // graphics
     double ring_radius;
     KDL::Frame ring_pose;
+    KDL::Frame ring_pose_interpolated; // used in the high-freq haptic loop
+    KDL::Frame tool_to_ring_tr[2];
+
     uint ring_in_action = 0;
     bool gripper_in_contact[2] ={false, false};
     // the distance between the center of the ring and the closest point on
@@ -232,9 +235,11 @@ private:
 
     int ring_num = 6;
     BulletVTKObject *ring_mesh[6];
+    BulletVTKObject *sep_cylinder[6];
     BulletVTKObject *tube_meshes[3];
     BulletVTKObject *tube_mesh_thin;
     BulletVTKObject *stand_mesh;
+    BulletVTKObject *stand_cube;
     KDL::Vector dir;
     // ADDED
     BulletVTKObject *trans_cyl;
