@@ -21,6 +21,7 @@ double Coral[3]      {1.0,  0.50, 0.31};
 double Gold[3]       {1.0,  0.84, 0.0};
 double Green[3]      {0.0,  0.9,  0.03};
 double Turquoise[3]	 {0.25, 0.88, 0.82};
+double BlueDodger[3] {0.12, 0.57, 1.0};
 
 
 };
