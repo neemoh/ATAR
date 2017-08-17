@@ -528,7 +528,27 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         task_ptr   = new TaskHook(mesh_files_dir, show_reference_frames,
                                   (bool) (n_arms - 1), with_guidance);
     }
+    else if(task_id ==7) {
+        ROS_DEBUG("No task assigned yet. ");
 
+        // getting the names of the slaves
+        std::string slave_names[n_arms];
+        for (int n_arm = 0; n_arm < n_arms; n_arm++) {
+
+            //getting the name of the arms
+            std::stringstream param_name;
+            param_name << std::string("slave_") << n_arm + 1 << "_name";
+            n.getParam(param_name.str(), slave_names[n_arm]);
+        }
+
+        // starting the task
+        ROS_DEBUG("Starting new BuzzWireTask task. ");
+        task_ptr = new TaskBuzzWire(
+            mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
+            with_guidance, haptic_loop_rate, slave_names,
+            slave_frame_to_world_frame
+        );
+    }
     if(task_ptr) {
         // assign the tool pose pointers
         ros::spinOnce();
@@ -999,6 +1019,11 @@ void OverlayROSConfig::ControlEventsCallback(const std_msgs::Int8ConstPtr
 
         case CE_START_TASK6:
             running_task_id = 6;
+            new_task_event = true;
+            break;
+
+        case CE_START_TASK7:
+            running_task_id = 7;
             new_task_event = true;
             break;
 
