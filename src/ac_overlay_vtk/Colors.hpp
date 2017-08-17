@@ -9,7 +9,8 @@ struct Colors {
 
 double Black [3]{0.0,  0.0,  0.0};
 double White [3]     {1.0,  1.0,  1.0};
-double GrayDark [3]  {0.4,  0.4,  0.4};
+double Gray [3]      {0.5,  0.5,  0.5};
+double GrayDark [3]  {0.2,  0.2,  0.2};
 double GrayLight [3] {0.7,  0.7,  0.7};
 double Red[3]        {1.0,  0.1,  0.03};
 double DeepPink[3]   {1.0,  0.08, 0.58};
