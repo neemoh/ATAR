@@ -232,7 +232,7 @@ TaskBuzzWire::TaskBuzzWire(
     vtkSmartPointer<vtkActor> stand_mesh_actor =
         vtkSmartPointer<vtkActor>::New();
     stand_mesh_actor->SetMapper(stand_mesh_mapper);
-    stand_mesh_actor->GetProperty()->SetColor(colors.GrayDark);
+    stand_mesh_actor->GetProperty()->SetColor(colors.Gray);
     //    stand_mesh_actor->GetProperty()->SetSpecular(0.8);
 
 
@@ -378,7 +378,7 @@ TaskBuzzWire::TaskBuzzWire(
 
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
-        actor->GetProperty()->SetColor(colors.GrayDark);
+        actor->GetProperty()->SetColor(colors.Gray);
         actor->SetPosition(0.09- (double)i * 0.006, 0.132 - (double)i * 0.0003,
                            0.01);
         score_sphere_actors.push_back(actor);
@@ -1072,7 +1072,7 @@ void TaskBuzzWire::ResetScoreHistory() {
 
     // reset colors to gray
     for (int i = 0; i < n_score_history; ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(colors.GrayDark);
+        score_sphere_actors[i]->GetProperty()->SetColor(colors.Gray);
 
     }
 

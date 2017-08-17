@@ -57,7 +57,7 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
                                     gripper_density, 1, gripper_friction,
                                     &mesh_file_dir_str);
         gripper_links[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
-        gripper_links[1]->GetBody()->setContactStiffnessAndDamping(1000, 100);
+        gripper_links[1]->GetBody()->setContactStiffnessAndDamping(5, 1);
         gripper_links[1]->GetBody()->setRollingFriction(btScalar(0.1));
         gripper_links[1]->GetBody()->setSpinningFriction(btScalar(0.1));
     }
@@ -83,7 +83,7 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
                                 gripper_density, 1, gripper_friction,
                                 &mesh_file_dir_str);
         gripper_links[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
-        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(1000, 100);
+        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(5, 1);
         gripper_links[2]->GetBody()->setRollingFriction(btScalar(0.1));
         gripper_links[2]->GetBody()->setSpinningFriction(btScalar(0.1));
     }
@@ -128,9 +128,9 @@ void Forceps::SetPoseAndJawAngle(const KDL::Frame pose,
                             grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
     gripper_links[0]->SetKinematicPose(link0_pose);
 
-    hinges[0]->setMotorTarget(grip_angle, 0.08);
+    hinges[0]->setMotorTarget(grip_angle, 0.09);
 
-    hinges[1]->setMotorTarget(-grip_angle, 0.08);
+    hinges[1]->setMotorTarget(-grip_angle, 0.09);
 
 
 
