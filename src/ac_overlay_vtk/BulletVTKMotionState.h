@@ -12,7 +12,7 @@
 #include <vtkMatrix4x4.h>
 #include <kdl/frames.hpp>
 
-#define B_DIM_SCALE 60.0f
+#define B_DIM_SCALE 100.0f
 //==============================================================================
 /*!
     \class      BulletVTKMotionState
