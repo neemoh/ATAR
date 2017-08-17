@@ -77,6 +77,17 @@ public:
     void PauseRecording() {recording = false;}
     bool IsRecording() {return recording;}
 
+    // get the number of repetition. Used to be sent from the task world, now
+    // is set and updated  locally.
+    uint GetRepetitionNumber() {
+        //return task_state.number_of_repetition;
+        return repetition_num;}
+
+    void SetRepetitionNumber(uint in) {
+         repetition_num = in;}
+
+    void ResetCurrentAcquisition(){repetition_data->clear();};
+
 
     void run();
 
@@ -104,7 +115,7 @@ private:
     bool recording;
     bool new_task_state_msg;
     std::ofstream reporting_file;
-
+    uint repetition_num=1;
     // two function pointers for each master/slave related topic
 
     void (RosObj::*slave_pose_current_callbacks[2])
@@ -204,6 +215,9 @@ public:
     ros::Subscriber subscriber_foot_pedal_clutch;
 
     ros::Publisher publisher_control_events;
+
+private:
+    std::vector< std::vector<double> > * repetition_data;
 };
 
 

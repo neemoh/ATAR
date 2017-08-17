@@ -63,8 +63,7 @@
  */
 
 
-enum class SHTaskState: uint8_t {Idle, OnGoing, ToStartPoint,
-    RepetitionComplete};
+enum class SHTaskState: uint8_t {Idle, OnGoing, Finished};
 
 
 class TaskSteadyHand : public VTKTask{
@@ -183,7 +182,6 @@ private:
     // graphics
     double ring_radius;
     KDL::Frame ring_pose;
-    KDL::Frame ring_pose_interpolated; // used in the high-freq haptic loop
     KDL::Frame tool_to_ring_tr[2];
 
     uint ring_in_action = 0;

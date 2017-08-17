@@ -55,7 +55,7 @@ MainWindow::~MainWindow()
 void MainWindow::onTimeout()
 {
 
-    ui->line_edit_num_repetitions->setText(QString::number(ros_obj.task_state.number_of_repetition));
+    ui->line_edit_num_repetitions->setText(QString::number(ros_obj.GetRepetitionNumber()));
 
     ui->line_edit_duration->setText(QString::number(ros_obj.task_state.time_stamp, 'f', 1));
 }
@@ -268,10 +268,10 @@ void MainWindow::on_stop_released()
 
 void MainWindow::on_button_repeat_clicked()
 {
-    // TODO IS THIS NEEDED?
     std_msgs::Int8 msg;
-    msg.data =  CE_RESET_TASK;
+    msg.data =  CE_RESET_ACQUISITION;
     ros_obj.publisher_control_events.publish(msg);
+    ros_obj.ResetCurrentAcquisition();
 }
 
 void MainWindow::on_button_reset_clicked()

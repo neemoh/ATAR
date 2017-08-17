@@ -112,7 +112,7 @@ TaskSteadyHand::TaskSteadyHand(
         board = new BulletVTKObject(
             ObjectShape::BOX, ObjectType::DYNAMIC, dim,
             pose, 0.0, 0, friction);
-        board->GetActor()->GetProperty()->SetColor(colors.GrayDark);
+        board->GetActor()->GetProperty()->SetColor(colors.Gray);
 
         dynamics_world->addRigidBody(board->GetBody());
         actors.push_back(board->GetActor());
@@ -386,7 +386,7 @@ TaskSteadyHand::TaskSteadyHand(
         actors.push_back(ring_mesh[ring_num - l -1]->GetActor());
         ring_mesh[ring_num-l-1]->GetActor()->GetProperty()->SetColor(colors.Turquoise);
         ring_mesh[ring_num-l-1]->GetBody()->setContactStiffnessAndDamping
-            (2000, 100);
+            (5, 1);
         ring_mesh[ring_num-l-1]->GetBody()->setRollingFriction(btScalar(0.01));
         ring_mesh[ring_num-l-1]->GetBody()->setSpinningFriction(btScalar(0.01));
 
@@ -459,8 +459,8 @@ TaskSteadyHand::TaskSteadyHand(
                 ObjectType::KINEMATIC, arm_dim, gripper_pose, 0.0);
             dynamics_world->addRigidBody(arm[i]->GetBody());
             actors.push_back(arm[i]->GetActor());
-            arm[i]->GetActor()->GetProperty()->SetColor(colors.Black);
-            arm[i]->GetActor()->GetProperty()->SetOpacity(0.1);
+            arm[i]->GetActor()->GetProperty()->SetColor(colors.GrayDark);
+            //arm[i]->GetActor()->GetProperty()->SetOpacity(0.1);
             arm[i]->GetBody()->setContactStiffnessAndDamping(2000, 100);
         }
     }
@@ -496,7 +496,7 @@ TaskSteadyHand::TaskSteadyHand(
 
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
-        actor->GetProperty()->SetColor(colors.GrayDark);
+        actor->GetProperty()->SetColor(colors.Gray);
         actor->SetPosition(0.09- (double)i * 0.006, 0.12 + (double)i * 0.0001,
                            0.005);
         score_sphere_actors.push_back(actor);
@@ -620,7 +620,6 @@ void TaskSteadyHand::UpdateActors() {
     // -------------------------------------------------------------------------
     // Task logic
     // -------------------------------------------------------------------------
-    double positioning_tolerance = 0.006;
     KDL::Vector destination_ring_position;
 
     // first run
@@ -648,15 +647,19 @@ void TaskSteadyHand::UpdateActors() {
     //        ac_params_changed = true;
     //    }
     //}
+    double positioning_tolerance = 0.006;
 
-    // then when the error is small we start the task.
-    // if guidance is off, then we don't need a restriction on the error
-    // sorry it is totally unreadable!
+    // if we finished the task in the last run, switch to idle now
+    if (task_state == SHTaskState::Finished)
+        task_state = SHTaskState::Idle;
 
+    // if we are idle and the ring in action is clode to the start point, and
+    // in the positive x side of it then start the acquisition
     if (task_state == SHTaskState::Idle
-        && ((ring_pose.p - start_point).x() > 0.0 ))
+        && ((ring_pose.p - start_point).x() > 0.0
+            && ((ring_pose.p - start_point).Norm() < positioning_tolerance) ))
     {
-        std::cout << " transition to start" << std::endl;
+        std::cout << " Transition to start" << std::endl;
         task_state = SHTaskState::OnGoing;
         destination_ring_actor->RotateY(100);
         //increment the repetition number
@@ -672,9 +675,9 @@ void TaskSteadyHand::UpdateActors() {
         (ring_pose.p - end_point).Norm() <
             positioning_tolerance)
     {
-        std::cout << " transition to finish" << std::endl;
+        std::cout << " Transition to finish" << std::endl;
 
-        task_state = SHTaskState::Idle;
+        task_state = SHTaskState::Finished;
         destination_ring_actor->RotateY(-100);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
             (colors.Turquoise);
@@ -700,6 +703,7 @@ void TaskSteadyHand::UpdateActors() {
 
         // reset score related vars
         ResetOnGoingEvaluation();
+
     }
 
     // active constraint activation
@@ -735,6 +739,9 @@ void TaskSteadyHand::UpdateActors() {
     task_state_msg.task_name = "SteadyHand";
     task_state_msg.task_state = (uint8_t)task_state;
     task_state_msg.number_of_repetition = uchar(ring_in_action+1);
+    task_state_msg.uint_slot = (uchar)gripper_in_contact[0] +
+        (uchar)gripper_in_contact[1] *(uchar)2;
+
     if (task_state == SHTaskState::OnGoing) {
 
         task_state_msg.time_stamp = (ros::Time::now() - start_time).toSec();
@@ -984,9 +991,7 @@ void TaskSteadyHand::ResetTask() {
     ROS_INFO("Resetting the task.");
     ring_in_action = 0;
     //task_state = SHTaskState::RepetitionComplete
-    // -----------ADDED-----------------------
     task_state = SHTaskState::Idle;
-    // ---------------------------------------
     ResetOnGoingEvaluation();
     ResetScoreHistory();
 }
@@ -996,12 +1001,7 @@ void TaskSteadyHand::ResetCurrentAcquisition() {
     if(task_state== SHTaskState::OnGoing){
         //|| task_state == SHTaskState::ToStartPoint){
         ResetOnGoingEvaluation();
-        if(ring_in_action>0)
-            ring_in_action--;
-        //task_state = SHTaskState::RepetitionComplete;
-        // -----------ADDED-----------------------
         task_state = SHTaskState::Idle;
-        // ---------------------------------------
     }
 }
 
@@ -1198,7 +1198,7 @@ void TaskSteadyHand::ResetScoreHistory() {
 
     // reset colors to gray
     for (int i = 0; i < n_score_history; ++i) {
-        score_sphere_actors[i]->GetProperty()->SetColor(colors.GrayDark);
+        score_sphere_actors[i]->GetProperty()->SetColor(colors.Gray);
 
     }
 
@@ -1248,7 +1248,7 @@ void TaskSteadyHand::StepDynamicsWorld() {
     double time_step = (ros::Time::now() - time_last).toSec();
 
     // simulation seems more realistic when time_step is halved right now!
-    dynamics_world->stepSimulation(btScalar(time_step), 60, 1/290.f);
+    dynamics_world->stepSimulation(btScalar(time_step), 90, 1/380.f);
     time_last = ros::Time::now();
 }
 
