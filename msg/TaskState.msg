@@ -1,6 +1,7 @@
 string task_name
 uint8 task_state
 uint8 number_of_repetition
+uint8 uint_slot
 float64 time_stamp
 float64 error_field_1
 float64 error_field_2

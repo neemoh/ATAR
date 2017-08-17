@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
         tf_conversions
         cv_bridge
         image_transport
-        message_generation
+#        message_generation
         geometry_msgs
         custom_msgs
         custom_conversions
