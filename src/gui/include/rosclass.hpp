@@ -32,6 +32,9 @@ public:
     RosObj(QObject *parent, std::string node_name);
     ~RosObj();
 
+    void RingPoseCurrentCallback(const geometry_msgs::PoseConstPtr &msg);
+    void RingPoseDesiredCallback(const geometry_msgs::PoseConstPtr &msg);
+
     void Slave0CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     void Slave1CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
@@ -50,8 +53,8 @@ public:
     void Master1GripperCallback(const std_msgs::Float32::ConstPtr &msg);
     void Master2GripperCallback(const std_msgs::Float32::ConstPtr &msg);
 
-    void Master0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg);
-    void Master1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg);
+    void Master0TwistCallback(const geometry_msgs::TwistConstPtr &msg);
+    void Master1TwistCallback(const geometry_msgs::TwistConstPtr &msg);
 
     void Master0WrenchCallback(const geometry_msgs::WrenchConstPtr &msg);
     void Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg);
@@ -137,7 +140,7 @@ private:
             (const std_msgs::Float32::ConstPtr &msg);
 
     void (RosObj::*master_twist_callbacks[2])
-            (const geometry_msgs::TwistStampedConstPtr &msg);
+            (const geometry_msgs::TwistConstPtr &msg);
 
     void (RosObj::*master_wrench_callbacks[2])
             (const geometry_msgs::Wrench::ConstPtr &msg);
@@ -157,6 +160,9 @@ public:
     std::string slave_names[2];
     std::string master_names[2];
     cv::Mat image_msg;
+
+    geometry_msgs::Pose ring_pose_current;
+    geometry_msgs::Pose ring_pose_desired;
 
     // NOTE: 0 stands for left and 1 for right;
 
@@ -195,6 +201,9 @@ public:
     geometry_msgs::Pose cam_pose;
 
     // SUBSCRIBERS
+    ros::Subscriber subscriber_ring_pose_current;
+    ros::Subscriber subscriber_ring_pose_desired;
+
     ros::Subscriber * subscriber_slave_pose_current;
     ros::Subscriber * subscriber_slave_pose_desired;
     ros::Subscriber * subscriber_master_pose_current;

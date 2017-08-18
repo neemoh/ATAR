@@ -14,8 +14,8 @@
 
 
 RosObj::RosObj(QObject *parent, std::string node_name)
-        : n(node_name), ros_freq(0), node_name(node_name),
-          state_label(0), recording(false), new_task_state_msg(false)
+    : n(node_name), ros_freq(0), node_name(node_name),
+    state_label(0), recording(false), new_task_state_msg(false)
 {
 
     slave_pose_current_callbacks[0] = &RosObj::Slave0CurrentPoseCallback;
@@ -114,12 +114,10 @@ void RosObj::GetROSParameterValues() {
 
         // subscribers
         param_name.str("");
-        param_name << std::string("/")
+        param_name << std::string("/atar/")
                    << slave_names[n_arm]<< "/tool_pose_desired";
         subscriber_slave_pose_desired[n_arm] = n.subscribe(
-                param_name.str(), 1,
-                slave_pose_desired_callbacks[n_arm],
-                this);
+            param_name.str(), 1, slave_pose_desired_callbacks[n_arm],this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
 
@@ -127,9 +125,8 @@ void RosObj::GetROSParameterValues() {
         param_name.str("");
         param_name << std::string("/dvrk/") << slave_names[n_arm]
                    << "/position_cartesian_current";
-        subscriber_slave_pose_current[n_arm] = n.subscribe(param_name.str(), 1,
-                                                           slave_pose_current_callbacks[n_arm],
-                                                           this);
+        subscriber_slave_pose_current[n_arm] = n.subscribe(param_name.str(), 1
+            ,slave_pose_current_callbacks[n_arm],this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
 
@@ -138,9 +135,8 @@ void RosObj::GetROSParameterValues() {
         param_name.str("");
         param_name << std::string("/dvrk/") << master_names[n_arm]
                    << "/position_cartesian_current";
-        subscriber_master_pose_current[n_arm] = n.subscribe(param_name.str(), 1,
-                                                            master_pose_current_callbacks[n_arm],
-                                                            this);
+        subscriber_master_pose_current[n_arm] = n.subscribe(param_name.str(), 1
+            ,master_pose_current_callbacks[n_arm], this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
 
@@ -149,9 +145,8 @@ void RosObj::GetROSParameterValues() {
         param_name.str("");
         param_name << std::string("/dvrk/") << master_names[n_arm]
                    << "/state_joint_current";
-        subscriber_master_joint_state[n_arm]
-                = n.subscribe(param_name.str(), 1
-                , master_joint_state_callbacks[n_arm], this);
+        subscriber_master_joint_state[n_arm] = n.subscribe(param_name.str(), 1
+            , master_joint_state_callbacks[n_arm], this);
 
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
@@ -160,19 +155,17 @@ void RosObj::GetROSParameterValues() {
         param_name.str("");
         param_name << std::string("/dvrk/") <<master_names[n_arm]
                    << "/gripper_position_current";
-        subscriber_master_current_gripper[n_arm] =
-                n.subscribe(param_name.str(), 1, gripper_callbacks[n_arm], this);
+        subscriber_master_current_gripper[n_arm] =n.subscribe(param_name.str()
+            , 1, gripper_callbacks[n_arm], this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
 
 
         //  master's twist
         param_name.str("");
-        param_name << std::string("/dvrk/") << master_names[n_arm]
-                   << "/twist_body_current";
-        subscriber_master_twist[n_arm] = n.subscribe(param_name.str(),
-                                                     1,
-                                                     master_twist_callbacks[n_arm],
-                                                     this);
+        param_name << std::string("/atar/") << master_names[n_arm]
+                   << "/twist_filtered";
+        subscriber_master_twist[n_arm] = n.subscribe(param_name.str(),1
+            ,master_twist_callbacks[n_arm], this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
 
@@ -181,10 +174,8 @@ void RosObj::GetROSParameterValues() {
         param_name.str("");
         param_name << std::string("/dvrk/") << slave_names[n_arm]
                    << "/twist_body_current";
-        subscriber_slave_twist[n_arm] = n.subscribe(param_name.str(),
-                                                    1,
-                                                    slave_twist_callbacks[n_arm],
-                                                    this);
+        subscriber_slave_twist[n_arm] = n.subscribe(param_name.str(), 1
+            ,slave_twist_callbacks[n_arm], this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
 
@@ -192,20 +183,17 @@ void RosObj::GetROSParameterValues() {
         param_name.str("");
         param_name << std::string("/dvrk/") << master_names[n_arm]
                    << "/set_wrench_body";
-        subscriber_master_wrench[n_arm] = n.subscribe(param_name.str(),
-                                                      1,
-                                                      master_wrench_callbacks[n_arm],
-                                                      this);
+        subscriber_master_wrench[n_arm] = n.subscribe(param_name.str(), 1
+            ,master_wrench_callbacks[n_arm], this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
 
 
         param_name.str("");
-        param_name << std::string("/") << master_names[n_arm]
+        param_name << std::string("/atar/") << master_names[n_arm]
                    << "/active_constraint_param";
-        subscriber_ac_params[n_arm] = n.subscribe(param_name.str(), 1,
-                                                  master_ac_params_callbacks[n_arm],
-                                                  this);
+        subscriber_ac_params[n_arm] = n.subscribe(param_name.str(), 1
+            ,master_ac_params_callbacks[n_arm], this);
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
 
@@ -233,17 +221,27 @@ void RosObj::GetROSParameterValues() {
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/clutch");
 
 
-    subscriber_task_state = n.subscribe("/task_state", 1,
+    subscriber_task_state = n.subscribe("/atar/task_state", 1,
                                         &RosObj::TaskSTateCallback,
                                         this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /task_state");
 
     //publisher
     publisher_control_events = n.advertise<std_msgs::Int8>
-            ("/atar/control_events", 1);
+                                    ("/atar/control_events", 1);
     ROS_INFO("Will publish on /control_events");
 
 
+    std::string topic_name = std::string("/atar/ring_pose_desired");
+    subscriber_ring_pose_current = n.subscribe(
+        topic_name.c_str(), 1, &RosObj::RingPoseCurrentCallback, this);
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", topic_name.c_str());
+
+
+    topic_name = std::string("/atar/ring_pose_desired");
+    subscriber_ring_pose_desired= n.subscribe(
+        topic_name.c_str(), 1, &RosObj::RingPoseDesiredCallback, this);
+    ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", topic_name.c_str());
 }
 
 
@@ -252,6 +250,17 @@ void RosObj::GetROSParameterValues() {
 //-----------------------------------------------------------------------------------
 // Callbacks
 //-----------------------------------------------------------------------------------
+
+// PSMs current pose
+void RosObj::RingPoseCurrentCallback(const geometry_msgs::PoseConstPtr &msg)  {
+    ring_pose_current.position = msg->position;
+    ring_pose_current.orientation = msg->orientation;
+}
+void RosObj::RingPoseDesiredCallback(const geometry_msgs::PoseConstPtr &msg)  {
+    ring_pose_desired.position = msg->position;
+    ring_pose_desired.orientation = msg->orientation;
+}
+
 
 // PSMs current pose
 void RosObj::Slave0CurrentPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
@@ -290,12 +299,12 @@ void RosObj::Master1CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr
 // Slave Twist
 void RosObj::Slave0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
     slave_twist[0].linear = msg->twist.linear;
-    slave_twist[0].linear = msg->twist.linear;
+    slave_twist[0].angular = msg->twist.angular;
 }
 
 void RosObj::Slave1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
     slave_twist[1].linear = msg->twist.linear;
-    slave_twist[1].linear = msg->twist.linear;
+    slave_twist[1].angular = msg->twist.angular;
 }
 
 
@@ -315,25 +324,25 @@ void RosObj::Master1JointStateCallback(const sensor_msgs::JointStateConstPtr &ms
 // -----------------------------------------------------------------------------
 // Reading the gripper positions
 void RosObj::Master1GripperCallback(
-        const std_msgs::Float32::ConstPtr &msg) {
+    const std_msgs::Float32::ConstPtr &msg) {
     gripper_position[0] =  msg->data;
 }
 
 void RosObj::Master2GripperCallback(
-        const std_msgs::Float32::ConstPtr &msg) {
+    const std_msgs::Float32::ConstPtr &msg) {
     gripper_position[1] =  msg->data;
 
 }
 
 // MTMs Twist
-void RosObj::Master0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
-    master_twist[0].linear = msg->twist.linear;
-    master_twist[0].linear = msg->twist.linear;
+void RosObj::Master0TwistCallback(const geometry_msgs::TwistConstPtr &msg) {
+    master_twist[0].linear = msg->linear;
+    master_twist[0].linear = msg->linear;
 }
 
-void RosObj::Master1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
-    master_twist[1].linear = msg->twist.linear;
-    master_twist[1].linear = msg->twist.linear;
+void RosObj::Master1TwistCallback(const geometry_msgs::TwistConstPtr &msg) {
+    master_twist[1].linear = msg->linear;
+    master_twist[1].linear = msg->linear;
 }
 
 
@@ -351,7 +360,7 @@ void RosObj::Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) {
 
 // MTMs AC params
 void RosObj::Master0ACParamsCallback(
-        const custom_msgs::ActiveConstraintParametersConstPtr & msg){
+    const custom_msgs::ActiveConstraintParametersConstPtr & msg){
     ac_params[0].active = msg->active;
     ac_params[0].method = msg->method;
     ac_params[0].angular_damping_coeff = msg->angular_damping_coeff;
@@ -364,7 +373,7 @@ void RosObj::Master0ACParamsCallback(
 
 
 void RosObj::Master1ACParamsCallback(
-        const custom_msgs::ActiveConstraintParametersConstPtr & msg){
+    const custom_msgs::ActiveConstraintParametersConstPtr & msg){
     ac_params[1].active = msg->active;
     ac_params[1].method = msg->method;
     ac_params[1].angular_damping_coeff = msg->angular_damping_coeff;
@@ -418,7 +427,7 @@ cv::Mat& RosObj::Image(ros::Duration timeout) {
 
         if (ros::Time::now() > timeout_time) {
             ROS_ERROR("Timeout whilst waiting for a new image from the image topic. "
-                              "Is the camera still publishing ?");
+                          "Is the camera still publishing ?");
         }
     }
 
@@ -432,89 +441,105 @@ void RosObj::OpenRecordingFile(std::string filename){
     reporting_file.open(filename);
     //first line is the name of the arms
     reporting_file
-            << (std::string)"slave_names[0]: " << slave_names[0]
-            << ", slave_names[1]: " << slave_names[1]
-            << ", master_names[0]: " << master_names[0]
-            << ", master_names[1]: " << master_names[1]
-            << std::endl;
+        << (std::string)"slave_names[0]: " << slave_names[0]
+        << ", slave_names[1]: " << slave_names[1]
+        << ", master_names[0]: " << master_names[0]
+        << ", master_names[1]: " << master_names[1]
+        << std::endl;
 
     reporting_file
-            << "number_of_repetition"
-            << ", task_state"
-            << ", time_stamp"
-            << ", gripper_in_contact"
-            << ", error_field_1"
-            << ", error_field_2"
-            << ", clutch_pedal_pressed"
-            << ", coag_pedal_pressed" ;
+        << "number_of_repetition"
+        << ", task_state"
+        << ", time_stamp"
+        << ", gripper_in_contact"
+        << ", error_field_1"
+        << ", error_field_2"
+        << ", clutch_pedal_pressed"
+        << ", coag_pedal_pressed"
+
+        << ", ring_current_pose.position.x"
+        << ", ring_current_pose.position.y"
+        << ", ring_current_pose.position.z"
+        << ", ring_current_pose.orientation.x"
+        << ", ring_current_pose.orientation.y"
+        << ", ring_current_pose.orientation.z"
+        << ", ring_current_pose.orientation.w"
+
+        << ", ring_desired_pose.position.x"
+        << ", ring_desired_pose.position.y"
+        << ", ring_desired_pose.position.z"
+        << ", ring_desired_pose.orientation.x"
+        << ", ring_desired_pose.orientation.y"
+        << ", ring_desired_pose.orientation.z"
+        << ", ring_desired_pose.orientation.w";;
 
     for (int i = 0; i < n_arms; ++i) {
 
         reporting_file
-                << ", slave_current_pose.position.x"
-                << ", slave_current_pose.position.y"
-                << ", slave_current_pose.position.z"
-                << ", slave_current_pose.orientation.x"
-                << ", slave_current_pose.orientation.y"
-                << ", slave_current_pose.orientation.z"
-                << ", slave_current_pose.orientation.w"
+            << ", slave_current_pose.position.x"
+            << ", slave_current_pose.position.y"
+            << ", slave_current_pose.position.z"
+            << ", slave_current_pose.orientation.x"
+            << ", slave_current_pose.orientation.y"
+            << ", slave_current_pose.orientation.z"
+            << ", slave_current_pose.orientation.w"
 
-                << ", slave_desired_pose.position.x"
-                << ", slave_desired_pose.position.y"
-                << ", slave_desired_pose.position.z"
-                << ", slave_desired_pose.orientation.x"
-                << ", slave_desired_pose.orientation.y"
-                << ", slave_desired_pose.orientation.z"
-                << ", slave_desired_pose.orientation.w"
+            << ", slave_desired_pose.position.x"
+            << ", slave_desired_pose.position.y"
+            << ", slave_desired_pose.position.z"
+            << ", slave_desired_pose.orientation.x"
+            << ", slave_desired_pose.orientation.y"
+            << ", slave_desired_pose.orientation.z"
+            << ", slave_desired_pose.orientation.w"
 
-                << ", master_current_pose.position.x"
-                << ", master_current_pose.position.y"
-                << ", master_current_pose.position.z"
-                << ", master_current_pose.orientation.x"
-                << ", master_current_pose.orientation.y"
-                << ", master_current_pose.orientation.z"
-                << ", master_current_pose.orientation.w"
+            << ", master_current_pose.position.x"
+            << ", master_current_pose.position.y"
+            << ", master_current_pose.position.z"
+            << ", master_current_pose.orientation.x"
+            << ", master_current_pose.orientation.y"
+            << ", master_current_pose.orientation.z"
+            << ", master_current_pose.orientation.w"
 
-                << ", master_joint_state.position[0]"
-                << ", master_joint_state.position[1]"
-                << ", master_joint_state.position[2]"
-                << ", master_joint_state.position[3]"
-                << ", master_joint_state.position[4]"
-                << ", master_joint_state.position[5]"
-                << ", master_joint_state.position[6]"
-                << ", master_joint_state.position[7]"
+            << ", master_joint_state.position[0]"
+            << ", master_joint_state.position[1]"
+            << ", master_joint_state.position[2]"
+            << ", master_joint_state.position[3]"
+            << ", master_joint_state.position[4]"
+            << ", master_joint_state.position[5]"
+            << ", master_joint_state.position[6]"
+            << ", master_joint_state.position[7]"
 
-                << ", gripper_position"
+            << ", gripper_position"
 
-                << ", slave_twist.linear.x"
-                << ", slave_twist.linear.y"
-                << ", slave_twist.linear.z"
-                << ", slave_twist.angular.x"
-                << ", slave_twist.angular.y"
-                << ", slave_twist.angular.z"
+            << ", slave_twist.linear.x"
+            << ", slave_twist.linear.y"
+            << ", slave_twist.linear.z"
+            << ", slave_twist.angular.x"
+            << ", slave_twist.angular.y"
+            << ", slave_twist.angular.z"
 
-                << ", master_twist.linear.x"
-                << ", master_twist.linear.y"
-                << ", master_twist.linear.z"
-                << ", master_twist.angular.x"
-                << ", master_twist.angular.y"
-                << ", master_twist.angular.z"
+            << ", master_twist.linear.x"
+            << ", master_twist.linear.y"
+            << ", master_twist.linear.z"
+            << ", master_twist.angular.x"
+            << ", master_twist.angular.y"
+            << ", master_twist.angular.z"
 
-                << ", master_wrench.force.x"
-                << ", master_wrench.force.y"
-                << ", master_wrench.force.z"
-                << ", master_wrench.torque.x"
-                << ", master_wrench.torque.y"
-                << ", master_wrench.torque.z"
+            << ", master_wrench.force.x"
+            << ", master_wrench.force.y"
+            << ", master_wrench.force.z"
+            << ", master_wrench.torque.x"
+            << ", master_wrench.torque.y"
+            << ", master_wrench.torque.z"
 
-                << ",ac_params.active"
-                << ",ac_params.method"
-                << ",ac_params.angular_damping_coeff"
-                << ",ac_params.angular_elastic_coeff"
-                << ",ac_params.linear_damping_coeff"
-                << ",ac_params.linear_elastic_coeff"
-                << ",ac_params.max_force"
-                << ",ac_params.max_torque";
+            << ",ac_params.active"
+            << ",ac_params.method"
+            << ",ac_params.angular_damping_coeff"
+            << ",ac_params.angular_elastic_coeff"
+            << ",ac_params.linear_damping_coeff"
+            << ",ac_params.linear_elastic_coeff"
+            << ",ac_params.max_force"
+            << ",ac_params.max_torque";
 
     }
 
@@ -547,6 +572,22 @@ void RosObj::run(){
             data_sample.push_back(task_state.error_field_2);
             data_sample.push_back(double(clutch_pedal_pressed));
             data_sample.push_back(double(coag_pedal_pressed));
+
+            data_sample.push_back(ring_pose_current.position.x);
+            data_sample.push_back(ring_pose_current.position.y);
+            data_sample.push_back(ring_pose_current.position.z);
+            data_sample.push_back(ring_pose_current.orientation.x);
+            data_sample.push_back(ring_pose_current.orientation.y);
+            data_sample.push_back(ring_pose_current.orientation.z);
+            data_sample.push_back(ring_pose_current.orientation.w);
+
+            data_sample.push_back(ring_pose_desired.position.x);
+            data_sample.push_back(ring_pose_desired.position.y);
+            data_sample.push_back(ring_pose_desired.position.z);
+            data_sample.push_back(ring_pose_desired.orientation.x);
+            data_sample.push_back(ring_pose_desired.orientation.y);
+            data_sample.push_back(ring_pose_desired.orientation.z);
+            data_sample.push_back(ring_pose_desired.orientation.w);
 
             for(uint j=0; j<n_arms; j++){
 

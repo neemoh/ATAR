@@ -96,8 +96,10 @@ public:
     void UpdateActors();
 
     // calculates the desired tool pose
-    void CalculatedDesiredToolPose(const KDL::Frame ring_pose,
-                                   KDL::Frame &desired_tool_pose);
+    void CalculatedDesiredRingPose(
+        const KDL::Frame ring_pose,
+        KDL::Frame &desired_ring_pose
+    );
 
     // returns the status of the change of the ac_param
     bool IsACParamChanged();
@@ -136,7 +138,7 @@ public:
 private:
 
     // updates the error actor
-    void UpdateTubeColor();
+    void UpdateRingColor();
 
     // Calculates the closest points of the wire mesh to three points of
     // interest on the ring used for calculating the desired pose of the ring
@@ -175,6 +177,7 @@ private:
     double orient_error_sum;
 
     double posit_error_max;
+    double orient_error_max;
     uint sample_count;
     uint n_score_history;
     std::vector<double> score_history;

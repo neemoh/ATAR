@@ -243,7 +243,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
         // Publishing the active constraint parameters that may change during
         // the task
         param_name.str("");
-        param_name << std::string("/")<< master_names[n_arm]
+        param_name << std::string("/atar/")<< master_names[n_arm]
                    << "/active_constraint_param";
         publisher_ac_params[n_arm] =
             n.advertise<custom_msgs::ActiveConstraintParameters>(
@@ -303,7 +303,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     }
 
     // Publisher for the task state
-    std::string task_state_topic_name = "/task_state";
+    std::string task_state_topic_name = "/atar/task_state";
     publisher_task_state = n.advertise<custom_msgs::TaskState>(
         task_state_topic_name.c_str(), 1);
     ROS_INFO("Will publish on %s", task_state_topic_name.c_str());

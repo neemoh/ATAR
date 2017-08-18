@@ -23,7 +23,7 @@ TaskSteadyHand::TaskSteadyHand(
     destination_ring_counter(0),
     ac_params_changed(true),
     task_state(SHTaskState::Idle),
-    n_score_history(10),
+    n_score_history(6),
     time_last(ros::Time::now())
 {
 
@@ -98,7 +98,7 @@ TaskSteadyHand::TaskSteadyHand(
     // -------------------------------------------------------------------------
     // Create a cube for the board
     {
-        double friction = 0.005;
+        double friction = 0.05;
         double board_dimensions[3] = {0.18, 0.132, 0.008};
 
         double pose[7]{
@@ -208,7 +208,7 @@ TaskSteadyHand::TaskSteadyHand(
     // Define the rotation of the tube mesh
     KDL::Rotation tube_rot(
         KDL::Rotation::RotZ(-1.0*M_PI /18. ) *
-        KDL::Rotation::RotX(M_PI / 2) *
+            KDL::Rotation::RotX(M_PI / 2) *
             KDL::Rotation::RotY(-M_PI / 2));
     KDL::Frame tube_pose;
     tube_pose.M = tube_rot * KDL::Rotation::RotX(-M_PI / 2);
@@ -386,7 +386,7 @@ TaskSteadyHand::TaskSteadyHand(
         actors.push_back(ring_mesh[ring_num - l -1]->GetActor());
         ring_mesh[ring_num-l-1]->GetActor()->GetProperty()->SetColor(colors.Turquoise);
         ring_mesh[ring_num-l-1]->GetBody()->setContactStiffnessAndDamping
-            (5, 1);
+            (3000, 100);
         ring_mesh[ring_num-l-1]->GetBody()->setRollingFriction(btScalar(0.01));
         ring_mesh[ring_num-l-1]->GetBody()->setSpinningFriction(btScalar(0.01));
 
@@ -395,27 +395,27 @@ TaskSteadyHand::TaskSteadyHand(
 
         //// --------- separation cylinders --------------------
 
-            _dim = {0.0004, 0.005};
+        _dim = {0.0004, 0.005};
 
-            KDL::Rotation cyl_orient = cyl_pose.M *
-                KDL::Rotation::RotX(M_PI / 2);
-            cyl_orient.GetQuaternion(qx, qy, qz, qw);
+        KDL::Rotation cyl_orient = cyl_pose.M *
+            KDL::Rotation::RotX(M_PI / 2);
+        cyl_orient.GetQuaternion(qx, qy, qz, qw);
 
-            double pose_cyl[7]{
-                cyl_pose.p.x() + (l -0.5+1) * step * dir.x(), cyl_pose.p.y()
-                    + (l -0.5+ 0.2) * step * dir.y(), cyl_pose.p.z()
-                    + (l-0.5) * step * dir.z(), qx, qy, qz, qw
-            };
+        double pose_cyl[7]{
+            cyl_pose.p.x() + (l -0.5+1) * step * dir.x(), cyl_pose.p.y()
+                + (l -0.5+ 0.2) * step * dir.y(), cyl_pose.p.z()
+                + (l-0.5) * step * dir.z(), qx, qy, qz, qw
+        };
 
-            sep_cylinder[l] = new
-                BulletVTKObject(
-                ObjectShape::CYLINDER, ObjectType::KINEMATIC, _dim,
-                pose_cyl, 0.0
-            );
+        sep_cylinder[l] = new
+            BulletVTKObject(
+            ObjectShape::CYLINDER, ObjectType::KINEMATIC, _dim,
+            pose_cyl, 0.0
+        );
 
-            dynamics_world->addRigidBody(sep_cylinder[l]->GetBody());
-            actors.push_back(sep_cylinder[l]->GetActor());
-            sep_cylinder[l]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
+        dynamics_world->addRigidBody(sep_cylinder[l]->GetBody());
+        actors.push_back(sep_cylinder[l]->GetActor());
+        sep_cylinder[l]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
 
 
         ////---------------------------------------------------
@@ -497,7 +497,7 @@ TaskSteadyHand::TaskSteadyHand(
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
         actor->GetProperty()->SetColor(colors.Gray);
-        actor->SetPosition(0.09- (double)i * 0.006, 0.12 + (double)i * 0.0001,
+        actor->SetPosition(0.115 - (double)i * 0.006, 0.12 + (double)i * 0.0001,
                            0.005);
         score_sphere_actors.push_back(actor);
     }
@@ -669,6 +669,8 @@ void TaskSteadyHand::UpdateActors() {
         ResetOnGoingEvaluation();
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
             (colors.Orange);
+        stand_cube->GetActor()->GetProperty()->SetColor(colors.OrangeRed);
+
     }
 
     else if (task_state == SHTaskState::OnGoing &&
@@ -703,6 +705,8 @@ void TaskSteadyHand::UpdateActors() {
 
         // reset score related vars
         ResetOnGoingEvaluation();
+        stand_cube->GetActor()->GetProperty()->SetColor(colors.GrayLight);
+
 
     }
 
@@ -733,7 +737,7 @@ void TaskSteadyHand::UpdateActors() {
 
     // -------------------------------------------------------------------------
     // Performance Metrics
-    UpdateTubeColor();
+    UpdateRingColor();
 
     // Populate the task state message
     task_state_msg.task_name = "SteadyHand";
@@ -757,6 +761,9 @@ void TaskSteadyHand::UpdateActors() {
         if(posit_error_max < position_error_norm)
             posit_error_max = position_error_norm;
 
+        if(orient_error_max < orientation_error_norm)
+            orient_error_max = orientation_error_norm;
+
         sample_count++;
 
     } else {
@@ -776,8 +783,10 @@ void TaskSteadyHand::UpdateActors() {
 
 
 //------------------------------------------------------------------------------
-void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
-                                               KDL::Frame &transform_to_desired_ring_pose) {
+void TaskSteadyHand::CalculatedDesiredRingPose(
+    const KDL::Frame ring_pose,
+    KDL::Frame &desired_ring_pose
+) {
     // NOTE: All the closest points are on the wire mesh
 
     //---------------------------------------------------------------------
@@ -868,69 +877,57 @@ void TaskSteadyHand::CalculatedDesiredToolPose(const KDL::Frame ring_pose,
 
     // desired pose only when the ring is close to the wire.if it is too
     // far we don't want fixtures
-    if (ring_center_to_cp.Norm() < 5 * ring_radius) {
+    //if (ring_center_to_cp.Norm() < 5 * ring_radius) {
 
-        // Desired position is one that puts the center of the ring on the
-        // center of the mesh.
+    // Desired position is one that puts the center of the ring on the
+    // center of the mesh.
 
-        //---------------------------------------------------------------------
-        // Find the desired position of the ring assuming that the length
-        // of the thin tube is negligible
-        transform_to_desired_ring_pose.p = ring_center_to_cp;
+    //---------------------------------------------------------------------
+    // Find the desired position of the ring assuming that the length
+    // of the thin tube is negligible
+    desired_ring_pose.p = closest_point_to_center_point;
 
-        KDL::Vector desired_z, desired_y, desired_x;
+    KDL::Vector desired_z, desired_y, desired_x;
 
-        KDL::Vector point_y_to_cp =
-            closest_point_to_y_point - radial_y_point_kdl;
+    KDL::Vector point_y_to_cp =
+        closest_point_to_y_point - radial_y_point_kdl;
 
-        KDL::Vector point_x_to_cp =
-            closest_point_to_x_point - radial_x_point_kdl;
+    KDL::Vector point_x_to_cp =
+        closest_point_to_x_point - radial_x_point_kdl;
 
-        desired_x = -point_x_to_cp / point_x_to_cp.Norm();
-        desired_y = -point_y_to_cp / point_y_to_cp.Norm();
-        desired_z = desired_x * desired_y;
+    desired_x = -point_x_to_cp / point_x_to_cp.Norm();
+    desired_y = -point_y_to_cp / point_y_to_cp.Norm();
+    desired_z = desired_x * desired_y;
 
-        // make sure axes are perpendicular and normal
-        desired_z = desired_z / desired_z.Norm();
-        desired_x = desired_y * desired_z;
-        desired_x = desired_x / desired_x.Norm();
-        desired_y = desired_z * desired_x;
-        desired_y = desired_y / desired_y.Norm();
+    // make sure axes are perpendicular and normal
+    desired_z = desired_z / desired_z.Norm();
+    desired_x = desired_y * desired_z;
+    desired_x = desired_x / desired_x.Norm();
+    desired_y = desired_z * desired_x;
+    desired_y = desired_y / desired_y.Norm();
 
-        transform_to_desired_ring_pose.M =
-            KDL::Rotation(desired_x, desired_y, desired_z)
-                * ring_pose.M.Inverse();
+    desired_ring_pose.M =
+        KDL::Rotation(desired_x, desired_y, desired_z);
 
+    // draw the connection lines for debug
+    //line1_source->SetPoint1(radial_x_point_kdl[0],
+    //                        radial_x_point_kdl[1],
+    //                        radial_x_point_kdl[2]);
+    //line1_source->SetPoint2(closest_point_to_x_point[0],
+    //                        closest_point_to_x_point[1],
+    //                        closest_point_to_x_point[2]);
+    //line2_source->SetPoint1(radial_y_point_kdl[0],
+    //                        radial_y_point_kdl[1],
+    //                        radial_y_point_kdl[2]);
+    //line2_source->SetPoint2(closest_point_to_y_point[0],
+    //                        closest_point_to_y_point[1],
+    //                        closest_point_to_y_point[2]);
 
-
-        //------------------------------------------------------------------
-        // Calculate errors
-        position_error_norm = transform_to_desired_ring_pose.p.Norm();
-        KDL::Vector rpy;
-        transform_to_desired_ring_pose.M.GetRPY(rpy[0],
-                                                rpy[1],
-                                                rpy[2]);
-        orientation_error_norm = rpy.Norm();
-
-        // draw the connection lines for debug
-        line1_source->SetPoint1(radial_x_point_kdl[0],
-                                radial_x_point_kdl[1],
-                                radial_x_point_kdl[2]);
-        line1_source->SetPoint2(closest_point_to_x_point[0],
-                                closest_point_to_x_point[1],
-                                closest_point_to_x_point[2]);
-        line2_source->SetPoint1(radial_y_point_kdl[0],
-                                radial_y_point_kdl[1],
-                                radial_y_point_kdl[2]);
-        line2_source->SetPoint2(closest_point_to_y_point[0],
-                                closest_point_to_y_point[1],
-                                closest_point_to_y_point[2]);
-
-    } else {
-        transform_to_desired_ring_pose = KDL::Frame();
-        // due to the delay in teleop loop this will create some wrneches if
-        // the guidance is still active
-    }
+    //} else {
+    //    desired_ring_pose = ring_pose;
+    //    // due to the delay in teleop loop this will create some wrneches if
+    //    // the guidance is still active
+    //}
 
 
 
@@ -954,7 +951,7 @@ custom_msgs::ActiveConstraintParameters* TaskSteadyHand::GetACParameters() {
 
 
 //------------------------------------------------------------------------------
-void TaskSteadyHand::UpdateTubeColor() {
+void TaskSteadyHand::UpdateRingColor() {
 
     double max_pos_error = 0.002;
     double max_orient_error = 0.3;
@@ -973,13 +970,13 @@ void TaskSteadyHand::UpdateTubeColor() {
 
 //    score_sphere_actors->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
 //                                                0.1);
-    if(task_state== SHTaskState::OnGoing){
-        ring_mesh[ring_in_action]->GetActor()->GetProperty()
-                                 ->SetColor(colors.Orange[0],
-                                            colors.Orange[1]- 0.6*
-                                                (error_ratio-0.3),
-                                            colors.Orange[2]);
-    }
+//    if(task_state== SHTaskState::OnGoing){
+    ring_mesh[ring_in_action]->GetActor()->GetProperty()
+                             ->SetColor(colors.Orange[0],
+                                        colors.Orange[1]- 0.6*
+                                            (error_ratio-0.3),
+                                        colors.Orange[2]);
+    //}
 
 }
 
@@ -1016,14 +1013,15 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
 
     //getting the name of the arms
     std::stringstream param_name;
-    param_name << std::string("/") << slave_names[0] << "/tool_pose_desired";
+    param_name << std::string("/atar/") << slave_names[0] <<
+               "/tool_pose_desired";
 
-    ros::Publisher pub_desired[2];
+    ros::Publisher pub_slave_desired[2];
     ros::Publisher pub_wrench_abs[2];
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
-    pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                             (param_name.str(), 10);
+    pub_slave_desired[0] = node->advertise<geometry_msgs::PoseStamped>
+                                   (param_name.str(), 10);
     ROS_INFO("Will publish on %s", param_name.str().c_str());
 
     // make sure the masters are in wrench absolute orientation
@@ -1038,9 +1036,10 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
     //if(bimanual) {
     //getting the name of the arms
     param_name.str("");
-    param_name << std::string("/") << slave_names[1] << "/tool_pose_desired";
-    pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                             (param_name.str(), 10);
+    param_name << std::string("/atar/") << slave_names[1] <<
+               "/tool_pose_desired";
+    pub_slave_desired[1] = node->advertise<geometry_msgs::PoseStamped>
+                                   (param_name.str(), 10);
     ROS_INFO("Will publish on %s", param_name.str().c_str());
 
     // make sure the masters are in wrench absolute orientation
@@ -1056,9 +1055,21 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
     ROS_INFO("The desired pose will be updated at '%f'",
              haptic_loop_rate);
 
+
+    ros::Publisher pub_ring_desired, pub_ring_current;
+    std::string ring_topic = "/atar/ring_pose_current";
+    pub_ring_current = node->advertise<geometry_msgs::Pose>
+                               (ring_topic.c_str(), 10);
+    ROS_INFO("Will publish on %s", ring_topic.c_str());
+
+    ring_topic = "/atar/ring_pose_desired";
+    pub_ring_desired = node->advertise<geometry_msgs::Pose>
+                               (ring_topic.c_str(), 10);
+    ROS_INFO("Will publish on %s", ring_topic.c_str());
+    int lower_freq_pub_counter = 0;
+
     //---------------------------------------------
     // loop
-
     while (ros::ok())
     {
 
@@ -1068,14 +1079,28 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         tool_current_pose[0] = *tool_current_pose_ptr[0];
         tool_current_pose[1] = *tool_current_pose_ptr[1];
 
-        KDL::Frame transform_to_desired_ring_pose;
+        KDL::Frame transform_to_desired_ring_pose, desired_ring_pose;
         KDL::Frame interpolated_ring_pose;
+
+        // the pose of the ring is updated with the graphics frequency which
+        // is too low for haptics. The good news is that if we assume that
+        // the ring does not move relative to the forceps when gripped, we
+        // can use the pose of the forceps that are updated fast and find the
+        // ring_pose. When the ring is not gripped we do not need haptics but
+        // to calculate the errors etc we still nedd to know the pose of the
+        // ring the desired one.
         if(gripper_in_contact[0])
             interpolated_ring_pose = tool_current_pose[0] * tool_to_ring_tr[0];
         else if (gripper_in_contact[1])
             interpolated_ring_pose = tool_current_pose[1] * tool_to_ring_tr[1];
+        else
+            interpolated_ring_pose = ring_pose;
 
-        CalculatedDesiredToolPose(interpolated_ring_pose, transform_to_desired_ring_pose);
+        CalculatedDesiredRingPose(interpolated_ring_pose, desired_ring_pose);
+
+        transform_to_desired_ring_pose.p = desired_ring_pose.p - ring_pose.p;
+        transform_to_desired_ring_pose.M = desired_ring_pose.M
+            * ring_pose.M.Inverse();
 
         // publish desired poses
         for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
@@ -1110,8 +1135,28 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
             pose_msg.header.frame_id = "/slave_frame";
             pose_msg.header.stamp = ros::Time::now();
             // publish
-            pub_desired[n_arm].publish(pose_msg);
+            pub_slave_desired[n_arm].publish(pose_msg);
         }
+
+
+
+
+        lower_freq_pub_counter++;
+        // publish the ring poses
+        if(lower_freq_pub_counter==10){
+            lower_freq_pub_counter = 0;
+            pub_ring_current.publish(conversions::KDLFramePoseMsg(ring_pose));
+            pub_ring_desired.publish(conversions::KDLFramePoseMsg
+                                         (desired_ring_pose));
+        }
+        //------------------------------------------------------------------
+        // Calculate errors
+        position_error_norm = transform_to_desired_ring_pose.p.Norm();
+        KDL::Vector rpy;
+        transform_to_desired_ring_pose.M.GetRPY(rpy[0],
+                                                rpy[1],
+                                                rpy[2]);
+        orientation_error_norm = rpy.Norm();
 
         ros::spinOnce();
         loop_rate.sleep();
@@ -1125,10 +1170,11 @@ void TaskSteadyHand::CalculateAndSaveError() {
     double posit_error_avg = posit_error_sum/(double)sample_count;
     double orient_error_avg = orient_error_sum/(double)sample_count;
 
-    double posit_error_avg_ideal = 0.0005;
-    double orient_error_avg_ideal = 0.35;
-    double posit_error_max_ideal = 0.0015;
-    double duration_ideal = 9.0;
+    double posit_error_avg_ideal = 0.001;
+    double orient_error_avg_ideal = 0.30;
+    double posit_error_max_ideal = 0.003;
+    double orient_error_max_ideal = M_PI*30./180.;
+    double duration_ideal = 65.0;
 
     // put a threshold on the values
     if (posit_error_avg < posit_error_avg_ideal)
@@ -1137,17 +1183,23 @@ void TaskSteadyHand::CalculateAndSaveError() {
     if (orient_error_avg < orient_error_avg_ideal)
         orient_error_avg = orient_error_avg_ideal;
 
+    if (orient_error_max < orient_error_max_ideal)
+        orient_error_max = orient_error_max_ideal;
+
     if (posit_error_max < posit_error_max_ideal)
         posit_error_max = posit_error_max_ideal;
+    else if(posit_error_max > 0.004)
+        posit_error_max = 1000.;
 
     if (duration < duration_ideal)
         duration = duration_ideal;
 
     double score = ( posit_error_avg_ideal/posit_error_avg
         + posit_error_max_ideal/posit_error_max
+        + orient_error_max_ideal/orient_error_max
         + duration_ideal/duration
         + orient_error_avg_ideal/orient_error_avg)
-        * 100 / 4;
+        * 100 / 5;
 
     // when the history gets full we start a new set
     if (score_history.size() == n_score_history)
@@ -1162,10 +1214,15 @@ void TaskSteadyHand::CalculateAndSaveError() {
 
     }
 
-    ROS_INFO("posit_error_max: %f", posit_error_max);
-    ROS_INFO("duration: %f", duration);
-    ROS_INFO("posit_error_avg: %f", posit_error_avg);
-    ROS_INFO("orient_error_avg: %f", orient_error_avg);
+    ROS_INFO("posit_error_max: %f, score: %f", posit_error_max,
+             posit_error_max_ideal/posit_error_max*100);
+    ROS_INFO("orient_error_max: %f, score: %f", orient_error_max,
+             orient_error_max_ideal/orient_error_max*100);
+    ROS_INFO("duration: %f, score: %f", duration,duration_ideal/duration *100);
+    ROS_INFO("posit_error_avg: %f, score: %f", posit_error_avg,
+             posit_error_avg_ideal/posit_error_avg*100);
+    ROS_INFO("orient_error_avg: %f, score: %f", orient_error_avg,
+             orient_error_avg_ideal/orient_error_avg*100);
     ROS_INFO("Score: %f", score);
     ROS_INFO("  ");
 }
@@ -1179,7 +1236,7 @@ double * TaskSteadyHand::GetScoreColor(const double score) {
     else if (score > 80)
         return colors.Gold;
     else if(score > 60)
-        return colors.Orange;
+        return colors.OrangeDark;
     else
         return colors.Red;
 
@@ -1188,6 +1245,7 @@ double * TaskSteadyHand::GetScoreColor(const double score) {
 void TaskSteadyHand::ResetOnGoingEvaluation() {
     posit_error_sum = 0.0;
     posit_error_max = 0.0;
+    orient_error_max = 0.0;
     orient_error_sum = 0.0;
     sample_count = 0;
 }
@@ -1248,7 +1306,7 @@ void TaskSteadyHand::StepDynamicsWorld() {
     double time_step = (ros::Time::now() - time_last).toSec();
 
     // simulation seems more realistic when time_step is halved right now!
-    dynamics_world->stepSimulation(btScalar(time_step), 90, 1/380.f);
+    dynamics_world->stepSimulation(btScalar(time_step), 40, 1/256.f);
     time_last = ros::Time::now();
 }
 
