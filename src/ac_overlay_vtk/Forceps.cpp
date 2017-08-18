@@ -57,7 +57,7 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
                                     gripper_density, 1, gripper_friction,
                                     &mesh_file_dir_str);
         gripper_links[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
-        gripper_links[1]->GetBody()->setContactStiffnessAndDamping(5, 1);
+        gripper_links[1]->GetBody()->setContactStiffnessAndDamping(500, 100);
         gripper_links[1]->GetBody()->setRollingFriction(btScalar(0.1));
         gripper_links[1]->GetBody()->setSpinningFriction(btScalar(0.1));
     }
@@ -83,7 +83,7 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
                                 gripper_density, 1, gripper_friction,
                                 &mesh_file_dir_str);
         gripper_links[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
-        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(5, 1);
+        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(500, 100);
         gripper_links[2]->GetBody()->setRollingFriction(btScalar(0.1));
         gripper_links[2]->GetBody()->setSpinningFriction(btScalar(0.1));
     }
