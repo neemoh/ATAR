@@ -908,7 +908,8 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
 
     //getting the name of the arms
     std::stringstream param_name;
-    param_name << std::string("/") << slave_names[0] << "/tool_pose_desired";
+    param_name << std::string("/atar/") << slave_names[0] <<
+               "/tool_pose_desired";
 
     ros::Publisher pub_desired[2];
     ros::Publisher pub_wrench_abs[2];
@@ -930,7 +931,8 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
     if(bimanual) {
         //getting the name of the arms
         param_name.str("");
-        param_name << std::string("/") << slave_names[1] << "/tool_pose_desired";
+        param_name << std::string("/atar/") << slave_names[1] <<
+                   "/tool_pose_desired";;
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
                                  (param_name.str(), 10);
         ROS_INFO("Will publish on %s", param_name.str().c_str());
@@ -942,7 +944,6 @@ void TaskBuzzWire::FindAndPublishDesiredToolPose() {
         pub_wrench_abs[1].publish(wrench_body_orientation_absolute);
         ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
     }
-
 
     ros::Rate loop_rate(haptic_loop_rate);
     ROS_INFO("The desired pose will be updated at '%f'",

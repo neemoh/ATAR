@@ -658,22 +658,22 @@ void TaskTest::ResetTask() {
         out[i]=0;
     }
 
-    peg1->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose1));
+    peg1->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(peg_pose1));
     motion_state_ = new BulletVTKMotionState(peg_pose1, peg1->GetActor());
     peg1->GetBody()->setMotionState(motion_state_);
     peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
-    peg2->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose2));
+    peg2->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(peg_pose2));
     motion_state_ = new BulletVTKMotionState(peg_pose2, peg2->GetActor());
     peg2->GetBody()->setMotionState(motion_state_);
     peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
-    peg3->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose3));
+    peg3->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(peg_pose3));
     motion_state_ = new BulletVTKMotionState(peg_pose3, peg3->GetActor());
     peg3->GetBody()->setMotionState(motion_state_);
     peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
-    peg4->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(peg_pose4));
+    peg4->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(peg_pose4));
     motion_state_ = new BulletVTKMotionState(peg_pose4, peg4->GetActor());
     peg4->GetBody()->setMotionState(motion_state_);
     peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);

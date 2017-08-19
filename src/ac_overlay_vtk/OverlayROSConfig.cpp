@@ -558,6 +558,8 @@ void OverlayROSConfig::StartTask(const uint task_id) {
         task_ptr->SetCurrentGripperpositionPointer(gripper_current[0], 0);
         task_ptr->SetCurrentGripperpositionPointer(gripper_current[1], 1);
 
+        task_ptr->UpdateActors();
+
         // bind the haptics thread
         haptics_thread = boost::thread(boost::bind(
             &VTKTask::FindAndPublishDesiredToolPose, task_ptr));

@@ -172,7 +172,7 @@ void TaskBulletTest::UpdateActors() {
         pointer_posit[2] + (starting_point - count) * direction[2],
         0, 0, 0, 1};
 
-    plane[index]->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(pose));
+    plane[index]->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(pose));
     KDL::Vector point = {pointer_pose[0], pointer_pose[1], pointer_pose[2]};
     KDL::Vector center = {
         plane[index]->GetActor()->GetCenter()[0]
@@ -189,7 +189,7 @@ void TaskBulletTest::UpdateActors() {
         pose[2] - (point - cam_position).Norm(),
         0, 0, 0, 1
         };
-    plane[num]->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(_pose));
+    plane[num]->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(_pose));
     plane[num]->GetActor()->GetProperty()->SetOpacity(1.0);
     if (dot(direction, center - point) <= 0.0 &&
         (center - point).Norm() >= (point - cam_position).Norm()) {

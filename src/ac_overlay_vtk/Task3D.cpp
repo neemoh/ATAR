@@ -247,7 +247,7 @@ void Task3D::ArrowManager() {
         arrow_x, arrow_y, arrow_z, arrow_w};
     var = var + 0.05;
 
-    arrow->GetActor()->SetUserMatrix(PoseVectorToVTKMatrix(pose));
+    arrow->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(pose));
 
     // Check if the arrow has been approached
     double* arrow_position;
