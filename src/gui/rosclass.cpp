@@ -95,13 +95,14 @@ void RosObj::GetROSParameterValues() {
         //getting the name of the arms
         std::stringstream param_name;
         param_name << std::string("slave_") << n_arm + 1 << "_name";
-        std::cout << param_name.str()<< std::endl;
-
-        n.getParam(param_name.str(),slave_names[n_arm]);
+        if(!n.getParam(param_name.str(), slave_names[n_arm]))
+            throw std::runtime_error("No slave names found");
 
         param_name.str("");
         param_name << std::string("master_") << n_arm + 1 << "_name";
-        n.getParam(param_name.str(), master_names[n_arm]);
+        if(!n.getParam(param_name.str(), master_names[n_arm]))
+            throw std::runtime_error("No Master names found");
+
 
 
         //        // publishers
