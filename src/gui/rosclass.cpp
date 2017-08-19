@@ -232,7 +232,7 @@ void RosObj::GetROSParameterValues() {
     ROS_INFO("Will publish on /control_events");
 
 
-    std::string topic_name = std::string("/atar/ring_pose_desired");
+    std::string topic_name = std::string("/atar/ring_pose_current");
     subscriber_ring_pose_current = n.subscribe(
         topic_name.c_str(), 1, &RosObj::RingPoseCurrentCallback, this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", topic_name.c_str());
