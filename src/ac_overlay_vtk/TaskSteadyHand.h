@@ -35,6 +35,7 @@
 #include <std_msgs/Bool.h>
 
 #include <btBulletDynamicsCommon.h>
+#include <mutex>
 #include "BulletVTKObject.h"
 #include "Forceps.h"
 #include "Colors.hpp"
@@ -157,7 +158,6 @@ private:
         int gripper_side
     );
 private:
-
     // -------------------------------------------------------------------------
     // task logic
 //    bool bimanual;
@@ -167,8 +167,8 @@ private:
     std::string *slave_names;
     KDL::Frame *slave_frame_to_world_frame_tr;
     Colors colors;
-
-    KDL::Vector idle_point;
+    KDL::Frame tube_frame;
+    //KDL::Vector idle_point;
     KDL::Vector start_point;
     KDL::Vector end_point;
     custom_msgs::TaskState task_state_msg;
@@ -223,7 +223,7 @@ private:
     vtkSmartPointer<vtkActor>                       line1_actor;
     vtkSmartPointer<vtkActor>                       line2_actor;
 
-    vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
+    //vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
 
     // dynamics
 
@@ -239,6 +239,7 @@ private:
     BulletVTKObject *sep_cylinder[6];
     BulletVTKObject *tube_meshes[3];
     BulletVTKObject *tube_mesh_thin;
+    BulletVTKObject *tube_vis_thin;
     BulletVTKObject *stand_mesh;
     BulletVTKObject *stand_cube;
     KDL::Vector dir;

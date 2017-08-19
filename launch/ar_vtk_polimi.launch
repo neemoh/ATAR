@@ -1,6 +1,6 @@
 <launch>
-    <arg name="slave_1_name" value="MTMR_DUMMY"/>
-    <arg name="slave_2_name" value="MTML_DUMMY"/>
+    <arg name="slave_1_name" value="PSM1_DUMMY"/>
+    <arg name="slave_2_name" value="PSM2_DUMMY"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
     <arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>
@@ -41,7 +41,7 @@
         <!--<param name="show_image" value="false"/>-->
     <!--</node>-->
 
-    <!-- Node recording the data-->
+    <!--&lt;!&ndash; Node recording the data&ndash;&gt;-->
     <node pkg="atar" type="reporter" name="reporter" output="screen">
         <!--records data at the frequency of task_state topic-->
         <param name="number_of_arms" value="2"/>
@@ -107,7 +107,7 @@
         <param name= "cam_pose_averaging_factor" value= "0.5" />
 
         <!--Activate or deactivate haptic guidance -->
-        <param name= "enable_guidance" value= "false" />
+        <param name= "enable_guidance" value= "true" />
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />
@@ -148,11 +148,12 @@
 	desired pose topic. The sampling_frequency param is for filtering.
     -->
     <node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">
-        <param name="number_of_arms" value="1"/>
+        <param name="number_of_arms" value="2"/>
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_1_name" value="$(arg master_1_name)"/>
         <param name="master_2_name" value="$(arg master_2_name)"/>
+        <!--the ac params will be overwritten if new message arrives-->
         <param name="max_force" value="3"/>
         <param name="max_torque" value="0.03"/><!-- 0.03 -->
         <param name="linear_elastic_coeff" value="1000"/>
