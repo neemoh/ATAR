@@ -78,7 +78,7 @@ private:
 
 
 // -----------------------------------------------------------------------------
-vtkSmartPointer<vtkMatrix4x4> PoseVectorToVTKMatrix(double pose[]);
+vtkSmartPointer<vtkMatrix4x4> PoseArrayToVTKMatrix(double *pose);
 
 // -----------------------------------------------------------------------------
 KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>);

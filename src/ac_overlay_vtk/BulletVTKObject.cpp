@@ -211,22 +211,22 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
             // reader.
             vtkSmartPointer<vtkOBJReader> reader =
                 vtkSmartPointer<vtkOBJReader>::New();
-            if(o_type!=NOPHYSICS) {
-
-                //
-                ////            // visualize the compund mesh for debug
-                size_t last_dot_position = filepath->find_last_of(".");
-
-                std::string file_name_no_extension = filepath->substr(
-                    0,
-                    last_dot_position
-                );
-
-                std::stringstream out_name;
-                out_name << file_name_no_extension << "_hacd.obj";
-
-                reader->SetFileName(out_name.str().c_str());
-            } else
+            //if(o_type!=NOPHYSICS) {
+            //
+            //    //
+            //    ////            // visualize the compund mesh for debug
+            //    size_t last_dot_position = filepath->find_last_of(".");
+            //
+            //    std::string file_name_no_extension = filepath->substr(
+            //        0,
+            //        last_dot_position
+            //    );
+            //
+            //    std::stringstream out_name;
+            //    out_name << file_name_no_extension << "_hacd.obj";
+            //
+            //    reader->SetFileName(out_name.str().c_str());
+            //} else
                 reader->SetFileName(filepath->c_str());
 
             reader->Update();
@@ -271,7 +271,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
     // rigid body_ is dynamic if and only if mass is non zero, otherwise static
 
     if(object_type_==NOPHYSICS)
-        actor_->SetUserMatrix(PoseVectorToVTKMatrix(pose));
+        actor_->SetUserMatrix(PoseArrayToVTKMatrix(pose));
     else    {
 
         btScalar bt_mass = float(volume * density);
@@ -280,7 +280,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         btVector3 local_inertia(0, 0, 0);
 
         if (isStatic)
-            actor_->SetUserMatrix(PoseVectorToVTKMatrix(pose));
+            actor_->SetUserMatrix(PoseArrayToVTKMatrix(pose));
 
         if (!isStatic && (object_type_ != ObjectType::KINEMATIC))
             // Set initial pose of graphical representation
@@ -378,14 +378,12 @@ void BulletVTKObject::SetKinematicPose(double *pose) {
 }
 
 KDL::Frame BulletVTKObject::GetPose() {
-    vtkSmartPointer<vtkMatrix4x4> vtk_mat =
-        vtkSmartPointer<vtkMatrix4x4>::New();
-    vtk_mat = actor_->GetMatrix();
-    return VTKMatrixToKDLFrame(vtk_mat);
+    KDL::Frame out = motion_state_->getKDLFrame();
+    return out;
 }
 
 //------------------------------------------------------------------------------
-vtkSmartPointer<vtkMatrix4x4> PoseVectorToVTKMatrix(double pose[]) {
+vtkSmartPointer<vtkMatrix4x4> PoseArrayToVTKMatrix(double *pose) {
 
     vtkSmartPointer<vtkMatrix4x4> out =
             vtkSmartPointer<vtkMatrix4x4>::New();
