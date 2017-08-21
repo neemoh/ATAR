@@ -179,7 +179,6 @@ private:
     double posit_error_max;
     double orient_error_max;
     uint sample_count;
-    uint n_score_history;
     std::vector<double> score_history;
     // -------------------------------------------------------------------------
     // graphics
@@ -234,7 +233,7 @@ private:
     btCollisionDispatcher* dispatcher;
     btDefaultCollisionConfiguration* collisionConfiguration;
 
-    int ring_num = 6;
+    int ring_num = 4;
     BulletVTKObject *ring_mesh[6];
     BulletVTKObject *sep_cylinder[6];
     BulletVTKObject *tube_meshes[3];

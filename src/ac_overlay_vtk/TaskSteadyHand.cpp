@@ -23,7 +23,6 @@ TaskSteadyHand::TaskSteadyHand(
     destination_ring_counter(0),
     ac_params_changed(true),
     task_state(SHTaskState::Idle),
-    n_score_history(6),
     time_last(ros::Time::now())
 {
 
@@ -33,7 +32,7 @@ TaskSteadyHand::TaskSteadyHand(
 
     *slave_names = *slave_names_in;
 
-    // -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
     //  ACTIVE CONSTRAINT
     // -------------------------------------------------------------------------
     // these parameters could be set as ros parameters too but since
@@ -234,9 +233,8 @@ TaskSteadyHand::TaskSteadyHand(
     std::vector<double> dim_cube={0.025+0.01,0.025+0.01,(0.11-0.016-0.025)/2};
 
     double pose_cube[7] = {
-        base_position[0]+0.02*cos(M_PI/4), base_position[1]-0.02*cos
-            (M_PI/4), (0.11-0.016-0.025)
-            /4, qx,qy,qz, qw};
+        base_position[0]+0.015*cos(M_PI/4), base_position[1]-0.03*cos
+            (M_PI/4), (0.11-0.016-0.025)/4, qx,qy,qz, qw};
 
     stand_cube = new
         BulletVTKObject(
@@ -275,23 +273,7 @@ TaskSteadyHand::TaskSteadyHand(
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(1);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(100);
     }
-    {
-        //// this is the tube tha has only visuals and no dynamics
-        //input_file_dir.str("");
-        //input_file_dir << mesh_files_dir
-        //               << std::string("tube_quarter_mesh_whole.obj");
-        //mesh_file_dir_str = input_file_dir.str();
-        //
-        //tube_vis_thin = new
-        //    BulletVTKObject(
-        //    ObjectShape::MESH, ObjectType::NOPHYSICS, {},
-        //    pose_tube, 0.0, 0, friction, &mesh_file_dir_str);
-        //
-        //actors.push_back(tube_vis_thin->GetActor());
-        //tube_vis_thin->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
-        //tube_vis_thin->GetActor()->GetProperty()->SetSpecular(1);
-        //tube_vis_thin->GetActor()->GetProperty()->SetSpecularPower(100);
-    }
+
     // -------------------------------------------------------------------------
     // MESH thin
     input_file_dir.str("");
@@ -465,7 +447,7 @@ TaskSteadyHand::TaskSteadyHand(
         vtkSmartPointer<vtkPolyDataMapper>::New();
     sphere_mapper->SetInputConnection(source->GetOutputPort());
 
-    for (int i = 0; i < n_score_history; ++i) {
+    for (int i = 0; i < ring_num; ++i) {
 
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(sphere_mapper);
@@ -650,8 +632,8 @@ void TaskSteadyHand::UpdateActors() {
         destination_ring_actor->RotateY(-100);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
             (colors.Turquoise);
-
-        ring_in_action +=  1;
+        if(ring_in_action<(ring_num-1))
+            ring_in_action +=  1;
 
         KDL::Vector base_position = KDL::Vector(0.11-0.016, 0.08, 0.025+0.035);
 
@@ -1063,11 +1045,11 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         // ring the desired one.
         //         tool_to_ring_tr[0] = ring_pose * tool_current_pose[0].Inverse();
 
-        if(gripper_in_contact[0])
-            interpolated_ring_pose = tool_current_pose[0] *tool_to_ring_tr[0];
-        else if (gripper_in_contact[1])
-            interpolated_ring_pose = tool_current_pose[1]* tool_to_ring_tr[1];
-        else
+        //if(gripper_in_contact[0])
+        //    interpolated_ring_pose = tool_current_pose[0] *tool_to_ring_tr[0];
+        //else if (gripper_in_contact[1])
+        //    interpolated_ring_pose = tool_current_pose[1]* tool_to_ring_tr[1];
+        //else
             interpolated_ring_pose = ring_pose_t;
 
         CalculatedDesiredRingPose(interpolated_ring_pose, desired_ring_pose);
@@ -1120,7 +1102,7 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
             lower_freq_pub_counter = 0;
             pub_ring_current.publish(conversions::KDLFramePoseMsg(interpolated_ring_pose));
             pub_ring_desired.publish(conversions::KDLFramePoseMsg
-                                         (ring_pose));
+                                         (desired_ring_pose));
         }
         //------------------------------------------------------------------
         // Calculate errors
@@ -1175,7 +1157,7 @@ void TaskSteadyHand::CalculateAndSaveError() {
         * 100 / 5;
 
     // when the history gets full we start a new set
-    if (score_history.size() == n_score_history)
+    if (score_history.size() == ring_num)
         ResetScoreHistory();
 
     score_history.push_back(score);
@@ -1228,7 +1210,7 @@ void TaskSteadyHand::ResetScoreHistory() {
     score_history_colors.clear();
 
     // reset colors to gray
-    for (int i = 0; i < n_score_history; ++i) {
+    for (int i = 0; i < ring_num; ++i) {
         score_sphere_actors[i]->GetProperty()->SetColor(colors.Gray);
 
     }
@@ -1277,7 +1259,7 @@ void TaskSteadyHand::InitBullet() {
 void TaskSteadyHand::StepDynamicsWorld() {
     ///-----stepsimulation_start-----
     double time_step = (ros::Time::now() - time_last).toSec();
-
+    //std::cout << "time_step: " << time_step << std::endl;
     // simulation seems more realistic when time_step is halved right now!
     dynamics_world->stepSimulation(btScalar(time_step), 100, 1/256.f);
     time_last = ros::Time::now();
