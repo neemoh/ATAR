@@ -55,6 +55,8 @@ private slots:
 
     void onTimeout();
 
+    void StopRecording();
+
 
 private:
     Ui::MainWindow *ui;

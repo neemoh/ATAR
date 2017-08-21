@@ -691,6 +691,16 @@ void RosObj::CloseRecordingFile(){
 
 }
 
+void RosObj::ResetTask(){
+    repetition_num = 1;
+    if(recording){
+
+        recording = false;
+        repetition_data->clear();
+        CloseRecordingFile();
+    }
+
+};
 
 void RosObj::CleanUpAndQuit(){
 

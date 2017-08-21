@@ -91,6 +91,7 @@ public:
 
     void ResetCurrentAcquisition(){repetition_data->clear();};
 
+    void ResetTask();
 
     void run();
 

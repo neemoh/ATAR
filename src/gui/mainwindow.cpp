@@ -249,16 +249,7 @@ void MainWindow::on_pause_clicked()
 
 void MainWindow::on_stop_released()
 {
-    qDebug() << "Stopping the recording." ;
-    ros_obj.PauseRecording();
-    ros_obj.CloseRecordingFile();
-    ui->record->setEnabled(true);
-    ui->record->setChecked(false);
-    ui->record->setText("Record");
-    ui->pause_button->setText("Pause");
-    ui->pause_button->setChecked(false);
-
-    ui->file_name->setDisabled(false);
+    StopRecording();
 
     //  QPalette pal = ui->record->palette();
     //  pal.setColor(QPalette::Window, QColor(Qt::blue));
@@ -269,17 +260,44 @@ void MainWindow::on_stop_released()
 
 void MainWindow::on_button_repeat_clicked()
 {
+    ros_obj.ResetCurrentAcquisition();
+
     std_msgs::Int8 msg;
     msg.data =  CE_RESET_ACQUISITION;
     ros_obj.publisher_control_events.publish(msg);
-    ros_obj.ResetCurrentAcquisition();
+
 }
 
 void MainWindow::on_button_reset_clicked()
 {
+    StopRecording();
+    ros_obj.ResetTask();
     std_msgs::Int8 msg;
     msg.data =  CE_RESET_TASK;
     ros_obj.publisher_control_events.publish(msg);
 
 }
 
+void MainWindow::StopRecording(){
+    qDebug() << "Stopping the recording." ;
+
+    // stop writing to file and close it
+    ros_obj.PauseRecording();
+    ros_obj.CloseRecordingFile();
+
+    // reset the interface
+    ui->record->setEnabled(true);
+    ui->record->setChecked(false);
+    ui->record->setText("Record");
+
+    ui->pause_button->setText("Pause");
+    ui->pause_button->setChecked(false);
+
+    ui->file_name->setDisabled(false);
+    ui->file_name->setText("");
+
+    // clear the saved acquisition data
+    ros_obj.ResetCurrentAcquisition();
+
+
+};
