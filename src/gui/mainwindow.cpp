@@ -41,6 +41,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->pause_button, SIGNAL(released()), this, SLOT(on_pause_clicked()) );
 
+    ui->input_init_perf->setText("0.0");
+    ui->input_session->setText("1");
+
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 
@@ -218,7 +221,15 @@ void MainWindow::on_record_clicked()
         ros_obj.OpenRecordingFile(file_name.str());
         ui->file_name->setDisabled(true);
         ui->record->setText("Recording");
-        ros_obj.StartRecording();
+
+        // start recording
+        int session = ui->input_session->text().toInt();
+        double initial_performance= ui->input_init_perf->text().toDouble();
+        ui->input_init_perf->setDisabled(true);
+        ui->input_session->setDisabled(true);
+
+        ros_obj.StartRecording(initial_performance, session);
+
         ui->record->setEnabled(false);
         qDebug() << "Started recording." ;
     }
@@ -235,7 +246,7 @@ void MainWindow::on_pause_clicked()
             qDebug() << "Paused recording." ;
         }
         else{
-            ros_obj.StartRecording();
+            ros_obj.ContinueRecording();
             ui->pause_button->setText("Pause");
             ui->record->setEnabled(true);
             qDebug() << "Continued recording." ;
@@ -294,6 +305,8 @@ void MainWindow::StopRecording(){
     ui->pause_button->setChecked(false);
 
     ui->file_name->setDisabled(false);
+    ui->input_init_perf->setDisabled(false);
+    ui->input_session->setDisabled(false);
     ui->file_name->setText("");
 
     // clear the saved acquisition data

@@ -11,6 +11,8 @@
 #include <custom_msgs/ActiveConstraintParameters.h>
 #include "custom_msgs/TaskState.h"
 #include <std_msgs/Int8.h>
+#include <kdl/frames.hpp>
+#include <tf_conversions/tf_kdl.h>
 
 
 RosBridge::RosBridge(QObject *parent, std::string node_name)
@@ -41,9 +43,6 @@ RosBridge::RosBridge(QObject *parent, std::string node_name)
 
     master_wrench_callbacks[0] = &RosBridge::Master0WrenchCallback;
     master_wrench_callbacks[1] = &RosBridge::Master1WrenchCallback;
-
-    master_ac_params_callbacks[0] = &RosBridge::Master0ACParamsCallback;
-    master_ac_params_callbacks[1] = &RosBridge::Master1ACParamsCallback;
 
     task_frame_to_slave_frame[0] = std::vector<double>(7, 0.0);
     task_frame_to_slave_frame[1] = std::vector<double>(7, 0.0);
@@ -87,7 +86,7 @@ void RosBridge::GetROSParameterValues() {
     subscriber_master_current_gripper = new ros::Subscriber[n_arms];
     subscriber_master_twist = new ros::Subscriber[n_arms];
     subscriber_master_wrench = new ros::Subscriber[n_arms];
-    subscriber_ac_params = new ros::Subscriber[n_arms];
+    publisher_ac_params = new ros::Publisher[(uint)n_arms];
 
     // arm names
     for (int n_arm = 0; n_arm < n_arms; n_arm++) {
@@ -189,16 +188,15 @@ void RosBridge::GetROSParameterValues() {
         ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
                  param_name.str().c_str());
 
-
+        // Publishing the active constraint parameters that may change during
+        // the task
         param_name.str("");
-        param_name << std::string("/atar/") << master_names[n_arm]
+        param_name << std::string("/atar/")<< master_names[n_arm]
                    << "/active_constraint_param";
-        subscriber_ac_params[n_arm] = n.subscribe(param_name.str(), 1
-            ,master_ac_params_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
-                 param_name.str().c_str());
-
-
+        publisher_ac_params[n_arm] =
+                n.advertise<custom_msgs::ActiveConstraintParameters>(
+                        param_name.str().c_str(), 1 );
+        ROS_INFO("Will publish on %s", param_name.str().c_str());
 //        // the transformation from the coordinate frame of the slave (RCM) to the task coordinate
 //        // frame.
 //        param_name.str("");
@@ -296,7 +294,6 @@ void RosBridge::Master1CurrentPoseCallback(const geometry_msgs::PoseStampedConst
     master_current_pose[1].orientation = msg->pose.orientation;
 }
 
-
 // Slave Twist
 void RosBridge::Slave0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
     slave_twist[0].linear = msg->twist.linear;
@@ -358,33 +355,6 @@ void RosBridge::Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) 
     master_wrench[1].torque= msg->torque;
 }
 
-
-// MTMs AC params
-void RosBridge::Master0ACParamsCallback(
-    const custom_msgs::ActiveConstraintParametersConstPtr & msg){
-    ac_params[0].active = msg->active;
-    ac_params[0].method = msg->method;
-    ac_params[0].angular_damping_coeff = msg->angular_damping_coeff;
-    ac_params[0].angular_elastic_coeff = msg->angular_elastic_coeff;
-    ac_params[0].linear_damping_coeff = msg->linear_damping_coeff;
-    ac_params[0].linear_elastic_coeff = msg->linear_elastic_coeff;
-    ac_params[0].max_force = msg->max_force;
-    ac_params[0].max_torque = msg->max_torque;
-}
-
-
-void RosBridge::Master1ACParamsCallback(
-    const custom_msgs::ActiveConstraintParametersConstPtr & msg){
-    ac_params[1].active = msg->active;
-    ac_params[1].method = msg->method;
-    ac_params[1].angular_damping_coeff = msg->angular_damping_coeff;
-    ac_params[1].angular_elastic_coeff = msg->angular_elastic_coeff;
-    ac_params[1].linear_damping_coeff = msg->linear_damping_coeff;
-    ac_params[1].linear_elastic_coeff = msg->linear_elastic_coeff;
-    ac_params[1].max_force = msg->max_force;
-    ac_params[1].max_torque = msg->max_torque;
-}
-
 // task state
 void RosBridge::TaskSTateCallback(const custom_msgs::TaskStateConstPtr &msg){
     task_state.task_name = msg->task_name;
@@ -407,274 +377,109 @@ void RosBridge::ClutchFootSwitchCallback(const sensor_msgs::Joy &msg){
 }
 
 
-void RosBridge::OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg) {
-    try
-    {
-        image_msg = cv_bridge::toCvShare(msg, "bgr8")->image;
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
-    }
-}
+//void RosBridge::OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg) {
+//    try
+//    {
+//        image_msg = cv_bridge::toCvShare(msg, "bgr8")->image;
+//    }
+//    catch (cv_bridge::Exception& e)
+//    {
+//        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
+//    }
+//}
 
-cv::Mat& RosBridge::Image(ros::Duration timeout) {
-    ros::Rate loop_rate(100);
-    ros::Time timeout_time = ros::Time::now() + timeout;
+//cv::Mat& RosBridge::Image(ros::Duration timeout) {
+//    ros::Rate loop_rate(100);
+//    ros::Time timeout_time = ros::Time::now() + timeout;
+//
+//    while(image_msg.empty()) {
+//        ros::spinOnce();
+//        loop_rate.sleep();
+//
+//        if (ros::Time::now() > timeout_time) {
+//            ROS_ERROR("Timeout whilst waiting for a new image from the image topic. "
+//                          "Is the camera still publishing ?");
+//        }
+//    }
+//
+//    return image_msg;
+//}
 
-    while(image_msg.empty()) {
-        ros::spinOnce();
-        loop_rate.sleep();
-
-        if (ros::Time::now() > timeout_time) {
-            ROS_ERROR("Timeout whilst waiting for a new image from the image topic. "
-                          "Is the camera still publishing ?");
-        }
-    }
-
-    return image_msg;
-}
-
-
-void RosBridge::OpenRecordingFile(std::string filename){
-
-
-    reporting_file.open(filename);
-    //first line is the name of the arms
-    reporting_file
-        << (std::string)"slave_names[0]: " << slave_names[0]
-        << ", slave_names[1]: " << slave_names[1]
-        << ", master_names[0]: " << master_names[0]
-        << ", master_names[1]: " << master_names[1]
-        << std::endl;
-
-    reporting_file
-        << "number_of_repetition"
-        << ", task_state"
-        << ", time_stamp"
-        << ", gripper_in_contact"
-        << ", error_field_1"
-        << ", error_field_2"
-        << ", clutch_pedal_pressed"
-        << ", coag_pedal_pressed"
-
-        << ", ring_current_pose.position.x"
-        << ", ring_current_pose.position.y"
-        << ", ring_current_pose.position.z"
-        << ", ring_current_pose.orientation.x"
-        << ", ring_current_pose.orientation.y"
-        << ", ring_current_pose.orientation.z"
-        << ", ring_current_pose.orientation.w"
-
-        << ", ring_desired_pose.position.x"
-        << ", ring_desired_pose.position.y"
-        << ", ring_desired_pose.position.z"
-        << ", ring_desired_pose.orientation.x"
-        << ", ring_desired_pose.orientation.y"
-        << ", ring_desired_pose.orientation.z"
-        << ", ring_desired_pose.orientation.w";;
-
-    for (int i = 0; i < n_arms; ++i) {
-
-        reporting_file
-            << ", slave_current_pose.position.x"
-            << ", slave_current_pose.position.y"
-            << ", slave_current_pose.position.z"
-            << ", slave_current_pose.orientation.x"
-            << ", slave_current_pose.orientation.y"
-            << ", slave_current_pose.orientation.z"
-            << ", slave_current_pose.orientation.w"
-
-            << ", slave_desired_pose.position.x"
-            << ", slave_desired_pose.position.y"
-            << ", slave_desired_pose.position.z"
-            << ", slave_desired_pose.orientation.x"
-            << ", slave_desired_pose.orientation.y"
-            << ", slave_desired_pose.orientation.z"
-            << ", slave_desired_pose.orientation.w"
-
-            << ", master_current_pose.position.x"
-            << ", master_current_pose.position.y"
-            << ", master_current_pose.position.z"
-            << ", master_current_pose.orientation.x"
-            << ", master_current_pose.orientation.y"
-            << ", master_current_pose.orientation.z"
-            << ", master_current_pose.orientation.w"
-
-            << ", master_joint_state.position[0]"
-            << ", master_joint_state.position[1]"
-            << ", master_joint_state.position[2]"
-            << ", master_joint_state.position[3]"
-            << ", master_joint_state.position[4]"
-            << ", master_joint_state.position[5]"
-            << ", master_joint_state.position[6]"
-            << ", master_joint_state.position[7]"
-
-            << ", gripper_position"
-
-            << ", slave_twist.linear.x"
-            << ", slave_twist.linear.y"
-            << ", slave_twist.linear.z"
-            << ", slave_twist.angular.x"
-            << ", slave_twist.angular.y"
-            << ", slave_twist.angular.z"
-
-            << ", master_twist.linear.x"
-            << ", master_twist.linear.y"
-            << ", master_twist.linear.z"
-            << ", master_twist.angular.x"
-            << ", master_twist.angular.y"
-            << ", master_twist.angular.z"
-
-            << ", master_wrench.force.x"
-            << ", master_wrench.force.y"
-            << ", master_wrench.force.z"
-            << ", master_wrench.torque.x"
-            << ", master_wrench.torque.y"
-            << ", master_wrench.torque.z"
-
-            << ",ac_params.active"
-            << ",ac_params.method"
-            << ",ac_params.angular_damping_coeff"
-            << ",ac_params.angular_elastic_coeff"
-            << ",ac_params.linear_damping_coeff"
-            << ",ac_params.linear_elastic_coeff"
-            << ",ac_params.max_force"
-            << ",ac_params.max_torque";
-
-    }
-
-    reporting_file << std::endl;
-}
 
 
 
 void RosBridge::run(){
 
-    while(ros::ok() ){
+    while(ros::ok() ) {
         ros::Time begin = ros::Time::now();
 
-        // decided to record the data only when the task state is 1.
-        if(recording && new_task_state_msg && task_state.task_state==1 ){
-//        if(recording ){
-
+        if (recording && new_task_state_msg){
             new_task_state_msg = false;
 
-            //seconds = psm1_joint_state.header.stamp.nsec;
-            //	std::cout << "sec=" << secs << "  nsec= " << nsecs << std::endl;
+            // Transition from idle to ongoing
+            if (last_task_state.task_state == 0 && task_state.task_state == 1) {
+                PublishACActivation(assistance_activation);
+           }
 
-            std::vector<double> data_sample;
+            // ON GOING
+            if (task_state.task_state == 1 ) {
 
-            data_sample.push_back(double(repetition_num));
-            data_sample.push_back(double(task_state.task_state));
-            data_sample.push_back(task_state.time_stamp);
-            data_sample.push_back(double((task_state.uint_slot)));
-            data_sample.push_back(task_state.error_field_1);
-            data_sample.push_back(task_state.error_field_2);
-            data_sample.push_back(double(clutch_pedal_pressed));
-            data_sample.push_back(double(coag_pedal_pressed));
+                repetition_data->push_back(VectorizeData());
 
-            data_sample.push_back(ring_pose_current.position.x);
-            data_sample.push_back(ring_pose_current.position.y);
-            data_sample.push_back(ring_pose_current.position.z);
-            data_sample.push_back(ring_pose_current.orientation.x);
-            data_sample.push_back(ring_pose_current.orientation.y);
-            data_sample.push_back(ring_pose_current.orientation.z);
-            data_sample.push_back(ring_pose_current.orientation.w);
+                // increment the evaluation
+                KDL::Frame desired, current;
+                tf::poseMsgToKDL(ring_pose_desired, desired);
+                tf::poseMsgToKDL(ring_pose_current, current);
+                perf_eval->Increment(desired, current);
 
-            data_sample.push_back(ring_pose_desired.position.x);
-            data_sample.push_back(ring_pose_desired.position.y);
-            data_sample.push_back(ring_pose_desired.position.z);
-            data_sample.push_back(ring_pose_desired.orientation.x);
-            data_sample.push_back(ring_pose_desired.orientation.y);
-            data_sample.push_back(ring_pose_desired.orientation.z);
-            data_sample.push_back(ring_pose_desired.orientation.w);
 
-            for(uint j=0; j<n_arms; j++){
-
-                data_sample.push_back(slave_current_pose[j].position.x);
-                data_sample.push_back(slave_current_pose[j].position.y);
-                data_sample.push_back(slave_current_pose[j].position.z);
-                data_sample.push_back(slave_current_pose[j].orientation.x);
-                data_sample.push_back(slave_current_pose[j].orientation.y);
-                data_sample.push_back(slave_current_pose[j].orientation.z);
-                data_sample.push_back(slave_current_pose[j].orientation.w);
-
-                data_sample.push_back(slave_desired_pose[j].position.x);
-                data_sample.push_back(slave_desired_pose[j].position.y);
-                data_sample.push_back(slave_desired_pose[j].position.z);
-                data_sample.push_back(slave_desired_pose[j].orientation.x);
-                data_sample.push_back(slave_desired_pose[j].orientation.y);
-                data_sample.push_back(slave_desired_pose[j].orientation.z);
-                data_sample.push_back(slave_desired_pose[j].orientation.w);
-
-                data_sample.push_back(master_current_pose[j].position.x);
-                data_sample.push_back(master_current_pose[j].position.y);
-                data_sample.push_back(master_current_pose[j].position.z);
-                data_sample.push_back(master_current_pose[j].orientation.x);
-                data_sample.push_back(master_current_pose[j].orientation.y);
-                data_sample.push_back(master_current_pose[j].orientation.z);
-                data_sample.push_back(master_current_pose[j].orientation.w);
-
-                data_sample.push_back(master_joint_state[j].position[0]);
-                data_sample.push_back(master_joint_state[j].position[1]);
-                data_sample.push_back(master_joint_state[j].position[2]);
-                data_sample.push_back(master_joint_state[j].position[3]);
-                data_sample.push_back(master_joint_state[j].position[4]);
-                data_sample.push_back(master_joint_state[j].position[5]);
-                data_sample.push_back(master_joint_state[j].position[6]);
-                data_sample.push_back(master_joint_state[j].position[7]);
-
-                data_sample.push_back(gripper_position[j]);
-
-                data_sample.push_back(slave_twist[j].linear.x);
-                data_sample.push_back(slave_twist[j].linear.y);
-                data_sample.push_back(slave_twist[j].linear.z);
-                data_sample.push_back(slave_twist[j].angular.x);
-                data_sample.push_back(slave_twist[j].angular.y);
-                data_sample.push_back(slave_twist[j].angular.z);
-
-                data_sample.push_back(master_twist[j].linear.x);
-                data_sample.push_back(master_twist[j].linear.y);
-                data_sample.push_back(master_twist[j].linear.z);
-                data_sample.push_back(master_twist[j].angular.x);
-                data_sample.push_back(master_twist[j].angular.y);
-                data_sample.push_back(master_twist[j].angular.z);
-
-                data_sample.push_back(master_wrench[j].force.x);
-                data_sample.push_back(master_wrench[j].force.y);
-                data_sample.push_back(master_wrench[j].force.z);
-                data_sample.push_back(master_wrench[j].torque.x);
-                data_sample.push_back(master_wrench[j].torque.y);
-                data_sample.push_back(master_wrench[j].torque.z);
-
-                data_sample.push_back(double(ac_params[j].active));
-                data_sample.push_back(double(ac_params[j].method));
-                data_sample.push_back(ac_params[j].angular_damping_coeff);
-                data_sample.push_back(ac_params[j].angular_elastic_coeff);
-                data_sample.push_back(ac_params[j].linear_damping_coeff);
-                data_sample.push_back(ac_params[j].linear_elastic_coeff);
-                data_sample.push_back(ac_params[j].max_force);
-                data_sample.push_back(ac_params[j].max_torque);
             }
-            repetition_data->push_back(data_sample);
-        }
-        else if(recording && new_task_state_msg && task_state.task_state==2){
-            // saving the acquisition in the file
-            qDebug() << "Saving the acquisition in the file";
-            new_task_state_msg = false;
 
-            for (int j = 0; j < repetition_data->size(); ++j) {
+            // transition from on-going to end
+            if (last_task_state.task_state == 1 && task_state.task_state == 2) {
 
-                for(int i= 0; i< repetition_data->at(j).size()-1; i++){
-                    reporting_file << repetition_data->at(j)[i] << ", ";
+                // ----------- saving the acquisition in the file
+                qDebug() << "Saving the acquisition in the file";
+                for (int j = 0; j < repetition_data->size(); ++j) {
+
+                    for (int i = 0; i < repetition_data->at(j).size() - 1; i++) {
+                        reporting_file << repetition_data->at(j)[i] << ", ";
+                    }
+                    reporting_file << repetition_data->at(j).back() << std::endl;
                 }
-                reporting_file << repetition_data->at(j).back() << std::endl;
+
+                repetition_data->clear();
+
+                //increment the repetition number
+                repetition_num++;
+
+                // -------- performance evaluation
+                perf_history.push_back(
+                        perf_eval->GetPerformanceAndReset(task_state.time_stamp));
+
+                assistance_activation =
+                        perf_eval->GetHapticAssistanceActivation(perf_history);
+                PublishACActivation(0.0);
             }
-            qDebug() << "Finished writing the acquisition to the file";
-            repetition_data->clear();
-            //increment the repetition number
-            repetition_num++;
+
+
+//            else if (last_task_state.task_state == 1 &&
+//                     task_state.task_state == 2) {
+//
+//                // performance evaluation
+//                perf_history.push_back(
+//                        perf_eval->GetPerformanceAndReset(task_state.time_stamp));
+//
+//                assistance_activation =
+//                        perf_eval->GetHapticAssistanceActivation(perf_history);
+//                PublishACActivation(0.0);
+//
+//            }
+//                // transition from end to idle
+//            else if (last_task_state.task_state == 1 &&
+//                     task_state.task_state == 2) {
+//            }
+
         }
 
         ros::spinOnce();
@@ -693,19 +498,277 @@ void RosBridge::CloseRecordingFile(){
 
 void RosBridge::ResetTask(){
     repetition_num = 1;
-    if(recording){
 
+    if(recording){
         recording = false;
         repetition_data->clear();
         CloseRecordingFile();
+        if(perf_eval)
+            delete perf_eval;
     }
-
 };
 
-void RosBridge::StepPerformanceCalculation(){
 
+void RosBridge::InitializeAdaptiveAssistance(
+        const double performance_initial_value,
+        const uint n_session){
+
+    perf_history.push_back(performance_initial_value);
+
+    perf_eval = new SteadyHandPerfEval(n_session);
+
+    assistance_activation =
+            perf_eval->GetHapticAssistanceActivation(perf_history);
+
+    //  ACTIVE CONSTRAINT
+    for (int i = 0; i < n_arms; ++i) {
+        ac_parameters[i].method = 0; // 0 for visco/elastic
+        ac_parameters[i].activation = assistance_activation;
+
+        ac_parameters[i].max_force = 4.0;
+        ac_parameters[i].linear_elastic_coeff = 1000.0;
+        ac_parameters[i].linear_damping_coeff = 10.0;
+
+        //ac_parameters[0].max_torque = 0.03;
+        ac_parameters[i].max_torque = 0.03;
+        ac_parameters[i].angular_elastic_coeff = 0.04;
+        ac_parameters[i].angular_damping_coeff = 0.002;
+
+        // publish the params
+        publisher_ac_params[i].publish(ac_params[i]);
+    }
+}
+
+
+
+void RosBridge::PublishACActivation(const double &activation){
+
+    for (int i = 0; i < n_arms; ++i) {
+        ac_parameters[i].activation = activation;
+    }
 
 }
+void RosBridge::StartRecording(const double performance_initial_value,
+                               const int session) {
+
+    InitializeAdaptiveAssistance(performance_initial_value, (uint)session);
+    recording = true;
+}
+
+
+void RosBridge::OpenRecordingFile(std::string filename){
+
+
+    reporting_file.open(filename);
+    //first line is the name of the arms
+    reporting_file
+            << (std::string)"slave_names[0]: " << slave_names[0]
+            << ", slave_names[1]: " << slave_names[1]
+            << ", master_names[0]: " << master_names[0]
+            << ", master_names[1]: " << master_names[1]
+            << std::endl;
+
+    reporting_file
+            << "number_of_repetition"
+            << ", task_state"
+            << ", time_stamp"
+            << ", gripper_in_contact"
+            << ", error_field_1"
+            << ", error_field_2"
+            << ", clutch_pedal_pressed"
+            << ", coag_pedal_pressed"
+
+            << ", ring_current_pose.position.x"
+            << ", ring_current_pose.position.y"
+            << ", ring_current_pose.position.z"
+            << ", ring_current_pose.orientation.x"
+            << ", ring_current_pose.orientation.y"
+            << ", ring_current_pose.orientation.z"
+            << ", ring_current_pose.orientation.w"
+
+            << ", ring_desired_pose.position.x"
+            << ", ring_desired_pose.position.y"
+            << ", ring_desired_pose.position.z"
+            << ", ring_desired_pose.orientation.x"
+            << ", ring_desired_pose.orientation.y"
+            << ", ring_desired_pose.orientation.z"
+            << ", ring_desired_pose.orientation.w";;
+
+    for (int i = 0; i < n_arms; ++i) {
+
+        reporting_file
+                << ", slave_current_pose.position.x"
+                << ", slave_current_pose.position.y"
+                << ", slave_current_pose.position.z"
+                << ", slave_current_pose.orientation.x"
+                << ", slave_current_pose.orientation.y"
+                << ", slave_current_pose.orientation.z"
+                << ", slave_current_pose.orientation.w"
+
+                << ", slave_desired_pose.position.x"
+                << ", slave_desired_pose.position.y"
+                << ", slave_desired_pose.position.z"
+                << ", slave_desired_pose.orientation.x"
+                << ", slave_desired_pose.orientation.y"
+                << ", slave_desired_pose.orientation.z"
+                << ", slave_desired_pose.orientation.w"
+
+                << ", master_current_pose.position.x"
+                << ", master_current_pose.position.y"
+                << ", master_current_pose.position.z"
+                << ", master_current_pose.orientation.x"
+                << ", master_current_pose.orientation.y"
+                << ", master_current_pose.orientation.z"
+                << ", master_current_pose.orientation.w"
+
+                << ", master_joint_state.position[0]"
+                << ", master_joint_state.position[1]"
+                << ", master_joint_state.position[2]"
+                << ", master_joint_state.position[3]"
+                << ", master_joint_state.position[4]"
+                << ", master_joint_state.position[5]"
+                << ", master_joint_state.position[6]"
+                << ", master_joint_state.position[7]"
+
+                << ", gripper_position"
+
+                << ", slave_twist.linear.x"
+                << ", slave_twist.linear.y"
+                << ", slave_twist.linear.z"
+                << ", slave_twist.angular.x"
+                << ", slave_twist.angular.y"
+                << ", slave_twist.angular.z"
+
+                << ", master_twist.linear.x"
+                << ", master_twist.linear.y"
+                << ", master_twist.linear.z"
+                << ", master_twist.angular.x"
+                << ", master_twist.angular.y"
+                << ", master_twist.angular.z"
+
+                << ", master_wrench.force.x"
+                << ", master_wrench.force.y"
+                << ", master_wrench.force.z"
+                << ", master_wrench.torque.x"
+                << ", master_wrench.torque.y"
+                << ", master_wrench.torque.z"
+
+                << ",ac_params.active"
+                << ",ac_params.method"
+                << ",ac_params.angular_damping_coeff"
+                << ",ac_params.angular_elastic_coeff"
+                << ",ac_params.linear_damping_coeff"
+                << ",ac_params.linear_elastic_coeff"
+                << ",ac_params.max_force"
+                << ",ac_params.max_torque";
+
+    }
+
+    reporting_file << std::endl;
+}
+
+std::vector<double> RosBridge::VectorizeData(){
+
+
+    std::vector<double> data_sample;
+
+    data_sample.push_back(double(repetition_num));
+    data_sample.push_back(double(task_state.task_state));
+    data_sample.push_back(task_state.time_stamp);
+    data_sample.push_back(double((task_state.uint_slot)));
+    data_sample.push_back(task_state.error_field_1);
+    data_sample.push_back(task_state.error_field_2);
+    data_sample.push_back(double(clutch_pedal_pressed));
+    data_sample.push_back(double(coag_pedal_pressed));
+
+    data_sample.push_back(ring_pose_current.position.x);
+    data_sample.push_back(ring_pose_current.position.y);
+    data_sample.push_back(ring_pose_current.position.z);
+    data_sample.push_back(ring_pose_current.orientation.x);
+    data_sample.push_back(ring_pose_current.orientation.y);
+    data_sample.push_back(ring_pose_current.orientation.z);
+    data_sample.push_back(ring_pose_current.orientation.w);
+
+    data_sample.push_back(ring_pose_desired.position.x);
+    data_sample.push_back(ring_pose_desired.position.y);
+    data_sample.push_back(ring_pose_desired.position.z);
+    data_sample.push_back(ring_pose_desired.orientation.x);
+    data_sample.push_back(ring_pose_desired.orientation.y);
+    data_sample.push_back(ring_pose_desired.orientation.z);
+    data_sample.push_back(ring_pose_desired.orientation.w);
+
+    for(uint j=0; j<n_arms; j++){
+
+        data_sample.push_back(slave_current_pose[j].position.x);
+        data_sample.push_back(slave_current_pose[j].position.y);
+        data_sample.push_back(slave_current_pose[j].position.z);
+        data_sample.push_back(slave_current_pose[j].orientation.x);
+        data_sample.push_back(slave_current_pose[j].orientation.y);
+        data_sample.push_back(slave_current_pose[j].orientation.z);
+        data_sample.push_back(slave_current_pose[j].orientation.w);
+
+        data_sample.push_back(slave_desired_pose[j].position.x);
+        data_sample.push_back(slave_desired_pose[j].position.y);
+        data_sample.push_back(slave_desired_pose[j].position.z);
+        data_sample.push_back(slave_desired_pose[j].orientation.x);
+        data_sample.push_back(slave_desired_pose[j].orientation.y);
+        data_sample.push_back(slave_desired_pose[j].orientation.z);
+        data_sample.push_back(slave_desired_pose[j].orientation.w);
+
+        data_sample.push_back(master_current_pose[j].position.x);
+        data_sample.push_back(master_current_pose[j].position.y);
+        data_sample.push_back(master_current_pose[j].position.z);
+        data_sample.push_back(master_current_pose[j].orientation.x);
+        data_sample.push_back(master_current_pose[j].orientation.y);
+        data_sample.push_back(master_current_pose[j].orientation.z);
+        data_sample.push_back(master_current_pose[j].orientation.w);
+
+        data_sample.push_back(master_joint_state[j].position[0]);
+        data_sample.push_back(master_joint_state[j].position[1]);
+        data_sample.push_back(master_joint_state[j].position[2]);
+        data_sample.push_back(master_joint_state[j].position[3]);
+        data_sample.push_back(master_joint_state[j].position[4]);
+        data_sample.push_back(master_joint_state[j].position[5]);
+        data_sample.push_back(master_joint_state[j].position[6]);
+        data_sample.push_back(master_joint_state[j].position[7]);
+
+        data_sample.push_back(gripper_position[j]);
+
+        data_sample.push_back(slave_twist[j].linear.x);
+        data_sample.push_back(slave_twist[j].linear.y);
+        data_sample.push_back(slave_twist[j].linear.z);
+        data_sample.push_back(slave_twist[j].angular.x);
+        data_sample.push_back(slave_twist[j].angular.y);
+        data_sample.push_back(slave_twist[j].angular.z);
+
+        data_sample.push_back(master_twist[j].linear.x);
+        data_sample.push_back(master_twist[j].linear.y);
+        data_sample.push_back(master_twist[j].linear.z);
+        data_sample.push_back(master_twist[j].angular.x);
+        data_sample.push_back(master_twist[j].angular.y);
+        data_sample.push_back(master_twist[j].angular.z);
+
+        data_sample.push_back(master_wrench[j].force.x);
+        data_sample.push_back(master_wrench[j].force.y);
+        data_sample.push_back(master_wrench[j].force.z);
+        data_sample.push_back(master_wrench[j].torque.x);
+        data_sample.push_back(master_wrench[j].torque.y);
+        data_sample.push_back(master_wrench[j].torque.z);
+
+        data_sample.push_back(double(ac_params[j].active));
+        data_sample.push_back(double(ac_params[j].method));
+        data_sample.push_back(ac_params[j].angular_damping_coeff);
+        data_sample.push_back(ac_params[j].angular_elastic_coeff);
+        data_sample.push_back(ac_params[j].linear_damping_coeff);
+        data_sample.push_back(ac_params[j].linear_elastic_coeff);
+        data_sample.push_back(ac_params[j].max_force);
+        data_sample.push_back(ac_params[j].max_torque);
+    }
+
+    return data_sample;
+
+}
+
 
 void RosBridge::CleanUpAndQuit(){
 
@@ -719,14 +782,13 @@ void RosBridge::CleanUpAndQuit(){
     delete [] subscriber_master_joint_state ;
     delete [] subscriber_master_twist ;
     delete [] subscriber_master_wrench;
-    delete [] subscriber_ac_params;
+    delete [] publisher_ac_params;
+    if(perf_eval)
+        delete perf_eval;
     delete ros_rate;
 
     quit();
 
 }
-
-
-
 
 
