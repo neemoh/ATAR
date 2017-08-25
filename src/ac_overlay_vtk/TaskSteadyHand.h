@@ -28,7 +28,6 @@
 #include <vtkCornerAnnotation.h>
 
 #include "Rendering.h"
-#include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
@@ -196,7 +195,6 @@ private:
     double orientation_error_norm;
 
     bool ac_params_changed;
-    custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
     KDL::Frame tool_desired_pose[2];
     KDL::Frame *tool_current_pose_ptr[2];
@@ -205,6 +203,7 @@ private:
 
     uint destination_ring_counter;
 //    vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
+    custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
 
     // actors that are updated during the task

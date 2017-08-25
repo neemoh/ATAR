@@ -180,7 +180,6 @@ private:
     ros::Subscriber * subtool_current_pose;
     ros::Subscriber * subtool_current_gripper;
     ros::Publisher * publisher_tool_pose_desired;
-    ros::Publisher * publisher_ac_params;
     ros::Publisher publisher_task_state;
 
     //overlay image publishers

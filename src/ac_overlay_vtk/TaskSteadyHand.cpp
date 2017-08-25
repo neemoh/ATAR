@@ -32,23 +32,6 @@ TaskSteadyHand::TaskSteadyHand(
 
     *slave_names = *slave_names_in;
 
-        // -------------------------------------------------------------------------
-    //  ACTIVE CONSTRAINT
-    // -------------------------------------------------------------------------
-    // these parameters could be set as ros parameters too but since
-    // they change during the task I am hard coding them here.
-    ac_parameters[0].method = 0; // 0 for visco/elastic
-    ac_parameters[0].active = 0;
-
-    ac_parameters[0].max_force = 4.0;
-    ac_parameters[0].linear_elastic_coeff = 1000.0;
-    ac_parameters[0].linear_damping_coeff = 10.0;
-
-    //ac_parameters[0].max_torque = 0.03;
-    ac_parameters[0].max_torque = 0.03;
-    ac_parameters[0].angular_elastic_coeff = 0.04;
-    ac_parameters[0].angular_damping_coeff = 0.002;
-
     // prevent tools from hitting things at the initializiation
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);
     tool_current_pose[1].p = KDL::Vector(0.1, 0.2, 0.1);
@@ -657,21 +640,7 @@ void TaskSteadyHand::UpdateActors() {
 
     }
 
-    // active constraint activation
-    if(task_state == SHTaskState::OnGoing){
-        for (int i = 0; i < 2; ++i) {
-            if(with_guidance && gripper_in_contact[i]
-                && !ac_parameters[i] .active){
-                ac_parameters[i].active = 1;
-                ac_params_changed = true;
-            }
-            else if(!gripper_in_contact[i] && ac_parameters[i].active){
-                ac_parameters[i].active = 0;
-                ac_params_changed = true;
-            }
 
-        }
-    }
 
     // show the destination to the user
     double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
@@ -894,7 +863,6 @@ bool TaskSteadyHand::IsACParamChanged() {
 //------------------------------------------------------------------------------
 custom_msgs::ActiveConstraintParameters* TaskSteadyHand::GetACParameters() {
 
-    ac_params_changed = false;
     // assuming once we read it we can consider it unchanged
     return ac_parameters;
 }
