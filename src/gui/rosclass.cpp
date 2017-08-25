@@ -478,7 +478,7 @@ void RosBridge::CloseRecordingFile(){
 
 void RosBridge::ResetTask(){
     repetition_num = 1;
-
+    perf_history.clear();
     if(recording){
         recording = false;
         repetition_data->clear();

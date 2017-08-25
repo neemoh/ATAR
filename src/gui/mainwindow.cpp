@@ -309,11 +309,6 @@ void MainWindow::on_stop_released()
 {
     StopRecording();
 
-    //  QPalette pal = ui->record->palette();
-    //  pal.setColor(QPalette::Window, QColor(Qt::blue));
-    //  ui->record->setAutoFillBackground(true);
-    //  ui->record->setPalette(pal);
-    //  ui->record->update();
 }
 
 void MainWindow::on_button_repeat_clicked()
@@ -337,30 +332,31 @@ void MainWindow::on_button_reset_clicked()
 }
 
 void MainWindow::StopRecording(){
+
     qDebug() << "Stopping the recording." ;
 
     if(ros_obj.IsRecording()){
-    // stop writing to file and close it
-    ros_obj.PauseRecording();
-    ros_obj.CloseRecordingFile();
+        // stop writing to file and close it
+        ros_obj.PauseRecording();
+        ros_obj.CloseRecordingFile();
 
-    // reset the interface
-    ui->record->setEnabled(true);
-    ui->record->setChecked(false);
-    ui->record->setText("Record");
+        // reset the interface
+        ui->record->setEnabled(true);
+        ui->record->setChecked(false);
+        ui->record->setText("Record");
 
-    ui->pause_button->setText("Pause");
-    ui->pause_button->setChecked(false);
+        ui->pause_button->setText("Pause");
+        ui->pause_button->setChecked(false);
 
-    ui->stop->setEnabled(false);
+        ui->stop->setEnabled(false);
 
-    ui->file_name->setDisabled(false);
-    ui->input_init_perf->setDisabled(false);
-    ui->input_session->setDisabled(false);
-    ui->file_name->setText("");
+        ui->file_name->setDisabled(false);
+        ui->input_init_perf->setDisabled(false);
+        ui->input_session->setDisabled(false);
+        ui->file_name->setText("");
 
-    // clear the saved acquisition data
-    ros_obj.ResetCurrentAcquisition();
-}
+        // clear the saved acquisition data
+        ros_obj.ResetCurrentAcquisition();
+    }
 
 };
