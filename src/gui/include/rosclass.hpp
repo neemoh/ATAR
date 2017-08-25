@@ -25,12 +25,12 @@
 #include <custom_msgs/ActiveConstraintParameters.h>
 #include <custom_msgs/TaskState.h>
 
-class RosObj : public QThread
+class RosBridge : public QThread
 {
 public:
 
-    RosObj(QObject *parent, std::string node_name);
-    ~RosObj();
+    RosBridge(QObject *parent, std::string node_name);
+    ~RosBridge();
 
     void RingPoseCurrentCallback(const geometry_msgs::PoseConstPtr &msg);
     void RingPoseDesiredCallback(const geometry_msgs::PoseConstPtr &msg);
@@ -70,8 +70,8 @@ public:
 
     void ClutchFootSwitchCallback(const sensor_msgs::Joy &msg);
 
-
     void OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg);
+
     void SetStateLabel(int in ){ state_label = in;  }
 
     void OpenRecordingFile(std::string filename);
@@ -95,12 +95,13 @@ public:
 
     void run();
 
+    void StepPerformanceCalculation();
 
     /**
      * Get the latest image from the input.
      *
      * If no image is available this call will block until an image is received. Otherwise this will
-     * simply return #RosObj::Image. In practice the only time where #RosObj::Image might be empty
+     * simply return #RosBridge::Image. In practice the only time where #RosBridge::Image might be empty
      * is just after the start of the program before the first frame has arrived or if the camera
      * gets disconnected.
      *
@@ -122,31 +123,31 @@ private:
     uint repetition_num=1;
     // two function pointers for each master/slave related topic
 
-    void (RosObj::*slave_pose_current_callbacks[2])
+    void (RosBridge::*slave_pose_current_callbacks[2])
             (const geometry_msgs::PoseStampedConstPtr &msg);
 
-    void (RosObj::*master_pose_current_callbacks[2])
+    void (RosBridge::*master_pose_current_callbacks[2])
             (const geometry_msgs::PoseStampedConstPtr &msg);
 
-    void (RosObj::*slave_pose_desired_callbacks[2])
+    void (RosBridge::*slave_pose_desired_callbacks[2])
             (const geometry_msgs::PoseStampedConstPtr &msg);
 
-    void (RosObj::*slave_twist_callbacks[2])
+    void (RosBridge::*slave_twist_callbacks[2])
             (const geometry_msgs::TwistStampedConstPtr &msg);
 
-    void (RosObj::*master_joint_state_callbacks[2])
+    void (RosBridge::*master_joint_state_callbacks[2])
             (const sensor_msgs::JointStateConstPtr &msg);
 
-    void (RosObj::*gripper_callbacks[2])
+    void (RosBridge::*gripper_callbacks[2])
             (const std_msgs::Float32::ConstPtr &msg);
 
-    void (RosObj::*master_twist_callbacks[2])
+    void (RosBridge::*master_twist_callbacks[2])
             (const geometry_msgs::TwistConstPtr &msg);
 
-    void (RosObj::*master_wrench_callbacks[2])
+    void (RosBridge::*master_wrench_callbacks[2])
             (const geometry_msgs::Wrench::ConstPtr &msg);
 
-    void (RosObj::*master_ac_params_callbacks[2])
+    void (RosBridge::*master_ac_params_callbacks[2])
             (const custom_msgs::ActiveConstraintParametersConstPtr &msg);
 
 

@@ -62,7 +62,7 @@ private:
     Ui::MainWindow *ui;
     QLabel *stat_label;
     QProgressBar *stat_progress;
-    RosObj ros_obj;
+    RosBridge ros_obj;
     CVImageWidget *imageWidget;
     QTimer *timer;
 

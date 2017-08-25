@@ -13,37 +13,37 @@
 #include <std_msgs/Int8.h>
 
 
-RosObj::RosObj(QObject *parent, std::string node_name)
+RosBridge::RosBridge(QObject *parent, std::string node_name)
     : n(node_name), ros_freq(0), node_name(node_name),
     state_label(0), recording(false), new_task_state_msg(false)
 {
 
-    slave_pose_current_callbacks[0] = &RosObj::Slave0CurrentPoseCallback;
-    slave_pose_current_callbacks[1] = &RosObj::Slave1CurrentPoseCallback;
+    slave_pose_current_callbacks[0] = &RosBridge::Slave0CurrentPoseCallback;
+    slave_pose_current_callbacks[1] = &RosBridge::Slave1CurrentPoseCallback;
 
-    slave_pose_desired_callbacks[0] = &RosObj::Slave0DesiredPoseCallback;
-    slave_pose_desired_callbacks[1] = &RosObj::Slave1DesiredPoseCallback;
+    slave_pose_desired_callbacks[0] = &RosBridge::Slave0DesiredPoseCallback;
+    slave_pose_desired_callbacks[1] = &RosBridge::Slave1DesiredPoseCallback;
 
-    master_pose_current_callbacks[0] = &RosObj::Master0CurrentPoseCallback;
-    master_pose_current_callbacks[1] = &RosObj::Master1CurrentPoseCallback;
+    master_pose_current_callbacks[0] = &RosBridge::Master0CurrentPoseCallback;
+    master_pose_current_callbacks[1] = &RosBridge::Master1CurrentPoseCallback;
 
-    slave_twist_callbacks[0] = &RosObj::Slave0TwistCallback;
-    slave_twist_callbacks[1] = &RosObj::Slave1TwistCallback;
+    slave_twist_callbacks[0] = &RosBridge::Slave0TwistCallback;
+    slave_twist_callbacks[1] = &RosBridge::Slave1TwistCallback;
 
-    master_joint_state_callbacks[0] = &RosObj::Master0JointStateCallback;
-    master_joint_state_callbacks[1] = &RosObj::Master1JointStateCallback;
+    master_joint_state_callbacks[0] = &RosBridge::Master0JointStateCallback;
+    master_joint_state_callbacks[1] = &RosBridge::Master1JointStateCallback;
 
-    gripper_callbacks[0] = &RosObj::Master1GripperCallback;
-    gripper_callbacks[1] = &RosObj::Master2GripperCallback;
+    gripper_callbacks[0] = &RosBridge::Master1GripperCallback;
+    gripper_callbacks[1] = &RosBridge::Master2GripperCallback;
 
-    master_twist_callbacks[0] = &RosObj::Master0TwistCallback;
-    master_twist_callbacks[1] = &RosObj::Master1TwistCallback;
+    master_twist_callbacks[0] = &RosBridge::Master0TwistCallback;
+    master_twist_callbacks[1] = &RosBridge::Master1TwistCallback;
 
-    master_wrench_callbacks[0] = &RosObj::Master0WrenchCallback;
-    master_wrench_callbacks[1] = &RosObj::Master1WrenchCallback;
+    master_wrench_callbacks[0] = &RosBridge::Master0WrenchCallback;
+    master_wrench_callbacks[1] = &RosBridge::Master1WrenchCallback;
 
-    master_ac_params_callbacks[0] = &RosObj::Master0ACParamsCallback;
-    master_ac_params_callbacks[1] = &RosObj::Master1ACParamsCallback;
+    master_ac_params_callbacks[0] = &RosBridge::Master0ACParamsCallback;
+    master_ac_params_callbacks[1] = &RosBridge::Master1ACParamsCallback;
 
     task_frame_to_slave_frame[0] = std::vector<double>(7, 0.0);
     task_frame_to_slave_frame[1] = std::vector<double>(7, 0.0);
@@ -56,11 +56,11 @@ RosObj::RosObj(QObject *parent, std::string node_name)
 }
 
 
-RosObj::~RosObj(){
+RosBridge::~RosBridge(){
     //    delete task_frame_to_slave_frame;;
-    qDebug() << "In rosobj dsstructor";
+    qDebug() << "In RosBridge dsstructor";
     ros::shutdown();
-    qDebug() << "rosobj dsstructor end";
+    qDebug() << "RosBridge dsstructor end";
 
 }
 
@@ -68,7 +68,7 @@ RosObj::~RosObj(){
 // GetROSParameterValues
 //-----------------------------------------------------------------------------------
 
-void RosObj::GetROSParameterValues() {
+void RosBridge::GetROSParameterValues() {
 
     // spinning frequency. THe recording happens at the freq of task_state
     ros_rate = new ros::Rate(100);
@@ -212,18 +212,18 @@ void RosObj::GetROSParameterValues() {
 
     // common subscriber
     subscriber_foot_pedal_coag = n.subscribe("/dvrk/footpedals/coag", 1,
-                                             &RosObj::CoagFootSwitchCallback,
+                                             &RosBridge::CoagFootSwitchCallback,
                                              this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/coag");
 
     subscriber_foot_pedal_clutch = n.subscribe("/dvrk/footpedals/clutch", 1,
-                                               &RosObj::ClutchFootSwitchCallback,
+                                               &RosBridge::ClutchFootSwitchCallback,
                                                this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/clutch");
 
 
     subscriber_task_state = n.subscribe("/atar/task_state", 1,
-                                        &RosObj::TaskSTateCallback,
+                                        &RosBridge::TaskSTateCallback,
                                         this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /task_state");
 
@@ -235,13 +235,13 @@ void RosObj::GetROSParameterValues() {
 
     std::string topic_name = std::string("/atar/ring_pose_current");
     subscriber_ring_pose_current = n.subscribe(
-        topic_name.c_str(), 1, &RosObj::RingPoseCurrentCallback, this);
+        topic_name.c_str(), 1, &RosBridge::RingPoseCurrentCallback, this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", topic_name.c_str());
 
 
     topic_name = std::string("/atar/ring_pose_desired");
     subscriber_ring_pose_desired= n.subscribe(
-        topic_name.c_str(), 1, &RosObj::RingPoseDesiredCallback, this);
+        topic_name.c_str(), 1, &RosBridge::RingPoseDesiredCallback, this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", topic_name.c_str());
 }
 
@@ -253,70 +253,70 @@ void RosObj::GetROSParameterValues() {
 //-----------------------------------------------------------------------------------
 
 // PSMs current pose
-void RosObj::RingPoseCurrentCallback(const geometry_msgs::PoseConstPtr &msg)  {
+void RosBridge::RingPoseCurrentCallback(const geometry_msgs::PoseConstPtr &msg)  {
     ring_pose_current.position = msg->position;
     ring_pose_current.orientation = msg->orientation;
 }
-void RosObj::RingPoseDesiredCallback(const geometry_msgs::PoseConstPtr &msg)  {
+void RosBridge::RingPoseDesiredCallback(const geometry_msgs::PoseConstPtr &msg)  {
     ring_pose_desired.position = msg->position;
     ring_pose_desired.orientation = msg->orientation;
 }
 
 
 // PSMs current pose
-void RosObj::Slave0CurrentPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+void RosBridge::Slave0CurrentPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
     slave_current_pose[0].position = msg->pose.position;
     slave_current_pose[0].orientation = msg->pose.orientation;
 }
 
-void RosObj::Slave1CurrentPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+void RosBridge::Slave1CurrentPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
     slave_current_pose[1].position = msg->pose.position;
     slave_current_pose[1].orientation = msg->pose.orientation;
 }
 
 // PSMs Desired pose
-void RosObj::Slave0DesiredPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+void RosBridge::Slave0DesiredPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
     slave_desired_pose[0].position = msg->pose.position;
     slave_desired_pose[0].orientation = msg->pose.orientation;
 }
 
-void RosObj::Slave1DesiredPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+void RosBridge::Slave1DesiredPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
     slave_desired_pose[1].position = msg->pose.position;
     slave_desired_pose[1].orientation = msg->pose.orientation;
 }
 
 // MTMs current pose
-void RosObj::Master0CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
+void RosBridge::Master0CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
     master_current_pose[0].position = msg->pose.position;
     master_current_pose[0].orientation = msg->pose.orientation;
 }
 
-void RosObj::Master1CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
+void RosBridge::Master1CurrentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
     master_current_pose[1].position = msg->pose.position;
     master_current_pose[1].orientation = msg->pose.orientation;
 }
 
 
 // Slave Twist
-void RosObj::Slave0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
+void RosBridge::Slave0TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
     slave_twist[0].linear = msg->twist.linear;
     slave_twist[0].angular = msg->twist.angular;
 }
 
-void RosObj::Slave1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
+void RosBridge::Slave1TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
     slave_twist[1].linear = msg->twist.linear;
     slave_twist[1].angular = msg->twist.angular;
 }
 
 
 // MTMs  joint state
-void RosObj::Master0JointStateCallback(const sensor_msgs::JointStateConstPtr &msg) {
+void RosBridge::Master0JointStateCallback(const sensor_msgs::JointStateConstPtr &msg) {
     master_joint_state[0].position = msg->position;
     master_joint_state[0].velocity = msg->velocity;
     master_joint_state[0].effort = msg->effort;
 }
 
-void RosObj::Master1JointStateCallback(const sensor_msgs::JointStateConstPtr &msg) {
+void RosBridge::Master1JointStateCallback(const sensor_msgs::JointStateConstPtr &msg) {
     master_joint_state[1].position = msg->position;
     master_joint_state[1].velocity = msg->velocity;
     master_joint_state[1].effort = msg->effort;
@@ -324,43 +324,43 @@ void RosObj::Master1JointStateCallback(const sensor_msgs::JointStateConstPtr &ms
 
 // -----------------------------------------------------------------------------
 // Reading the gripper positions
-void RosObj::Master1GripperCallback(
+void RosBridge::Master1GripperCallback(
     const std_msgs::Float32::ConstPtr &msg) {
     gripper_position[0] =  msg->data;
 }
 
-void RosObj::Master2GripperCallback(
+void RosBridge::Master2GripperCallback(
     const std_msgs::Float32::ConstPtr &msg) {
     gripper_position[1] =  msg->data;
 
 }
 
 // MTMs Twist
-void RosObj::Master0TwistCallback(const geometry_msgs::TwistConstPtr &msg) {
+void RosBridge::Master0TwistCallback(const geometry_msgs::TwistConstPtr &msg) {
     master_twist[0].linear = msg->linear;
     master_twist[0].linear = msg->linear;
 }
 
-void RosObj::Master1TwistCallback(const geometry_msgs::TwistConstPtr &msg) {
+void RosBridge::Master1TwistCallback(const geometry_msgs::TwistConstPtr &msg) {
     master_twist[1].linear = msg->linear;
     master_twist[1].linear = msg->linear;
 }
 
 
 // MTMs Wrench
-void RosObj::Master0WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) {
+void RosBridge::Master0WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) {
     master_wrench[0].force= msg->force;
     master_wrench[0].torque= msg->torque;
 }
 
-void RosObj::Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) {
+void RosBridge::Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) {
     master_wrench[1].force= msg->force;
     master_wrench[1].torque= msg->torque;
 }
 
 
 // MTMs AC params
-void RosObj::Master0ACParamsCallback(
+void RosBridge::Master0ACParamsCallback(
     const custom_msgs::ActiveConstraintParametersConstPtr & msg){
     ac_params[0].active = msg->active;
     ac_params[0].method = msg->method;
@@ -373,7 +373,7 @@ void RosObj::Master0ACParamsCallback(
 }
 
 
-void RosObj::Master1ACParamsCallback(
+void RosBridge::Master1ACParamsCallback(
     const custom_msgs::ActiveConstraintParametersConstPtr & msg){
     ac_params[1].active = msg->active;
     ac_params[1].method = msg->method;
@@ -386,7 +386,7 @@ void RosObj::Master1ACParamsCallback(
 }
 
 // task state
-void RosObj::TaskSTateCallback(const custom_msgs::TaskStateConstPtr &msg){
+void RosBridge::TaskSTateCallback(const custom_msgs::TaskStateConstPtr &msg){
     task_state.task_name = msg->task_name;
     task_state.number_of_repetition = msg->number_of_repetition;
     task_state.task_state = msg->task_state;
@@ -398,16 +398,16 @@ void RosObj::TaskSTateCallback(const custom_msgs::TaskStateConstPtr &msg){
 }
 
 // foot pedals
-void RosObj::CoagFootSwitchCallback(const sensor_msgs::Joy &msg){
+void RosBridge::CoagFootSwitchCallback(const sensor_msgs::Joy &msg){
     clutch_pedal_pressed = (bool) msg.buttons[0];
 }
 
-void RosObj::ClutchFootSwitchCallback(const sensor_msgs::Joy &msg){
+void RosBridge::ClutchFootSwitchCallback(const sensor_msgs::Joy &msg){
     coag_pedal_pressed = (bool) msg.buttons[0];
 }
 
 
-void RosObj::OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg) {
+void RosBridge::OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg) {
     try
     {
         image_msg = cv_bridge::toCvShare(msg, "bgr8")->image;
@@ -418,7 +418,7 @@ void RosObj::OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg) {
     }
 }
 
-cv::Mat& RosObj::Image(ros::Duration timeout) {
+cv::Mat& RosBridge::Image(ros::Duration timeout) {
     ros::Rate loop_rate(100);
     ros::Time timeout_time = ros::Time::now() + timeout;
 
@@ -436,7 +436,7 @@ cv::Mat& RosObj::Image(ros::Duration timeout) {
 }
 
 
-void RosObj::OpenRecordingFile(std::string filename){
+void RosBridge::OpenRecordingFile(std::string filename){
 
 
     reporting_file.open(filename);
@@ -549,7 +549,7 @@ void RosObj::OpenRecordingFile(std::string filename){
 
 
 
-void RosObj::run(){
+void RosBridge::run(){
 
     while(ros::ok() ){
         ros::Time begin = ros::Time::now();
@@ -683,7 +683,7 @@ void RosObj::run(){
 }
 
 
-void RosObj::CloseRecordingFile(){
+void RosBridge::CloseRecordingFile(){
 
     reporting_file.close();
     qDebug() << "Closed reporting file";
@@ -691,7 +691,7 @@ void RosObj::CloseRecordingFile(){
 
 }
 
-void RosObj::ResetTask(){
+void RosBridge::ResetTask(){
     repetition_num = 1;
     if(recording){
 
@@ -702,7 +702,12 @@ void RosObj::ResetTask(){
 
 };
 
-void RosObj::CleanUpAndQuit(){
+void RosBridge::StepPerformanceCalculation(){
+
+
+}
+
+void RosBridge::CleanUpAndQuit(){
 
     //TODO cleanup
     ros::shutdown();
