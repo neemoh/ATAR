@@ -98,13 +98,23 @@ public:
 
     void CleanUpAndQuit();
 
+    void SetHapticsMode(int state){haptics_mode = state;};
+
+    void SetACActivation(const double act){ assistance_activation=act;
+    ROS_INFO("Setting ac activation to %f", act);};
+
+    void GetPerformanceHistory(std::vector<double> &perf_hist){
+        perf_hist = perf_history;
+    };
+
 private:
     int n_arms;
     int state_label;
     bool recording;
     bool new_task_state_msg;
+    int haptics_mode = 0;
     std::ofstream reporting_file;
-    uint repetition_num=1;
+    uint repetition_num = 1;
 
     std::vector<double> VectorizeData();
 
@@ -121,6 +131,8 @@ private:
                                       const uint n_session);
 
     void PublishACActivation(const double &activation);
+
+    void DumpDataToFileAndClear();
 
     void GetROSParameterValues();
 
@@ -193,9 +205,6 @@ public:
 
     // task state
     custom_msgs::TaskState task_state, last_task_state;
-
-    // left and right master active constraints parameters
-    custom_msgs::ActiveConstraintParameters ac_params[2];
 
     // foot pedals;
     bool clutch_pedal_pressed;

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>592</width>
-    <height>433</height>
+    <width>633</width>
+    <height>521</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>10</y>
+      <x>340</x>
+      <y>20</y>
       <width>271</width>
       <height>231</height>
      </rect>
@@ -197,9 +197,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>120</y>
-      <width>281</width>
-      <height>171</height>
+      <y>270</y>
+      <width>301</width>
+      <height>141</height>
      </rect>
     </property>
     <property name="title">
@@ -210,7 +210,7 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>261</width>
+       <width>281</width>
        <height>31</height>
       </rect>
      </property>
@@ -234,67 +234,9 @@
     <widget class="QWidget" name="">
      <property name="geometry">
       <rect>
-       <x>180</x>
-       <y>70</y>
-       <width>91</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <widget class="QLabel" name="session_label">
-        <property name="text">
-         <string>Session</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="input_session">
-        <property name="text">
-         <string/>
-        </property>
-        <property name="readOnly">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="">
-     <property name="geometry">
-      <rect>
        <x>10</x>
-       <y>70</y>
-       <width>161</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <widget class="QLabel" name="session_label_2">
-        <property name="text">
-         <string>last Performance</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="input_init_perf">
-        <property name="text">
-         <string/>
-        </property>
-        <property name="readOnly">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>120</y>
-       <width>261</width>
+       <y>80</y>
+       <width>281</width>
        <height>41</height>
       </rect>
      </property>
@@ -364,17 +306,13 @@ color:rgb(255, 0, 0);
     <zorder>stop</zorder>
     <zorder>layoutWidget</zorder>
     <zorder>layoutWidget</zorder>
-    <zorder>input_session</zorder>
-    <zorder>session_label</zorder>
-    <zorder>input_init_perf</zorder>
-    <zorder>session_label_2</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_3">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>20</y>
-      <width>281</width>
+      <width>301</width>
       <height>91</height>
      </rect>
     </property>
@@ -416,9 +354,9 @@ color:rgb(255, 0, 0);
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
-       <x>120</x>
+       <x>111</x>
        <y>30</y>
-       <width>152</width>
+       <width>181</width>
        <height>52</height>
       </rect>
      </property>
@@ -443,10 +381,10 @@ color:rgb(255, 0, 0);
    <widget class="QGroupBox" name="option_group">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>250</y>
+      <x>340</x>
+      <y>260</y>
       <width>271</width>
-      <height>141</height>
+      <height>111</height>
      </rect>
     </property>
     <property name="title">
@@ -455,8 +393,8 @@ color:rgb(255, 0, 0);
     <widget class="QCheckBox" name="checkBox_pub_imgs">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>50</y>
+       <x>20</x>
+       <y>80</y>
        <width>111</width>
        <height>20</height>
       </rect>
@@ -465,42 +403,16 @@ color:rgb(255, 0, 0);
       <string>Publish Imgs</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="checkBox_shadows">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>70</y>
-       <width>85</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Shadows</string>
-     </property>
-    </widget>
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>150</x>
        <y>30</y>
        <width>111</width>
-       <height>91</height>
+       <height>71</height>
       </rect>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QPushButton" name="button_home_masters">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Home Masters</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QPushButton" name="button_calib_arm1">
         <property name="sizePolicy">
@@ -529,27 +441,33 @@ color:rgb(255, 0, 0);
       </item>
      </layout>
     </widget>
-    <widget class="QCheckBox" name="haptic_assistance_enable">
+    <widget class="QPushButton" name="button_home_masters">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>20</x>
        <y>30</y>
-       <width>111</width>
-       <height>20</height>
+       <width>109</width>
+       <height>31</height>
       </rect>
      </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
-      <string>Enable haptics</string>
+      <string>Home Masters</string>
      </property>
     </widget>
    </widget>
    <widget class="QPushButton" name="button_exit">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>310</y>
+      <x>470</x>
+      <y>380</y>
       <width>131</width>
-      <height>71</height>
+      <height>51</height>
      </rect>
     </property>
     <property name="text">
@@ -559,16 +477,209 @@ color:rgb(255, 0, 0);
    <widget class="QPushButton" name="button_kill_core">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>310</y>
-      <width>91</width>
-      <height>71</height>
+      <x>340</x>
+      <y>380</y>
+      <width>111</width>
+      <height>51</height>
      </rect>
     </property>
     <property name="text">
      <string>Kill Core</string>
     </property>
    </widget>
+   <widget class="QGroupBox" name="groupBox_4">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>120</y>
+      <width>301</width>
+      <height>141</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Haptics</string>
+    </property>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>90</y>
+       <width>191</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLabel" name="init_perf_label">
+        <property name="text">
+         <string>Init</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="input_init_perf">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="readOnly">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="session_label">
+        <property name="text">
+         <string>Session</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="input_session">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="readOnly">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>170</x>
+       <y>60</y>
+       <width>121</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QLabel" name="activation_label">
+        <property name="text">
+         <string>Activation</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="input_ac_activation">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="readOnly">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>93</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QRadioButton" name="button_haptics_disable">
+        <property name="text">
+         <string>Disable</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="button_haptics_manual">
+        <property name="text">
+         <string>Manual</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="button_haptics_skill">
+        <property name="text">
+         <string>Skill-Based</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_2</string>
+        </attribute>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <zorder>button_haptics_disable</zorder>
+    <zorder>button_haptics_skill</zorder>
+    <zorder>button_haptics_manual</zorder>
+    <zorder>input_session</zorder>
+    <zorder>session_label</zorder>
+    <zorder>input_init_perf</zorder>
+    <zorder>init_perf_label</zorder>
+    <zorder>activation_label</zorder>
+    <zorder>input_ac_activation</zorder>
+    <zorder>activation_label</zorder>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_5">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>440</y>
+      <width>581</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Performance History</string>
+    </property>
+    <widget class="QLineEdit" name="text_perf_history">
+     <property name="geometry">
+      <rect>
+       <x>21</x>
+       <y>22</y>
+       <width>541</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="readOnly">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <zorder>text_perf_history</zorder>
+    <zorder>text_perf_history</zorder>
+    <zorder>text_perf_history_2</zorder>
+    <zorder>text_perf_history_3</zorder>
+    <zorder>text_perf_history_4</zorder>
+    <zorder>text_perf_history_5</zorder>
+    <zorder>text_perf_history_6</zorder>
+    <zorder>text_perf_history_7</zorder>
+    <zorder>text_perf_history_8</zorder>
+   </widget>
+   <zorder>groupBox</zorder>
+   <zorder>groupBox_2</zorder>
+   <zorder>groupBox_3</zorder>
+   <zorder>option_group</zorder>
+   <zorder>button_exit</zorder>
+   <zorder>button_kill_core</zorder>
+   <zorder>groupBox_4</zorder>
+   <zorder>groupBox_5</zorder>
+   <zorder></zorder>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionDo_Something">
@@ -582,5 +693,6 @@ color:rgb(255, 0, 0);
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="buttonGroup_2"/>
  </buttongroups>
 </ui>

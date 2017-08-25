@@ -411,19 +411,28 @@ void RosBridge::ClutchFootSwitchCallback(const sensor_msgs::Joy &msg){
 void RosBridge::run(){
 
     while(ros::ok() ) {
-        ros::Time begin = ros::Time::now();
 
         if (recording && new_task_state_msg){
+
             new_task_state_msg = false;
 
-            // Transition from idle to ongoing
+            // -----------------------------------------------------------------
+            // -------------------   Transition from idle to ongoing
             if (last_task_state.task_state == 0 && task_state.task_state == 1) {
-                PublishACActivation(assistance_activation);
-           }
 
-            // ON GOING
+                if(haptics_mode == 2)
+                    assistance_activation =
+                        perf_eval->GetHapticAssistanceActivation(perf_history);
+
+                if(haptics_mode>0)
+                    PublishACActivation(assistance_activation);
+            }
+
+            // -----------------------------------------------------------------
+            // -------------------   ONGOING
             if (task_state.task_state == 1 ) {
 
+                // save data sample
                 repetition_data->push_back(VectorizeData());
 
                 // increment the evaluation
@@ -431,54 +440,25 @@ void RosBridge::run(){
                 tf::poseMsgToKDL(ring_pose_desired, desired);
                 tf::poseMsgToKDL(ring_pose_current, current);
                 perf_eval->Increment(desired, current);
-
-
             }
 
-            // transition from on-going to end
+            // -----------------------------------------------------------------
+            // --------------------  Transition from ongoing to end
             if (last_task_state.task_state == 1 && task_state.task_state == 2) {
 
                 // ----------- saving the acquisition in the file
-                qDebug() << "Saving the acquisition in the file";
-                for (int j = 0; j < repetition_data->size(); ++j) {
-
-                    for (int i = 0; i < repetition_data->at(j).size() - 1; i++) {
-                        reporting_file << repetition_data->at(j)[i] << ", ";
-                    }
-                    reporting_file << repetition_data->at(j).back() << std::endl;
-                }
-
-                repetition_data->clear();
-
-                //increment the repetition number
+                DumpDataToFileAndClear();
                 repetition_num++;
 
                 // -------- performance evaluation
                 perf_history.push_back(
                         perf_eval->GetPerformanceAndReset(task_state.time_stamp));
 
-                assistance_activation =
-                        perf_eval->GetHapticAssistanceActivation(perf_history);
+                // activation will be published
                 PublishACActivation(0.0);
             }
+            // -----------------------------------------------------------------
 
-
-//            else if (last_task_state.task_state == 1 &&
-//                     task_state.task_state == 2) {
-//
-//                // performance evaluation
-//                perf_history.push_back(
-//                        perf_eval->GetPerformanceAndReset(task_state.time_stamp));
-//
-//                assistance_activation =
-//                        perf_eval->GetHapticAssistanceActivation(perf_history);
-//                PublishACActivation(0.0);
-//
-//            }
-//                // transition from end to idle
-//            else if (last_task_state.task_state == 1 &&
-//                     task_state.task_state == 2) {
-//            }
 
         }
 
@@ -523,7 +503,7 @@ void RosBridge::InitializeAdaptiveAssistance(
     //  ACTIVE CONSTRAINT
     for (int i = 0; i < n_arms; ++i) {
         ac_parameters[i].method = 0; // 0 for visco/elastic
-        ac_parameters[i].activation = assistance_activation;
+        ac_parameters[i].activation = 0.0; // this will be set later
 
         ac_parameters[i].max_force = 4.0;
         ac_parameters[i].linear_elastic_coeff = 1000.0;
@@ -535,7 +515,7 @@ void RosBridge::InitializeAdaptiveAssistance(
         ac_parameters[i].angular_damping_coeff = 0.002;
 
         // publish the params
-        publisher_ac_params[i].publish(ac_params[i]);
+        publisher_ac_params[i].publish(ac_parameters[i]);
     }
 }
 
@@ -555,6 +535,21 @@ void RosBridge::StartRecording(const double performance_initial_value,
     recording = true;
 }
 
+
+void RosBridge::DumpDataToFileAndClear() {
+
+    qDebug() << "Saving the acquisition in the file";
+    for (int j = 0; j < repetition_data->size(); ++j) {
+
+        for (int i = 0; i < repetition_data->at(j).size() - 1; i++) {
+            reporting_file << repetition_data->at(j)[i] << ", ";
+        }
+        reporting_file << repetition_data->at(j).back() << std::endl;
+    }
+
+    repetition_data->clear();
+
+}
 
 void RosBridge::OpenRecordingFile(std::string filename){
 
@@ -755,14 +750,14 @@ std::vector<double> RosBridge::VectorizeData(){
         data_sample.push_back(master_wrench[j].torque.y);
         data_sample.push_back(master_wrench[j].torque.z);
 
-        data_sample.push_back(double(ac_params[j].active));
-        data_sample.push_back(double(ac_params[j].method));
-        data_sample.push_back(ac_params[j].angular_damping_coeff);
-        data_sample.push_back(ac_params[j].angular_elastic_coeff);
-        data_sample.push_back(ac_params[j].linear_damping_coeff);
-        data_sample.push_back(ac_params[j].linear_elastic_coeff);
-        data_sample.push_back(ac_params[j].max_force);
-        data_sample.push_back(ac_params[j].max_torque);
+        data_sample.push_back(double(ac_parameters[j].active));
+        data_sample.push_back(double(ac_parameters[j].method));
+        data_sample.push_back(ac_parameters[j].angular_damping_coeff);
+        data_sample.push_back(ac_parameters[j].angular_elastic_coeff);
+        data_sample.push_back(ac_parameters[j].linear_damping_coeff);
+        data_sample.push_back(ac_parameters[j].linear_elastic_coeff);
+        data_sample.push_back(ac_parameters[j].max_force);
+        data_sample.push_back(ac_parameters[j].max_torque);
     }
 
     return data_sample;
