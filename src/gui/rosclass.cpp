@@ -50,7 +50,7 @@ RosBridge::RosBridge(QObject *parent, std::string node_name)
     GetROSParameterValues();
 
     // this saves all the samples during an acquisition
-    repetition_data = new std::vector< std::vector<double> >;
+    ongoing_acq_buffer = new std::vector< std::vector<double> >;
 
 }
 
@@ -433,7 +433,7 @@ void RosBridge::run(){
             if (task_state.task_state == 1 ) {
 
                 // save data sample
-                repetition_data->push_back(VectorizeData());
+                ongoing_acq_buffer->push_back(VectorizeData());
 
                 // increment the evaluation
                 KDL::Frame desired, current;
@@ -447,7 +447,7 @@ void RosBridge::run(){
             if (last_task_state.task_state == 1 && task_state.task_state == 2) {
 
                 // ----------- saving the acquisition in the file
-                DumpDataToFileAndClear();
+                DumpDataToFileAndClearBuffer();
                 repetition_num++;
 
                 // -------- performance evaluation
@@ -473,15 +473,17 @@ void RosBridge::CloseRecordingFile(){
     reporting_file.close();
     qDebug() << "Closed reporting file";
 
-
 }
 
 void RosBridge::ResetTask(){
+
     repetition_num = 1;
     perf_history.clear();
+
     if(recording){
         recording = false;
-        repetition_data->clear();
+        ongoing_acq_buffer->clear();
+
         CloseRecordingFile();
         if(perf_eval)
             delete perf_eval;
@@ -536,23 +538,23 @@ void RosBridge::StartRecording(const double performance_initial_value,
 }
 
 
-void RosBridge::DumpDataToFileAndClear() {
+void RosBridge::DumpDataToFileAndClearBuffer() {
 
     qDebug() << "Saving the acquisition in the file";
-    for (int j = 0; j < repetition_data->size(); ++j) {
+    for (int j = 0; j < ongoing_acq_buffer->size(); ++j) {
 
-        for (int i = 0; i < repetition_data->at(j).size() - 1; i++) {
-            reporting_file << repetition_data->at(j)[i] << ", ";
+        for (int i = 0; i < ongoing_acq_buffer->at(j).size() - 1; i++) {
+            reporting_file << ongoing_acq_buffer->at(j)[i] << ", ";
         }
-        reporting_file << repetition_data->at(j).back() << std::endl;
+        reporting_file << ongoing_acq_buffer->at(j).back() << std::endl;
     }
 
-    repetition_data->clear();
+    ongoing_acq_buffer->clear();
 
 }
 
-void RosBridge::OpenRecordingFile(std::string filename){
 
+void RosBridge::OpenRecordingFile(std::string filename){
 
     reporting_file.open(filename);
     //first line is the name of the arms

@@ -257,6 +257,7 @@ void MainWindow::on_exit_clicked(){
 void MainWindow::on_record_clicked()
 {
     std::string file_name_entered = ui->file_name->text().toStdString();
+
     if(file_name_entered.empty()){
         ui->record->setChecked(false);
     }
@@ -264,6 +265,7 @@ void MainWindow::on_record_clicked()
         std::stringstream file_name;
         file_name<<file_name_entered << std::string(".csv");
         ros_obj.OpenRecordingFile(file_name.str());
+
         ui->file_name->setDisabled(true);
         ui->record->setText("Recording");
         ui->stop->setEnabled(true);

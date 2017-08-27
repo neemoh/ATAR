@@ -132,7 +132,7 @@ private:
 
     void PublishACActivation(const double &activation);
 
-    void DumpDataToFileAndClear();
+    void DumpDataToFileAndClearBuffer();
 
     void GetROSParameterValues();
 
@@ -238,7 +238,7 @@ public:
     ros::Publisher * publisher_ac_params;
 
 private:
-    std::vector< std::vector<double> > * repetition_data;
+    std::vector< std::vector<double> > * ongoing_acq_buffer;
 };
 
 
