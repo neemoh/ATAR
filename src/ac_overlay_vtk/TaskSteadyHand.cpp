@@ -1045,11 +1045,11 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         // ring the desired one.
         //         tool_to_ring_tr[0] = ring_pose * tool_current_pose[0].Inverse();
 
-        //if(gripper_in_contact[0])
-        //    interpolated_ring_pose = tool_current_pose[0] *tool_to_ring_tr[0];
-        //else if (gripper_in_contact[1])
-        //    interpolated_ring_pose = tool_current_pose[1]* tool_to_ring_tr[1];
-        //else
+        if(gripper_in_contact[0])
+            interpolated_ring_pose = tool_current_pose[0] *tool_to_ring_tr[0];
+        else if (gripper_in_contact[1])
+            interpolated_ring_pose = tool_current_pose[1]* tool_to_ring_tr[1];
+        else
             interpolated_ring_pose = ring_pose_t;
 
         CalculatedDesiredRingPose(interpolated_ring_pose, desired_ring_pose);
