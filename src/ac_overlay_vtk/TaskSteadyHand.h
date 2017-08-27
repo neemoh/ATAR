@@ -187,6 +187,10 @@ private:
 
     uint ring_in_action = 0;
     bool gripper_in_contact[2] ={false, false};
+    bool gripper_in_contact_last[2] ={false, false};
+    uint ac_soft_start_counter = 0;
+    uint ac_soft_start_duration = 10;
+
     // the distance between the center of the ring and the closest point on
     // the wire. This is could be slightly different from the error
     // calculated from the difference of the desired pose and the current

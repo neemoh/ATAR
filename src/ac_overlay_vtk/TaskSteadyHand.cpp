@@ -469,7 +469,6 @@ tool_id) {
 //------------------------------------------------------------------------------
 void TaskSteadyHand::UpdateActors() {
 
-    bool gripper_in_contact_last[2];
     // check if any of the forceps have grasped the ring in action
     for (int i = 0; i < 2; ++i) {
         gripper_in_contact_last[i] = gripper_in_contact[i];
@@ -477,11 +476,10 @@ void TaskSteadyHand::UpdateActors() {
                                                              ring_mesh[ring_in_action]->GetBody());
     }
 
-
     ring_pose = ring_mesh[ring_in_action]->GetPose();
 
-    // we need to interpolate the pose of the ring for the high-freq haptic
-    // loop. Otherwise the haptics wiill go unstable.
+    // we need to estimate the pose of the ring for the high-freq haptic
+    // loop. Otherwise the haptics will go unstable.
     if(gripper_in_contact[0] & !gripper_in_contact_last[0])
         tool_to_ring_tr[0] = tool_current_pose[0].Inverse() * ring_pose;
     if(gripper_in_contact[1])
@@ -999,10 +997,8 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         tool_current_pose[0] = *tool_current_pose_ptr[0];
         tool_current_pose[1] = *tool_current_pose_ptr[1];
 
-
-
         KDL::Frame tr_to_desired_ring_pose, desired_ring_pose;
-        KDL::Frame interpolated_ring_pose;
+        KDL::Frame estimated_ring_pose;
 
         // the pose of the ring is updated with the graphics frequency which
         // is too low for haptics. The good news is that if we assume that
@@ -1013,31 +1009,46 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         // ring the desired one.
         //         tool_to_ring_tr[0] = ring_pose * tool_current_pose[0].Inverse();
 
-        //if(gripper_in_contact[0])
-        //    interpolated_ring_pose = tool_current_pose[0] *tool_to_ring_tr[0];
-        //else if (gripper_in_contact[1])
-        //    interpolated_ring_pose = tool_current_pose[1]* tool_to_ring_tr[1];
-        //else
-            interpolated_ring_pose = ring_pose_t;
+        if(gripper_in_contact[0])
+            estimated_ring_pose = tool_current_pose[0] *tool_to_ring_tr[0];
+        else if (gripper_in_contact[1])
+            estimated_ring_pose = tool_current_pose[1]* tool_to_ring_tr[1];
+        else
+            estimated_ring_pose = ring_pose_t;
 
-        CalculatedDesiredRingPose(interpolated_ring_pose, desired_ring_pose);
+        CalculatedDesiredRingPose(estimated_ring_pose, desired_ring_pose);
 
-        tr_to_desired_ring_pose.p = desired_ring_pose.p - interpolated_ring_pose.p;
-        tr_to_desired_ring_pose.M = desired_ring_pose.M * interpolated_ring_pose.M
+        tr_to_desired_ring_pose.p = desired_ring_pose.p - estimated_ring_pose.p;
+        tr_to_desired_ring_pose.M = desired_ring_pose.M * estimated_ring_pose.M
                                                                      .Inverse();
-        //tr_to_desired_ring_pose = desired_ring_pose * interpolated_ring_pose.Inverse();
+        //tr_to_desired_ring_pose = desired_ring_pose * estimated_ring_pose.Inverse();
 
+        // --------------- Soft start delta calculation
+        // did we grasped the ring just now?
+        if( (gripper_in_contact[0] & !gripper_in_contact_last[0]) ||
+                (gripper_in_contact[1] & !gripper_in_contact_last[1]) )
+            ac_soft_start_counter = 0;
 
-        // publish desired poses
+        double soft_start_delta;
+        if(ac_soft_start_counter < ac_soft_start_duration){
+            soft_start_delta = double(ac_soft_start_counter)
+                               /double(ac_soft_start_duration);
+            ac_soft_start_counter++;
+        }
+        else
+            soft_start_delta = 1.0;
+
+        // --------------- Publish desired poses
         for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
 
             if(gripper_in_contact[n_arm]) {
 
                 // here find the desired tool pose if it is in contact with
                 // the ring we add the displacement that would take the ring
-                // to it's desired pose to the current pose of the tool;
+                // to its desired pose to the current pose of the tool;
                 tool_desired_pose[n_arm].p =
-                    tr_to_desired_ring_pose.p + tool_current_pose[n_arm].p;
+                        soft_start_delta * tr_to_desired_ring_pose.p +
+                                tool_current_pose[n_arm].p;
                 tool_desired_pose[n_arm].M =
                     tr_to_desired_ring_pose.M * tool_current_pose[n_arm].M;
 
@@ -1068,7 +1079,7 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         // publish the ring poses
         if(lower_freq_pub_counter==10){
             lower_freq_pub_counter = 0;
-            pub_ring_current.publish(conversions::KDLFramePoseMsg(interpolated_ring_pose));
+            pub_ring_current.publish(conversions::KDLFramePoseMsg(estimated_ring_pose));
             pub_ring_desired.publish(conversions::KDLFramePoseMsg
                                          (desired_ring_pose));
         }
