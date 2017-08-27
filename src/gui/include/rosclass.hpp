@@ -25,12 +25,14 @@
 #include <custom_msgs/ActiveConstraintParameters.h>
 #include <custom_msgs/TaskState.h>
 
-class RosObj : public QThread
+#include "../PerformanceEvaluators.h"
+
+class RosBridge : public QThread
 {
 public:
 
-    RosObj(QObject *parent, std::string node_name);
-    ~RosObj();
+    RosBridge(QObject *parent, std::string node_name);
+    ~RosBridge();
 
     void RingPoseCurrentCallback(const geometry_msgs::PoseConstPtr &msg);
     void RingPoseDesiredCallback(const geometry_msgs::PoseConstPtr &msg);
@@ -59,25 +61,24 @@ public:
     void Master0WrenchCallback(const geometry_msgs::WrenchConstPtr &msg);
     void Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg);
 
-    void Master1ACParamsCallback(
-            const custom_msgs::ActiveConstraintParametersConstPtr & msg);
-    void Master0ACParamsCallback(
-            const custom_msgs::ActiveConstraintParametersConstPtr & msg);
-
     void TaskSTateCallback(const custom_msgs::TaskStateConstPtr  &msg);
 
     void CoagFootSwitchCallback(const sensor_msgs::Joy &msg);
 
     void ClutchFootSwitchCallback(const sensor_msgs::Joy &msg);
 
+//    void OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg);
 
-    void OnCameraImageMessage(const sensor_msgs::ImageConstPtr &msg);
     void SetStateLabel(int in ){ state_label = in;  }
 
     void OpenRecordingFile(std::string filename);
     void CloseRecordingFile();
-    void StartRecording() {recording = true;}
+    void StartRecording(const double performance_initial_value ,
+                        const int in);
+
     void PauseRecording() {recording = false;}
+    void ContinueRecording() {recording = true;}
+
     bool IsRecording() {return recording;}
 
     // get the number of repetition. Used to be sent from the task world, now
@@ -89,69 +90,83 @@ public:
     void SetRepetitionNumber(uint in) {
          repetition_num = in;}
 
-    void ResetCurrentAcquisition(){repetition_data->clear();};
+    void ResetCurrentAcquisition(){ongoing_acq_buffer->clear();};
 
     void ResetTask();
 
     void run();
 
-
-    /**
-     * Get the latest image from the input.
-     *
-     * If no image is available this call will block until an image is received. Otherwise this will
-     * simply return #RosObj::Image. In practice the only time where #RosObj::Image might be empty
-     * is just after the start of the program before the first frame has arrived or if the camera
-     * gets disconnected.
-     *
-     * @param timeout The maximum amount of time to wait for the image
-     * @return A reference to the image.
-     */
-    cv::Mat& Image(ros::Duration timeout = ros::Duration(1));
-
-
     void CleanUpAndQuit();
 
+    void SetHapticsMode(int state){haptics_mode = state;};
+
+    void SetACActivation(const double act){ assistance_activation=act;
+    ROS_INFO("Setting ac activation to %f", act);};
+
+    void GetPerformanceHistory(std::vector<double> &perf_hist){
+        perf_hist = perf_history;
+    };
+
 private:
-    void GetROSParameterValues();
     int n_arms;
     int state_label;
     bool recording;
     bool new_task_state_msg;
+    int haptics_mode = 0;
     std::ofstream reporting_file;
-    uint repetition_num=1;
+    uint repetition_num = 1;
+
+    std::vector<double> VectorizeData();
+
+    SteadyHandPerfEval *perf_eval=0;
+    std::vector<double> perf_history;
+
+    double assistance_activation;
+    // this comes from the last session performance of the same user
+    double performance_initial_value;
+
+private:
+
+    void InitializeAdaptiveAssistance(const double performance_initial_value,
+                                      const uint n_session);
+
+    void PublishACActivation(const double &activation);
+
+    void DumpDataToFileAndClearBuffer();
+
+    void GetROSParameterValues();
+
+
     // two function pointers for each master/slave related topic
 
-    void (RosObj::*slave_pose_current_callbacks[2])
+    void (RosBridge::*slave_pose_current_callbacks[2])
             (const geometry_msgs::PoseStampedConstPtr &msg);
 
-    void (RosObj::*master_pose_current_callbacks[2])
+    void (RosBridge::*master_pose_current_callbacks[2])
             (const geometry_msgs::PoseStampedConstPtr &msg);
 
-    void (RosObj::*slave_pose_desired_callbacks[2])
+    void (RosBridge::*slave_pose_desired_callbacks[2])
             (const geometry_msgs::PoseStampedConstPtr &msg);
 
-    void (RosObj::*slave_twist_callbacks[2])
+    void (RosBridge::*slave_twist_callbacks[2])
             (const geometry_msgs::TwistStampedConstPtr &msg);
 
-    void (RosObj::*master_joint_state_callbacks[2])
+    void (RosBridge::*master_joint_state_callbacks[2])
             (const sensor_msgs::JointStateConstPtr &msg);
 
-    void (RosObj::*gripper_callbacks[2])
+    void (RosBridge::*gripper_callbacks[2])
             (const std_msgs::Float32::ConstPtr &msg);
 
-    void (RosObj::*master_twist_callbacks[2])
+    void (RosBridge::*master_twist_callbacks[2])
             (const geometry_msgs::TwistConstPtr &msg);
 
-    void (RosObj::*master_wrench_callbacks[2])
+    void (RosBridge::*master_wrench_callbacks[2])
             (const geometry_msgs::Wrench::ConstPtr &msg);
-
-    void (RosObj::*master_ac_params_callbacks[2])
-            (const custom_msgs::ActiveConstraintParametersConstPtr &msg);
-
 
 
 public:
+
+    custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
     ros::NodeHandle n;
     ros::Rate * ros_rate;
@@ -189,10 +204,7 @@ public:
     geometry_msgs::Wrench master_wrench[2];
 
     // task state
-    custom_msgs::TaskState task_state;
-
-    // left and right master active constraints parameters
-    custom_msgs::ActiveConstraintParameters ac_params[2];
+    custom_msgs::TaskState task_state, last_task_state;
 
     // foot pedals;
     bool clutch_pedal_pressed;
@@ -217,17 +229,16 @@ public:
     ros::Subscriber * subscriber_slave_twist;
     ros::Subscriber * subscriber_master_wrench;
 
-    ros::Subscriber * subscriber_ac_params;
-
     ros::Subscriber subscriber_task_state;
 
     ros::Subscriber subscriber_foot_pedal_coag;
     ros::Subscriber subscriber_foot_pedal_clutch;
 
     ros::Publisher publisher_control_events;
+    ros::Publisher * publisher_ac_params;
 
 private:
-    std::vector< std::vector<double> > * repetition_data;
+    std::vector< std::vector<double> > * ongoing_acq_buffer;
 };
 
 

@@ -28,18 +28,39 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->button_task_7, SIGNAL(released()), this, SLOT(on_task_7_clicked()) );
     connect(ui->button_task_8, SIGNAL(released()), this, SLOT(on_task_8_clicked()) );
 
-    connect(ui->button_home_masters, SIGNAL(released()), this, SLOT(on_home_masters_clicked()) );
+    connect(ui->button_home_masters, SIGNAL(released()),
+            this, SLOT(on_home_masters_clicked()) );
 
-    connect(ui->checkBox_pub_imgs, SIGNAL(toggled(bool)), this, SLOT(on_pub_imgs_state_changed(bool)) );
+    connect(ui->checkBox_pub_imgs, SIGNAL(toggled(bool)),
+            this, SLOT(on_pub_imgs_state_changed(bool)) );
 
-    connect(ui->button_calib_arm1, SIGNAL(released()), this, SLOT(on_calib_arm1_clicked()) );
-    connect(ui->button_calib_arm2, SIGNAL(released()), this, SLOT(on_calib_arm2_clicked()) );
+    connect(ui->button_haptics_disable, SIGNAL(clicked()),
+            this, SLOT(on_button_haptics_disable_checked()) );
 
-    connect(ui->button_exit, SIGNAL(released()), this, SLOT(on_exit_clicked()) );
+    connect(ui->button_haptics_manual, SIGNAL(clicked()),
+            this, SLOT(on_button_haptics_manual_checked()) );
 
-    connect(ui->button_kill_core, SIGNAL(released()), this, SLOT(on_kill_core_clicked()) );
+    connect(ui->button_haptics_skill, SIGNAL(clicked()),
+            this, SLOT(on_button_haptics_skill_checked()) );
 
-    connect(ui->pause_button, SIGNAL(released()), this, SLOT(on_pause_clicked()) );
+    connect(ui->button_calib_arm1, SIGNAL(released()),
+            this, SLOT(on_calib_arm1_clicked()) );
+    connect(ui->button_calib_arm2, SIGNAL(released()),
+            this, SLOT(on_calib_arm2_clicked()) );
+
+    connect(ui->button_exit, SIGNAL(released()),
+            this, SLOT(on_exit_clicked()) );
+    connect(ui->button_kill_core, SIGNAL(released()),
+            this, SLOT(on_kill_core_clicked()) );
+    connect(ui->pause_button, SIGNAL(released()),
+            this, SLOT(on_pause_clicked()) );
+
+    ui->input_init_perf->setText("0.0");
+    ui->input_session->setText("1");
+    ui->stop->setEnabled(false);
+    ui->pause_button->setEnabled(false);
+
+    ui->button_haptics_disable->setChecked(true);
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
@@ -58,6 +79,14 @@ void MainWindow::onTimeout()
     ui->line_edit_num_repetitions->setText(QString::number(ros_obj.GetRepetitionNumber()));
 
     ui->line_edit_duration->setText(QString::number(ros_obj.task_state.time_stamp, 'f', 1));
+
+    std::vector<double> perf_hist;
+    ros_obj.GetPerformanceHistory(perf_hist);
+    std::stringstream perf_hist_str;
+    for (int i = 0; i < perf_hist.size(); ++i) {
+        perf_hist_str << perf_hist[i] << " - ";
+    }
+    ui->text_perf_history->setText(perf_hist_str.str().c_str());
 }
 
 void MainWindow::showImage(){
@@ -144,6 +173,25 @@ void MainWindow::on_task_8_clicked()
 
 }
 
+void MainWindow::on_button_haptics_disable_checked(){
+    if(ui->button_haptics_disable->isChecked())
+        ros_obj.SetHapticsMode(0);
+}
+
+void MainWindow::on_button_haptics_manual_checked() {
+    if(ui->button_haptics_manual->isChecked()){
+        ros_obj.SetHapticsMode(1);
+        ros_obj.SetACActivation(ui->input_ac_activation->text().toDouble());
+    }
+
+};
+
+void MainWindow::on_button_haptics_skill_checked() {
+    if(ui->button_haptics_skill->isChecked())
+        ros_obj.SetHapticsMode(2);
+};
+
+
 
 void MainWindow::on_home_masters_clicked(){
 
@@ -209,6 +257,7 @@ void MainWindow::on_exit_clicked(){
 void MainWindow::on_record_clicked()
 {
     std::string file_name_entered = ui->file_name->text().toStdString();
+
     if(file_name_entered.empty()){
         ui->record->setChecked(false);
     }
@@ -216,9 +265,20 @@ void MainWindow::on_record_clicked()
         std::stringstream file_name;
         file_name<<file_name_entered << std::string(".csv");
         ros_obj.OpenRecordingFile(file_name.str());
+
         ui->file_name->setDisabled(true);
         ui->record->setText("Recording");
-        ros_obj.StartRecording();
+        ui->stop->setEnabled(true);
+        ui->pause_button->setEnabled(true);
+
+        // start recording
+        int session = ui->input_session->text().toInt();
+        double initial_performance= ui->input_init_perf->text().toDouble();
+        ui->input_init_perf->setDisabled(true);
+        ui->input_session->setDisabled(true);
+
+        ros_obj.StartRecording(initial_performance, session);
+
         ui->record->setEnabled(false);
         qDebug() << "Started recording." ;
     }
@@ -235,7 +295,7 @@ void MainWindow::on_pause_clicked()
             qDebug() << "Paused recording." ;
         }
         else{
-            ros_obj.StartRecording();
+            ros_obj.ContinueRecording();
             ui->pause_button->setText("Pause");
             ui->record->setEnabled(true);
             qDebug() << "Continued recording." ;
@@ -251,11 +311,6 @@ void MainWindow::on_stop_released()
 {
     StopRecording();
 
-    //  QPalette pal = ui->record->palette();
-    //  pal.setColor(QPalette::Window, QColor(Qt::blue));
-    //  ui->record->setAutoFillBackground(true);
-    //  ui->record->setPalette(pal);
-    //  ui->record->update();
 }
 
 void MainWindow::on_button_repeat_clicked()
@@ -279,25 +334,31 @@ void MainWindow::on_button_reset_clicked()
 }
 
 void MainWindow::StopRecording(){
+
     qDebug() << "Stopping the recording." ;
 
-    // stop writing to file and close it
-    ros_obj.PauseRecording();
-    ros_obj.CloseRecordingFile();
+    if(ros_obj.IsRecording()){
+        // stop writing to file and close it
+        ros_obj.PauseRecording();
+        ros_obj.CloseRecordingFile();
 
-    // reset the interface
-    ui->record->setEnabled(true);
-    ui->record->setChecked(false);
-    ui->record->setText("Record");
+        // reset the interface
+        ui->record->setEnabled(true);
+        ui->record->setChecked(false);
+        ui->record->setText("Record");
 
-    ui->pause_button->setText("Pause");
-    ui->pause_button->setChecked(false);
+        ui->pause_button->setText("Pause");
+        ui->pause_button->setChecked(false);
 
-    ui->file_name->setDisabled(false);
-    ui->file_name->setText("");
+        ui->stop->setEnabled(false);
 
-    // clear the saved acquisition data
-    ros_obj.ResetCurrentAcquisition();
+        ui->file_name->setDisabled(false);
+        ui->input_init_perf->setDisabled(false);
+        ui->input_session->setDisabled(false);
+        ui->file_name->setText("");
 
+        // clear the saved acquisition data
+        ros_obj.ResetCurrentAcquisition();
+    }
 
 };

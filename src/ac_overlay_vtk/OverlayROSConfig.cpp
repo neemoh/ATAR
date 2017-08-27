@@ -197,7 +197,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     //    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
     subtool_current_pose = new ros::Subscriber[(uint)n_arms];
     subtool_current_gripper = new ros::Subscriber[(uint)n_arms];
-    publisher_ac_params = new ros::Publisher[(uint)n_arms];
+//    publisher_ac_params = new ros::Publisher[(uint)n_arms];
 
 
     std::string slave_names[n_arms];
@@ -242,13 +242,13 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 
         // Publishing the active constraint parameters that may change during
         // the task
-        param_name.str("");
-        param_name << std::string("/atar/")<< master_names[n_arm]
-                   << "/active_constraint_param";
-        publisher_ac_params[n_arm] =
-            n.advertise<custom_msgs::ActiveConstraintParameters>(
-                param_name.str().c_str(), 1 );
-        ROS_INFO("Will publish on %s", param_name.str().c_str());
+//        param_name.str("");
+//        param_name << std::string("/atar/")<< master_names[n_arm]
+//                   << "/active_constraint_param";
+//        publisher_ac_params[n_arm] =
+//            n.advertise<custom_msgs::ActiveConstraintParameters>(
+//                param_name.str().c_str(), 1 );
+//        ROS_INFO("Will publish on %s", param_name.str().c_str());
 
         n.param<bool>("AR_mode", ar_mode, false);
         ROS_INFO("AR mode: %s",
@@ -715,9 +715,9 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
 void OverlayROSConfig::PublishACtiveConstraintParameters(
     const custom_msgs::ActiveConstraintParameters ac_params[2]) {
 
-    publisher_ac_params[0].publish(ac_params[0]);
-    if(n_arms==2)
-        publisher_ac_params[1].publish(ac_params[1]);
+//    publisher_ac_params[0].publish(ac_params[0]);
+//    if(n_arms==2)
+//        publisher_ac_params[1].publish(ac_params[1]);
 }
 
 // -----------------------------------------------------------------------------

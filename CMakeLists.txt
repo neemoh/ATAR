@@ -342,7 +342,7 @@ set (MyProjectLib_hdr
         ${PROJECT_INCLUDE_DIR}/cvimagewidget.h)
 set (MyProjectLib_src
         src/gui/mainwindow.cpp
-        src/gui/rosclass.cpp)
+        src/gui/rosclass.cpp src/gui/PerformanceEvaluators.h)
 qt5_wrap_cpp(MyProjectLib_hdr_moc ${MyProjectLib_hdr})
 qt5_wrap_ui (MyProjectLib_ui_moc src/gui/mainwindow.ui)
 

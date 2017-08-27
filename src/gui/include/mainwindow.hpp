@@ -39,6 +39,10 @@ private slots:
     void on_home_masters_clicked();
     void on_pub_imgs_state_changed(bool state);
 
+    void on_button_haptics_disable_checked();
+    void on_button_haptics_skill_checked();
+    void on_button_haptics_manual_checked();
+
     void on_calib_arm1_clicked();
     void on_calib_arm2_clicked();
 
@@ -62,7 +66,7 @@ private:
     Ui::MainWindow *ui;
     QLabel *stat_label;
     QProgressBar *stat_progress;
-    RosObj ros_obj;
+    RosBridge ros_obj;
     CVImageWidget *imageWidget;
     QTimer *timer;
 

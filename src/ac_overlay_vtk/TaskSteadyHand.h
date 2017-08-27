@@ -28,7 +28,6 @@
 #include <vtkCornerAnnotation.h>
 
 #include "Rendering.h"
-#include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
@@ -188,6 +187,10 @@ private:
 
     uint ring_in_action = 0;
     bool gripper_in_contact[2] ={false, false};
+    bool gripper_in_contact_last[2] ={false, false};
+    uint ac_soft_start_counter = 0;
+    uint ac_soft_start_duration = 10;
+
     // the distance between the center of the ring and the closest point on
     // the wire. This is could be slightly different from the error
     // calculated from the difference of the desired pose and the current
@@ -196,7 +199,6 @@ private:
     double orientation_error_norm;
 
     bool ac_params_changed;
-    custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
     KDL::Frame tool_desired_pose[2];
     KDL::Frame *tool_current_pose_ptr[2];
@@ -205,6 +207,7 @@ private:
 
     uint destination_ring_counter;
 //    vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
+    custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
 
     // actors that are updated during the task
