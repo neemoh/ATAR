@@ -499,13 +499,16 @@ void TaskSteadyHand::UpdateActors() {
 
     // calculate the ring to estimated ring drift
     double drift = (ring_pose.p - estimated_ring_pose.p).Norm();
-    std::cout << "drift " << drift << std::endl;
+    my_count++;
+    if(my_count>10)
+        max_drift = MAX(max_drift, drift);
+    std::cout << "max_drift " << max_drift << std::endl;
     
     // Update the tool to ring tr if we just grasped the ring or if the drift
     // has grown too large
-    if( (gripper_in_contact[0] & !gripper_in_contact_last[0]) || drift > 0.2)
+    if( (gripper_in_contact[0] & !gripper_in_contact_last[0]) || drift > 0.001)
         tool_to_ring_tr[0] = tool_current_pose[0].Inverse() * ring_pose;
-    if( (gripper_in_contact[1] & !gripper_in_contact_last[1]) || drift > 0.2)
+    if( (gripper_in_contact[1] & !gripper_in_contact_last[1]) || drift > 0.001)
         tool_to_ring_tr[1] = tool_current_pose[1].Inverse() * ring_pose ;
 
     //// change the color of the grasped ring

@@ -161,6 +161,8 @@ private:
     // task logic
 //    bool bimanual;
 //    bool with_guidance;
+double max_drift;
+    uint my_count = 0;
     SHTaskState task_state;
     std::string mesh_files_dir;
     std::string slave_names[2];
