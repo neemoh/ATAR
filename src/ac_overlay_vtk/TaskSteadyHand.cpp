@@ -499,11 +499,7 @@ void TaskSteadyHand::UpdateActors() {
 
     // calculate the ring to estimated ring drift
     double drift = (ring_pose.p - estimated_ring_pose.p).Norm();
-    my_count++;
-    if(my_count>10)
-        max_drift = MAX(max_drift, drift);
-    std::cout << "max_drift " << max_drift << std::endl;
-    
+
     // Update the tool to ring tr if we just grasped the ring or if the drift
     // has grown too large
     if( (gripper_in_contact[0] & !gripper_in_contact_last[0]) || drift > 0.001)
