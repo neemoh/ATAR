@@ -60,12 +60,12 @@ RosBridge::RosBridge(QObject *parent, std::string node_name)
 
         ac_parameters[i].max_force = 4.0;
         ac_parameters[i].linear_elastic_coeff = 1000.0;
-        ac_parameters[i].linear_damping_coeff = 10.0;
+        ac_parameters[i].linear_damping_coeff = 30.0;
 
         //ac_parameters[0].max_torque = 0.03;
         ac_parameters[i].max_torque = 0.03;
         ac_parameters[i].angular_elastic_coeff = 0.04;
-        ac_parameters[i].angular_damping_coeff = 0.002;
+        ac_parameters[i].angular_damping_coeff = 0.000;
 
         // publish the params
         publisher_ac_params[i].publish(ac_parameters[i]);
@@ -376,6 +376,10 @@ void RosBridge::Master1WrenchCallback(const geometry_msgs::WrenchConstPtr &msg) 
 
 // task state
 void RosBridge::TaskSTateCallback(const custom_msgs::TaskStateConstPtr &msg){
+    // save last task state
+    last_task_state = task_state;
+
+
     task_state.task_name = msg->task_name;
     task_state.number_of_repetition = msg->number_of_repetition;
     task_state.task_state = msg->task_state;
@@ -471,7 +475,7 @@ void RosBridge::run(){
 
                 // -------- performance evaluation
                 perf_history.push_back(
-                        perf_eval->GetPerformanceAndReset(task_state.time_stamp));
+                        perf_eval->GetPerformanceAndReset(last_task_state.time_stamp));
 
                 // activation will be published
                 PublishACActivation(0.0);

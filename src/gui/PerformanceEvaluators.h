@@ -45,9 +45,14 @@ public:
         double pos_rms, ori_rms, pos_mean, ori_mean, pos_max, ori_max;
         GetEvaluation(pos_rms, ori_rms, pos_mean, ori_mean,
                                 pos_max, ori_max);
-        void Reset();
+        std::cout << "pos_rms: " << pos_rms
+                  << ", pos_mean: "<< pos_mean
+                  << ", ori_rms: "<< ori_rms
+                  << ", ori_mean: "<< ori_mean
+                  << ", repetition_time: "<< repetition_time << std::endl;
+
         // calculate the magnitude
-        double performance=pos_rms;
+        double performance=pos_mean;
 
         return performance;
 
@@ -81,16 +86,18 @@ private:
     std::tuple<double, double>
     CalculatePoseError(const KDL::Frame &desired, const KDL::Frame &current){
 
-        KDL::Frame error = desired * current.Inverse();
 
-        double pos_error_norm = error.p.Norm();
+        //double pos_error_norm = error.p.Norm();
+        double pos_error_norm = (desired.p - current.p).Norm();
 
         // calculate the orientation error as the absolute angle of rotation
         // to the desired pose
         KDL::Vector axis;
-        double ori_error_norm = fabs(error.M.GetRotAngle(axis));
+        double r,p,y;
+        (desired.M * current.M.Inverse()).GetRPY(r,p,y);
+        double ori_error_norm_rpy = sqrt(r*r + p*p + y*y);
 
-        return std::make_tuple(pos_error_norm, ori_error_norm);
+        return std::make_tuple(pos_error_norm, ori_error_norm_rpy);
 
     };
 
