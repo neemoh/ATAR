@@ -28,9 +28,8 @@ TaskSteadyHand::TaskSteadyHand(
 
     InitBullet();
 
-    slave_names = new std::string[bimanual + 1];
-
-    *slave_names = *slave_names_in;
+    slave_names[0] = slave_names_in[0];
+    slave_names[1] = slave_names_in[1];
 
     // prevent tools from hitting things at the initializiation
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);
@@ -482,7 +481,7 @@ void TaskSteadyHand::UpdateActors() {
     // loop. Otherwise the haptics will go unstable.
     if(gripper_in_contact[0] & !gripper_in_contact_last[0])
         tool_to_ring_tr[0] = tool_current_pose[0].Inverse() * ring_pose;
-    if(gripper_in_contact[1])
+    if(gripper_in_contact[1] & !gripper_in_contact_last[1])
         tool_to_ring_tr[1] = tool_current_pose[1].Inverse() * ring_pose ;
 
     //// change the color of the grasped ring
@@ -924,20 +923,16 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
     //----------------------------------------------
     // setting  up haptics
 
-    //std::string master_names[n_arms];
-    std::string check_topic_name;
+    ros::Publisher pub_slave_desired[2];
+    ros::Publisher pub_wrench_abs[2];
 
     //getting the name of the arms
     std::stringstream param_name;
     param_name << std::string("/atar/") << slave_names[0] <<
                "/tool_pose_desired";
-
-    ros::Publisher pub_slave_desired[2];
-    ros::Publisher pub_wrench_abs[2];
-
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_slave_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                                   (param_name.str(), 10);
+                                   (param_name.str(), 1);
     ROS_INFO("Will publish on %s", param_name.str().c_str());
 
     // make sure the masters are in wrench absolute orientation
@@ -955,7 +950,7 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
     param_name << std::string("/atar/") << slave_names[1] <<
                "/tool_pose_desired";
     pub_slave_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                   (param_name.str(), 10);
+                                   (param_name.str(), 1);
     ROS_INFO("Will publish on %s", param_name.str().c_str());
 
     // make sure the masters are in wrench absolute orientation
@@ -966,11 +961,9 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
     ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
     //}
 
-
     ros::Rate loop_rate(haptic_loop_rate);
     ROS_INFO("The desired pose will be updated at '%f'",
              haptic_loop_rate);
-
 
     ros::Publisher pub_ring_desired, pub_ring_current;
     std::string ring_topic = "/atar/ring_pose_current";
@@ -1299,7 +1292,6 @@ void TaskSteadyHand::UpdateToolRodsPose(
 }
 
 TaskSteadyHand::~TaskSteadyHand() {
-    delete [] slave_names;
 
     ROS_INFO("Destructing Bullet task: %d",
              dynamics_world->getNumCollisionObjects());

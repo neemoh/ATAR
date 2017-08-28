@@ -163,7 +163,7 @@ private:
 //    bool with_guidance;
     SHTaskState task_state;
     std::string mesh_files_dir;
-    std::string *slave_names;
+    std::string slave_names[2];
     KDL::Frame *slave_frame_to_world_frame_tr;
     Colors colors;
     KDL::Frame tube_frame;
@@ -189,7 +189,7 @@ private:
     bool gripper_in_contact[2] ={false, false};
     bool gripper_in_contact_last[2] ={false, false};
     uint ac_soft_start_counter = 0;
-    uint ac_soft_start_duration = 10;
+    uint ac_soft_start_duration = 200;
 
     // the distance between the center of the ring and the closest point on
     // the wire. This is could be slightly different from the error
