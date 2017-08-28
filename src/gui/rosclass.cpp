@@ -52,6 +52,25 @@ RosBridge::RosBridge(QObject *parent, std::string node_name)
     // this saves all the samples during an acquisition
     ongoing_acq_buffer = new std::vector< std::vector<double> >;
 
+
+    //  ACTIVE CONSTRAINT
+    for (int i = 0; i < n_arms; ++i) {
+        ac_parameters[i].method = 0; // 0 for visco/elastic
+        ac_parameters[i].activation = 0.0; // this will be set later
+
+        ac_parameters[i].max_force = 4.0;
+        ac_parameters[i].linear_elastic_coeff = 1000.0;
+        ac_parameters[i].linear_damping_coeff = 10.0;
+
+        //ac_parameters[0].max_torque = 0.03;
+        ac_parameters[i].max_torque = 0.03;
+        ac_parameters[i].angular_elastic_coeff = 0.04;
+        ac_parameters[i].angular_damping_coeff = 0.002;
+
+        // publish the params
+        publisher_ac_params[i].publish(ac_parameters[i]);
+    }
+
 }
 
 
@@ -502,23 +521,6 @@ void RosBridge::InitializeAdaptiveAssistance(
     assistance_activation =
             perf_eval->GetHapticAssistanceActivation(perf_history);
 
-    //  ACTIVE CONSTRAINT
-    for (int i = 0; i < n_arms; ++i) {
-        ac_parameters[i].method = 0; // 0 for visco/elastic
-        ac_parameters[i].activation = 0.0; // this will be set later
-
-        ac_parameters[i].max_force = 4.0;
-        ac_parameters[i].linear_elastic_coeff = 1000.0;
-        ac_parameters[i].linear_damping_coeff = 10.0;
-
-        //ac_parameters[0].max_torque = 0.03;
-        ac_parameters[i].max_torque = 0.03;
-        ac_parameters[i].angular_elastic_coeff = 0.04;
-        ac_parameters[i].angular_damping_coeff = 0.002;
-
-        // publish the params
-        publisher_ac_params[i].publish(ac_parameters[i]);
-    }
 }
 
 
@@ -527,6 +529,8 @@ void RosBridge::PublishACActivation(const double &activation){
 
     for (int i = 0; i < n_arms; ++i) {
         ac_parameters[i].activation = activation;
+        publisher_ac_params[i].publish(ac_parameters[i]);
+
     }
 
 }
@@ -552,6 +556,12 @@ void RosBridge::DumpDataToFileAndClearBuffer() {
     ongoing_acq_buffer->clear();
 
 }
+
+
+void RosBridge::OverrideACActivation(const double act){
+    assistance_activation=act;
+    PublishACActivation(assistance_activation);
+};
 
 
 void RosBridge::OpenRecordingFile(std::string filename){

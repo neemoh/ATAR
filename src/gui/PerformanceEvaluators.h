@@ -47,7 +47,7 @@ public:
                                 pos_max, ori_max);
         void Reset();
         // calculate the magnitude
-        double performance=0;
+        double performance=pos_rms;
 
         return performance;
 

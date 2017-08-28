@@ -181,7 +181,7 @@ void MainWindow::on_button_haptics_disable_checked(){
 void MainWindow::on_button_haptics_manual_checked() {
     if(ui->button_haptics_manual->isChecked()){
         ros_obj.SetHapticsMode(1);
-        ros_obj.SetACActivation(ui->input_ac_activation->text().toDouble());
+        ros_obj.OverrideACActivation(ui->input_ac_activation->text().toDouble());
     }
 
 };
@@ -274,12 +274,12 @@ void MainWindow::on_record_clicked()
         // start recording
         int session = ui->input_session->text().toInt();
         double initial_performance= ui->input_init_perf->text().toDouble();
-        ui->input_init_perf->setDisabled(true);
-        ui->input_session->setDisabled(true);
-
         ros_obj.StartRecording(initial_performance, session);
 
+        ui->input_init_perf->setDisabled(true);
+        ui->input_session->setDisabled(true);
         ui->record->setEnabled(false);
+
         qDebug() << "Started recording." ;
     }
 }

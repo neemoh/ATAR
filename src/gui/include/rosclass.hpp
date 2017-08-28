@@ -100,8 +100,7 @@ public:
 
     void SetHapticsMode(int state){haptics_mode = state;};
 
-    void SetACActivation(const double act){ assistance_activation=act;
-    ROS_INFO("Setting ac activation to %f", act);};
+    void OverrideACActivation(const double act);
 
     void GetPerformanceHistory(std::vector<double> &perf_hist){
         perf_hist = perf_history;
