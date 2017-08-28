@@ -183,6 +183,7 @@ private:
     // graphics
     double ring_radius;
     KDL::Frame ring_pose;
+    KDL::Frame estimated_ring_pose;
     KDL::Frame tool_to_ring_tr[2];
 
     uint ring_in_action = 0;
