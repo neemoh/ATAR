@@ -451,10 +451,6 @@ TaskSteadyHand::TaskSteadyHand(
 
 }
 
-//------------------------------------------------------------------------------
-//std::vector<vtkSmartPointer<vtkProp> > TaskSteadyHand::GetActors() {
-//    return actors;
-//}
 
 //------------------------------------------------------------------------------
 void TaskSteadyHand::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
@@ -476,13 +472,41 @@ void TaskSteadyHand::UpdateActors() {
                                                              ring_mesh[ring_in_action]->GetBody());
     }
 
+    // -------------------------------------------------------------------------
+    // NOTE1: We want to activate the haptic guidance for each tool when it
+    // grasps the ring. That, however, will cause a sudden high wrench being
+    // applied. To prevent this we can interpolate the desired pose the
+    // moment the ring is grasped. The duration of this interpolation is
+    // ac_soft_start_duration
+
+    // NOTE2: The  desired pose of the ring is calculated from its current
+    // pose. The problem is the current pose of the ring comes from the
+    // physics simulation which happens much slower than the haptics thread.
+    // To prevent this low freq from causing instability, we estimate the
+    // pose of the ring by saving its transformation with respect to the
+    // tool-tip at the moment of grasp and from that moment on we use that
+    // transform with the pose of the tool, that is updated at the haptics
+    // thread frq. This is of course based on the assumption that the
+    // relative pose of the ring with respect to the tool does not change,
+    // but it actually does sometimes. One can update the ring to tool
+    // transformation at every physics loop, but since there is a delay
+    // between the motion of the ring and the pose of the tool this will only
+    // cause more instability. So what I thought of doing at the end is to
+    // regularly check the ring/tool drift and if it is more than a threshold
+    // update the transformation and also reset the interpolation counter to
+    // make the transition smooth.
+
     ring_pose = ring_mesh[ring_in_action]->GetPose();
 
-    // we need to estimate the pose of the ring for the high-freq haptic
-    // loop. Otherwise the haptics will go unstable.
-    if(gripper_in_contact[0] & !gripper_in_contact_last[0])
+    // calculate the ring to estimated ring drift
+    double drift = (ring_pose.p - estimated_ring_pose.p).Norm();
+    std::cout << "drift " << drift << std::endl;
+    
+    // Update the tool to ring tr if we just grasped the ring or if the drift
+    // has grown too large
+    if( (gripper_in_contact[0] & !gripper_in_contact_last[0]) || drift > 0.2)
         tool_to_ring_tr[0] = tool_current_pose[0].Inverse() * ring_pose;
-    if(gripper_in_contact[1])
+    if( (gripper_in_contact[1] & !gripper_in_contact_last[1]) || drift > 0.2)
         tool_to_ring_tr[1] = tool_current_pose[1].Inverse() * ring_pose ;
 
     //// change the color of the grasped ring
@@ -495,26 +519,6 @@ void TaskSteadyHand::UpdateActors() {
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
-//    for (int k = 0; k < 1 + (int)bimanual; ++k) {
-//
-//        // -------------
-//        // the noise in the pose measurements of the tool made the rendered
-//        // shadows behave unexpectedly, to fix it we do a 1 step moving
-//        // averqge of the position of the tool before applying it to the ring
-//
-//        vtkSmartPointer<vtkMatrix4x4>   tool_pose_filt = vtkSmartPointer<vtkMatrix4x4>::New();
-//
-//        KDL::Frame tool_current_filt_kdl = tool_current_pose[k];
-//        tool_current_filt_kdl.p = 0.5*(tool_last_pose[k].p + tool_current_pose[k].p);
-//
-//        VTKConversions::KDLFrameToVTKMatrix(tool_current_filt_kdl, tool_pose_filt);
-//        tool_current_frame_axes[k]->SetUserMatrix(tool_pose_filt);
-//
-//        tool_last_pose[k] = tool_current_pose[k];
-//        // -------------
-//    }
-
-
     UpdateCurrentAndDesiredReferenceFrames(tool_current_pose,
                                            tool_desired_pose);
 
@@ -526,12 +530,6 @@ void TaskSteadyHand::UpdateActors() {
     double grip_angle = theta_max*(grip_posit)/1.55;
     if(grip_angle<theta_min)
         grip_angle=theta_min;
-
-    //KDL::Frame temp_pose;
-    //double dx = sin(2 * M_PI * double(destination_ring_counter) / 50);
-    //temp_pose.p = KDL::Vector(0.09 + dx*0.02, 0.15, 0.09);
-    //temp_pose.M.DoRotY(M_PI);
-    //temp_pose.M.DoRotZ(M_PI/2);
 
     forceps[0]->SetPoseAndJawAngle(tool_current_pose[0], grip_angle);
 
@@ -552,7 +550,6 @@ void TaskSteadyHand::UpdateActors() {
     // -------------------------------------------------------------------------
     KDL::Vector destination_ring_position;
 
-    // first run
     if (task_state == SHTaskState::Idle) {
         destination_ring_position = start_point;
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
@@ -561,22 +558,6 @@ void TaskSteadyHand::UpdateActors() {
         destination_ring_position = end_point;
 
 
-    // when the active constraints is suddenly enabled the tool makes some
-    // initial large movements. To prevent always having a peak at the
-    // beginning of the error, data we first activate the active constraint
-    // and wait till the error is small before we start the task.
-    //
-    //// First: if the tool is placed close to the starting point while being idle
-    //// we enable the active constraint.
-    //if (task_state == SHTaskState::Idle && with_guidance &&
-    //    (ring_pose.p - start_point).Norm() <
-    //        positioning_tolerance) {
-    //    // Make sure the active constraint is inactive
-    //    if (ac_parameters.active == 0) {
-    //        ac_parameters.active = 1;
-    //        ac_params_changed = true;
-    //    }
-    //}
     double positioning_tolerance = 0.006;
 
     // if we finished the task in the last run, switch to idle now
@@ -840,14 +821,6 @@ void TaskSteadyHand::CalculatedDesiredRingPose(
     //                        closest_point_to_y_point[1],
     //                        closest_point_to_y_point[2]);
 
-    //} else {
-    //    desired_ring_pose = ring_pose;
-    //    // due to the delay in teleop loop this will create some wrneches if
-    //    // the guidance is still active
-    //}
-
-
-
 
 }
 
@@ -884,16 +857,11 @@ void TaskSteadyHand::UpdateRingColor() {
     else if(error_ratio < 0.3)
         error_ratio = 0.3;
 
-//    score_sphere_actors->GetProperty()->SetColor(error_ratio, 1 - error_ratio,
-//                                                0.1);
-//    if(task_state== SHTaskState::OnGoing){
     ring_mesh[ring_in_action]->GetActor()->GetProperty()
                              ->SetColor(colors.Orange[0],
                                         colors.Orange[1]- 0.6*
                                             (error_ratio-0.3),
                                         colors.Orange[2]);
-    //}
-
 }
 
 custom_msgs::TaskState TaskSteadyHand::GetTaskStateMsg() {
@@ -988,17 +956,17 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
     // loop
     while (ros::ok())
     {
-        KDL::Frame ring_pose_t;
+        KDL::Frame ring_pose_loc;
 
         //ring_pose = ring_mesh[ring_in_action]->GetPose();
-        ring_pose_t = ring_pose;
+        ring_pose_loc = ring_pose;
 
         // find the center of the ring
         tool_current_pose[0] = *tool_current_pose_ptr[0];
         tool_current_pose[1] = *tool_current_pose_ptr[1];
 
         KDL::Frame tr_to_desired_ring_pose, desired_ring_pose;
-        KDL::Frame estimated_ring_pose;
+        KDL::Frame estimated_ring_pose_loc;
 
         // the pose of the ring is updated with the graphics frequency which
         // is too low for haptics. The good news is that if we assume that
@@ -1010,21 +978,26 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         //         tool_to_ring_tr[0] = ring_pose * tool_current_pose[0].Inverse();
 
         if(gripper_in_contact[0])
-            estimated_ring_pose = tool_current_pose[0] *tool_to_ring_tr[0];
+            estimated_ring_pose_loc = tool_current_pose[0] *tool_to_ring_tr[0];
         else if (gripper_in_contact[1])
-            estimated_ring_pose = tool_current_pose[1]* tool_to_ring_tr[1];
+            estimated_ring_pose_loc = tool_current_pose[1]* tool_to_ring_tr[1];
         else
-            estimated_ring_pose = ring_pose_t;
+            estimated_ring_pose_loc = ring_pose_loc;
 
-        CalculatedDesiredRingPose(estimated_ring_pose, desired_ring_pose);
 
-        tr_to_desired_ring_pose.p = desired_ring_pose.p - estimated_ring_pose.p;
-        tr_to_desired_ring_pose.M = desired_ring_pose.M * estimated_ring_pose.M
+        // save in global for use in the other thread
+        estimated_ring_pose = estimated_ring_pose_loc;
+
+        // calculate the desired pose
+        CalculatedDesiredRingPose(estimated_ring_pose_loc, desired_ring_pose);
+
+        tr_to_desired_ring_pose.p = desired_ring_pose.p - estimated_ring_pose_loc.p;
+        tr_to_desired_ring_pose.M = desired_ring_pose.M * estimated_ring_pose_loc.M
                                                                      .Inverse();
-        //tr_to_desired_ring_pose = desired_ring_pose * estimated_ring_pose.Inverse();
+        //tr_to_desired_ring_pose = desired_ring_pose * estimated_ring_pose_loc.Inverse();
 
         // --------------- Soft start delta calculation
-        // did we grasped the ring just now?
+        // did we grasp the ring just now?
         if( (gripper_in_contact[0] & !gripper_in_contact_last[0]) ||
                 (gripper_in_contact[1] & !gripper_in_contact_last[1]) )
             ac_soft_start_counter = 0;
@@ -1079,7 +1052,7 @@ void TaskSteadyHand::FindAndPublishDesiredToolPose() {
         // publish the ring poses
         if(lower_freq_pub_counter==10){
             lower_freq_pub_counter = 0;
-            pub_ring_current.publish(conversions::KDLFramePoseMsg(estimated_ring_pose));
+            pub_ring_current.publish(conversions::KDLFramePoseMsg(estimated_ring_pose_loc));
             pub_ring_desired.publish(conversions::KDLFramePoseMsg
                                          (desired_ring_pose));
         }

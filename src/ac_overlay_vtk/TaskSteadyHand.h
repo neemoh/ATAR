@@ -183,13 +183,14 @@ private:
     // graphics
     double ring_radius;
     KDL::Frame ring_pose;
+    KDL::Frame estimated_ring_pose;
     KDL::Frame tool_to_ring_tr[2];
 
     uint ring_in_action = 0;
     bool gripper_in_contact[2] ={false, false};
     bool gripper_in_contact_last[2] ={false, false};
     uint ac_soft_start_counter = 0;
-    uint ac_soft_start_duration = 10;
+    uint ac_soft_start_duration = 200;
 
     // the distance between the center of the ring and the closest point on
     // the wire. This is could be slightly different from the error
