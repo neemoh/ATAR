@@ -181,7 +181,8 @@ void MainWindow::on_button_haptics_disable_checked(){
 void MainWindow::on_button_haptics_manual_checked() {
     if(ui->button_haptics_manual->isChecked()){
         ros_obj.SetHapticsMode(1);
-        ros_obj.OverrideACActivation(ui->input_ac_activation->text().toDouble());
+        double act = MIN(ui->input_ac_activation->text().toDouble(), 1.0);
+        ros_obj.OverrideACActivation(act);
     }
 
 };
