@@ -231,7 +231,7 @@
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -301,11 +301,6 @@ color:rgb(255, 0, 0);
       </item>
      </layout>
     </widget>
-    <zorder>record</zorder>
-    <zorder>pause_button</zorder>
-    <zorder>stop</zorder>
-    <zorder>layoutWidget</zorder>
-    <zorder>layoutWidget</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_3">
     <property name="geometry">
@@ -351,31 +346,31 @@ color:rgb(255, 0, 0);
       </sizepolicy>
      </property>
     </widget>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QPushButton" name="button_reset">
      <property name="geometry">
       <rect>
-       <x>111</x>
+       <x>120</x>
        <y>30</y>
-       <width>181</width>
-       <height>52</height>
+       <width>80</width>
+       <height>22</height>
       </rect>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="QPushButton" name="button_repeat">
-        <property name="text">
-         <string>Repeat Last Acq.</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="button_reset">
-        <property name="text">
-         <string>ResetTask</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     <property name="text">
+      <string>ResetTask</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="button_repeat">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>60</y>
+       <width>161</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Repeat Last Acq.</string>
+     </property>
     </widget>
    </widget>
    <widget class="QGroupBox" name="option_group">
@@ -499,7 +494,7 @@ color:rgb(255, 0, 0);
     <property name="title">
      <string>Haptics</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>100</x>
@@ -551,7 +546,7 @@ color:rgb(255, 0, 0);
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -580,7 +575,7 @@ color:rgb(255, 0, 0);
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -622,16 +617,6 @@ color:rgb(255, 0, 0);
       </item>
      </layout>
     </widget>
-    <zorder>button_haptics_disable</zorder>
-    <zorder>button_haptics_skill</zorder>
-    <zorder>button_haptics_manual</zorder>
-    <zorder>input_session</zorder>
-    <zorder>session_label</zorder>
-    <zorder>input_init_perf</zorder>
-    <zorder>init_perf_label</zorder>
-    <zorder>activation_label</zorder>
-    <zorder>input_ac_activation</zorder>
-    <zorder>activation_label</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_5">
     <property name="geometry">
@@ -661,17 +646,7 @@ color:rgb(255, 0, 0);
       <bool>false</bool>
      </property>
     </widget>
-    <zorder>text_perf_history</zorder>
-    <zorder>text_perf_history</zorder>
-    <zorder>text_perf_history_2</zorder>
-    <zorder>text_perf_history_3</zorder>
-    <zorder>text_perf_history_4</zorder>
-    <zorder>text_perf_history_5</zorder>
-    <zorder>text_perf_history_6</zorder>
-    <zorder>text_perf_history_7</zorder>
-    <zorder>text_perf_history_8</zorder>
    </widget>
-   <zorder>groupBox</zorder>
    <zorder>groupBox_2</zorder>
    <zorder>groupBox_3</zorder>
    <zorder>option_group</zorder>
@@ -679,7 +654,7 @@ color:rgb(255, 0, 0);
    <zorder>button_kill_core</zorder>
    <zorder>groupBox_4</zorder>
    <zorder>groupBox_5</zorder>
-   <zorder></zorder>
+   <zorder>groupBox</zorder>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionDo_Something">
@@ -692,7 +667,7 @@ color:rgb(255, 0, 0);
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup"/>
   <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup"/>
  </buttongroups>
 </ui>

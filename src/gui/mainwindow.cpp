@@ -86,7 +86,7 @@ void MainWindow::onTimeout()
     ros_obj.GetPerformanceHistory(perf_hist);
     std::stringstream perf_hist_str;
     for (int i = 0; i < perf_hist.size(); ++i) {
-        perf_hist_str << std::fixed << std::setprecision(1)
+        perf_hist_str << std::fixed << std::setprecision(2)
                       <<perf_hist[i] <<" - ";
     }
     ui->text_perf_history->setText(perf_hist_str.str().c_str());

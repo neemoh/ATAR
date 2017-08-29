@@ -40,21 +40,45 @@ public:
     }
 
 
-    double GetPerformanceAndReset(const double repetition_time){
+    double GetPerformanceAndReset(const double time){
 
         double pos_rms, ori_rms, pos_mean, ori_mean, pos_max, ori_max;
+
         GetEvaluation(pos_rms, ori_rms, pos_mean, ori_mean,
                                 pos_max, ori_max);
+
         std::cout << "pos_rms: " << pos_rms
-                  << ", pos_mean: "<< pos_mean
+                  << ", pos_max: "<< pos_max
                   << ", ori_rms: "<< ori_rms
-                  << ", ori_mean: "<< ori_mean
-                  << ", repetition_time: "<< repetition_time << std::endl;
+                  << ", repetition_time: "<< time << std::endl;
+
+        double pos_rms_ideal = 0.001;
+        double ori_rms_ideal = 20*M_PI/180;
+        double pos_max_ideal = 0.0028;
+        double time_ideal = 64;
+
+        double pos_rms_worst = 0.0024;
+        double ori_rms_worst = 57*M_PI/180;
+        double pos_max_worst = 0.004;
+        double time_worst = 121;
 
         // calculate the magnitude
-        double performance=pos_mean;
+        double normalized_pos_rms=
+        MAX(0, MIN(1,
+                   (pos_rms_worst - pos_rms)/ (pos_rms_worst - pos_rms_ideal)));
 
-        return performance;
+        double normalized_ori_rms=
+        MAX(0, MIN(1,
+                   (ori_rms_worst - ori_rms)/ (ori_rms_worst - ori_rms_ideal)));
+        double normalized_pos_max=
+        MAX(0, MIN(1,
+                   (pos_max_worst - pos_max)/ (pos_max_worst - pos_max_ideal)));
+        double normalized_time=
+        MAX(0, MIN(1,
+                   (time_worst - time)/ (time_worst - time_ideal)));
+
+        return (normalized_pos_rms + normalized_ori_rms +
+            normalized_pos_max+ normalized_time) / 4.0;
 
     }
 
