@@ -4,6 +4,8 @@
 #include <fstream>
 #include <std_msgs/Int8.h>
 #include "../ac_overlay_vtk/ControlEvents.h"
+#include <iomanip>
+#include <sstream>
 
 MainWindow::MainWindow(QWidget *parent) :
         QMainWindow(parent),
@@ -84,7 +86,8 @@ void MainWindow::onTimeout()
     ros_obj.GetPerformanceHistory(perf_hist);
     std::stringstream perf_hist_str;
     for (int i = 0; i < perf_hist.size(); ++i) {
-        perf_hist_str << perf_hist[i] << " - ";
+        perf_hist_str << std::fixed << std::setprecision(1)
+                      <<perf_hist[i] <<" - ";
     }
     ui->text_perf_history->setText(perf_hist_str.str().c_str());
 }

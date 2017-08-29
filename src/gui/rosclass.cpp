@@ -664,7 +664,7 @@ void RosBridge::OpenRecordingFile(std::string filename){
                 << ", master_wrench.torque.y"
                 << ", master_wrench.torque.z"
 
-                << ",ac_params.active"
+                << ",ac_params.activation"
                 << ",ac_params.method"
                 << ",ac_params.angular_damping_coeff"
                 << ",ac_params.angular_elastic_coeff"
@@ -766,7 +766,7 @@ std::vector<double> RosBridge::VectorizeData(){
         data_sample.push_back(master_wrench[j].torque.y);
         data_sample.push_back(master_wrench[j].torque.z);
 
-        data_sample.push_back(double(ac_parameters[j].active));
+        data_sample.push_back(ac_parameters[j].activation);
         data_sample.push_back(double(ac_parameters[j].method));
         data_sample.push_back(ac_parameters[j].angular_damping_coeff);
         data_sample.push_back(ac_parameters[j].angular_elastic_coeff);
