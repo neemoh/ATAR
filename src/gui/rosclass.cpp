@@ -518,9 +518,7 @@ void RosBridge::InitializeAdaptiveAssistance(
         const double performance_initial_value,
         const uint n_session){
 
-    perf_history.push_back(performance_initial_value);
-
-    perf_eval = new SteadyHandPerfEval(n_session);
+    perf_eval = new SteadyHandPerfEval(n_session, performance_initial_value);
 
     assistance_activation =
             perf_eval->GetHapticAssistanceActivation(perf_history);
