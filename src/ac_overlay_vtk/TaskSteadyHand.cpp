@@ -568,7 +568,7 @@ void TaskSteadyHand::UpdateActors() {
         && ((ring_pose.p - start_point).x() > 0.0
             && ((ring_pose.p - start_point).Norm() < positioning_tolerance) ))
     {
-        std::cout << " Transition to start" << std::endl;
+        ROS_INFO(" Started new repetition");
         task_state = SHTaskState::OnGoing;
         destination_ring_actor->RotateY(100);
         //increment the repetition number
@@ -586,8 +586,6 @@ void TaskSteadyHand::UpdateActors() {
         (ring_pose.p - end_point).Norm() <
             positioning_tolerance)
     {
-        std::cout << " Transition to finish" << std::endl;
-
         task_state = SHTaskState::Finished;
         destination_ring_actor->RotateY(-100);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
@@ -1113,17 +1111,17 @@ void TaskSteadyHand::CalculateAndSaveError() {
 
     }
 
-    ROS_INFO("posit_error_max: %f, score: %f", posit_error_max,
-             posit_error_max_ideal/posit_error_max*100);
-    ROS_INFO("orient_error_max: %f, score: %f", orient_error_max,
-             orient_error_max_ideal/orient_error_max*100);
-    ROS_INFO("duration: %f, score: %f", duration,duration_ideal/duration *100);
-    ROS_INFO("posit_error_avg: %f, score: %f", posit_error_avg,
-             posit_error_avg_ideal/posit_error_avg*100);
-    ROS_INFO("orient_error_avg: %f, score: %f", orient_error_avg,
-             orient_error_avg_ideal/orient_error_avg*100);
-    ROS_INFO("Score: %f", score);
-    ROS_INFO("  ");
+    //ROS_INFO("posit_error_max: %f, score: %f", posit_error_max,
+    //         posit_error_max_ideal/posit_error_max*100);
+    //ROS_INFO("orient_error_max: %f, score: %f", orient_error_max,
+    //         orient_error_max_ideal/orient_error_max*100);
+    //ROS_INFO("duration: %f, score: %f", duration,duration_ideal/duration *100);
+    //ROS_INFO("posit_error_avg: %f, score: %f", posit_error_avg,
+    //         posit_error_avg_ideal/posit_error_avg*100);
+    //ROS_INFO("orient_error_avg: %f, score: %f", orient_error_avg,
+    //         orient_error_avg_ideal/orient_error_avg*100);
+    ROS_INFO("User Feedback Score: %f", score);
+    //ROS_INFO("  ");
 }
 
 double * TaskSteadyHand::GetScoreColor(const double score) {

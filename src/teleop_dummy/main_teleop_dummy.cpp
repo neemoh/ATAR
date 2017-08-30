@@ -96,7 +96,7 @@ int main(int argc, char * argv[]) {
     ros::NodeHandle n(ros_node_name);
 
     if( ros::console::set_logger_level(
-        ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) )
+        ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info) )
         ros::console::notifyLoggerLevelsChanged();
 
     // ------------------------------------- Clutches---------------------------

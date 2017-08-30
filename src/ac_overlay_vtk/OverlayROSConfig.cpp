@@ -38,7 +38,7 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name)
 void OverlayROSConfig::SetupROSandGetParameters() {
 
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
-                                       ros::console::levels::Debug) ) {
+                                       ros::console::levels::Info) ) {
         ros::console::notifyLoggerLevelsChanged();
     }
 
