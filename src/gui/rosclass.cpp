@@ -443,10 +443,6 @@ void RosBridge::run(){
             // -------------------   Transition from idle to ongoing
             if (last_task_state.task_state == 0 && task_state.task_state == 1) {
 
-                if(haptics_mode == 2)
-                    assistance_activation =
-                        perf_eval->GetHapticAssistanceActivation(perf_history);
-
                 if(haptics_mode>0)
                     PublishACActivation(assistance_activation);
             }
@@ -476,6 +472,11 @@ void RosBridge::run(){
                 // -------- performance evaluation
                 perf_history.push_back(
                         perf_eval->GetPerformanceAndReset(last_task_state.time_stamp));
+
+
+                if(haptics_mode == 2)
+                    assistance_activation =
+                        perf_eval->GetHapticAssistanceActivation(perf_history);
 
                 // activation will be published
                 PublishACActivation(0.0);
@@ -515,10 +516,13 @@ void RosBridge::ResetTask(){
 
 
 void RosBridge::InitializeAdaptiveAssistance(
-        const double last_session_perf,
-        const uint n_session){
+    const uint n_session,
+    const double last_session_perf,
+    const double last_last_session_perf
+) {
 
-    perf_eval = new SteadyHandPerfEval(n_session, last_session_perf);
+    perf_eval = new SteadyHandPerfEval(n_session, last_session_perf,
+                                       last_last_session_perf);
 
     assistance_activation =
             perf_eval->GetHapticAssistanceActivation(perf_history);
@@ -536,17 +540,20 @@ void RosBridge::PublishACActivation(const double &activation){
     }
 
 }
-void RosBridge::StartRecording(const double performance_initial_value,
-                               const int session) {
+void RosBridge::StartRecording(
+    const int session,
+    const double last_session_perf,
+    const double last_last_session_perf
+) {
 
-    InitializeAdaptiveAssistance(performance_initial_value, (uint)session);
+    InitializeAdaptiveAssistance((uint) session, last_session_perf, last_last_session_perf);
     recording = true;
 }
 
 
 void RosBridge::DumpDataToFileAndClearBuffer() {
 
-    qDebug() << "Saving the acquisition in the file";
+    qDebug() << "Writing the last to the file";
     for (int j = 0; j < ongoing_acq_buffer->size(); ++j) {
 
         for (int i = 0; i < ongoing_acq_buffer->at(j).size() - 1; i++) {

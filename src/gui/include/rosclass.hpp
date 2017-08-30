@@ -73,8 +73,11 @@ public:
 
     void OpenRecordingFile(std::string filename);
     void CloseRecordingFile();
-    void StartRecording(const double performance_initial_value ,
-                        const int in);
+    void StartRecording(
+        const int in,
+        const double last_session_perf,
+        const double last_last_session_perf
+    );
 
     void PauseRecording() {recording = false;}
     void ContinueRecording() {recording = true;}
@@ -90,7 +93,9 @@ public:
     void SetRepetitionNumber(uint in) {
          repetition_num = in;}
 
-    void ResetCurrentAcquisition(){ongoing_acq_buffer->clear();};
+    void ResetCurrentAcquisition(){ongoing_acq_buffer->clear();
+        if(perf_eval)
+            perf_eval->Reset();};
 
     void ResetTask();
 
@@ -126,8 +131,11 @@ private:
 
 private:
 
-    void InitializeAdaptiveAssistance(const double performance_initial_value,
-                                      const uint n_session);
+    void InitializeAdaptiveAssistance(
+        const uint n_session,
+        const double performance_initial_value,
+        const double last_last_session_perf
+    );
 
     void PublishACActivation(const double &activation);
 

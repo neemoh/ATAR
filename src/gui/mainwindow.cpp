@@ -57,8 +57,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->pause_button, SIGNAL(released()),
             this, SLOT(on_pause_clicked()) );
 
-    ui->input_init_perf->setText("0.0");
-    ui->input_session->setText("1");
+    ui->input_init_perf_1->setText("0.0");
+    ui->input_init_perf_2->setText("0.0");
+    ui->input_session->setText("3");
     ui->stop->setEnabled(false);
     ui->pause_button->setEnabled(false);
 
@@ -277,10 +278,13 @@ void MainWindow::on_record_clicked()
 
         // start recording
         int session = ui->input_session->text().toInt();
-        double initial_performance= ui->input_init_perf->text().toDouble();
-        ros_obj.StartRecording(initial_performance, session);
+        double initial_performance_last= ui->input_init_perf_1->text().toDouble();
+        double initial_performance_last2= ui->input_init_perf_2->text().toDouble();
+        ros_obj.StartRecording(session, initial_performance_last,
+                               initial_performance_last2);
 
-        ui->input_init_perf->setDisabled(true);
+        ui->input_init_perf_1->setDisabled(true);
+        ui->input_init_perf_2->setDisabled(true);
         ui->input_session->setDisabled(true);
         ui->record->setEnabled(false);
 
@@ -357,7 +361,8 @@ void MainWindow::StopRecording(){
         ui->stop->setEnabled(false);
 
         ui->file_name->setDisabled(false);
-        ui->input_init_perf->setDisabled(false);
+        ui->input_init_perf_1->setDisabled(false);
+        ui->input_init_perf_2->setDisabled(false);
         ui->input_session->setDisabled(false);
         ui->file_name->setText("");
 

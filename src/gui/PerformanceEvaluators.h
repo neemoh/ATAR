@@ -15,7 +15,11 @@ class SteadyHandPerfEval
 {
 public:
 
-    SteadyHandPerfEval(uint n_session, double last_sess_performance);
+    SteadyHandPerfEval(
+            uint n_session,
+            double last_sess_performance,
+            double last_last_sess_performance
+        );
 
     void Increment(const KDL::Frame &desired, const KDL::Frame &current);
 

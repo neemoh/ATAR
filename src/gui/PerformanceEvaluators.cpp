@@ -13,8 +13,11 @@
 
 
 
-SteadyHandPerfEval::SteadyHandPerfEval(uint n_session,
-                                       double last_sess_performance) {
+SteadyHandPerfEval::SteadyHandPerfEval(
+        uint n_session,
+        double last_sess_performance,
+        double last_last_sess_performance
+    ) {
 
 
     this->n_session=n_session;
@@ -25,13 +28,14 @@ SteadyHandPerfEval::SteadyHandPerfEval(uint n_session,
     double assist_feed_forward_last = 0;
     if(n_session>2)
         assist_feed_forward_last =
-                HapticAssistanceFeedForwardTerm(n_session-1, last_sess_performance);
+                HapticAssistanceFeedForwardTerm(n_session-1, last_last_sess_performance);
 
     intrasession_delta = assist_feed_forward_curr - assist_feed_forward_last;
 
     last_rep_assistance_level = assist_feed_forward_curr;
-    std::cout << "assist_feed_forward_last  = " << assist_feed_forward_last << std::endl;
-    std::cout << "assist_feed_forward_curr = " << assist_feed_forward_curr << std::endl;
+    std::cout << "Assist feed forward last  = " << assist_feed_forward_last
+    << ", Assist feed forward curr = " << assist_feed_forward_curr <<
+                                                                    std::endl;
 
 }
 
@@ -67,11 +71,6 @@ double SteadyHandPerfEval::GetPerformanceAndReset(const double time){
     GetEvaluation(pos_rms, ori_rms, pos_mean, ori_mean,
                   pos_max, ori_max);
 
-    std::cout << "pos_rms: " << pos_rms
-              << ", pos_max: "<< pos_max
-              << ", ori_rms: "<< ori_rms
-              << ", repetition_time: "<< time << std::endl;
-
     double pos_rms_ideal = 0.001;
     double ori_rms_ideal = 20*M_PI/180;
     double pos_max_ideal = 0.0028;
@@ -97,8 +96,16 @@ double SteadyHandPerfEval::GetPerformanceAndReset(const double time){
             MAX(0, MIN(1,
                        (time_worst - time)/ (time_worst - time_ideal)));
 
-    return (normalized_pos_rms + normalized_ori_rms +
-            normalized_pos_max+ normalized_time) / 4.0;
+    double perf = (2*normalized_pos_rms + normalized_ori_rms +
+        2*normalized_pos_max+ 2*normalized_time) / 7.0;
+
+    std::cout << "pos_rms: " << pos_rms
+              << ", pos_max: "<< pos_max
+              << ", ori_rms: "<< ori_rms
+              << ", repetition_time: "<< time
+              << ", perf: "<< perf << std::endl;
+
+    return perf;
 
 }
 
@@ -106,7 +113,7 @@ double SteadyHandPerfEval::GetHapticAssistanceActivation(const
                                                          std::vector<double>
                                                          &perf_history) {
 
-    double lambda = 0.5;
+    double lambda = 0.8;
     // first element of perf_history is the mean perf of last session
     double n_reps_done = perf_history.size();
 
@@ -121,11 +128,12 @@ double SteadyHandPerfEval::GetHapticAssistanceActivation(const
     double tfd = 1- lambda*perf - (1-lambda)*last_rep_assistance_level;
 
     double assistance_act =
-            MAX(0, assist_feed_forward_curr - intrasession_delta/2*(2*tfd-1));
+            MAX(0, assist_feed_forward_curr - intrasession_delta*(2*tfd-1));
 
-    std::cout << "perf= " << perf << std::endl;
-    std::cout << "tfd = " << tfd << std::endl;
-    std::cout << "assistance_act = " << assistance_act << std::endl;
+    std::cout << "-------- Perf mean curr session= " << perf_mean_current <<
+                                                                    std::endl;
+    std::cout << "Perf mean incl last session= " << perf << ", TFD = " << tfd
+              << ", Assistance activation = " << assistance_act << std::endl;
 
     last_rep_assistance_level = assistance_act;
     return assistance_act;

@@ -41,7 +41,7 @@
         <!--<param name="show_image" value="false"/>-->
     <!--</node>-->
 
-    <!--&lt;!&ndash; Node recording the data&ndash;&gt;-->
+    <!-- Node recording the data-->
     <node pkg="atar" type="reporter" name="reporter" output="screen">
         <!--records data at the frequency of task_state topic-->
         <param name="number_of_arms" value="2"/>
