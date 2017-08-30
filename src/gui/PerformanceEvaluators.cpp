@@ -14,20 +14,24 @@
 
 
 SteadyHandPerfEval::SteadyHandPerfEval(uint n_session,
-                                       double last_performance) {
+                                       double last_sess_performance) {
 
 
     this->n_session=n_session;
-    last_session_perf_mean = last_performance;
+    last_session_perf_mean = last_sess_performance;
 
     assist_feed_forward_curr =
-            HapticAssistanceFeedForwardTerm(n_session, last_performance);
-    double assist_feed_forward_last =
-            HapticAssistanceFeedForwardTerm(n_session-1, last_performance);
+            HapticAssistanceFeedForwardTerm(n_session, last_sess_performance);
+    double assist_feed_forward_last = 0;
+    if(n_session>2)
+        assist_feed_forward_last =
+                HapticAssistanceFeedForwardTerm(n_session-1, last_sess_performance);
 
     intrasession_delta = assist_feed_forward_curr - assist_feed_forward_last;
 
     last_rep_assistance_level = assist_feed_forward_curr;
+    std::cout << "assist_feed_forward_last  = " << assist_feed_forward_last << std::endl;
+    std::cout << "assist_feed_forward_curr = " << assist_feed_forward_curr << std::endl;
 
 }
 
@@ -118,6 +122,10 @@ double SteadyHandPerfEval::GetHapticAssistanceActivation(const
 
     double assistance_act =
             MAX(0, assist_feed_forward_curr - intrasession_delta/2*(2*tfd-1));
+
+    std::cout << "perf= " << perf << std::endl;
+    std::cout << "tfd = " << tfd << std::endl;
+    std::cout << "assistance_act = " << assistance_act << std::endl;
 
     last_rep_assistance_level = assistance_act;
     return assistance_act;

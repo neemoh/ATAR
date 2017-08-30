@@ -515,10 +515,10 @@ void RosBridge::ResetTask(){
 
 
 void RosBridge::InitializeAdaptiveAssistance(
-        const double performance_initial_value,
+        const double last_session_perf,
         const uint n_session){
 
-    perf_eval = new SteadyHandPerfEval(n_session, performance_initial_value);
+    perf_eval = new SteadyHandPerfEval(n_session, last_session_perf);
 
     assistance_activation =
             perf_eval->GetHapticAssistanceActivation(perf_history);
