@@ -324,6 +324,7 @@ void MainWindow::on_stop_released()
 void MainWindow::on_button_repeat_clicked()
 {
     ros_obj.ResetCurrentAcquisition();
+    qDebug() << "Resetting current acquisition" ;
 
     std_msgs::Int8 msg;
     msg.data =  CE_RESET_ACQUISITION;

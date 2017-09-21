@@ -499,6 +499,16 @@ void RosBridge::CloseRecordingFile(){
 
 }
 
+void RosBridge::ResetCurrentAcquisition() {
+
+    ongoing_acq_buffer->clear();
+
+
+
+    if(perf_eval)
+        perf_eval->Reset();
+};
+
 void RosBridge::ResetTask(){
 
     repetition_num = 1;
@@ -507,7 +517,6 @@ void RosBridge::ResetTask(){
     if(recording){
         recording = false;
         ongoing_acq_buffer->clear();
-
         CloseRecordingFile();
         if(perf_eval)
             delete perf_eval;

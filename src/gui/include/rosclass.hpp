@@ -93,9 +93,7 @@ public:
     void SetRepetitionNumber(uint in) {
          repetition_num = in;}
 
-    void ResetCurrentAcquisition(){ongoing_acq_buffer->clear();
-        if(perf_eval)
-            perf_eval->Reset();};
+    void ResetCurrentAcquisition();
 
     void ResetTask();
 
