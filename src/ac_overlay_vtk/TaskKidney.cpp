@@ -164,7 +164,7 @@ TaskKidney::TaskKidney(const std::string stl_file_dir,
     // -------------------------------------------------------------------------
     // Stand MESH hq
     std::stringstream input_file_dir;
-    input_file_dir << stl_files_dir << std::string("tumor2.stl");
+    input_file_dir << stl_files_dir << std::string("task_kidney_tumor2.stl");
 
     vtkSmartPointer<vtkSTLReader> stand_mesh_reader =
             vtkSmartPointer<vtkSTLReader>::New();

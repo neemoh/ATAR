@@ -92,7 +92,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     float soft_pose[7] = {attention_center[0], attention_center[1],
                            attention_center[2]*2, 0.0, 0.0, 0.0, 1.0};
     std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("sphere.obj");
+    input_file_dir << mesh_files_dir << std::string("task_deformable_sphere.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
 
     soft_o0 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,

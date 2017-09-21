@@ -120,7 +120,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         size_t n_rings = 4;
         BulletVTKObject *rings[n_rings];
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("ring_D2cm_D5mm.obj");
+        input_file_dir << mesh_files_dir << std::string("task_Hook_ring_D2cm_D5mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
         float density = 50000;
         float friction = 5;
@@ -207,7 +207,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     {
         double pose[7]{0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("hook.obj");
+        input_file_dir << mesh_files_dir << std::string("task_hook_hook.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
         std::vector<double> dim; // not used
         float density = 50000;

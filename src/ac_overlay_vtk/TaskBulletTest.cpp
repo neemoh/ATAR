@@ -54,7 +54,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     for (int i = 0; i < planes_number; i++) {
 
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("arrowplane")
+        input_file_dir << mesh_files_dir << std::string("task_bullet_test_arrowplane")
                        << std::string(".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
@@ -105,7 +105,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     kine_dim = {0.005, 4*0.007};
 
     std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("orientation_arrow")
+    input_file_dir << mesh_files_dir << std::string("task_bullet_test_orientation_arrow")
                    << std::string(".obj");
     std::string mesh_file_dir_str = input_file_dir.str();
 

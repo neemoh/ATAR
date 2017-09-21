@@ -178,7 +178,7 @@ TaskSteadyHand::TaskSteadyHand(
     std::string mesh_file_dir_str;
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
-                   << std::string("task_steady_hand_stand2.obj");
+                   << std::string("task_steady_hand_stand.obj");
     mesh_file_dir_str = input_file_dir.str();
 
     // Define the rotation of the tube mesh
@@ -240,7 +240,7 @@ TaskSteadyHand::TaskSteadyHand(
 
         input_file_dir.str("");
         input_file_dir << mesh_files_dir
-                       << std::string("tube_quarter_mesh") << m+1 <<".obj";
+                       << std::string("task_steady_hand_tube_quarter_mesh") << m+1 <<".obj";
         mesh_file_dir_str = input_file_dir.str();
 
         tube_meshes[m] = new
@@ -260,7 +260,7 @@ TaskSteadyHand::TaskSteadyHand(
     // MESH thin
     input_file_dir.str("");
     input_file_dir << mesh_files_dir
-                   << std::string("tube_whole_thin_tris.obj");
+                   << std::string("task_steady_hand_tube_whole_thin.obj");
     mesh_file_dir_str = input_file_dir.str();
     tube_mesh_thin = new
         BulletVTKObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim,
@@ -302,7 +302,7 @@ TaskSteadyHand::TaskSteadyHand(
 
         input_file_dir.str("");
         //input_file_dir <<mesh_file_dir << std::string("torus_D10mm_d1.2mm.obj");
-        input_file_dir <<mesh_file_dir << std::string("torus_D10mm_d1.2mm"
+        input_file_dir <<mesh_file_dir << std::string("task_steady_hand_torus_D10mm_d1.2mm"
                                                           ".obj");
 
         mesh_file_dir_str = input_file_dir.str();

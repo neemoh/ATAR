@@ -172,7 +172,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         float friction = 20;
         float density = 90000; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("needle_L3cm_d3mm_mesh"
+        input_file_dir << mesh_files_dir << std::string("task_needle_needle_L3cm_d3mm"
                                                                 ".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
@@ -202,7 +202,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         float friction = 3;
         float density = 0; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("suture_plane.obj");
+        input_file_dir << mesh_files_dir << std::string("task_needle_suture_plane.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         BulletVTKObject suture_plane_1(ObjectShape::MESH, ObjectType::DYNAMIC,
@@ -223,7 +223,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         float friction = 3;
         float density = 0; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("suture_plane.obj");
+        input_file_dir << mesh_files_dir << std::string("task_needle_suture_plane.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         BulletVTKObject suture_plane_2(ObjectShape::MESH, ObjectType::DYNAMIC,
@@ -245,7 +245,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         float friction = 20;
         float density = 50000; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("ring_D2cm_d4mm.obj");
+        input_file_dir << mesh_files_dir << std::string("task_needle_ring_D2cm_D5mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh = new
