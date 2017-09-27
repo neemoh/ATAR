@@ -15,7 +15,7 @@ class BulletVTKSoftObject {
 public:
     BulletVTKSoftObject(btSoftBodyWorldInfo &world_info,
                         const std::string mesh_file_dir,
-                        float *pose, float density,
+                        KDL::Frame pose, float density,
                         float friction);
 
     ~BulletVTKSoftObject();

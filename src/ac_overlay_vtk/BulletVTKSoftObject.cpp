@@ -22,16 +22,11 @@ inline bool FileExists (const std::string& name) {
 
 BulletVTKSoftObject::BulletVTKSoftObject(btSoftBodyWorldInfo &world_info,
                                          const std::string mesh_file_dir,
-                                         float *pose,
+                                         KDL::Frame pose,
                                          float density,
                                          float friction) {
 
-
-
-    double volume = 0.0;
     std::string shape_string; // for debug report
-
-
 
     if(!FileExists(mesh_file_dir.c_str())) {
         ROS_ERROR("Can't open mesh file: %s", mesh_file_dir.c_str());
@@ -75,19 +70,16 @@ BulletVTKSoftObject::BulletVTKSoftObject(btSoftBodyWorldInfo &world_info,
 //    body_->generateBendingConstraints(2,pm);
     body_->generateBendingConstraints(2);
     body_->m_cfg.piterations	=	2;
-    body_->m_cfg.kDF			=	0.5;
+    body_->m_cfg.kDF			=	0.9;
     body_->m_cfg.collisions	|=	btSoftBody::fCollision::VF_SS;
     body_->randomizeConstraints();
 
     btMatrix3x3	m;
     m.setEulerZYX(1.f, 0.f, 0.f);
-    body_->transform(btTransform(m,
-                                 btVector3(pose[0]*B_DIM_SCALE,
-                                           pose[1]*B_DIM_SCALE,
-                                           pose[2]*B_DIM_SCALE)));
-//    psb->scale(btVector3(6,6,6));
+    body_->transform(btTransform(m, btVector3((float)pose.p[0]*B_DIM_SCALE,
+                                              (float)pose.p[1]*B_DIM_SCALE,
+                                              (float)pose.p[2]*B_DIM_SCALE)));
     body_->setTotalMass(0.1);
-
 
 //    body_->m_cfg.viterations=20;
 //    body_->m_cfg.piterations=20;
@@ -96,8 +88,6 @@ BulletVTKSoftObject::BulletVTKSoftObject(btSoftBodyWorldInfo &world_info,
 //    sb->setMass(0, 0);
     body_->getCollisionShape()->setMargin(0.08);
 //    sb->generateBendingConstraints(3);
-
-
 
     // Create a polydata object
     vtkSmartPointer<vtkPolyData> polyData =

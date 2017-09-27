@@ -46,7 +46,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     board_dimensions[0]  = 0.1;
     board_dimensions[1]  = 0.1;
     board_dimensions[2]  = 0.02;
-    double friction = 0.1;
+    float friction = 0.1;
 
     double board_pose[7] = {attention_center[0] ,
         attention_center[1],
@@ -69,7 +69,6 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // SOFT BODY
-    float l = float(0.04 * B_DIM_SCALE);
     dynamics_world->setGravity(btVector3(0, 0, btScalar(-9.8)));
 
     sb_w_info = new btSoftBodyWorldInfo;
@@ -89,30 +88,36 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
 
     float density = 20000;
-    float soft_pose[7] = {attention_center[0], attention_center[1],
-                           attention_center[2]*2, 0.0, 0.0, 0.0, 1.0};
+    KDL::Frame soft_pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
+            , KDL::Vector(attention_center[0], attention_center[1], attention_center[2]) );
     std::stringstream input_file_dir;
     input_file_dir << mesh_files_dir << std::string("task_deformable_sphere.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
 
     soft_o0 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
                                      density, friction);
+    soft_o0->GetActor()->GetProperty()->SetDiffuse(0.5);
     dynamics_world->addSoftBody(soft_o0->GetBody());
     actors.push_back(soft_o0->GetActor());
 
-    soft_pose[0]+=0.03;
-    soft_pose[2]+=0.05;
+    soft_pose.p[0]+=0.03;
+    soft_pose.p[2]+=0.05;
     soft_o1 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
                                      density, friction);
+    soft_o1->GetActor()->GetProperty()->SetDiffuse(0.5);
+
     dynamics_world->addSoftBody(soft_o1->GetBody());
     actors.push_back(soft_o1->GetActor());
 
 
 
-    soft_pose[0]-=0.06;
-    soft_pose[2]+=0.05;
+    soft_pose.p[0]-=0.06;
+    soft_pose.p[2]+=0.05;
     soft_o2 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
                                      density, friction);
+//    soft_o2->GetActor()->GetProperty()->SetSpecular(0);
+    soft_o2->GetActor()->GetProperty()->SetDiffuse(0.5);
+//    soft_o2->GetActor()->GetProperty()->SetSpecularPower(127);
     dynamics_world->addSoftBody(soft_o2->GetBody());
     actors.push_back(soft_o2->GetActor());
 
@@ -120,41 +125,41 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     //// -------------------------------------------------------------------------
     //// Create spheres
-    //int cols = 3;
-    //int rows = 2;
-    //double density = 4; // kg/cm3
-    //double * sphere_pose;
-    //
-    //BulletVTKObject* spheres[cols*rows];
-    //for (int i = 0; i < rows; ++i) {
-    //
-    //    for (int j = 0; j < cols; ++j) {
-    //
-    //        std::vector<double> dim = {0.004};
-    //
-    //        sphere_pose = new double[7]{
-    //            attention_center[0] + (double)i * 4*dim[0] + (double)j * dim[0]/2,
-    //            attention_center[1],
-    //            attention_center[2] + 0.12 + dim[0] *1.5* (double)j,
-    //            0, 0, 0, 1};
-    //
-    //        spheres[i*rows+j] =
-    //            new BulletVTKObject(
-    //                ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, sphere_pose,
-    //                density, NULL, friction
-    //            );
-    //        delete [] sphere_pose;
-    //        double ratio = (double)i/4.0;
-    //        spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
-    //            0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);
-    //        spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-    //        spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
-    //
-    //        dynamics_world->addRigidBody(spheres[i*rows+j]->GetBody());
-    //        actors.push_back(spheres[i*rows+j]->GetActor());
-    //
-    //    }
-    //}
+    int cols = 3;
+    int rows = 2;
+//    double density = 4; // kg/cm3
+    double * sphere_pose;
+
+    BulletVTKObject* spheres[cols*rows];
+    for (int i = 0; i < rows; ++i) {
+
+        for (int j = 0; j < cols; ++j) {
+
+            std::vector<double> dim = {0.004};
+
+            sphere_pose = new double[7]{
+                attention_center[0] + (double)i * 4*dim[0] + (double)j * dim[0]/2,
+                attention_center[1],
+                attention_center[2] + 0.12 + dim[0] *1.5* (double)j,
+                0, 0, 0, 1};
+
+            spheres[i*rows+j] =
+                new BulletVTKObject(
+                    ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, sphere_pose,
+                    density, NULL, friction
+                );
+            delete [] sphere_pose;
+            double ratio = (double)i/4.0;
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
+                0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecular(1);
+            spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(10);
+
+            dynamics_world->addRigidBody(spheres[i*rows+j]->GetBody());
+            actors.push_back(spheres[i*rows+j]->GetActor());
+
+        }
+    }
 
 //    // -------------------------------------------------------------------------
 //    // Create cubes
@@ -451,32 +456,12 @@ void TaskDeformable::InitBullet() {
 
 
 void TaskDeformable::StepDynamicsWorld() {
-    ///-----stepsimulation_start-----
 
     double time_step = (ros::Time::now() - time_last).toSec();
 
-    // simulation seems more realistic when time_step is halved right now!
-    dynamics_world->stepSimulation(btScalar(time_step), 60, 1/240.f);
+    dynamics_world->stepSimulation(btScalar(time_step), 60, 1/120.f);
     time_last = ros::Time::now();
 
-//    //print positions of all objects
-//    for (int j = dynamics_world->getNumCollisionObjects() - 1; j >= 0; j--)
-//    {
-//        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[j];
-//        btRigidBody* body_ = btRigidBody::upcast(obj);
-//        btTransform trans;
-//        if (body_ && body_->getMotionState())
-//        {
-//            body_->getMotionState()->getWorldTransform(trans);
-//        }
-//        else
-//        {
-//            trans = obj->getWorldTransform();
-//        }
-//
-//            heights[j] = trans.getOrigin().z();
-//        heights2[j] = actors[j]->GetMatrix()->Element[2][3];
-//    }
 
 }
 
