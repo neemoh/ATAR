@@ -17,18 +17,11 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
     float gripper_density = 500000; // kg/m3
     float gripper_friction = 50;
 
-    double qx, qy, qz, qw;
-    init_pose.M.GetQuaternion(qx, qy, qz, qw);
-
     // create the kinematic link
     {
-        double gripper_pose[7]{init_pose.p[0], init_pose.p[1],
-                               init_pose.p[2], qx, qy, qz, qw};
-
-
         gripper_links[0] =
                 new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                    link_dims_[0], gripper_pose,
+                                    link_dims_[0], init_pose,
                                     0.0, 0);
         gripper_links[0]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f,
                                                               0.7f);
@@ -42,18 +35,9 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
 
     // create jaw 1
     {
-
-        auto gripper_pose_position = init_pose*KDL::Vector(0.f,
-                                                           -jaws_axis_y_offset,
-                                                           -link0_axis_z_offset);
-        double gripper_pose[7]{gripper_pose_position.x(),
-                               gripper_pose_position.y(),
-                               gripper_pose_position.z(),
-                               qx, qy, qz, qw};
-
         gripper_links[1] =
                 new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
-                                    link_dims_[0], gripper_pose,
+                                    link_dims_[0], init_pose,
                                     gripper_density, 1, gripper_friction,
                                     &mesh_file_dir_str);
         gripper_links[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
@@ -71,12 +55,9 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
         KDL::Rotation jaw_2_rot;
         jaw_2_rot.DoRotZ(M_PI);
         jaw_2_rot = init_pose.M * jaw_2_rot;
-        jaw_2_rot.GetQuaternion(qx, qy, qz, qw);
 
-        double gripper_pose[7]{gripper_pose_position.x(),
-                               gripper_pose_position.y(),
-                               gripper_pose_position.z(),
-                               qx, qy, qz, qw};
+        KDL::Frame gripper_pose(jaw_2_rot, gripper_pose_position);
+
         gripper_links[2] =
             new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
                                 link_dims_[0], gripper_pose,

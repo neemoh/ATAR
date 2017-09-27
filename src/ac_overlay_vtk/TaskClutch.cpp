@@ -35,7 +35,6 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
     board_dimensions[0] = 0.12;
     board_dimensions[1] = 0.12;
     board_dimensions[2] = 0.005;
-    double *pose;
     double density;
     double stiffnes = 1000;
     double damping = 20;
@@ -51,8 +50,6 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
     rot.UnitY((-direction)*rot.UnitX());
     rot.UnitX(rot.UnitY()*rot.UnitZ());
 
-    double x, y, z, w;
-    rot.GetQuaternion(x, y, z, w);
 
     box_pose.x(0);
     box_pose.y(0);
@@ -60,9 +57,8 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
 
     box_pose=rot*box_pose;
 
-    pose = new double[7]{
-        box_pose.x() , box_pose.y(), box_pose.z(), x, y, z, w
-    };
+    KDL::Frame pose = KDL::Frame(rot, KDL::Vector(box_pose.x() , box_pose.y()
+            , box_pose.z()));
 
     std::vector<double> dim = {
         board_dimensions[0]*3, board_dimensions[1]*3, board_dimensions[2]
@@ -88,7 +84,7 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
     board_dimensions[0] = 0.12 / cols;
     board_dimensions[1] = 0.12 / rows;
     board_dimensions[2] = 0.005;
-    height=board_dimensions[2];
+    height = float(board_dimensions[2]);
 
     dim = {
         board_dimensions[0], board_dimensions[1],  board_dimensions[2]
@@ -106,18 +102,12 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
             KDL::Vector position;
             position=rot*box_pose;
 
-
-
-            pose = new double[7]{
-                position.x(), position.y(), position.z(), x, y, z, w
-            };
+            pose.p = KDL::Vector(position.x(), position.y(), position.z());
 
             chessboard[i * rows + j] =
                     new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                         dim, pose, 0.0, 0, friction,
                                         NULL);
-
-            delete[] pose;
 
             if (index == 0) {
                 chessboard[i * rows + j]->GetActor()->GetProperty()->SetColor(
@@ -138,19 +128,15 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
 
         box_n = std::rand() % (cols * rows) +1;
 
-
         // -------------------------------------------------------------------------
         // Create kinematic pointer
-
-        stiffnes = 1000;
-        damping = 100;
         friction = 50.1;
 
-        pose = new double[7]{0, 0, 0, 0, 0, 0, 1};
         kine_pointer_dim = {2 * 0.0025};
         kine_p =
                 new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
-                                    kine_pointer_dim, pose, 0.0, 0, friction,
+                                    kine_pointer_dim, KDL::Frame(), 0.0, 0,
+                                    friction,
                                     NULL);
         dynamicsWorld->addRigidBody(kine_p->GetBody());
         kine_p->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);

@@ -25,11 +25,10 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
-    double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
     BulletVTKObject* floor= new BulletVTKObject(ObjectShape::STATICPLANE,
                                                 ObjectType::DYNAMIC, floor_dims,
-                                                dummy_pose, 0.0, 0, 0,
+                                                KDL::Frame(), 0.0, 0, 0,
                                                 NULL);
     dynamics_world->addRigidBody(floor->GetBody());
 
@@ -48,10 +47,10 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     board_dimensions[2]  = 0.02;
     float friction = 0.1;
 
-    double board_pose[7] = {attention_center[0] ,
+    KDL::Frame board_pose;
+    board_pose.p = KDL::Vector(attention_center[0] ,
         attention_center[1],
-        -board_dimensions[2]/2,
-        0, 0, 0, 1};
+        -board_dimensions[2]/2);
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
@@ -128,7 +127,6 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     int cols = 3;
     int rows = 2;
 //    double density = 4; // kg/cm3
-    double * sphere_pose;
 
     BulletVTKObject* spheres[cols*rows];
     for (int i = 0; i < rows; ++i) {
@@ -137,18 +135,16 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
             std::vector<double> dim = {0.004};
 
-            sphere_pose = new double[7]{
-                attention_center[0] + (double)i * 4*dim[0] + (double)j * dim[0]/2,
-                attention_center[1],
-                attention_center[2] + 0.12 + dim[0] *1.5* (double)j,
-                0, 0, 0, 1};
+            KDL::Frame sphere_pose;
+            sphere_pose.p = KDL::Vector(attention_center[0] + (double)i * 4*dim[0] + (double)j * dim[0]/2,
+                                        attention_center[1],
+                                        attention_center[2] + 0.12 + dim[0] *1.5* (double)j);
 
             spheres[i*rows+j] =
                 new BulletVTKObject(
                     ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, sphere_pose,
                     density, NULL, friction
                 );
-            delete [] sphere_pose;
             double ratio = (double)i/4.0;
             spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
                 0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);
@@ -253,7 +249,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     std::vector<double> kine_sph_dim = {0.002};
     kine_sphere_0 =
             new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
-                                kine_sph_dim, dummy_pose, 0.0, 0, friction,
+                                kine_sph_dim, KDL::Frame(), 0.0, 0, friction,
                                 NULL);
     dynamics_world->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
@@ -264,7 +260,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     kine_sphere_1 =
             new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
-                                kine_sph_dim, dummy_pose, 0.0, 0, friction,
+                                kine_sph_dim, KDL::Frame(), 0.0, 0, friction,
                                 NULL);
 
     dynamics_world->addRigidBody(kine_sphere_1->GetBody());

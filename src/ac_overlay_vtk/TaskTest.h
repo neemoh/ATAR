@@ -103,8 +103,6 @@ private:
     double peg_dimensions[3];
     double sides;
     bool out[4];
-    double actual_distance;
-    double target_distance;
     ros::Time start_pause;
     BulletVTKObject* kine_box;
     BulletVTKObject* kine_scoop;
@@ -115,14 +113,11 @@ private:
     BulletVTKObject* peg3;
     BulletVTKObject* cubes[4];
     bool count = 0;
-    double* peg_pose1;
-    double* peg_pose2;
-    double* peg_pose3;
-    double* peg_pose4;
-    double* peg_p1;
-    double* peg_p2;
-    double* peg_p3;
-    double* peg_p4;
+    KDL::Frame peg_pose1;
+    KDL::Frame peg_pose2;
+    KDL::Frame peg_pose3;
+    KDL::Frame peg_pose4;
+
     BulletVTKMotionState* motion_state_;
     std::vector<double> target_pos;
     KDL::Vector previous_point;

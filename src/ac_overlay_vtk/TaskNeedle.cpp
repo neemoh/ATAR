@@ -39,11 +39,10 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     {
         double friction = 0.5;
 
-        double pose[7]{
-                board_dimensions[0] / 2.45, board_dimensions[1] / 2.78,
-                -board_dimensions[2] / 2, 0, 0, 0, 1
-        };
-
+        KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
+                        KDL::Vector(board_dimensions[0] / 2.45,
+                                    board_dimensions[1] / 2.78,
+                                    -board_dimensions[2] / 2));
         std::vector<double> dim = {
                 board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
@@ -65,13 +64,11 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // static floor
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
-    double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
     BulletVTKObject *floor = new BulletVTKObject(ObjectShape::STATICPLANE,
                                                  ObjectType::DYNAMIC,
-                                                 floor_dims, dummy_pose, 0.0, 0,
-                                                 0,
-                                                 NULL);
+                                                 floor_dims, KDL::Frame(), 0.0,
+                                                 0, 0, NULL);
     dynamics_world->addRigidBody(floor->GetBody());
 
     //// -------------------------------------------------------------------------
@@ -166,7 +163,8 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     //// Create needle mesh
     {
-        double pose[7]{0.04, 0.11, 0.03, 0.7, 0, 0.7, 0};
+        KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
+                        KDL::Vector(0.04, 0.11, 0.03));
         std::vector<double> _dim = {0.002};
 
         float friction = 20;
@@ -196,7 +194,8 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     //// Create suture plane 1 mesh
     {
-        double pose[7]{0.055, 0.07, 0.02, 0.5, 0.5, 0.5, 0.5};
+        KDL::Frame pose(KDL::Rotation::Quaternion(0.5, 0.5, 0.5, 0.5),
+                        KDL::Vector(0.055, 0.07, 0.02));
         std::vector<double> _dim = {0.002};
 
         float friction = 3;
@@ -217,7 +216,8 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     //// Create suture plane 1 mesh
     {
-        double pose[7]{0.08, 0.07, 0.02, 0.5, 0.5, 0.5, 0.5};
+        KDL::Frame pose(KDL::Rotation::Quaternion(0.5, 0.5, 0.5, 0.5),
+                        KDL::Vector(0.08, 0.07, 0.02));
         std::vector<double> _dim = {0.002};
 
         float friction = 3;
@@ -239,7 +239,8 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // -------------------------------------------------------------------------
     //// Create ring mesh
     {
-        double pose[7]{0.07, 0.02, 0.08, 0.7, 0, 0.7, 0};
+        KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
+                        KDL::Vector(0.07, 0.02, 0.08));
         std::vector<double> _dim = {0.002};
 
         float friction = 20;
@@ -276,7 +277,6 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     {
         float gripper_density = 0; // kg/m3
         float gripper_friction = 10;
-        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
         gripper_link_dims =
                 {{0.003, 0.003, 0.005},
                  {0.004, 0.001, 0.009},
@@ -288,7 +288,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         for (int i = 0; i < 5; ++i) {
             right_gripper_links[i] =
                     new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                        gripper_link_dims[i], gripper_pose,
+                                        gripper_link_dims[i], KDL::Frame(),
                                         gripper_density, 0, gripper_friction,
                                         NULL);
             dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
@@ -304,7 +304,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         for (int i = 0; i < 5; ++i) {
             left_gripper_links[i] =
                     new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                        gripper_link_dims[i], gripper_pose,
+                                        gripper_link_dims[i], KDL::Frame(),
                                         gripper_density, 0, gripper_friction,
                                         NULL);
             dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());

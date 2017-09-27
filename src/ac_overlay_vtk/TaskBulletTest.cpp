@@ -11,18 +11,17 @@
 
 
 TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
-                       const bool show_ref_frames, const bool biman,
-                       const bool with_guidance)
-    :
-    VTKTask(show_ref_frames, biman, with_guidance, 0) ,
-    time_last(ros::Time::now())
+                               const bool show_ref_frames, const bool biman,
+                               const bool with_guidance)
+        :
+        VTKTask(show_ref_frames, biman, with_guidance, 0) ,
+        time_last(ros::Time::now())
 {
 
 
 
     InitBullet();
 
-    double *pose;
     double density = 120000;
     double friction = 0.5;
     //std::vector<int> first_path = {1, 3, 2, 0};
@@ -51,14 +50,13 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //double x, y, z, w;
     //rot.GetQuaternion(x, y, z, w);
     //
+    KDL::Frame pose;
     for (int i = 0; i < planes_number; i++) {
 
         std::stringstream input_file_dir;
         input_file_dir << mesh_files_dir << std::string("task_bullet_test_arrowplane")
                        << std::string(".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
-
-        pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
 
         plane[i] = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
                                        _dim, pose, 0.0, 0, friction,
@@ -100,8 +98,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     friction = 0.1;
 
     pointer_posit = cam_position + (0.05 + 0.16)*direction;
-    pose = new double[7] {pointer_posit[0], pointer_posit[1], pointer_posit[2],
-    0, 0, 0, 1};
+    pose.p = KDL::Vector(pointer_posit[0], pointer_posit[1],
+                         pointer_posit[2]);
     kine_dim = {0.005, 4*0.007};
 
     std::stringstream input_file_dir;
@@ -121,15 +119,15 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     // Direction of movement
 
     movement =  {pointer_posit[0] - starting_point*direction[0],
-        pointer_posit[1] - starting_point*direction[1],
-        pointer_posit[2] - starting_point*direction[2] + 0.05};
+                 pointer_posit[1] - starting_point*direction[1],
+                 pointer_posit[2] - starting_point*direction[2] + 0.05};
     movement = movement/movement.Norm();
 }
 
 
 //------------------------------------------------------------------------------
 void TaskBulletTest::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                           const int tool_id) {
+                                               const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
 
@@ -161,34 +159,34 @@ void TaskBulletTest::UpdateActors() {
     double x, y, z, w;
     tool_pose.M.GetQuaternion(x, y, z, w);
     double pointer_pose[7] = {
-        pointer_posit[0], pointer_posit[1], pointer_posit[2], x, y, z, w
+            pointer_posit[0], pointer_posit[1], pointer_posit[2], x, y, z, w
     };
     kine_p->SetKinematicPose(pointer_pose);
 
     // Move the plane towards the user
     double pose[7] = {
-        pointer_posit[0] + (starting_point - count) * direction[0],
-        pointer_posit[1] + (starting_point - count) * direction[1],
-        pointer_posit[2] + (starting_point - count) * direction[2],
-        0, 0, 0, 1};
+            pointer_posit[0] + (starting_point - count) * direction[0],
+            pointer_posit[1] + (starting_point - count) * direction[1],
+            pointer_posit[2] + (starting_point - count) * direction[2],
+            0, 0, 0, 1};
 
     plane[index]->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(pose));
     KDL::Vector point = {pointer_pose[0], pointer_pose[1], pointer_pose[2]};
     KDL::Vector center = {
-        plane[index]->GetActor()->GetCenter()[0]
-        , plane[index]->GetActor()->GetCenter()[1]
-        , plane[index]->GetActor()->GetCenter()[2]
+            plane[index]->GetActor()->GetCenter()[0]
+            , plane[index]->GetActor()->GetCenter()[1]
+            , plane[index]->GetActor()->GetCenter()[2]
     };
 
     int num = index + 1;
     if (index == 2)
         num = 0;
     double _pose[7] = {
-        pose[0] - (point - cam_position).Norm(),
-        pose[1] - (point - cam_position).Norm(),
-        pose[2] - (point - cam_position).Norm(),
-        0, 0, 0, 1
-        };
+            pose[0] - (point - cam_position).Norm(),
+            pose[1] - (point - cam_position).Norm(),
+            pose[2] - (point - cam_position).Norm(),
+            0, 0, 0, 1
+    };
     plane[num]->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(_pose));
     plane[num]->GetActor()->GetProperty()->SetOpacity(1.0);
     if (dot(direction, center - point) <= 0.0 &&
@@ -347,30 +345,30 @@ void TaskBulletTest::ExitChecking() {
 
 
 
-        //if (transf[1] >= -kine_dim[1]/2) {
-        //    if (path == 3){
-        //        ring[index[target][path]]->GetActor()->GetProperty()->SetColor
-        //            (Green);
-        //    }
-        //    else {
-        //        ring[index[target][path
-        //            + 1]]->GetActor()->GetProperty()->SetColor(Yellow);
-        //        ring[index[target][path]]->GetActor()->GetProperty()->SetColor(Green);
-        //    }
-        //}
-        //if (transf[1] < -kine_dim[1]/2){
-        //    ring[index[target][path]]->GetActor()->GetProperty()->SetColor(1.0, 1.0, 1.0);
-        //    path = path + 1;
-        //    task_state = TaskState::Entry;
-        //    touch = 0;
-        //    if (path > 3){
-        //        target = std::rand() % 3;
-        //        path = 0;
-        //        task_state = TaskState::Idle;
-        //        n_rep=n_rep+(unsigned char)1;
-        //        arrow->GetActor()->GetProperty()->SetOpacity(1);
-        //    }
-        //}
+    //if (transf[1] >= -kine_dim[1]/2) {
+    //    if (path == 3){
+    //        ring[index[target][path]]->GetActor()->GetProperty()->SetColor
+    //            (Green);
+    //    }
+    //    else {
+    //        ring[index[target][path
+    //            + 1]]->GetActor()->GetProperty()->SetColor(Yellow);
+    //        ring[index[target][path]]->GetActor()->GetProperty()->SetColor(Green);
+    //    }
+    //}
+    //if (transf[1] < -kine_dim[1]/2){
+    //    ring[index[target][path]]->GetActor()->GetProperty()->SetColor(1.0, 1.0, 1.0);
+    //    path = path + 1;
+    //    task_state = TaskState::Entry;
+    //    touch = 0;
+    //    if (path > 3){
+    //        target = std::rand() % 3;
+    //        path = 0;
+    //        task_state = TaskState::Idle;
+    //        n_rep=n_rep+(unsigned char)1;
+    //        arrow->GetActor()->GetProperty()->SetOpacity(1);
+    //    }
+    //}
 }
 
 
@@ -409,10 +407,10 @@ void TaskBulletTest::FindAndPublishDesiredToolPose() {
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                             ("/PSM1/tool_pose_desired", 10);
+            ("/PSM1/tool_pose_desired", 10);
     if(bimanual)
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                 ("/PSM2/tool_pose_desired", 10);
+                ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(200);
 

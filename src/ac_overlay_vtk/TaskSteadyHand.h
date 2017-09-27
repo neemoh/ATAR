@@ -165,7 +165,7 @@ private:
     std::string slave_names[2];
     KDL::Frame *slave_frame_to_world_frame_tr;
     Colors colors;
-    KDL::Frame tube_frame;
+    KDL::Frame pose_tube;
     //KDL::Vector idle_point;
     KDL::Vector start_point;
     KDL::Vector end_point;

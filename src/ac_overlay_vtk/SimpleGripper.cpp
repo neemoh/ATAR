@@ -20,7 +20,7 @@ SimpleGripper::SimpleGripper(
 
         gripper_links[i] =
                 new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                    link_dims_[i], gripper_pose,
+                                    link_dims_[i], KDL::Frame(),
                                     gripper_density, 0, gripper_friction,
                                     NULL);
         gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);

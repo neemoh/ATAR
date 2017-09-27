@@ -30,8 +30,10 @@ inline bool FileExists (const std::string& name) {
 }
 
 BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
-                                 std::vector<double> dimensions, double pose[],
-                                 double density, const int id, double friction, void *data)
+                                 std::vector<double> dimensions,
+                                 const KDL::Frame &pose,
+                                 double density, const int id, double friction,
+                                 void *data)
         : object_type_(o_type), id_(id)
 {
 
@@ -271,7 +273,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
     // rigid body_ is dynamic if and only if mass is non zero, otherwise static
 
     if(object_type_==NOPHYSICS)
-        actor_->SetUserMatrix(PoseArrayToVTKMatrix(pose));
+        actor_->SetUserMatrix(KDLFrameToVTKMatrix(pose));
     else    {
 
         btScalar bt_mass = float(volume * density);
@@ -280,7 +282,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         btVector3 local_inertia(0, 0, 0);
 
         if (isStatic)
-            actor_->SetUserMatrix(PoseArrayToVTKMatrix(pose));
+            actor_->SetUserMatrix(KDLFrameToVTKMatrix(pose));
 
         if (!isStatic && (object_type_ != ObjectType::KINEMATIC))
             // Set initial pose of graphical representation
@@ -398,6 +400,22 @@ vtkSmartPointer<vtkMatrix4x4> PoseArrayToVTKMatrix(double *pose) {
             out->SetElement(i, j, k.M(i,j));
         }
         out->SetElement(i, 3, k.p[i]);
+    }
+
+    return out;
+}
+//------------------------------------------------------------------------------
+vtkSmartPointer<vtkMatrix4x4> KDLFrameToVTKMatrix(const KDL::Frame &pose) {
+
+    vtkSmartPointer<vtkMatrix4x4> out =
+            vtkSmartPointer<vtkMatrix4x4>::New();
+
+    // Convert to VTK matrix.
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            out->SetElement(i, j, pose.M(i,j));
+        }
+        out->SetElement(i, 3, pose.p[i]);
     }
 
     return out;

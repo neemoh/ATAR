@@ -34,16 +34,12 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     board_dimensions[0]  = 0.48;
     board_dimensions[1]  = 0.54;
     board_dimensions[2]  = 0.05;
-    double *pose;
     double density;
-    double stiffnes = 1000;
-    double damping = 20;
     double friction = 6;
 
-    pose= new double[7] {board_dimensions[0]/2,
-        board_dimensions[1] / 2,
-        0,
-        0, 0, 0, 1};
+    KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                             KDL::Vector(board_dimensions[0]/2,
+        board_dimensions[1] / 2, 0) );
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
@@ -169,13 +165,8 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
     // -------------------------------------------------------------------------
     // Create kinematic box
-
-    stiffnes = 1000;
-    damping= 100;
     friction = 50.1;
 
-
-    pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     std::vector<double> kine_box_dim = {0.005, 0.005, 0.02};
     kine_box =
             new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
@@ -220,22 +211,18 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
     // Set cubic pegs params
     density = 12;
-    stiffnes = 1000;
-    damping = 20;
     friction = 100;
 
     // Set spheric pegs params
-    double stiffnes_sphere = 10;
-    double damping_sphere = 10;
     double friction_sphere = 0.2;
 
     if (peg_type==1){
         // -------------------------------------------------------------------------
         // Create sphere 1
 
-        peg_pose1 = new double[7]{
-            0.04, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
+        peg_pose1 = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                        KDL::Vector(0.04, 0.04,
+                                    board_dimensions[2]/2+peg_dimensions[2]/2) );
 
         std::vector<double> peg_SPHERE_dimension = {peg_dimensions[0] / 2};
 
@@ -253,10 +240,8 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
         // -------------------------------------------------------------------------
         // Create sphere 2
 
-        peg_pose2 = new double[7]{
-            0.08, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
+        peg_pose2 = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                             KDL::Vector( 0.08, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2) );
 
         peg2 = new BulletVTKObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
                                    peg_SPHERE_dimension, peg_pose2, density, 0,
@@ -270,11 +255,8 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
         // -------------------------------------------------------------------------
         // Create sphere 3
-
-        peg_pose3 = new double[7]{
-            0.04, 0.08, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
+        peg_pose3 = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                             KDL::Vector(  0.04, 0.08, board_dimensions[2]/2+peg_dimensions[2]/2) );
 
         peg3 = new BulletVTKObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
                                    peg_SPHERE_dimension, peg_pose3, density, 0,
@@ -288,10 +270,10 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
         // -------------------------------------------------------------------------
         // Create sphere 4
+        peg_pose4 = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                             KDL::Vector(  0.06, 0.06,
+                                           board_dimensions[2]/2+peg_dimensions[2]/2) );
 
-        peg_pose4 = new double[7]{
-            0.06, 0.06, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
 
         peg4 = new BulletVTKObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
                                    peg_SPHERE_dimension, peg_pose4, density, 0,
@@ -309,10 +291,9 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
         // -------------------------------------------------------------------------
         // Create  cubic peg1
 
-        peg_pose1 = new double[7]{
-            0.0, 0.0, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
+        KDL::Frame peg_pose1(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                             KDL::Vector(0.0, 0.0,
+                                         board_dimensions[2]/2+peg_dimensions[2]/2) );
         std::vector<double> peg_dim = {
             peg_dimensions[0], peg_dimensions[1], peg_dimensions[2]
         };
@@ -329,9 +310,10 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
         // -------------------------------------------------------------------------
         // Create cubic peg2
 
-        peg_pose2 = new double[7]{
-            0.04, 0.0, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
+
+        KDL::Frame peg_pose2(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                             KDL::Vector(0.04, 0.0,
+                                         board_dimensions[2]/2+peg_dimensions[2]/2) );
 
         peg2 = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                    peg_dim, peg_pose2, density, 0, friction,
@@ -345,10 +327,9 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
         // -------------------------------------------------------------------------
         // Create cubic peg3
 
-        peg_pose3 = new double[7]{
-            0.0, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
-
+        KDL::Frame peg_pose3(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                             KDL::Vector(0.0, 0.04,
+                                         board_dimensions[2]/2+peg_dimensions[2]/2) );
         peg3 = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                    peg_dim, peg_pose3, density, 0, friction,
                                    NULL);
@@ -360,10 +341,9 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
         // -------------------------------------------------------------------------
         // Create cubic peg4
-
-        peg_pose4 = new double[7]{
-            0.02, 0.02, board_dimensions[2]/2+peg_dimensions[2]/2, 0, 0, 0, 1
-        };
+        KDL::Frame peg_pose4(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
+                             KDL::Vector(0.02, 0.02,
+                                         board_dimensions[2]/2+peg_dimensions[2]/2) );
 
         peg4 = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                    peg_dim, peg_pose4, density, 0, friction,
@@ -409,8 +389,6 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     // Create a static target made of cubes
 
     sides = peg_dimensions[0]+0.002;
-    stiffnes = 1000;
-    damping = 100;
     friction = 0.51;
     std::vector<double> dim1 = {sides/2, 3*sides-0.5*sides, 2*sides};
     std::vector<double> dim2 = {2*sides-0.5*sides, sides/2, 2*sides};
@@ -419,8 +397,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
     // Create Cube1
 
-    pose = new double[7] {target_pos[0]+sides, target_pos[1], target_pos[2],
-        0, 0, 0, 1};
+    pose.p  = KDL::Vector(target_pos[0]+sides, target_pos[1], target_pos[2]);
 
     cubes[0] = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim1,
                                    pose, 0.0, 0, friction,
@@ -432,8 +409,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
     // Create Cube2
 
-    pose = new double[7] {target_pos[0], target_pos[1]-sides, target_pos[2],
-        0, 0, 0, 1};
+    pose.p  = KDL::Vector(target_pos[0], target_pos[1]-sides, target_pos[2]);
 
     cubes[1] = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim2,
                                    pose, 0.0, 0, friction,
@@ -444,9 +420,8 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     actors.push_back(cubes[1]->GetActor());
 
     // Create Cube3
+    pose.p  = KDL::Vector(target_pos[0], target_pos[1]+sides, target_pos[2]);
 
-    pose = new double[7] {target_pos[0], target_pos[1]+sides, target_pos[2],
-        0, 0, 0, 1};
 
     cubes[2] = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim2,
                                    pose, 0.0, 0, friction,
@@ -457,9 +432,8 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     actors.push_back(cubes[2]->GetActor());
 
     // Create Cube4
+    pose.p  = KDL::Vector(target_pos[0]-sides, target_pos[1], target_pos[2]);
 
-    pose = new double[7] {target_pos[0]-sides, target_pos[1], target_pos[2],
-        0, 0, 0, 1};
 
     cubes[3] = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim1,
                                    pose, 0.0, 0, friction,
@@ -525,8 +499,6 @@ void TaskTest::UpdateActors() {
 
     //--------------------------------
     //scoop
-    double grip_posit = (*gripper_position[0]);
-
     KDL::Vector gripper_pos = KDL::Vector( -0.0, -0.0, -0.01+0.01); //previously (4 the cylinder) y=(1+grip_posit)* 0.004
     gripper_pos = tool_pose * gripper_pos;
 
@@ -658,22 +630,22 @@ void TaskTest::ResetTask() {
         out[i]=0;
     }
 
-    peg1->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(peg_pose1));
+    peg1->GetActor()->SetUserMatrix(KDLFrameToVTKMatrix(peg_pose1));
     motion_state_ = new BulletVTKMotionState(peg_pose1, peg1->GetActor());
     peg1->GetBody()->setMotionState(motion_state_);
     peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
-    peg2->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(peg_pose2));
+    peg2->GetActor()->SetUserMatrix(KDLFrameToVTKMatrix(peg_pose2));
     motion_state_ = new BulletVTKMotionState(peg_pose2, peg2->GetActor());
     peg2->GetBody()->setMotionState(motion_state_);
     peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
-    peg3->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(peg_pose3));
+    peg3->GetActor()->SetUserMatrix(KDLFrameToVTKMatrix(peg_pose3));
     motion_state_ = new BulletVTKMotionState(peg_pose3, peg3->GetActor());
     peg3->GetBody()->setMotionState(motion_state_);
     peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
-    peg4->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(peg_pose4));
+    peg4->GetActor()->SetUserMatrix(KDLFrameToVTKMatrix(peg_pose4));
     motion_state_ = new BulletVTKMotionState(peg_pose4, peg4->GetActor());
     peg4->GetBody()->setMotionState(motion_state_);
     peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);

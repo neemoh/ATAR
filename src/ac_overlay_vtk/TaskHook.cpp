@@ -29,9 +29,10 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
         double friction = 0.5;
 
-        double pose[7]{
+        KDL::Frame pose;
+        pose.p = KDL::Vector(
                 - 0.01 + board_dimensions[0]/2,  board_dimensions[1]/2,
-                -board_dimensions[2]/2, 0, 0, 0, 1};
+                -board_dimensions[2]/2);
 
         std::vector<double> dim = {
                 board_dimensions[0], board_dimensions[1], board_dimensions[2]
@@ -53,7 +54,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
     BulletVTKObject* floor= new BulletVTKObject(ObjectShape::STATICPLANE,
                                                 ObjectType::DYNAMIC, floor_dims,
-                                                dummy_pose, 0.0, 0, 0,
+                                                KDL::Frame(), 0.0, 0, 0,
                                                 NULL);
     dynamics_world->addRigidBody(floor->GetBody());
 
@@ -70,10 +71,10 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
                 std::vector<double> dim = {0.002, 0.035};
 
-                double pose[7] = {
-                        0.02 + (double) j * 0.028, 0.09, dim[1] / 2, 0, 0.70711
-                        , 0.70711, 0.0
-                };
+                KDL::Frame pose(KDL::Rotation::Quaternion(0, 0.70711,
+                                                          0.70711, 0.0),
+                                KDL::Vector( 0.02 + (double) j * 0.028, 0.09,
+                                             dim[1] / 2));
 
                 cylinders[i * rows + j] =
                         new BulletVTKObject(ObjectShape::CYLINDER,
@@ -100,8 +101,8 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     // ROD
     {
         std::vector<double> rod_dim = {0.002, 0.1};
-        double pose[7] = {0.10, 0.03, 0.03, 0.70711, 0.70711, 0.0, 0.0};
-
+        KDL::Frame pose(KDL::Rotation::Quaternion(0.70711, 0.70711, 0.0, 0.0),
+                        KDL::Vector(0.10, 0.03, 0.03));
         BulletVTKObject rod = BulletVTKObject(ObjectShape::CYLINDER,
                                               ObjectType::DYNAMIC, rod_dim,
                                               pose, 0.0, 0, 0,
@@ -126,10 +127,8 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         float friction = 5;
         for (int l = 0; l < n_rings; ++l) {
 
-            double pose[7]{
-                    0.06 + (double) l * 0.01, 0.03, 0.03, 0.70711, 0.70711, 0.0, 0.0
-            };
-
+            KDL::Frame pose(KDL::Rotation::Quaternion(0.70711, 0.70711, 0.0, 0.0),
+                            KDL::Vector(0.06 + (double) l * 0.01, 0.03, 0.03));
             std::vector<double> dim; // not used
 
             rings[l] = new
@@ -173,7 +172,6 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
             grippers[j]->AddToActorsVector(actors);
         }
 
-
         std::vector<std::vector<double>> gripper_3link_dims =
                 {{0.002, 0.002, 0.005}
                         , {0.004, 0.001, 0.009}
@@ -184,28 +182,14 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         three_gripper->AddToWorld(dynamics_world);
         three_gripper->AddToActorsVector(actors);
 
-        //for (int i = 0; i < 5; ++i) {
-        //    left_gripper_links[i] =
-        //        new BulletVTKObject(
-        //            ObjectShape::BOX, ObjectType::KINEMATIC,
-        //            gripper_link_dims[i], gripper_pose,
-        //            gripper_density,
-        //            NULL, gripper_friction
-        //        );
-        //    dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
-        //    actors.push_back(left_gripper_links[i]->GetActor());
-        //    left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
-        //    left_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
-        //    left_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
-        //}
-
     }
 
 
     // -------------------------------------------------------------------------
     //// Create hook mesh
     {
-        double pose[7]{0.09, 0.07, 0.08, 0.7, 0, 0.7, 0};
+        KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
+                        KDL::Vector(0.09, 0.07, 0.08));
         std::stringstream input_file_dir;
         input_file_dir << mesh_files_dir << std::string("task_hook_hook.obj");
         std::string mesh_file_dir_str = input_file_dir.str();

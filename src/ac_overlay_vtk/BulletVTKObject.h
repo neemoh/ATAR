@@ -43,7 +43,7 @@ public:
     BulletVTKObject(ObjectShape shape,
                     ObjectType type,
                     std::vector<double> dimensions,
-                    double pose[],
+                    const KDL::Frame &pose,
                     double density,
                     const int id = 0,
                     double friction = 0.1,
@@ -79,6 +79,7 @@ private:
 
 // -----------------------------------------------------------------------------
 vtkSmartPointer<vtkMatrix4x4> PoseArrayToVTKMatrix(double *pose);
+vtkSmartPointer<vtkMatrix4x4> KDLFrameToVTKMatrix(const KDL::Frame &pose);
 
 // -----------------------------------------------------------------------------
 KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>);

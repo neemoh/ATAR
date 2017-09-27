@@ -43,17 +43,19 @@ protected:
     KDL::Frame                  frame;
 
 public:
-    BulletVTKMotionState(const double pose[],
+    BulletVTKMotionState(const KDL::Frame &pose,
                          vtkSmartPointer<vtkActor> actor)
         : actor_(actor){
 
         btTransform init_transform;
         init_transform.setIdentity();
-        init_transform.setOrigin(btVector3(float(B_DIM_SCALE*pose[0]),
-                                           float(B_DIM_SCALE*pose[1]),
-                                           float(B_DIM_SCALE*pose[2]) ));
-        init_transform.setRotation(btQuaternion((float) pose[3], (float) pose[4],
-                                                (float) pose[5], (float) pose[6]));
+        init_transform.setOrigin(btVector3(float(B_DIM_SCALE*pose.p[0]),
+                                           float(B_DIM_SCALE*pose.p[1]),
+                                           float(B_DIM_SCALE*pose.p[2]) ));
+        double qx, qy,qz, qw;
+        pose.M.GetQuaternion(qx, qy,qz, qw);
+        init_transform.setRotation(btQuaternion((float)qx, (float)qy,
+                                                (float)qz, (float)qw ));
         bt_pose_ = init_transform;
     }
 
@@ -64,7 +66,7 @@ public:
 
     // -------------------------------------------------------------------------
     //! This shouold not really be needed!
-    void setActor(vtkSmartPointer<vtkActor> actor){ actor_ = actor; }
+//    void setActor(vtkSmartPointer<vtkActor> actor){ actor_ = actor; }
 
 
     // -------------------------------------------------------------------------

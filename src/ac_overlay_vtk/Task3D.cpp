@@ -9,24 +9,23 @@
 #include <boost/thread/thread.hpp>
 
 namespace  ThreeDColors {
-double Green_Arrow[3]{0.3176, 0.6431, 0.3215};
-double Green[3]{0.0, 0.9, 0.03};
-double Yellow[3]{1.0, 0.702, 0.0};
+    double Green_Arrow[3]{0.3176, 0.6431, 0.3215};
+    double Green[3]{0.0, 0.9, 0.03};
+    double Yellow[3]{1.0, 0.702, 0.0};
 
 }
 Task3D::Task3D(const std::string mesh_files_dir,
-                               const bool show_ref_frames, const bool biman,
-                               const bool with_guidance)
-    :
-    VTKTask(show_ref_frames, biman, with_guidance, 0) ,
-    time_last(ros::Time::now())
+               const bool show_ref_frames, const bool biman,
+               const bool with_guidance)
+        :
+        VTKTask(show_ref_frames, biman, with_guidance, 0) ,
+        time_last(ros::Time::now())
 {
 
 
 
     InitBullet();
 
-    double *pose;
     double density = 120000;
     double friction = 0.5;
     std::vector<int> first_path = {1, 3, 2, 0};
@@ -47,8 +46,6 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
     rot.DoRotX(M_PI);
     rot.DoRotZ(-M_PI/180*105);
-    double x, y, z, w;
-    rot.GetQuaternion(x, y, z, w);
 
     KDL::Vector cam_position(0.118884, 0.27565, 0.14583);
     KDL::Vector focal_point(-0.04443, -0.57915, -0.413638);
@@ -67,16 +64,13 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
         KDL::Vector ring_pos;
         ring_pos = cam_position +  ((double)i* 0.05 + 0.16 +
-            sin((double)i*M_PI/3)*(0.05/4))*direction;
-
-        pose = new double[7] {ring_pos.x(),
-            ring_pos.y(),
-            ring_pos.z(),
-            x, y, z, w};
-
-        ideal_position[i].x(pose[0]);
-        ideal_position[i].y(pose[1]);
-        ideal_position[i].z(pose[2]);
+                                    sin((double)i*M_PI/3)*(0.05/4))*direction;
+        KDL::Frame pose(rot,KDL::Vector(ring_pos.x(),
+                                        ring_pos.y(),
+                                        ring_pos.z()) );
+        ideal_position[i].x(pose.p[0]);
+        ideal_position[i].y(pose.p[1]);
+        ideal_position[i].z(pose.p[2]);
 
         ring[i] = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
                                       _dim, pose, density, 0, friction,
@@ -87,7 +81,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
         ring[i]->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
 
 
-        const btVector3 btPivotA(0.f, 0.f, -(0.025f+radii[i])*B_DIM_SCALE);
+        const btVector3 btPivotA(0.f, 0.f, -float(0.025f+radii[i])*B_DIM_SCALE);
         btVector3 btAxisA( 1.0f, 0.0f, 0.0f );
         hinges[i] = new btHingeConstraint( *ring[i]->GetBody(), btPivotA, btAxisA );
         hinges[i]->enableAngularMotor(true, 0 , 0.00015);
@@ -102,13 +96,12 @@ Task3D::Task3D(const std::string mesh_files_dir,
                              <<std::string(".obj");
         std::string mesh_file_dir_hinge_str = input_file_dir_hinge.str();
 
-        pose = new double[7] {ring_pos.x(),
-            ring_pos.y(),
-            ring_pos.z() + 0.025 + radii[i],
-            x, y, z, w};
-
+        KDL::Frame pose2(rot,KDL::Vector(ring_pos.x(),
+                                        ring_pos.y(),
+                                        ring_pos.z() + 0.025 + radii[i]) );
         hinge_cyl[i] = new BulletVTKObject(ObjectShape::MESH,
-                                           ObjectType::DYNAMIC, _dim, pose, 0.0,
+                                           ObjectType::DYNAMIC, _dim, pose2,
+                                           0.0,
                                            0, friction,
                                            &mesh_file_dir_hinge_str);
 
@@ -128,10 +121,8 @@ Task3D::Task3D(const std::string mesh_files_dir,
     rot.DoRotX(-M_PI/2);
     rot.GetQuaternion(arrow_x, arrow_y, arrow_z, arrow_w);
 
-    pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
-
     arrow = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                                pose, 0.0, 0, friction,
+                                KDL::Frame(), 0.0, 0, friction,
                                 &mesh_file_dir_str);
 
     dynamicsWorld->addRigidBody(arrow->GetBody());
@@ -145,11 +136,10 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
     friction = 0.1;
 
-    pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     kine_dim = {0.005, 4*0.007};
     kine_p=
             new BulletVTKObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC,
-                                kine_dim, pose, 0.0, 0, friction,
+                                kine_dim, KDL::Frame(), 0.0, 0, friction,
                                 NULL);
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
@@ -159,7 +149,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
 //------------------------------------------------------------------------------
 void Task3D::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                               const int tool_id) {
+                                       const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
 
@@ -184,7 +174,7 @@ void Task3D::UpdateActors() {
     double x, y, z, w;
     _rot.GetQuaternion(x, y, z, w);
     double pointer_pose[7] = {pointer_posit[0], pointer_posit[1], pointer_posit[2],
-        x,y,z,w};
+                              x,y,z,w};
     kine_p->SetKinematicPose(pointer_pose);
 
     //--------------------------------
@@ -201,7 +191,7 @@ void Task3D::UpdateActors() {
         vtkMatrix4x4* ring_rf = vtkMatrix4x4::New();
         ring[index[target][path]]->GetActor()->GetMatrix(ring_rf);
         double actual_posit[4] = {pointer_posit[0], pointer_posit[1],
-            pointer_posit[2], 1};
+                                  pointer_posit[2], 1};
         ring_rf->Invert();
         ring_rf->MultiplyPoint(actual_posit, transf);
 
@@ -223,7 +213,7 @@ void Task3D::UpdateActors() {
 
         // Verify if the ring is touched
         if (fabs(ring[index[target][path]]->GetActor()->GetCenter()[0] -
-            ideal_position[index[target][path]].x()) >= 0.0005){
+                 ideal_position[index[target][path]].x()) >= 0.0005){
             touch = 1;
         }
 
@@ -235,16 +225,16 @@ void Task3D::UpdateActors() {
 void Task3D::ArrowManager() {
 
     ring[index[target][path]]->GetActor()->GetProperty()->SetColor
-        (ThreeDColors::Yellow);
+            (ThreeDColors::Yellow);
 
     KDL::Vector shift(0.0, 0.0, -0.03 + 0.005*sin(var));
     arrow_posit = rot*shift;
 
     double* pose;
     pose = new double[7]{arrow_posit[0] + ideal_position[index[target][path]].x(),
-        arrow_posit[1] + ideal_position[index[target][path]].y(),
-        arrow_posit[2] + ideal_position[index[target][path]].z(),
-        arrow_x, arrow_y, arrow_z, arrow_w};
+                         arrow_posit[1] + ideal_position[index[target][path]].y(),
+                         arrow_posit[2] + ideal_position[index[target][path]].z(),
+                         arrow_x, arrow_y, arrow_z, arrow_w};
     var = var + 0.05;
 
     arrow->GetActor()->SetUserMatrix(PoseArrayToVTKMatrix(pose));
@@ -278,10 +268,10 @@ void Task3D::CheckCrossing() {
     // Verify if the tool is crossing the target
     if (transf[1] >= 0 && transf[1] <= kine_dim[1]/2 &&
         pow(transf[0], 2) + pow(transf[2], 2) <= pow
-            (radii[index[target][path]], 2)){
+                (radii[index[target][path]], 2)){
 
         ring[index[target][path]]->GetActor()->GetProperty()->SetColor
-            (ThreeDColors::Green);
+                (ThreeDColors::Green);
         task_state = TaskState::Exit;
         cond=0;
     }
@@ -314,12 +304,12 @@ void Task3D::ExitChecking() {
     if (transf[1] >= -kine_dim[1]/2) {
         if (path == 3){
             ring[index[target][path]]->GetActor()->GetProperty()->SetColor
-                (ThreeDColors::Green);
+                    (ThreeDColors::Green);
         }
         else {
             ring[index[target][path
-                + 1]]->GetActor()->GetProperty()->SetColor
-                (ThreeDColors::Yellow);
+                               + 1]]->GetActor()->GetProperty()->SetColor
+                    (ThreeDColors::Yellow);
             ring[index[target][path]]->GetActor()->GetProperty()->SetColor(ThreeDColors::Green);
         }
     }
@@ -374,10 +364,10 @@ void Task3D::FindAndPublishDesiredToolPose() {
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                             ("/PSM1/tool_pose_desired", 10);
+            ("/PSM1/tool_pose_desired", 10);
     if(bimanual)
         pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                 ("/PSM2/tool_pose_desired", 10);
+                ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(200);
 

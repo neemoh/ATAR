@@ -64,12 +64,12 @@ TaskSteadyHand::TaskSteadyHand(
     // static floor
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
-    double dummy_pose[7] = {0,0,0,0,0,0,0};
+
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
     BulletVTKObject *floor = new BulletVTKObject(
         ObjectShape::STATICPLANE,
         ObjectType::DYNAMIC,
-        floor_dims, dummy_pose,0.0);
+        floor_dims, KDL::Frame(),0.0);
     dynamics_world->addRigidBody(floor->GetBody());
 
     BulletVTKObject *board;
@@ -79,10 +79,10 @@ TaskSteadyHand::TaskSteadyHand(
         double friction = 0.05;
         double board_dimensions[3] = {0.18, 0.132, 0.008};
 
-        double pose[7]{
-            board_dimensions[0] / 3, board_dimensions[1] / 2,
-            -board_dimensions[2] / 2, 0, 0, 0, 1
-        };
+        KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
+                , KDL::Vector( board_dimensions[0] / 3,
+                               board_dimensions[1] / 2,
+                               -board_dimensions[2]/ 2) );
 
         std::vector<double> dim = {
             board_dimensions[0], board_dimensions[1], board_dimensions[2]
@@ -183,24 +183,18 @@ TaskSteadyHand::TaskSteadyHand(
 
     // Define the rotation of the tube mesh
 
-   tube_frame =   KDL::Frame( KDL::Rotation::RotX(M_PI/2)*
+   pose_tube =   KDL::Frame( KDL::Rotation::RotX(M_PI/2)*
                                KDL::Rotation::RotY(-10./180.*M_PI),
                            base_position);
-    KDL::Frame stand_frame = tube_frame;
+    KDL::Frame stand_frame = pose_tube;
     stand_frame.M.DoRotY(-49./180.*M_PI);
-    double qx, qy, qz, qw;
-    stand_frame.M.GetQuaternion(qx,qy, qz, qw);
-    double stand_pose[7] = {
-        stand_frame.p[0], stand_frame.p[1], stand_frame.p[2], qx, qy,
-        qz, qw
-    };
 
     std::vector<double> _dim;
     double friction = 0.001;
     stand_mesh = new
         BulletVTKObject(
         ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-        stand_pose, 0.0, 0, friction, &mesh_file_dir_str);
+        stand_frame, 0.0, 0, friction, &mesh_file_dir_str);
 
     dynamics_world->addRigidBody(stand_mesh->GetBody());
     actors.push_back(stand_mesh->GetActor());
@@ -214,14 +208,15 @@ TaskSteadyHand::TaskSteadyHand(
 
     std::vector<double> dim_cube={0.025+0.01,0.025+0.01,(0.11-0.016-0.025)/2};
 
-    double pose_cube[7] = {
-        base_position[0]+0.015*cos(M_PI/4), base_position[1]-0.03*cos
-            (M_PI/4), (0.11-0.016-0.025)/4, qx,qy,qz, qw};
+    KDL::Frame pose_cube = stand_frame;
+    pose_cube.p = KDL::Vector( base_position[0]+0.015*cos(M_PI/4),
+                               base_position[1]-0.03*cos
+                                       (M_PI/4), (0.11-0.016-0.025)/4) ;
 
     stand_cube = new
-        BulletVTKObject(
-        ObjectShape::BOX, ObjectType::DYNAMIC, dim_cube,
-        pose_cube, 0.0, 0, friction, &mesh_file_dir_str);
+            BulletVTKObject(
+            ObjectShape::BOX, ObjectType::DYNAMIC, dim_cube,
+            pose_cube, 0.0, 0, friction, &mesh_file_dir_str);
 
     dynamics_world->addRigidBody(stand_cube->GetBody());
     actors.push_back(stand_cube->GetActor());
@@ -230,11 +225,6 @@ TaskSteadyHand::TaskSteadyHand(
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for generating
     // active constraints
-    tube_frame.M.GetQuaternion(qx, qy, qz, qw);
-
-    double pose_tube[7]{
-        tube_frame.p[0], tube_frame.p[1], tube_frame.p[2], qx, qy, qz,
-        qw};
 
     for (int m = 0; m <4; ++m) {
 
@@ -279,7 +269,7 @@ TaskSteadyHand::TaskSteadyHand(
     // Closing cylinder
     KDL::Frame ring_holder_bar_pose;
     ring_holder_bar_pose.M = KDL::Rotation::RotZ(87./180.*M_PI)*stand_frame.M;
-    ring_holder_bar_pose.p = tube_frame*KDL::Vector(-0.094, -0.034, 0.010 ); //
+    ring_holder_bar_pose.p = pose_tube*KDL::Vector(-0.094, -0.034, 0.010 ); //
 
     dir = ring_holder_bar_pose.M.UnitX();
 
@@ -291,14 +281,13 @@ TaskSteadyHand::TaskSteadyHand(
 
     KDL::Rotation rings_orient = ring_holder_bar_pose.M *
         KDL::Rotation::RotY(M_PI/2);
-    rings_orient.GetQuaternion(qx, qy, qz, qw);
 
     for (int l = 0; l < ring_num; ++l) {
 
-        double pose[7]{ring_holder_bar_pose.p.x() + (l+1) * step * dir.x(),
-            ring_holder_bar_pose.p.y() + (l+1) * step * dir.y(),
-            ring_holder_bar_pose.p.z()  + (l+1) * step * dir.z(),
-            qx, qy, qz, qw};
+        KDL::Frame pose(rings_orient
+                , KDL::Vector( ring_holder_bar_pose.p.x() + (l+1) * step * dir.x(),
+                               ring_holder_bar_pose.p.y() + (l+1) * step * dir.y(),
+                               ring_holder_bar_pose.p.z()  + (l+1) * step * dir.z()) );
 
         input_file_dir.str("");
         //input_file_dir <<mesh_file_dir << std::string("torus_D10mm_d1.2mm.obj");
@@ -325,12 +314,11 @@ TaskSteadyHand::TaskSteadyHand(
 
         _dim = {0.0004, 0.005};
 
-        double pose_cyl[7]{
-            ring_holder_bar_pose.p.x() + (l -0.5+1) * step * dir.x(), ring_holder_bar_pose.p.y()
-                + (l -0.5+ 0.2) * step * dir.y(), ring_holder_bar_pose.p.z()
-                + (l-0.5) * step * dir.z(), qx, qy, qz, qw
-        };
-
+        KDL::Frame pose_cyl(rings_orient
+                , KDL::Vector(ring_holder_bar_pose.p.x() + (l -0.5+1) * step * dir.x(),
+                              ring_holder_bar_pose.p.y() + (l -0.5+ 0.2) * step * dir.y(),
+                              ring_holder_bar_pose.p.z()+ (l-0.5) * step *
+                                                                  dir.z()) );
         sep_cylinder[l] = new
             BulletVTKObject(
             ObjectShape::CYLINDER, ObjectType::KINEMATIC, _dim,
@@ -346,7 +334,7 @@ TaskSteadyHand::TaskSteadyHand(
     }
 
     start_point  = ring_holder_bar_pose.p + (ring_num + 3) * step *dir;
-    end_point = tube_frame * KDL::Vector(-0.012, 0.0, -0.01);
+    end_point = pose_tube * KDL::Vector(-0.012, 0.0, -0.01);
     // -------------------------------------------------------------------------
     // Create Forceps
     {
@@ -371,7 +359,8 @@ TaskSteadyHand::TaskSteadyHand(
         rcm[0] = {cam_posit.x()-0.1, cam_posit.y(), cam_posit.z()+ 0.05};
         rcm[1] = {cam_posit.x()+0.1, cam_posit.y(), cam_posit.z()+ 0.05};
 
-        double gripper_pose[7]{0.04, 0.2, 0.1, 0, 0, 0, 1};
+        KDL::Frame gripper_pose(rings_orient , KDL::Vector(.04, 0.2, 0.1) );
+
         for (int i = 0; i < 1 + (int)bimanual; ++i) {
             std::vector<double> arm_dim = { 0.002, rcm[i].Norm()*2};
             arm[i] = new BulletVTKObject(
@@ -707,7 +696,7 @@ void TaskSteadyHand::CalculatedDesiredRingPose(
     // So we need the its pose and inv
 
     //static KDL::Frame tube_mesh_pose = tube_mesh_thin->GetPose();
-    static KDL::Frame tube_mesh_pose = tube_frame;
+    static KDL::Frame tube_mesh_pose = pose_tube;
     static KDL::Frame tube_mesh_pose_inv = tube_mesh_pose.Inverse();
 
     // ----------------------- FIRST CLOSEST POINT

@@ -14,11 +14,11 @@ ThreeLinkGripper::ThreeLinkGripper(
     assert(("Three link gripper needs a vector of 3 for dimensions",
             link_dims_.size()==3));
 
+    KDL::Frame gripper_pose;
+
     float gripper_density = 500000; // kg/m3
     float gripper_friction = 50;
     {
-        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
-
 
         gripper_links[0] =
                 new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
@@ -30,9 +30,6 @@ ThreeLinkGripper::ThreeLinkGripper(
     }
 
     {
-        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
-
-
         gripper_links[1] =
                 new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                     link_dims_[1], gripper_pose,
@@ -43,8 +40,6 @@ ThreeLinkGripper::ThreeLinkGripper(
     }
 
     {
-        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
-
         gripper_links[2] =
                 new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                     link_dims_[2], gripper_pose,
