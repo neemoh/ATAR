@@ -2,17 +2,14 @@
 // Created by nima on 4/13/17.
 //
 #include "ros/ros.h"
-#include "geometry_msgs/Pose.h"
-#include "geometry_msgs/PoseStamped.h"
-#include "custom_conversions/Conversions.h"
-#include "OverlayROSConfig.h"
+#include "ARCore.h"
 
 
 int main(int argc, char **argv)
 {
 
     ros::init(argc, argv, "ac_overlay");
-    OverlayROSConfig rc (ros::this_node::getName());
+    ARCore rc (ros::this_node::getName());
 
     ros::Rate loop_rate(30);
 
