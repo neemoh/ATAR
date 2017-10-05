@@ -137,7 +137,7 @@ void RosBridge::GetROSParameterValues() {
                    << slave_names[n_arm]<< "/tool_pose_desired";
         subscriber_slave_pose_desired[n_arm] = n.subscribe(
             param_name.str(), 1, slave_pose_desired_callbacks[n_arm],this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+        ROS_INFO("[SUBSCRIBERS]  %s",
                  param_name.str().c_str());
 
         // the current pose of the slaves
@@ -146,7 +146,7 @@ void RosBridge::GetROSParameterValues() {
                    << "/position_cartesian_current";
         subscriber_slave_pose_current[n_arm] = n.subscribe(param_name.str(), 1
             ,slave_pose_current_callbacks[n_arm],this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+        ROS_INFO("[SUBSCRIBERS]  %s",
                  param_name.str().c_str());
 
 
@@ -156,7 +156,7 @@ void RosBridge::GetROSParameterValues() {
                    << "/position_cartesian_current";
         subscriber_master_pose_current[n_arm] = n.subscribe(param_name.str(), 1
             ,master_pose_current_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+        ROS_INFO("[SUBSCRIBERS]  %s",
                  param_name.str().c_str());
 
 
@@ -167,7 +167,7 @@ void RosBridge::GetROSParameterValues() {
         subscriber_master_joint_state[n_arm] = n.subscribe(param_name.str(), 1
             , master_joint_state_callbacks[n_arm], this);
 
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+        ROS_INFO("[SUBSCRIBERS]  %s",
                  param_name.str().c_str());
 
         //  master's gripper
@@ -176,7 +176,7 @@ void RosBridge::GetROSParameterValues() {
                    << "/gripper_position_current";
         subscriber_master_current_gripper[n_arm] =n.subscribe(param_name.str()
             , 1, gripper_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
+        ROS_INFO("[SUBSCRIBERS]  %s", param_name.str().c_str());
 
 
         //  master's twist
@@ -185,7 +185,7 @@ void RosBridge::GetROSParameterValues() {
                    << "/twist_filtered";
         subscriber_master_twist[n_arm] = n.subscribe(param_name.str(),1
             ,master_twist_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+        ROS_INFO("[SUBSCRIBERS]  %s",
                  param_name.str().c_str());
 
 
@@ -195,7 +195,7 @@ void RosBridge::GetROSParameterValues() {
                    << "/twist_body_current";
         subscriber_slave_twist[n_arm] = n.subscribe(param_name.str(), 1
             ,slave_twist_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+        ROS_INFO("[SUBSCRIBERS]  %s",
                  param_name.str().c_str());
 
         //master's wrench
@@ -204,7 +204,7 @@ void RosBridge::GetROSParameterValues() {
                    << "/set_wrench_body";
         subscriber_master_wrench[n_arm] = n.subscribe(param_name.str(), 1
             ,master_wrench_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s",
+        ROS_INFO("[SUBSCRIBERS]  %s",
                  param_name.str().c_str());
 
         // Publishing the active constraint parameters that may change during
@@ -231,18 +231,18 @@ void RosBridge::GetROSParameterValues() {
     subscriber_foot_pedal_coag = n.subscribe("/dvrk/footpedals/coag", 1,
                                              &RosBridge::CoagFootSwitchCallback,
                                              this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/coag");
+    ROS_INFO("[SUBSCRIBERS]  /dvrk/footpedals/coag");
 
     subscriber_foot_pedal_clutch = n.subscribe("/dvrk/footpedals/clutch", 1,
                                                &RosBridge::ClutchFootSwitchCallback,
                                                this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to /dvrk/footpedals/clutch");
+    ROS_INFO("[SUBSCRIBERS]  /dvrk/footpedals/clutch");
 
 
     subscriber_task_state = n.subscribe("/atar/task_state", 1,
                                         &RosBridge::TaskSTateCallback,
                                         this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to /task_state");
+    ROS_INFO("[SUBSCRIBERS]  /task_state");
 
     //publisher
     publisher_control_events = n.advertise<std_msgs::Int8>
@@ -253,13 +253,13 @@ void RosBridge::GetROSParameterValues() {
     std::string topic_name = std::string("/atar/ring_pose_current");
     subscriber_ring_pose_current = n.subscribe(
         topic_name.c_str(), 1, &RosBridge::RingPoseCurrentCallback, this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", topic_name.c_str());
+    ROS_INFO("[SUBSCRIBERS]  %s", topic_name.c_str());
 
 
     topic_name = std::string("/atar/ring_pose_desired");
     subscriber_ring_pose_desired= n.subscribe(
         topic_name.c_str(), 1, &RosBridge::RingPoseDesiredCallback, this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", topic_name.c_str());
+    ROS_INFO("[SUBSCRIBERS]  %s", topic_name.c_str());
 }
 
 

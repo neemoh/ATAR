@@ -105,7 +105,7 @@ void ARCore::SetupROSandGetParameters() {
     std::string left_image_topic_name = "/camera/left/image_color";;
     if (n.getParam("left_image_topic_name", left_image_topic_name))
         ROS_INFO(
-            "[SUBSCRIBERS] Left camera images will be read from topic '%s'",
+            "[SUBSCRIBERS] Left cam images from '%s'",
             left_image_topic_name.c_str());
     image_subscribers[0] = it->subscribe(
         left_image_topic_name, 1, &ARCore::ImageLeftCallback,
@@ -116,7 +116,7 @@ void ARCore::SetupROSandGetParameters() {
     std::string right_image_topic_name = "/camera/right/image_color";
     if (n.getParam("right_image_topic_name", right_image_topic_name))
         ROS_INFO(
-            "[SUBSCRIBERS] Right camera images will be read from topic '%s'",
+            "[SUBSCRIBERS] Right cam images from '%s'",
             right_image_topic_name.c_str());
     image_subscribers[1] = it->subscribe(
         right_image_topic_name, 1, &ARCore::ImageRightCallback,
@@ -168,7 +168,7 @@ void ARCore::SetupROSandGetParameters() {
     std::stringstream topic_name;
     topic_name << std::string("/") << left_cam_name
                << "/world_to_camera_transform";
-    ROS_INFO("[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
+    ROS_INFO("[SUBSCRIBERS] Left came pose from '%s'",
              topic_name.str().c_str());
     sub_cam_pose_left = n.subscribe(
         topic_name.str(), 1, &ARCore::LeftCamPoseCallback, this);
@@ -177,7 +177,7 @@ void ARCore::SetupROSandGetParameters() {
     topic_name << std::string("/") << right_cam_name
                << "/world_to_camera_transform";
     // if the topic name is found, check if something is being published on it
-    ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
+    ROS_INFO("[SUBSCRIBERS] Right cam pose from '%s'",
              topic_name.str().c_str());
     sub_cam_pose_right = n.subscribe(
         topic_name.str(), 1, &ARCore::RightCamPoseCallback, this);
@@ -186,7 +186,7 @@ void ARCore::SetupROSandGetParameters() {
     // ------------------------------------- Clutches---------------------------
     sub_foot_pedal_clutch = n.subscribe( "/dvrk/footpedals/camera", 1,
                                          &ARCore::FootSwitchCallback, this);
-    ROS_INFO("[SUBSCRIBERS] Subscribed to /dvrk/footpedals/camera");
+    ROS_INFO("[SUBSCRIBERS] /dvrk/footpedals/camera");
 
     // ------------------------------------- TOOLS -----------------------------
     n.param<int>("number_of_arms", n_arms, 1);
@@ -224,7 +224,7 @@ void ARCore::SetupROSandGetParameters() {
         subtool_current_pose[n_arm] =
             n.subscribe(param_name.str(), 1,
                         pose_current_tool_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
+        ROS_INFO("[SUBSCRIBERS] %s", param_name.str().c_str());
         // we will later check to see if something is publishing on the
         // current slave pose
         check_topic_name = param_name.str();
@@ -235,7 +235,7 @@ void ARCore::SetupROSandGetParameters() {
                    << "/gripper_position_current";
         subtool_current_gripper[n_arm] =
             n.subscribe(param_name.str(), 1, gripper_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] Will subscribe to %s", param_name.str().c_str());
+        ROS_INFO("[SUBSCRIBERS] %s", param_name.str().c_str());
         // we will later check to see if something is publishing on the
         // current slave pose
         check_topic_name = param_name.str();
@@ -311,7 +311,7 @@ void ARCore::SetupROSandGetParameters() {
     subscriber_control_events = n.subscribe(
         "/atar/control_events", 1, &ARCore::ControlEventsCallback,
         this);
-    ROS_INFO("[SUBSCRIBERS] Will subscribe to /control_events");
+    ROS_INFO("[SUBSCRIBERS] /control_events");
 
 
     if (!all_required_params_found)
