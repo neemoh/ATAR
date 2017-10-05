@@ -24,12 +24,12 @@
 #include "Rendering.h"
 #include <mutex>
 
-class OverlayROSConfig {
+class ARCore {
 
 
 public:
 
-    OverlayROSConfig(std::string node_name);
+    ARCore(std::string node_name);
 
 
     bool UpdateWorld();
@@ -187,11 +187,11 @@ private:
     image_transport::Publisher publisher_stereo_overlayed;
 
     // two function pointers for slave pose callbacks
-    void (OverlayROSConfig::*pose_current_tool_callbacks[2])
+    void (ARCore::*pose_current_tool_callbacks[2])
             (const geometry_msgs::PoseStamped::ConstPtr &msg);
 
     // two function pointers for slave gripper callbacks
-    void (OverlayROSConfig::*gripper_callbacks[2])
+    void (ARCore::*gripper_callbacks[2])
             (const std_msgs::Float32::ConstPtr &msg);
 
 

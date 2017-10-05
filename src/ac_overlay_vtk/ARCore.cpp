@@ -2,7 +2,7 @@
 // Created by charm on 4/17/17.
 //
 
-#include "OverlayROSConfig.h"
+#include "ARCore.h"
 #include <custom_conversions/Conversions.h>
 #include <pwd.h>
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
@@ -16,15 +16,15 @@
 #include "TaskSteadyHand.h"
 
 // -----------------------------------------------------------------------------
-OverlayROSConfig::OverlayROSConfig(std::string node_name)
+ARCore::ARCore(std::string node_name)
     : n(node_name), running_task_id(0), task_ptr(NULL)
 {
 
     // assign the callback functions
-    pose_current_tool_callbacks[0] = &OverlayROSConfig::Tool1PoseCurrentCallback;
-    pose_current_tool_callbacks[1] = &OverlayROSConfig::Tool2PoseCurrentCallback;
-    gripper_callbacks[0] = &OverlayROSConfig::Tool1GripperCurrentCallback;
-    gripper_callbacks[1] = &OverlayROSConfig::Tool2GripperCurrentCallback;
+    pose_current_tool_callbacks[0] = &ARCore::Tool1PoseCurrentCallback;
+    pose_current_tool_callbacks[1] = &ARCore::Tool2PoseCurrentCallback;
+    gripper_callbacks[0] = &ARCore::Tool1GripperCurrentCallback;
+    gripper_callbacks[1] = &ARCore::Tool2GripperCurrentCallback;
 
     it = new image_transport::ImageTransport(n);
 
@@ -35,7 +35,7 @@ OverlayROSConfig::OverlayROSConfig(std::string node_name)
 }
 
 //------------------------------------------------------------------------------
-void OverlayROSConfig::SetupROSandGetParameters() {
+void ARCore::SetupROSandGetParameters() {
 
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
                                        ros::console::levels::Info) ) {
@@ -108,7 +108,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
             "[SUBSCRIBERS] Left camera images will be read from topic '%s'",
             left_image_topic_name.c_str());
     image_subscribers[0] = it->subscribe(
-        left_image_topic_name, 1, &OverlayROSConfig::ImageLeftCallback,
+        left_image_topic_name, 1, &ARCore::ImageLeftCallback,
         this);
 
     //--------
@@ -119,7 +119,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
             "[SUBSCRIBERS] Right camera images will be read from topic '%s'",
             right_image_topic_name.c_str());
     image_subscribers[1] = it->subscribe(
-        right_image_topic_name, 1, &OverlayROSConfig::ImageRightCallback,
+        right_image_topic_name, 1, &ARCore::ImageRightCallback,
         this);
 
     // KEPT FOR THE OLD OVERLAY NODE TO WORK THE NEW NODE HAS JUST ONE PUBLISHER
@@ -171,7 +171,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     ROS_INFO("[SUBSCRIBERS] Left camera pose will be read from topic '%s'",
              topic_name.str().c_str());
     sub_cam_pose_left = n.subscribe(
-        topic_name.str(), 1, &OverlayROSConfig::LeftCamPoseCallback, this);
+        topic_name.str(), 1, &ARCore::LeftCamPoseCallback, this);
 
     topic_name.str("");
     topic_name << std::string("/") << right_cam_name
@@ -180,12 +180,12 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     ROS_INFO("[SUBSCRIBERS] Right camera pose will be read from topic '%s'",
              topic_name.str().c_str());
     sub_cam_pose_right = n.subscribe(
-        topic_name.str(), 1, &OverlayROSConfig::RightCamPoseCallback, this);
+        topic_name.str(), 1, &ARCore::RightCamPoseCallback, this);
 
 
     // ------------------------------------- Clutches---------------------------
     sub_foot_pedal_clutch = n.subscribe( "/dvrk/footpedals/camera", 1,
-                                         &OverlayROSConfig::FootSwitchCallback, this);
+                                         &ARCore::FootSwitchCallback, this);
     ROS_INFO("[SUBSCRIBERS] Subscribed to /dvrk/footpedals/camera");
 
     // ------------------------------------- TOOLS -----------------------------
@@ -309,7 +309,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
     ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
 
     subscriber_control_events = n.subscribe(
-        "/atar/control_events", 1, &OverlayROSConfig::ControlEventsCallback,
+        "/atar/control_events", 1, &ARCore::ControlEventsCallback,
         this);
     ROS_INFO("[SUBSCRIBERS] Will subscribe to /control_events");
 
@@ -320,7 +320,7 @@ void OverlayROSConfig::SetupROSandGetParameters() {
 
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::SetupGraphics() {
+void ARCore::SetupGraphics() {
 
     n.param<bool>("publish_overlayed_images", publish_overlayed_images, true);
     ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
@@ -381,7 +381,7 @@ void OverlayROSConfig::SetupGraphics() {
 
 }
 // -----------------------------------------------------------------------------
-bool OverlayROSConfig::UpdateWorld() {
+bool ARCore::UpdateWorld() {
 
     // -------------------------------------------------------------------------
     // Update cam poses if needed
@@ -453,7 +453,7 @@ bool OverlayROSConfig::UpdateWorld() {
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::HandleTaskEvent() {
+void ARCore::HandleTaskEvent() {
 
     if (new_task_event){
 
@@ -479,7 +479,7 @@ void OverlayROSConfig::HandleTaskEvent() {
 
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::StartTask(const uint task_id) {
+void ARCore::StartTask(const uint task_id) {
 
     // create the task
     if(task_id ==1){
@@ -567,7 +567,7 @@ void OverlayROSConfig::StartTask(const uint task_id) {
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::DeleteTask() {
+void ARCore::DeleteTask() {
 
     ROS_DEBUG("Interrupting haptics thread");
     haptics_thread.interrupt();
@@ -579,7 +579,7 @@ void OverlayROSConfig::DeleteTask() {
 
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::LockAndGetImages(ros::Duration timeout,
+void ARCore::LockAndGetImages(ros::Duration timeout,
                                         cv::Mat images[]) {
 
     ros::Rate loop_rate(10);
@@ -611,7 +611,7 @@ void OverlayROSConfig::LockAndGetImages(ros::Duration timeout,
 }
 
 // -----------------------------------------------------------------------------
-bool OverlayROSConfig::GetNewImages( cv::Mat images[]) {
+bool ARCore::GetNewImages( cv::Mat images[]) {
 
     if(new_image[0] && new_image[1]) {
         image_from_ros[0].copyTo(images[0]);
@@ -626,7 +626,7 @@ bool OverlayROSConfig::GetNewImages( cv::Mat images[]) {
 }
 
 // -----------------------------------------------------------------------------
-bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
+bool ARCore::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                                          cv::Vec3d cam_tvec_out[2]) {
 
     // // estimate left_to_right_cam transform:
@@ -712,7 +712,7 @@ bool OverlayROSConfig::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
 
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::PublishACtiveConstraintParameters(
+void ARCore::PublishACtiveConstraintParameters(
     const custom_msgs::ActiveConstraintParameters ac_params[2]) {
 
 //    publisher_ac_params[0].publish(ac_params[0]);
@@ -721,13 +721,13 @@ void OverlayROSConfig::PublishACtiveConstraintParameters(
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::PublishTaskState(custom_msgs::TaskState msg) {
+void ARCore::PublishTaskState(custom_msgs::TaskState msg) {
     publisher_task_state.publish(msg);
 
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::DoArmToWorldFrameCalibration(const uint arm_id) {
+void ARCore::DoArmToWorldFrameCalibration(const uint arm_id) {
 
     //getting the name of the arms
     std::stringstream param_name;
@@ -792,14 +792,14 @@ void OverlayROSConfig::DoArmToWorldFrameCalibration(const uint arm_id) {
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::Cleanup() {
+void ARCore::Cleanup() {
 
     DeleteTask();
     delete graphics;
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::StartArmToWorldFrameCalibration(const uint arm_id) {
+void ARCore::StartArmToWorldFrameCalibration(const uint arm_id) {
 
     ROS_INFO("Starting Arm 1 to world calibration.");
     if(running_task_id>0) {
@@ -819,7 +819,7 @@ void OverlayROSConfig::StartArmToWorldFrameCalibration(const uint arm_id) {
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::PublishRenderedImages() {
+void ARCore::PublishRenderedImages() {
 
     cv::Mat augmented_images[2];
 
@@ -856,7 +856,7 @@ void OverlayROSConfig::PublishRenderedImages() {
 
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::ReadCameraParameters(const std::string file_path,
+void ARCore::ReadCameraParameters(const std::string file_path,
                                             cv::Mat &camera_matrix,
                                             cv::Mat &camera_distortion) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
@@ -882,7 +882,7 @@ void OverlayROSConfig::ReadCameraParameters(const std::string file_path,
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
+void ARCore::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
@@ -896,7 +896,7 @@ void OverlayROSConfig::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
+void ARCore::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
@@ -911,7 +911,7 @@ void OverlayROSConfig::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::LeftCamPoseCallback(
+void ARCore::LeftCamPoseCallback(
     const geometry_msgs::PoseStampedConstPtr & msg)
 {
     new_cam_pose[0] = true;
@@ -920,7 +920,7 @@ void OverlayROSConfig::LeftCamPoseCallback(
 
 }
 
-void OverlayROSConfig::RightCamPoseCallback(
+void ARCore::RightCamPoseCallback(
     const geometry_msgs::PoseStampedConstPtr & msg)
 {
     new_cam_pose[1] = true;
@@ -931,7 +931,7 @@ void OverlayROSConfig::RightCamPoseCallback(
 
 // Reading the pose of the slaves and take them to task space
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::Tool1PoseCurrentCallback(
+void ARCore::Tool1PoseCurrentCallback(
     const geometry_msgs::PoseStamped::ConstPtr &msg) {
     // take the pose from the arm frame to the task frame
     KDL::Frame frame;
@@ -940,7 +940,7 @@ void OverlayROSConfig::Tool1PoseCurrentCallback(
 
 }
 
-void OverlayROSConfig::Tool2PoseCurrentCallback(
+void ARCore::Tool2PoseCurrentCallback(
     const geometry_msgs::PoseStamped::ConstPtr &msg) {
     // take the pose from the arm frame to the task frame
     KDL::Frame frame;
@@ -950,24 +950,24 @@ void OverlayROSConfig::Tool2PoseCurrentCallback(
 
 // -----------------------------------------------------------------------------
 // Reading the gripper positions
-void OverlayROSConfig::Tool1GripperCurrentCallback(
+void ARCore::Tool1GripperCurrentCallback(
     const std_msgs::Float32::ConstPtr &msg) {
     gripper_current[0] =  msg->data;
 }
 
-void OverlayROSConfig::Tool2GripperCurrentCallback(
+void ARCore::Tool2GripperCurrentCallback(
     const std_msgs::Float32::ConstPtr &msg) {
     gripper_current[1] =  msg->data;
 
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::FootSwitchCallback(const sensor_msgs::JoyConstPtr & msg){
+void ARCore::FootSwitchCallback(const sensor_msgs::JoyConstPtr & msg){
     foot_switch_pressed = (bool)msg->buttons[0];
 }
 
 // -----------------------------------------------------------------------------
-void OverlayROSConfig::ControlEventsCallback(const std_msgs::Int8ConstPtr
+void ARCore::ControlEventsCallback(const std_msgs::Int8ConstPtr
                                              &msg) {
 
     control_event = msg->data;

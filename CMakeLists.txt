@@ -280,8 +280,8 @@ add_executable(
         src/ac_overlay_vtk/CalibratedCamera.h
         src/ac_overlay_vtk/Rendering.cpp
         src/ac_overlay_vtk/Rendering.h
-        src/ac_overlay_vtk/OverlayROSConfig.cpp
-        src/ac_overlay_vtk/OverlayROSConfig.h
+        src/ac_overlay_vtk/ARCore.cpp
+        src/ac_overlay_vtk/ARCore.h
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.h
         src/ac_overlay_vtk/ControlEvents.h
