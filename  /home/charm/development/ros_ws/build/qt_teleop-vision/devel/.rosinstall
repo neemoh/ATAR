@@ -1,2 +1,0 @@
-- setup-file:
-    local-name: /home/charm/development/ros_ws/src/teleop-vision/ /home/charm/development/ros_ws/build/qt_teleop-vision/devel/setup.sh

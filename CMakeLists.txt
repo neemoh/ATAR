@@ -187,12 +187,12 @@ add_executable(stereo_usb_cam_publisher
         )
 
 #add_executable(
-#        ac_overlay_cv
-#        src/deprecated/ac_overlay_cv/main_ac_overlay.cpp
-#        src/deprecated/ac_overlay_cv/ACOverlay.cpp
-#        src/deprecated/ac_overlay_cv/ACOverlay.h
-#        src/deprecated/ac_overlay_cv/Drawings.cpp
-#        src/deprecated/ac_overlay_cv/Drawings.h
+#        ar_core
+#        src/deprecated/ar_core/main_ac_overlay.cpp
+#        src/deprecated/ar_core/ACOverlay.cpp
+#        src/deprecated/ar_core/ACOverlay.h
+#        src/deprecated/ar_core/Drawings.cpp
+#        src/deprecated/ar_core/Drawings.h
 #)
 
 
@@ -349,21 +349,21 @@ include_directories (${PROJECT_SOURCE_DIR})
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_INCLUDE_DIR})
 
-add_library (reporter_utils SHARED
+add_library (gui_utils SHARED
         ${MyProjectLib_src}
         ${MyProjectLib_hdr_moc}
         ${MyProjectLib_ui_moc}
         )
 
-target_link_libraries (reporter_utils
+target_link_libraries (gui_utils
         Qt5::Widgets
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
 
-add_executable(reporter src/gui/ui_node.cpp)
-target_link_libraries (reporter
+add_executable(gui src/gui/ui_node.cpp)
+target_link_libraries (gui
         ${catkin_LIBRARIES}
-        reporter_utils
+        gui_utils
         )
 
 

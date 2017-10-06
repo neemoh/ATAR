@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: teleop_vision
-Description: Description of teleop_vision
-Version: 0.0.0
-Cflags: -I/usr/local/include
-Libs: -L/usr/local/lib 
-Requires: message_runtime cv_bridge image_transport sensor_msgs

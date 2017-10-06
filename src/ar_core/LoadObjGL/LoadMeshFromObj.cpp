@@ -4,7 +4,7 @@
 #include <BulletCollision/CollisionShapes/btConvexHullShape.h>
 #include <iostream>
 #include <sys/stat.h>
-#include "src/ac_overlay_vtk/LoadObjGL/VHACDGen.h"
+#include "src/ar_core/LoadObjGL/VHACDGen.h"
 #include "Bullet3Common/b3HashMap.h"
 #include "Wavefront2GLInstanceGraphicsShape.h"
 

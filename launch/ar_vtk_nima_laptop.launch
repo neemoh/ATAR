@@ -1,6 +1,6 @@
 <launch>
-    <arg name="slave_1_name" value="MTMR_DUMMY"/>
-    <arg name="slave_2_name" value="MTML_DUMMY"/>
+    <arg name="slave_1_name" value="PSM1_DUMMY"/>
+    <arg name="slave_2_name" value="PSM2_DUMMY"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
     <!--<arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>-->
@@ -42,7 +42,7 @@
     <!--</node>-->
 
     <!-- Node recording the data-->
-    <node pkg="atar" type="reporter" name="reporter" output="screen">
+    <node pkg="atar" type="gui" name="gui" output="screen">
 
         <!--records data at the frequency of task_state topic-->
         <param name="number_of_arms" value="2"/>

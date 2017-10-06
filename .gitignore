@@ -7,3 +7,4 @@ cmake-build-release/*
 *_hacd.obj
 *.mtl
 unused/
+resources/mesh/trash/

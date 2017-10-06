@@ -2,7 +2,7 @@
 // Created by nima on 04/08/17.
 //
 
-#include <src/ac_overlay_vtk/LoadObjGL/LoadMeshFromObj.h>
+#include <src/ar_core/LoadObjGL/LoadMeshFromObj.h>
 #include <ros/ros.h>
 #include "BulletVTKSoftObject.h"
 #include <sys/stat.h>
@@ -12,7 +12,7 @@
 #include <vtkPoints.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkPolyData.h>
-#include <src/ac_overlay_vtk/LoadObjGL/GLInstanceGraphicsShape.h>
+#include <src/ar_core/LoadObjGL/GLInstanceGraphicsShape.h>
 
 
 inline bool FileExists (const std::string& name) {

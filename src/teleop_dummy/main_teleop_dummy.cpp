@@ -10,7 +10,7 @@
 #include <kdl_conversions/kdl_msg.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int8.h>
-#include <src/ac_overlay_vtk/ControlEvents.h>
+#include <src/ar_core/ControlEvents.h>
 
 // This node simulates the slaves of the dvrk in a teleop mode and controls the
 // behavior of the master console to mock that of the dvrk teleoperation mode.

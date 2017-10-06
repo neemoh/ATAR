@@ -9,15 +9,9 @@
 #include <kdl/frames.hpp>
 #include <vtkConeSource.h>
 #include <vtkCylinderSource.h>
-#include <src/ac_overlay_vtk/LoadObjGL/GLInstanceGraphicsShape.h>
 #include <vtkOBJReader.h>
-#include <vtkTransformPolyDataFilter.h>
 #include <vtkMassProperties.h>
 #include <vtkTriangleFilter.h>
-#include <vtkTriangle.h>
-
-#include <iostream>
-#include <sstream>
 #include "BulletVTKObject.h"
 #include "LoadObjGL/LoadMeshFromObj.h"
 //for debug message
