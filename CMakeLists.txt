@@ -186,14 +186,14 @@ add_executable(stereo_usb_cam_publisher
         src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp
         )
 
-add_executable(
-        ac_overlay_cv
-        src/ac_overlay_cv/main_ac_overlay.cpp
-        src/ac_overlay_cv/ACOverlay.cpp
-        src/ac_overlay_cv/ACOverlay.h
-        src/ac_overlay_cv/Drawings.cpp
-        src/ac_overlay_cv/Drawings.h
-)
+#add_executable(
+#        ac_overlay_cv
+#        src/deprecated/ac_overlay_cv/main_ac_overlay.cpp
+#        src/deprecated/ac_overlay_cv/ACOverlay.cpp
+#        src/deprecated/ac_overlay_cv/ACOverlay.h
+#        src/deprecated/ac_overlay_cv/Drawings.cpp
+#        src/deprecated/ac_overlay_cv/Drawings.h
+#)
 
 
 add_executable(
@@ -205,7 +205,6 @@ set(executables
         stereo_image_view
         stereo_image_split
         stereo_usb_cam_publisher
-        ac_overlay_cv
         teleop_dummy)
 
 foreach (_ex ${executables})
@@ -250,15 +249,15 @@ vtk_module_config(VTK
 include(${VTK_USE_FILE})
 
 add_library(LoadObjGL
-        src/ac_overlay_vtk/LoadObjGL/LoadMeshFromObj.h
-        src/ac_overlay_vtk/LoadObjGL/LoadMeshFromObj.cpp
-        src/ac_overlay_vtk/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
-        src/ac_overlay_vtk/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
-        src/ac_overlay_vtk/LoadObjGL/tiny_obj_loader.cpp
-        src/ac_overlay_vtk/LoadObjGL/tiny_obj_loader.cpp
-        src/ac_overlay_vtk/LoadObjGL/GLInstanceGraphicsShape.h
-        src/ac_overlay_vtk/LoadObjGL/VHACDGen.cpp
-        src/ac_overlay_vtk/LoadObjGL/VHACDGen.h
+        src/ar_core/LoadObjGL/LoadMeshFromObj.h
+        src/ar_core/LoadObjGL/LoadMeshFromObj.cpp
+        src/ar_core/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
+        src/ar_core/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
+        src/ar_core/LoadObjGL/tiny_obj_loader.cpp
+        src/ar_core/LoadObjGL/tiny_obj_loader.cpp
+        src/ar_core/LoadObjGL/GLInstanceGraphicsShape.h
+        src/ar_core/LoadObjGL/VHACDGen.cpp
+        src/ar_core/LoadObjGL/VHACDGen.h
         )
 
 target_link_libraries(
@@ -270,36 +269,36 @@ target_link_libraries(
 )
 
 # Assume all files that start with "Task" are to be added
-file(GLOB tasks_src "src/ac_overlay_vtk/Task*.cpp")
-file(GLOB tasks_h "src/ac_overlay_vtk/Task*.h")
+file(GLOB tasks_src "src/ar_core/Task*.cpp")
+file(GLOB tasks_h "src/ar_core/Task*.h")
 
 add_executable(
         ac_overlay_vtk
-        src/ac_overlay_vtk/main_ac_overlay_vtk.cpp
-        src/ac_overlay_vtk/CalibratedCamera.cpp
-        src/ac_overlay_vtk/CalibratedCamera.h
-        src/ac_overlay_vtk/Rendering.cpp
-        src/ac_overlay_vtk/Rendering.h
-        src/ac_overlay_vtk/ARCore.cpp
-        src/ac_overlay_vtk/ARCore.h
+        src/ar_core/main_ac_overlay_vtk.cpp
+        src/ar_core/CalibratedCamera.cpp
+        src/ar_core/CalibratedCamera.h
+        src/ar_core/Rendering.cpp
+        src/ar_core/Rendering.h
+        src/ar_core/ARCore.cpp
+        src/ar_core/ARCore.h
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.h
-        src/ac_overlay_vtk/ControlEvents.h
-        src/ac_overlay_vtk/BulletVTKMotionState.h
-        src/ac_overlay_vtk/BulletVTKObject.cpp
-        src/ac_overlay_vtk/BulletVTKObject.h
-        src/ac_overlay_vtk/VTKTask.h
+        src/ar_core/ControlEvents.h
+        src/ar_core/BulletVTKMotionState.h
+        src/ar_core/BulletVTKObject.cpp
+        src/ar_core/BulletVTKObject.h
+        src/ar_core/VTKTask.h
         ${tasks_src}
         ${tasks_h}
-        src/ac_overlay_vtk/BulletVTKSoftObject.cpp
-        src/ac_overlay_vtk/BulletVTKSoftObject.h
-        src/ac_overlay_vtk/SimpleGripper.cpp
-        src/ac_overlay_vtk/SimpleGripper.h
-        src/ac_overlay_vtk/ThreeLinkGripper.cpp
-        src/ac_overlay_vtk/ThreeLinkGripper.h
-        src/ac_overlay_vtk/Forceps.cpp
-        src/ac_overlay_vtk/Forceps.h
-        src/ac_overlay_vtk/Colors.hpp)
+        src/ar_core/BulletVTKSoftObject.cpp
+        src/ar_core/BulletVTKSoftObject.h
+        src/ar_core/SimpleGripper.cpp
+        src/ar_core/SimpleGripper.h
+        src/ar_core/ThreeLinkGripper.cpp
+        src/ar_core/ThreeLinkGripper.h
+        src/ar_core/Forceps.cpp
+        src/ar_core/Forceps.h
+        src/ar_core/Colors.hpp)
 
 
 target_link_libraries(
