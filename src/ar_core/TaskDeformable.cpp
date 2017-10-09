@@ -143,8 +143,8 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
             spheres[i*rows+j] =
                 new BulletVTKObject(
                     ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, sphere_pose,
-                    density, NULL, friction
-                );
+                    density);
+
             double ratio = (double)i/4.0;
             spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
                 0.8 - 0.2*ratio, 0.4 - 0.3*ratio, 0.2 + 0.3*ratio);

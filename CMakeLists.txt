@@ -15,17 +15,16 @@ find_package(catkin REQUIRED COMPONENTS
         tf_conversions
         cv_bridge
         image_transport
-#        message_generation
+        #        message_generation
         geometry_msgs
         custom_msgs
         custom_conversions
-        active_constraints
-        )
+        active_constraints)
 
 #find_package(OpenCV 3 REQUIRED)
 #add_service_files(
- #       FILES
-  #      CalculateStereoCamsTransfromFromTopics.srv)
+#       FILES
+#      CalculateStereoCamsTransfromFromTopics.srv)
 
 #add_message_files(
 #        FILES
@@ -46,15 +45,12 @@ catkin_package(CATKIN_DEPENDS
 
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED)
-#find_package(ODE REQUIRED)
 find_package(Bullet REQUIRED)
 
 include_directories(
         include/
         ${catkin_INCLUDE_DIRS}
-        ${BULLET_INCLUDE_DIR}
-#        /usr/local/include/bullet/BulletCollision/CollisionShapes/
-)
+        ${BULLET_INCLUDE_DIR})
 
 ##########################################################################
 #                    Build Client and Service Nodes
@@ -66,10 +62,10 @@ include_directories(
 #        )
 #target_link_libraries(calculate_stereo_cams_transform_from_topics
 #        ${catkin_LIBRARIES}
- #       )
+#       )
 #add_dependencies(calculate_stereo_cams_transform_from_topics
 #        teleop_vision_gencpp
- #       )
+#       )
 
 #
 #add_executable(intrinsic_calib
@@ -77,43 +73,222 @@ include_directories(
 #        )
 
 
-add_library(ExtrinsicCalibArucoNodelet
-        src/extrinsic_calib_aruco/ExtrinsicArucoNodelet.cpp
-        src/extrinsic_calib_aruco/BoardDetector.cpp
-        )
-
-target_link_libraries(ExtrinsicCalibArucoNodelet
-        ${catkin_LIBRARIES}
-        )
+##########################################################################
+#                    Build Calibration nodes
+##########################################################################
 
 add_executable(extrinsic_calib_charuco
         src/extrinsic_calib_aruco/main_extrinsic_charuco.cpp
         src/intrinsic_calib/IntrinsicCalibrationCharuco.cpp
-        src/intrinsic_calib/IntrinsicCalibrationCharuco.h
-        )
+        src/intrinsic_calib/IntrinsicCalibrationCharuco.h)
 
 target_link_libraries(extrinsic_calib_charuco
-        ${catkin_LIBRARIES}
-        )
+        ${catkin_LIBRARIES})
 
-#add_executable(calibrate_camera_charuco
-#        src/deprecated/intrinsic_calibration_charuco.cpp
-#        )
-#
-#target_link_libraries(calibrate_camera_charuco
-#        ${catkin_LIBRARIES} arucoUtils
-#        )
+add_executable(create_aruco_board
+        src/utils/create_aruco_board.cpp)
+
+add_executable(create_charuco_board
+        src/utils/create_charuco_board.cpp)
+
+set(aruco_executables create_aruco_board create_charuco_board)
+foreach (_ex ${aruco_executables})
+    target_link_libraries(
+            ${_ex}
+            ${OpenCV_LIBRARIES}
+    )
+endforeach ()
 
 add_executable(arm_to_world_calibration
         src/arm_to_world_calibration/main_arm_to_world.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
-        src/arm_to_world_calibration/ArmToWorldCalibration.h
-        )
+        src/arm_to_world_calibration/ArmToWorldCalibration.h)
 
 target_link_libraries(arm_to_world_calibration
         ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES})
+
+add_library(ExtrinsicCalibArucoNodelet
+        src/extrinsic_calib_aruco/ExtrinsicArucoNodelet.cpp
+        src/extrinsic_calib_aruco/BoardDetector.cpp)
+
+target_link_libraries(ExtrinsicCalibArucoNodelet
+        ${catkin_LIBRARIES})
+
+##########################################################################
+#                           Build Common Nodes
+##########################################################################
+add_executable(
+        stereo_image_view
+        src/stereo_image_view/main_stereo_image_view.cpp)
+
+add_executable(
+        stereo_image_split
+        src/stereo_image_view/main_stereo_image_split_TEMPORARY.cpp)
+
+add_executable(stereo_usb_cam_publisher
+        src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp)
+
+add_executable(
+        teleop_dummy
+        src/teleop_dummy/main_teleop_dummy.cpp)
+
+set(executables
+        stereo_image_view
+        stereo_image_split
+        stereo_usb_cam_publisher
+        teleop_dummy)
+
+foreach (_ex ${executables})
+    target_link_libraries(
+            ${_ex}
+            ${OpenCV_LIBRARIES}
+            ${catkin_LIBRARIES})
+endforeach ()
+
+
+##########################################################################
+#                           AC  VTK
+##########################################################################
+
+if(POLICY CMP0025)
+    cmake_policy(SET CMP0025 NEW) # CMake 3.0
+endif()
+if(POLICY CMP0053)
+    cmake_policy(SET CMP0053 NEW) # CMake 3.1
+endif()
+SET(GCC_COVERAGE_COMPILE_FLAGS "-fopenmp")
+SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
+
+find_package(VTK REQUIRED)
+vtk_module_config(VTK
+        vtkCommonCore
+        vtkCommonDataModel
+        vtkFiltersCore
+        vtkFiltersModeling
+        vtkIOXML
+        vtkInteractionStyle
+        vtkRendering${VTK_RENDERING_BACKEND}
+        vtkImagingGeneral
+        vtkInteractionWidgets
+        vtkIOGeometry)
+
+include(${VTK_USE_FILE})
+
+add_library(LoadObjGL
+        src/ar_core/LoadObjGL/LoadMeshFromObj.h
+        src/ar_core/LoadObjGL/LoadMeshFromObj.cpp
+        src/ar_core/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
+        src/ar_core/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
+        src/ar_core/LoadObjGL/tiny_obj_loader.cpp
+        src/ar_core/LoadObjGL/tiny_obj_loader.cpp
+        src/ar_core/LoadObjGL/GLInstanceGraphicsShape.h
+        src/ar_core/LoadObjGL/VHACDGen.cpp
+        src/ar_core/LoadObjGL/VHACDGen.h)
+
+target_link_libraries(
+        LoadObjGL
+        BulletDynamics
+        BulletCollision
+        LinearMath
+        Bullet3Common)
+
+# Assume all files that start with "Task" are to be added
+file(GLOB tasks_src "src/ar_core/Task*.cpp")
+file(GLOB tasks_h "src/ar_core/Task*.h")
+
+add_executable(
+        ar_core
+        src/ar_core/main_ar.cpp
+        src/ar_core/CalibratedCamera.cpp
+        src/ar_core/CalibratedCamera.h
+        src/ar_core/Rendering.cpp
+        src/ar_core/Rendering.h
+        src/ar_core/ARCore.cpp
+        src/ar_core/ARCore.h
+        src/arm_to_world_calibration/ArmToWorldCalibration.cpp
+        src/arm_to_world_calibration/ArmToWorldCalibration.h
+        src/ar_core/ControlEvents.h
+        src/ar_core/BulletVTKMotionState.h
+        src/ar_core/BulletVTKObject.cpp
+        src/ar_core/BulletVTKObject.h
+        src/ar_core/VTKTask.h
+        ${tasks_src}
+        ${tasks_h}
+        src/ar_core/BulletVTKSoftObject.cpp
+        src/ar_core/BulletVTKSoftObject.h
+        src/ar_core/SimpleGripper.cpp
+        src/ar_core/SimpleGripper.h
+        src/ar_core/Forceps.cpp
+        src/ar_core/Forceps.h
+        src/ar_core/Colors.hpp)
+
+target_link_libraries(
+        ar_core
         ${OpenCV_LIBRARIES}
-        )
+        ${VTK_LIBRARIES}
+        ${catkin_LIBRARIES}
+        BulletDynamics
+        BulletCollision
+        LinearMath
+        LoadObjGL
+        BulletSoftBody
+        vhacd
+        pthread)
+
+
+##########################################################################
+#                           Reporter node
+##########################################################################
+
+find_package(Qt5Widgets)
+find_package(Qt5Core REQUIRED)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(PROJECT_INCLUDE_DIR src/gui/include)
+
+set (MyProjectLib_hdr
+        ${PROJECT_INCLUDE_DIR}/mainwindow.hpp
+        ${PROJECT_INCLUDE_DIR}/cvimagewidget.h)
+set (MyProjectLib_src
+        src/gui/mainwindow.cpp
+        src/gui/rosclass.cpp src/gui/PerformanceEvaluators.h src/gui/PerformanceEvaluators.cpp)
+qt5_wrap_cpp(MyProjectLib_hdr_moc ${MyProjectLib_hdr})
+qt5_wrap_ui (MyProjectLib_ui_moc src/gui/mainwindow.ui)
+
+include_directories (${PROJECT_SOURCE_DIR})
+include_directories (${PROJECT_BINARY_DIR})
+include_directories (${PROJECT_INCLUDE_DIR})
+
+add_library (gui_utils SHARED
+        ${MyProjectLib_src}
+        ${MyProjectLib_hdr_moc}
+        ${MyProjectLib_ui_moc})
+
+target_link_libraries (gui_utils
+        Qt5::Widgets
+        ${OpenCV_LIBRARIES}
+        ${catkin_LIBRARIES})
+
+add_executable(gui src/gui/ui_node.cpp)
+target_link_libraries (gui
+        ${catkin_LIBRARIES}
+        gui_utils)
+
+
+##########################################################################
+#                           Install Targets
+##########################################################################
+
+install(TARGETS
+        ExtrinsicCalibArucoNodelet
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+
 
 
 ##########################################################################
@@ -147,233 +322,3 @@ target_link_libraries(arm_to_world_calibration
 #    endif (FLYCAPTURE2_FOUND)
 #endif (WITH_FlyCapture)
 
-
-
-
-
-##########################################################################
-#                           Build Common Nodes
-##########################################################################
-
-
-add_executable(create_aruco_board
-        src/utils/create_aruco_board.cpp
-        )
-
-add_executable(create_charuco_board
-        src/utils/create_charuco_board.cpp
-        )
-
-set(aruco_executables create_aruco_board create_charuco_board)
-foreach (_ex ${aruco_executables})
-    target_link_libraries(
-            ${_ex}
-            ${OpenCV_LIBRARIES}
-            )
-endforeach ()
-
-
-add_executable(
-        stereo_image_view
-        src/stereo_image_view/main_stereo_image_view.cpp
-)
-add_executable(
-        stereo_image_split
-        src/stereo_image_view/main_stereo_image_split_TEMPORARY.cpp
-)
-
-add_executable(stereo_usb_cam_publisher
-        src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp
-        )
-
-#add_executable(
-#        ar_core
-#        src/deprecated/ar_core/main_ac_overlay.cpp
-#        src/deprecated/ar_core/ACOverlay.cpp
-#        src/deprecated/ar_core/ACOverlay.h
-#        src/deprecated/ar_core/Drawings.cpp
-#        src/deprecated/ar_core/Drawings.h
-#)
-
-
-add_executable(
-        teleop_dummy
-        src/teleop_dummy/main_teleop_dummy.cpp
-)
-
-set(executables
-        stereo_image_view
-        stereo_image_split
-        stereo_usb_cam_publisher
-        teleop_dummy)
-
-foreach (_ex ${executables})
-    target_link_libraries(
-            ${_ex}
-            ${OpenCV_LIBRARIES}
-            ${catkin_LIBRARIES})
-endforeach ()
-
-
-add_executable(bullet_test src/bullet_test.cpp )
-target_link_libraries(bullet_test  BulletDynamics BulletCollision LinearMath
-        )
-
-##########################################################################
-#                           AC OVERLAY VTK
-##########################################################################
-
-if(POLICY CMP0025)
-    cmake_policy(SET CMP0025 NEW) # CMake 3.0
-endif()
-if(POLICY CMP0053)
-    cmake_policy(SET CMP0053 NEW) # CMake 3.1
-endif()
-SET(GCC_COVERAGE_COMPILE_FLAGS "-fopenmp")
-SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
-
-find_package(VTK REQUIRED)
-vtk_module_config(VTK
-        vtkCommonCore
-        vtkCommonDataModel
-        vtkFiltersCore
-        vtkFiltersModeling
-        vtkIOXML
-        vtkInteractionStyle
-        vtkRendering${VTK_RENDERING_BACKEND}
-        vtkImagingGeneral
-        vtkInteractionWidgets
-        vtkIOGeometry
-        )
-
-include(${VTK_USE_FILE})
-
-add_library(LoadObjGL
-        src/ar_core/LoadObjGL/LoadMeshFromObj.h
-        src/ar_core/LoadObjGL/LoadMeshFromObj.cpp
-        src/ar_core/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
-        src/ar_core/LoadObjGL/Wavefront2GLInstanceGraphicsShape.cpp
-        src/ar_core/LoadObjGL/tiny_obj_loader.cpp
-        src/ar_core/LoadObjGL/tiny_obj_loader.cpp
-        src/ar_core/LoadObjGL/GLInstanceGraphicsShape.h
-        src/ar_core/LoadObjGL/VHACDGen.cpp
-        src/ar_core/LoadObjGL/VHACDGen.h
-        )
-
-target_link_libraries(
-        LoadObjGL
-        BulletDynamics
-        BulletCollision
-        LinearMath
-        Bullet3Common
-)
-
-# Assume all files that start with "Task" are to be added
-file(GLOB tasks_src "src/ar_core/Task*.cpp")
-file(GLOB tasks_h "src/ar_core/Task*.h")
-
-add_executable(
-        ac_overlay_vtk
-        src/ar_core/main_ac_overlay_vtk.cpp
-        src/ar_core/CalibratedCamera.cpp
-        src/ar_core/CalibratedCamera.h
-        src/ar_core/Rendering.cpp
-        src/ar_core/Rendering.h
-        src/ar_core/ARCore.cpp
-        src/ar_core/ARCore.h
-        src/arm_to_world_calibration/ArmToWorldCalibration.cpp
-        src/arm_to_world_calibration/ArmToWorldCalibration.h
-        src/ar_core/ControlEvents.h
-        src/ar_core/BulletVTKMotionState.h
-        src/ar_core/BulletVTKObject.cpp
-        src/ar_core/BulletVTKObject.h
-        src/ar_core/VTKTask.h
-        ${tasks_src}
-        ${tasks_h}
-        src/ar_core/BulletVTKSoftObject.cpp
-        src/ar_core/BulletVTKSoftObject.h
-        src/ar_core/SimpleGripper.cpp
-        src/ar_core/SimpleGripper.h
-        src/ar_core/ThreeLinkGripper.cpp
-        src/ar_core/ThreeLinkGripper.h
-        src/ar_core/Forceps.cpp
-        src/ar_core/Forceps.h
-        src/ar_core/Colors.hpp)
-
-
-target_link_libraries(
-        ac_overlay_vtk
-        ${OpenCV_LIBRARIES}
-        ${VTK_LIBRARIES}
-        ${catkin_LIBRARIES}
-        BulletDynamics
-        BulletCollision
-        LinearMath
-        LoadObjGL
-        BulletSoftBody
-        vhacd
-        pthread
-)
-
-add_executable(
-        vtk_shadow_test src/vtkshadowtest.cpp
-)
-
-target_link_libraries(
-        vtk_shadow_test
-        ${OpenCV_LIBRARIES}
-        ${VTK_LIBRARIES}
-)
-##########################################################################
-#                           Reporter node
-##########################################################################
-
-find_package(Qt5Widgets)
-find_package(Qt5Core REQUIRED)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(PROJECT_INCLUDE_DIR src/gui/include)
-
-set (MyProjectLib_hdr
-        ${PROJECT_INCLUDE_DIR}/mainwindow.hpp
-        ${PROJECT_INCLUDE_DIR}/cvimagewidget.h)
-set (MyProjectLib_src
-        src/gui/mainwindow.cpp
-        src/gui/rosclass.cpp src/gui/PerformanceEvaluators.h src/gui/PerformanceEvaluators.cpp)
-qt5_wrap_cpp(MyProjectLib_hdr_moc ${MyProjectLib_hdr})
-qt5_wrap_ui (MyProjectLib_ui_moc src/gui/mainwindow.ui)
-
-include_directories (${PROJECT_SOURCE_DIR})
-include_directories (${PROJECT_BINARY_DIR})
-include_directories (${PROJECT_INCLUDE_DIR})
-
-add_library (gui_utils SHARED
-        ${MyProjectLib_src}
-        ${MyProjectLib_hdr_moc}
-        ${MyProjectLib_ui_moc}
-        )
-
-target_link_libraries (gui_utils
-        Qt5::Widgets
-        ${OpenCV_LIBRARIES}
-        ${catkin_LIBRARIES})
-
-add_executable(gui src/gui/ui_node.cpp)
-target_link_libraries (gui
-        ${catkin_LIBRARIES}
-        gui_utils
-        )
-
-
-##########################################################################
-#                           Install Targets
-##########################################################################
-
-install(TARGETS
-        ExtrinsicCalibArucoNodelet
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )

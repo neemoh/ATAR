@@ -9,13 +9,13 @@ int main(int argc, char **argv)
 {
 
     ros::init(argc, argv, "ac_overlay");
-    ARCore rc (ros::this_node::getName());
+    ARCore acore (ros::this_node::getName());
 
     ros::Rate loop_rate(30);
 
     while (ros::ok())
     {
-        if(!rc.UpdateWorld())
+        if(!acore.UpdateWorld())
             break;
         loop_rate.sleep();
     }
@@ -23,6 +23,4 @@ int main(int argc, char **argv)
     ros::shutdown();
     return 0;
 }
-
-
 

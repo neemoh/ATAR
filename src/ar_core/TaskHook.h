@@ -39,7 +39,6 @@
 #include <btBulletDynamicsCommon.h>
 #include "BulletVTKObject.h"
 #include "SimpleGripper.h"
-#include "ThreeLinkGripper.h"
 #include <vtkMinimalStandardRandomSequence.h>
 
 
@@ -100,7 +99,6 @@ private:
 
     std::vector<std::vector<double>> gripper_link_dims;
     SimpleGripper * grippers[1];
-    ThreeLinkGripper* three_gripper;
     uint counter=0;
 
     BulletVTKObject *hook_mesh;

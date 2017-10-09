@@ -3,7 +3,6 @@
 //
 
 #include "TaskHook.h"
-
 #include <custom_conversions/Conversions.h>
 #include <boost/thread/thread.hpp>
 
@@ -177,11 +176,6 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                         , {0.004, 0.001, 0.009}
                         , {0.004, 0.001, 0.009}};
 
-        three_gripper = new ThreeLinkGripper(gripper_3link_dims);
-
-        three_gripper->AddToWorld(dynamics_world);
-        three_gripper->AddToActorsVector(actors);
-
     }
 
 
@@ -273,8 +267,6 @@ void TaskHook::UpdateActors() {
     th_gripper_pose.p = KDL::Vector(0.03 + y , 0.03 , 0.01);
     th_gripper_pose.M.DoRotY(M_PI/2);
     th_gripper_pose.M.DoRotZ(M_PI/2);
-    three_gripper->SetPoseAndJawAngle(grpr_right_pose, grip_angle);
-
 
     //Update the pose of hook
     {
