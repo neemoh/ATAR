@@ -1,12 +1,12 @@
 //
-// Created by nima on 13/06/17.
+// Created by Andrea on 28/07/2017.
 //
 
-#ifndef ATAR_TASHOOK_H
-#define ATAR_TASKHOOK_H
+#ifndef ATAR_TASKBULLETTEST_H
+#define ATAR_TASKBULLETTEST_H
 
 
-#include "VTKTask.h"
+#include "src/ar_core/VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -29,28 +29,27 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkCornerAnnotation.h>
 
-#include "Rendering.h"
+#include "src/ar_core/Rendering.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
-#include "BulletVTKMotionState.h"
+#include "src/ar_core/BulletVTKMotionState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
-#include "BulletVTKObject.h"
-#include "SimpleGripper.h"
+#include "src/ar_core/BulletVTKObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
 
 
 
-class TaskHook : public VTKTask{
+class Task3D : public VTKTask{
 public:
 
-    TaskHook(const std::string mesh_files_dir,
-            const bool show_ref_frames, const bool num_tools,
-            const bool with_guidance);
+    Task3D(const std::string mesh_files_dir,
+                   const bool show_ref_frames, const bool num_tools,
+                   const bool with_guidance);
 
-    ~TaskHook();
+    ~Task3D();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -73,6 +72,9 @@ public:
 
     custom_msgs::TaskState GetTaskStateMsg();
 
+    // check if the task is finished
+    void TaskEvaluation();
+
     // resets the number of repetitions and task state;
     void ResetTask();
 
@@ -93,18 +95,65 @@ public:
 
     void StepDynamicsWorld();
 
+    void CheckCrossing();
+
+    void ArrowManager();
+
+    void ExitChecking();
+
+
 private:
+    std::vector<std::array<double, 3> > sphere_positions;
 
-    double board_dimensions[3];
+    enum class TaskState: uint8_t {Idle, Entry, Exit};
 
-    std::vector<std::vector<double>> gripper_link_dims;
-    SimpleGripper * grippers[1];
-    uint counter=0;
+    // quidditch task
+    int rings_number = 4;
+    BulletVTKObject* ring[4];
+    BulletVTKObject* hinge_cyl[4];
+    KDL::Vector ideal_position[4];
+    btHingeConstraint * hinges[4];
+    double* radii;
+    int target;
+    std::vector<double> kine_dim;
+    BulletVTKObject* arrow;
+    std::vector<std::vector<int>> index;
+    int path = 0;
+    TaskState task_state;
+    KDL::Vector distance;
+    double threshold=0.005;
+    double transf[4];
+    KDL::Vector arrow_posit;
+    double arrow_x, arrow_y, arrow_z, arrow_w;
+    double var;
+    KDL::Rotation rot;
+    //
 
-    BulletVTKObject *hook_mesh;
 
+    custom_msgs::TaskState task_state_msg;
+    bool out[4];
+    BulletVTKObject* kine_p;
+    float height=0.035;
+    btDiscreteDynamicsWorld* dynamicsWorld;
     ros::Time time_last;
-    btDiscreteDynamicsWorld* dynamics_world;
+    double color[3];
+
+    //Metrics
+    bool cond=0;
+    bool touch=0;
+    // Timing
+    double time;
+    ros::Time begin;
+    float axes_dist=0;
+
+    unsigned char n_rep=1;
+
+
+    KDL::Vector pointer_posit;
+
+    //keep track of the shapes, we release memory at exit.
+    //make sure to re-use collision shapes among rigid bodies whenever possible!
+//    btAlignedObjectArray<btCollisionShape*> collisionShapes;
     btSequentialImpulseConstraintSolver* solver;
     btBroadphaseInterface* overlappingPairCache;
     btCollisionDispatcher* dispatcher;
@@ -112,13 +161,15 @@ private:
 
     // -------------------------------------------------------------------------
     // graphics
+
     // for not we use the same type of active constraint for both arms
     custom_msgs::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-    double * jaw_position[2];
-
+    double *gripper_position[2];
 };
 
-#endif //ATAR_TASKHOOK_H
+#endif //ATAR_TASKBULLETt_H
+
+

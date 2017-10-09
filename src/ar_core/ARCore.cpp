@@ -6,14 +6,14 @@
 #include <custom_conversions/Conversions.h>
 #include <pwd.h>
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
-#include "TaskBuzzWire.h"
-#include "TaskKidney.h"
-#include "TaskDeformable.h"
-#include "TaskBulletTest.h"
+#include "src/ar_core/tasks/TaskBuzzWire.h"
+#include "src/ar_core/tasks/TaskKidney.h"
+#include "src/ar_core/tasks/TaskDeformable.h"
+#include "src/ar_core/tasks/TaskBulletTest.h"
 #include "ControlEvents.h"
-#include "TaskNeedle.h"
-#include "TaskHook.h"
-#include "TaskSteadyHand.h"
+#include "src/ar_core/tasks/TaskNeedle.h"
+#include "src/ar_core/tasks/TaskHook.h"
+#include "src/ar_core/tasks/TaskSteadyHand.h"
 
 // -----------------------------------------------------------------------------
 ARCore::ARCore(std::string node_name)

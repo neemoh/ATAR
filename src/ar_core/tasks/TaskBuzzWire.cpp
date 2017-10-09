@@ -9,7 +9,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <kdl_conversions/kdl_msg.h>
 #include "TaskBuzzWire.h"
-#include "Colors.hpp"
+#include "src/ar_core/Colors.hpp"
 
 TaskBuzzWire::TaskBuzzWire(
         const std::string stl_file_dir,

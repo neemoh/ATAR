@@ -2,9 +2,9 @@
 // Created by nima on 4/18/17.
 //
 
-#ifndef TELEOP_VISION_TASKBUZZWIRE_H
-#define TELEOP_VISION_TASKBUZZWIRE_H
-#include "VTKTask.h"
+#ifndef TELEOP_VISION_TASKKIDNEY_H
+#define TELEOP_VISION_TASKKIDNEY_H
+#include "src/ar_core/VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -27,18 +27,14 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkCornerAnnotation.h>
 
-#include "Rendering.h"
+#include "src/ar_core/Rendering.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
-#include <std_msgs/Bool.h>
-#include "Colors.hpp"
-
-
 
 /**
- * \class TaskBuzzWire
+ * \class TaskKidney
  * \brief This is a class that generates graphics and logic for a simple ring
  * and wire task, where the user is supposed to move a ring without around a
  * tube without touching it. 10 spheres in the bottom of the image show the
@@ -61,24 +57,23 @@
  */
 
 
-enum class TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
+enum class TaskKidneyState: uint8_t {Idle, ToEndPoint, ToStartPoint,
     RepetitionComplete};
 
 
-class TaskBuzzWire : public VTKTask{
+
+// -------------------------------------------------------------------------
+
+
+class TaskKidney : public VTKTask{
 public:
 
-    TaskBuzzWire(
-            const std::string stl_files_dir,
-            const bool show_ref_frames,
-            const bool num_tools,
-            const bool with_guidance,
-            const double haptic_loop_rate,
-            const std::string slave_names[],
-            KDL::Frame *slave_to_world_tr
-        );
+    TaskKidney(const std::string stl_files_dir,
+                     const bool show_ref_frames, const bool num_tools,
+                     const bool with_guidance);
 
-    ~TaskBuzzWire();
+//    ~TaskKidney();
+
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
         return actors;
@@ -134,16 +129,17 @@ private:
     // Calculates the closest points of the wire mesh to three points of
     // interest on the ring used for calculating the desired pose of the ring
 
+public:
+
 private:
+
 
     // -------------------------------------------------------------------------
     // task logic
 //    bool bimanual;
 //    bool with_guidance;
-    TaskState task_state;
+    TaskKidneyState task_state;
     std::string stl_files_dir;
-    std::string *slave_names;
-    KDL::Frame *slave_frame_to_world_frame_tr;
 
     KDL::Vector idle_point;
     KDL::Vector start_point;
@@ -153,12 +149,13 @@ private:
     ros::Time start_time;
     double posit_error_sum;
     double orient_error_sum;
-    Colors colors;
 
     double posit_error_max;
     uint sample_count;
     uint n_score_history;
     std::vector<double> score_history;
+
+
     // -------------------------------------------------------------------------
     // graphics
     double ring_radius;
@@ -182,7 +179,6 @@ private:
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame *tool_current_pose_kdl[2];
-    KDL::Frame tool_last_pose[2];
 
     uint destination_ring_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
@@ -191,26 +187,18 @@ private:
 
     // actors that are updated during the task
     vtkSmartPointer<vtkActor>                       ring_actor[2];
-    vtkSmartPointer<vtkActor>                       destination_ring_actor;
-    std::vector< vtkSmartPointer<vtkActor>>         score_sphere_actors;
-    std::vector<double*>                           score_history_colors;
 
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes[2];
     vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes[2];
 
     vtkSmartPointer<vtkCellLocator>                 cellLocator;
 
-    vtkSmartPointer<vtkLineSource>                  line1_source;
-    vtkSmartPointer<vtkLineSource>                  line2_source;
-    vtkSmartPointer<vtkActor>                       line1_actor;
-    vtkSmartPointer<vtkActor>                       line2_actor;
+    vtkSmartPointer<vtkActor>                       mesh_actor;
 //    vtkSmartPointer<vtkActor>                       ring_guides_mesh_actor;
 //    vtkSmartPointer<vtkActor>                       destination_cone_actor;
-    vtkSmartPointer<vtkActor>                       tube_mesh_actor ;
-
+//    vtkSmartPointer<vtkActor>                       kidney_mesh_actor ;
     vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
 
 };
 
-
-#endif //TELEOP_VISION_TaskBuzzWire_H
+#endif //TELEOP_VISION_TaskKidney_H

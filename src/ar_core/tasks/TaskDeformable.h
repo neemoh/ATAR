@@ -2,11 +2,11 @@
 // Created by nima on 13/06/17.
 //
 
-#ifndef ATAR_TASKTEST_H
-#define ATAR_TASKTEST_H
+#ifndef ATAR_TASKDEFORMABLE_H
+#define ATAR_TASKDEFORMABLE_H
 
 
-#include "VTKTask.h"
+#include "src/ar_core/VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -29,27 +29,33 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkCornerAnnotation.h>
 
-#include "Rendering.h"
+#include "src/ar_core/Rendering.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
-#include "BulletVTKMotionState.h"
+#include "src/ar_core/BulletVTKMotionState.h"
+#include "src/ar_core/BulletVTKSoftObject.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
-#include "BulletVTKObject.h"
+#include "src/ar_core/BulletVTKObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
+#include <BulletSoftBody/btDefaultSoftBodySolver.h>
+#include <BulletSoftBody/btSoftRigidDynamicsWorld.h>
+#include <BulletSoftBody/btSoftBodyHelpers.h>
+#include <BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
+
+#include <memory>
 
 
-
-class TaskTest : public VTKTask{
+class TaskDeformable : public VTKTask{
 public:
 
-    TaskTest(const std::string mesh_files_dir,
+    TaskDeformable(const std::string mesh_files_dir,
             const bool show_ref_frames, const bool num_tools,
             const bool with_guidance);
 
-    ~TaskTest();
+    ~TaskDeformable();
 
     // returns all the task actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
@@ -72,9 +78,6 @@ public:
 
     custom_msgs::TaskState GetTaskStateMsg();
 
-    // check if the task is finished
-    void EndChecking();
-
     // resets the number of repetitions and task state;
     void ResetTask();
 
@@ -96,42 +99,30 @@ public:
     void StepDynamicsWorld();
 
 
+    void RenderSoftbody(btSoftBody* b, vtkSmartPointer<vtkActor> actor);
 private:
     std::vector<std::array<double, 3> > sphere_positions;
 
     double board_dimensions[3];
-    double peg_dimensions[3];
-    double sides;
-    bool out[4];
-    ros::Time start_pause;
     BulletVTKObject* kine_box;
-    BulletVTKObject* kine_scoop;
-    BulletVTKObject* kine_cylinder_1;
-    BulletVTKObject* peg4;
-    BulletVTKObject* peg1;
-    BulletVTKObject* peg2;
-    BulletVTKObject* peg3;
-    BulletVTKObject* cubes[4];
-    bool count = 0;
-    KDL::Frame peg_pose1;
-    KDL::Frame peg_pose2;
-    KDL::Frame peg_pose3;
-    KDL::Frame peg_pose4;
-
-    BulletVTKMotionState* motion_state_;
-    std::vector<double> target_pos;
-    KDL::Vector previous_point;
-    btDiscreteDynamicsWorld* dynamicsWorld;
-    ros::Time time_last;
-
+    BulletVTKObject* kine_sphere_0;
+    BulletVTKObject* kine_sphere_1;
+    btSoftRigidDynamicsWorld* dynamics_world;
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
 //    btAlignedObjectArray<btCollisionShape*> collisionShapes;
     btSequentialImpulseConstraintSolver* solver;
+    btSoftBodySolver* sb_solver;
     btBroadphaseInterface* overlappingPairCache;
     btCollisionDispatcher* dispatcher;
-    btDefaultCollisionConfiguration* collisionConfiguration;
+    btSoftBodyRigidBodyCollisionConfiguration* collisionConfiguration;
 
+    BulletVTKSoftObject * soft_o0;
+    BulletVTKSoftObject * soft_o1;
+    BulletVTKSoftObject * soft_o2;
+
+    ros::Time time_last;
+    btSoftBodyWorldInfo *sb_w_info;
     // -------------------------------------------------------------------------
     // graphics
 
@@ -144,9 +135,6 @@ private:
 //    vtkSmartPointer<vtkActor>                       d_board_actor;
 //    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
 
-    int peg_type=1; // 1 = spheres, 0= cubes
-
-
 };
 
-#endif //ATAR_TASKBULLETt_H
+#endif //ATAR_TASKDEFORMABLE_H

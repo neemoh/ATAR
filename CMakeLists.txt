@@ -148,7 +148,7 @@ endforeach ()
 
 
 ##########################################################################
-#                           AC  VTK
+#                               AR CORE
 ##########################################################################
 
 if(POLICY CMP0025)
@@ -158,7 +158,7 @@ if(POLICY CMP0053)
     cmake_policy(SET CMP0053 NEW) # CMake 3.1
 endif()
 SET(GCC_COVERAGE_COMPILE_FLAGS "-fopenmp")
-SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
 
 find_package(VTK REQUIRED)
 vtk_module_config(VTK
@@ -194,8 +194,8 @@ target_link_libraries(
         Bullet3Common)
 
 # Assume all files that start with "Task" are to be added
-file(GLOB tasks_src "src/ar_core/Task*.cpp")
-file(GLOB tasks_h "src/ar_core/Task*.h")
+file(GLOB tasks_src "src/ar_core/tasks/Task*.cpp")
+file(GLOB tasks_h "src/ar_core/tasks/Task*.h")
 
 add_executable(
         ar_core

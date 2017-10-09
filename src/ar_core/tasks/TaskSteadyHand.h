@@ -4,7 +4,7 @@
 
 #ifndef TELEOP_VISION_TASKSTEADYHAND_H
 #define TELEOP_VISION_TASKSTEADYHAND_H
-#include "VTKTask.h"
+#include "src/ar_core/VTKTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -27,7 +27,7 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkCornerAnnotation.h>
 
-#include "Rendering.h"
+#include "src/ar_core/Rendering.h"
 #include "custom_msgs/TaskState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
@@ -35,9 +35,9 @@
 
 #include <btBulletDynamicsCommon.h>
 #include <mutex>
-#include "BulletVTKObject.h"
-#include "Forceps.h"
-#include "Colors.hpp"
+#include "src/ar_core/BulletVTKObject.h"
+#include "src/ar_core/Forceps.h"
+#include "src/ar_core/Colors.hpp"
 
 /**
  * \class TaskSteadyHand
