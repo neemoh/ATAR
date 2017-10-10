@@ -50,12 +50,12 @@
  * a simple geometric estimation of the closest point on the tube path (for
  * position) and the path tangent on the closest point. This is far from
  * ideal but the goal was to not limit ourselves to parametric curves and be
- * able to use any aribitrary tube.
+ * able to use any arbitrary tube.
  * The task has two modes: a simple 1 ring mode, and a bimanual mode where
  * two robot arms are used and each have a ring. TODO: I still have to test
  * this mode.
  *
- * An important point here is that there is a thread in this class that doeas
+ * An important point here is that there is a thread in this class that does
  * the spinning for ros and updates the desired pose at a much higher
  * frequency with respect to the 25Hz for graphics which would lead to
  * unstable guidance forces. This is totally not thread-safe! Hopefully in
@@ -197,18 +197,14 @@ private:
     // pose, though not significantly.
     double position_error_norm;
     double orientation_error_norm;
-
     bool ac_params_changed;
 
     KDL::Frame tool_desired_pose[2];
     KDL::Frame *tool_current_pose_ptr[2];
     KDL::Frame tool_current_pose[2];
-//    KDL::Frame tool_last_pose[2];
 
     uint destination_ring_counter;
-//    vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
     custom_msgs::ActiveConstraintParameters ac_parameters[2];
-
 
     // actors that are updated during the task
     vtkSmartPointer<vtkActor>                       destination_ring_actor;
@@ -225,10 +221,7 @@ private:
     vtkSmartPointer<vtkActor>                       line1_actor;
     vtkSmartPointer<vtkActor>                       line2_actor;
 
-    //vtkSmartPointer<vtkCornerAnnotation>            cornerAnnotation;
-
     // dynamics
-
     ros::Time time_last;
     btDiscreteDynamicsWorld* dynamics_world;
     btSequentialImpulseConstraintSolver* solver;
@@ -241,18 +234,11 @@ private:
     BulletVTKObject *sep_cylinder[6];
     BulletVTKObject *tube_meshes[3];
     BulletVTKObject *tube_mesh_thin;
-    BulletVTKObject *tube_vis_thin;
     BulletVTKObject *stand_mesh;
     BulletVTKObject *stand_cube;
     KDL::Vector dir;
-    // ADDED
-    BulletVTKObject *trans_cyl;
-    // -----
 
-//    std::vector<std::vector<double>> gripper_link_dims;
     Forceps * forceps[2];
-
-    BulletVTKObject* closing_cylinder;
     BulletVTKObject* arm[2];
     KDL::Vector rcm[2];
 
