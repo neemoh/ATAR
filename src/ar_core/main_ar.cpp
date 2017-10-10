@@ -8,7 +8,7 @@
 int main(int argc, char **argv)
 {
 
-    ros::init(argc, argv, "ac_overlay");
+    ros::init(argc, argv, "ar_core");
     ARCore acore (ros::this_node::getName());
 
     ros::Rate loop_rate(30);

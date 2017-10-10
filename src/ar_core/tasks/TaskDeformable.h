@@ -33,12 +33,12 @@
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include "src/ar_core/BulletVTKMotionState.h"
-#include "src/ar_core/BulletVTKSoftObject.h"
+#include "src/ar_core/SimSoftObject.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
-#include "src/ar_core/BulletVTKObject.h"
+#include "src/ar_core/SimObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
 #include <BulletSoftBody/btDefaultSoftBodySolver.h>
 #include <BulletSoftBody/btSoftRigidDynamicsWorld.h>
@@ -69,7 +69,7 @@ public:
     tool_id);
 
     // updates the task logic and the actors
-    void UpdateActors();
+    void StepWorld();
 
     bool IsACParamChanged();
 
@@ -92,7 +92,7 @@ public:
      * It first reads the current poses of the tools and then finds the
      * desired pose from the mesh.
   *  **/
-    void FindAndPublishDesiredToolPose();
+    void HapticsThread();
 
     void InitBullet();
 
@@ -104,9 +104,9 @@ private:
     std::vector<std::array<double, 3> > sphere_positions;
 
     double board_dimensions[3];
-    BulletVTKObject* kine_box;
-    BulletVTKObject* kine_sphere_0;
-    BulletVTKObject* kine_sphere_1;
+    SimObject* kine_box;
+    SimObject* kine_sphere_0;
+    SimObject* kine_sphere_1;
     btSoftRigidDynamicsWorld* dynamics_world;
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
@@ -117,9 +117,9 @@ private:
     btCollisionDispatcher* dispatcher;
     btSoftBodyRigidBodyCollisionConfiguration* collisionConfiguration;
 
-    BulletVTKSoftObject * soft_o0;
-    BulletVTKSoftObject * soft_o1;
-    BulletVTKSoftObject * soft_o2;
+    SimSoftObject * soft_o0;
+    SimSoftObject * soft_o1;
+    SimSoftObject * soft_o2;
 
     ros::Time time_last;
     btSoftBodyWorldInfo *sb_w_info;

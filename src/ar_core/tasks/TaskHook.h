@@ -37,8 +37,8 @@
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
-#include "src/ar_core/BulletVTKObject.h"
-#include "src/ar_core/SimpleGripper.h"
+#include "src/ar_core/SimObject.h"
+#include "src/ar_core/FiveLinkGripper.h"
 #include <vtkMinimalStandardRandomSequence.h>
 
 
@@ -64,7 +64,7 @@ public:
     tool_id);
 
     // updates the task logic and the actors
-    void UpdateActors();
+    void StepWorld();
 
     bool IsACParamChanged();
 
@@ -87,7 +87,7 @@ public:
      * It first reads the current poses of the tools and then finds the
      * desired pose from the mesh.
   *  **/
-    void FindAndPublishDesiredToolPose();
+    void HapticsThread();
 
     void InitBullet();
 
@@ -98,10 +98,10 @@ private:
     double board_dimensions[3];
 
     std::vector<std::vector<double>> gripper_link_dims;
-    SimpleGripper * grippers[1];
+    FiveLinkGripper * grippers[1];
     uint counter=0;
 
-    BulletVTKObject *hook_mesh;
+    SimObject *hook_mesh;
 
     ros::Time time_last;
     btDiscreteDynamicsWorld* dynamics_world;

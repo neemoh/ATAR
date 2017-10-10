@@ -16,7 +16,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
     InitBullet();
 
-    BulletVTKObject *board;
+    SimObject *board;
     // -----------------------
     // -------------------------------------------------------------------------
     // Create a cube for the board
@@ -36,9 +36,8 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         std::vector<double> dim = {
                 board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
-        board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
-                                    pose, 0.0, 0, friction,
-                                    NULL);
+        board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose,
+                              0.0, friction);
         //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.6, 0.5, 0.5);
 
@@ -51,10 +50,8 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     // objects falling too far and mess things up.
     double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject* floor= new BulletVTKObject(ObjectShape::STATICPLANE,
-                                                ObjectType::DYNAMIC, floor_dims,
-                                                KDL::Frame(), 0.0, 0, 0,
-                                                NULL);
+    SimObject* floor= new SimObject(ObjectShape::STATICPLANE,
+                                    ObjectType::DYNAMIC, floor_dims);
     dynamics_world->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
@@ -63,7 +60,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         int cols = 4;
         int rows = 1;
         float friction = 2.2;
-        BulletVTKObject *cylinders[cols * rows];
+        SimObject *cylinders[cols * rows];
         for (int i = 0; i < rows; ++i) {
 
             for (int j = 0; j < cols; ++j) {
@@ -76,10 +73,9 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                                              dim[1] / 2));
 
                 cylinders[i * rows + j] =
-                        new BulletVTKObject(ObjectShape::CYLINDER,
-                                            ObjectType::DYNAMIC, dim, pose, 0.0,
-                                            0, friction,
-                                            NULL);
+                        new SimObject(ObjectShape::CYLINDER,
+                                      ObjectType::DYNAMIC, dim, pose, 0.0,
+                                      friction);
 
                 auto ratio = (float) j / (float) cols;
                 cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
@@ -102,10 +98,8 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         std::vector<double> rod_dim = {0.002, 0.1};
         KDL::Frame pose(KDL::Rotation::Quaternion(0.70711, 0.70711, 0.0, 0.0),
                         KDL::Vector(0.10, 0.03, 0.03));
-        BulletVTKObject rod = BulletVTKObject(ObjectShape::CYLINDER,
-                                              ObjectType::DYNAMIC, rod_dim,
-                                              pose, 0.0, 0, 0,
-                                              NULL);
+        SimObject rod = SimObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC,
+                                  rod_dim, pose);
 
         dynamics_world->addRigidBody(rod.GetBody());
         actors.push_back(rod.GetActor());
@@ -118,7 +112,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     //// Create smallRING meshes
     {
         size_t n_rings = 4;
-        BulletVTKObject *rings[n_rings];
+        SimObject *rings[n_rings];
         std::stringstream input_file_dir;
         input_file_dir << mesh_files_dir << std::string("task_Hook_ring_D2cm_D5mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
@@ -131,9 +125,9 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
             std::vector<double> dim; // not used
 
             rings[l] = new
-                    BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, dim,
-                                    pose, density, 0, friction,
-                                    &mesh_file_dir_str);
+                    SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, dim, pose,
+                              density, friction,
+                              mesh_file_dir_str, 0);
             dynamics_world->addRigidBody(rings[l]->GetBody());
             actors.push_back(rings[l]->GetActor());
             rings[l]->GetActor()->GetProperty()->SetColor(0., 0.5, 0.6);
@@ -164,7 +158,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                         , {0.004, 0.001, 0.007}
                         , {0.004, 0.001, 0.007}};
 
-        grippers[0] = new SimpleGripper(gripper_link_dims);
+        grippers[0] = new FiveLinkGripper(gripper_link_dims);
 
         for (int j = 0; j < 1 ;++j) {
             grippers[j]->AddToWorld(dynamics_world);
@@ -191,9 +185,9 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         float density = 50000;
 
         hook_mesh = new
-                BulletVTKObject(ObjectShape::MESH, ObjectType::KINEMATIC, dim,
-                                pose, density, 0, 0,
-                                &mesh_file_dir_str);
+                SimObject(ObjectShape::MESH, ObjectType::KINEMATIC, dim, pose,
+                          density, 0,
+                          mesh_file_dir_str, 0);
         dynamics_world->addRigidBody(hook_mesh->GetBody());
         actors.push_back(hook_mesh->GetActor());
         hook_mesh->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
@@ -205,9 +199,9 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     //    std::vector<double> dim = {0.0015, 0.04};
     //    double pose[7]{0.0, 0.0, 0.0, 0.7, 0, 0.7, 0};
     //
-    //    tool_cyl = new BulletVTKObject(
+    //    tool_cyl = new SimObject(
     //        ObjectShape::CYLINDER, ObjectType::KINEMATIC, dim, pose,
-    //        0.0, NULL);
+    //       );
     //    dynamics_world->addRigidBody(tool_cyl->GetBody());
     //    actors.push_back(tool_cyl->GetActor());
     //    tool_cyl->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
@@ -245,7 +239,7 @@ tool_id) {
 };
 
 //------------------------------------------------------------------------------
-void TaskHook::UpdateActors() {
+void TaskHook::StepWorld() {
 
 
     //-------------------------------- UPDATE RIGHT GRIPPER
@@ -329,7 +323,7 @@ void TaskHook::ResetCurrentAcquisition() {
 }
 
 
-void TaskHook::FindAndPublishDesiredToolPose() {
+void TaskHook::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 

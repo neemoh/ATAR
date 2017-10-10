@@ -37,7 +37,7 @@
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
-#include "src/ar_core/BulletVTKObject.h"
+#include "src/ar_core/SimObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
 
 
@@ -63,7 +63,7 @@ public:
     tool_id);
 
     // updates the task logic and the actors
-    void UpdateActors();
+    void StepWorld();
 
     bool IsACParamChanged();
 
@@ -89,7 +89,7 @@ public:
      * It first reads the current poses of the tools and then finds the
      * desired pose from the mesh.
   *  **/
-    void FindAndPublishDesiredToolPose();
+    void HapticsThread();
 
     void InitBullet();
 
@@ -116,7 +116,7 @@ private:
 
     // Positioning task
     int planes_number = 3;
-    BulletVTKObject* plane[3];
+    SimObject* plane[3];
     std::vector<double> kine_dim;
     int index = 0;
     KDL::Vector cam_position;
@@ -129,12 +129,12 @@ private:
 
 
     // quidditch task
-    BulletVTKObject* hinge_cyl[4];
+    SimObject* hinge_cyl[4];
     KDL::Vector ideal_position[4];
     btHingeConstraint * hinges[4];
     double* radii;
     int target;
-    BulletVTKObject* arrow;
+    SimObject* arrow;
     TaskState task_state;
     KDL::Vector distance;
     double threshold=0.005;
@@ -148,7 +148,7 @@ private:
     //
     custom_msgs::TaskState task_state_msg;
     bool out[4];
-    BulletVTKObject* kine_p;
+    SimObject* kine_p;
     float height=0.035;
     btDiscreteDynamicsWorld* dynamicsWorld;
     ros::Time time_last;

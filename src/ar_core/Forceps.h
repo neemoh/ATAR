@@ -5,7 +5,7 @@
 #ifndef ATAR_FORCEPS_H
 #define ATAR_FORCEPS_H
 
-#include "BulletVTKObject.h"
+#include "SimObject.h"
 #include <kdl/frames.hpp>
 
 class Forceps {
@@ -31,7 +31,7 @@ private:
 
     std::vector<std::vector<double> > link_dims_;
 
-    BulletVTKObject* gripper_links[5];
+    SimObject* gripper_links[5];
 
     btHingeConstraint* hinges[2];
 };

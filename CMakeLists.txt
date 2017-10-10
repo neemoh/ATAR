@@ -210,15 +210,15 @@ add_executable(
         src/arm_to_world_calibration/ArmToWorldCalibration.h
         src/ar_core/ControlEvents.h
         src/ar_core/BulletVTKMotionState.h
-        src/ar_core/BulletVTKObject.cpp
-        src/ar_core/BulletVTKObject.h
+        src/ar_core/SimObject.cpp
+        src/ar_core/SimObject.h
         src/ar_core/VTKTask.h
         ${tasks_src}
         ${tasks_h}
-        src/ar_core/BulletVTKSoftObject.cpp
-        src/ar_core/BulletVTKSoftObject.h
-        src/ar_core/SimpleGripper.cpp
-        src/ar_core/SimpleGripper.h
+        src/ar_core/SimSoftObject.cpp
+        src/ar_core/SimSoftObject.h
+        src/ar_core/FiveLinkGripper.cpp
+        src/ar_core/FiveLinkGripper.h
         src/ar_core/Forceps.cpp
         src/ar_core/Forceps.h
         src/ar_core/Colors.hpp)

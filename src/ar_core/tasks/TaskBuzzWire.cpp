@@ -430,7 +430,7 @@ void TaskBuzzWire::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 }
 
 //------------------------------------------------------------------------------
-void TaskBuzzWire::UpdateActors() {
+void TaskBuzzWire::StepWorld() {
 
     // -------------------------------------------------------------------------
     // Find closest points and update frames
@@ -898,7 +898,7 @@ void TaskBuzzWire::ResetCurrentAcquisition() {
 }
 
 
-void TaskBuzzWire::FindAndPublishDesiredToolPose() {
+void TaskBuzzWire::HapticsThread() {
 
     //----------------------------------------------
     // setting  up haptics

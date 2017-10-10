@@ -22,7 +22,7 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
     task_state = TaskState::Idle;
 
 
-    BulletVTKObject *board;
+    SimObject *board;
     // -----------------------
     // -------------------------------------------------------------------------
     // Create the higher level board: set opacity to 0.5 since the lower
@@ -63,9 +63,9 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
     std::vector<double> dim = {
         board_dimensions[0]*3, board_dimensions[1]*3, board_dimensions[2]
     };
-    board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
-                                pose, 0.0, 0, friction,
-                                NULL);
+    board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0,
+                          friction,
+                          NULL, 0);
     board->GetActor()->GetProperty()->SetOpacity(1.0);
     board->GetActor()->GetProperty()->SetColor(0.2549, 0.4117, 0.8823);
 
@@ -105,9 +105,9 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
             pose.p = KDL::Vector(position.x(), position.y(), position.z());
 
             chessboard[i * rows + j] =
-                    new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC,
-                                        dim, pose, 0.0, 0, friction,
-                                        NULL);
+                    new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
+                                  pose, 0.0, friction,
+                                  NULL, 0);
 
             if (index == 0) {
                 chessboard[i * rows + j]->GetActor()->GetProperty()->SetColor(
@@ -134,10 +134,9 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
 
         kine_pointer_dim = {2 * 0.0025};
         kine_p =
-                new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
-                                    kine_pointer_dim, KDL::Frame(), 0.0, 0,
-                                    friction,
-                                    NULL);
+                new SimObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
+                              kine_pointer_dim, KDL::Frame(), 0.0, friction,
+                              NULL, 0);
         dynamicsWorld->addRigidBody(kine_p->GetBody());
         kine_p->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
         actors.push_back(kine_p->GetActor());
@@ -167,7 +166,7 @@ tool_id
 };
 
 //------------------------------------------------------------------------------
-void TaskClutch::UpdateActors() {
+void TaskClutch::StepWorld() {
 
     if (task_state == TaskState::Idle){
 
@@ -425,7 +424,7 @@ void TaskClutch::ResetCurrentAcquisition() {
 
 }
 
-void TaskClutch::FindAndPublishDesiredToolPose() {
+void TaskClutch::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 
@@ -534,7 +533,7 @@ TaskClutch::~TaskClutch() {
     }
 
 //    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-//        BulletVTKObject* sphere = spheres[j];
+//        SimObject* sphere = spheres[j];
 //        spheres[j] = 0;
 //        delete sphere;
 //    }

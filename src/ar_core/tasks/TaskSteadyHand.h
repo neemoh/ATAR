@@ -35,7 +35,7 @@
 
 #include <btBulletDynamicsCommon.h>
 #include <mutex>
-#include "src/ar_core/BulletVTKObject.h"
+#include "src/ar_core/SimObject.h"
 #include "src/ar_core/Forceps.h"
 #include "src/ar_core/Colors.hpp"
 
@@ -80,26 +80,28 @@ public:
         );
 
     ~TaskSteadyHand();
+
+    // updates the task logic and the actors
+    void StepWorld();
+
+    /**
+    * \brief This is the function that is handled by the haptics thread.
+    * It first reads the current poses of the tools and then finds the
+    * desired pose from the mesh.
+    *  **/
+    void HapticsThread();
+
     // returns all the task actors to be sent to the rendering part
-    std::vector< vtkSmartPointer <vtkProp> > GetActors() {
-        return actors;
-    }
+    std::vector< vtkSmartPointer <vtkProp> > GetActors() {return actors;}
+
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
-
 
     // sets the position of the gripper
     void SetCurrentGripperpositionPointer(double &gripper_position, const int
     tool_id);
 
-    // updates the task logic and the actors
-    void UpdateActors();
-
-    // calculates the desired tool pose
-    void CalculatedDesiredRingPose(
-        const KDL::Frame ring_pose,
-        KDL::Frame &desired_ring_pose
-    );
+    custom_msgs::TaskState GetTaskStateMsg();
 
     // returns the status of the change of the ac_param
     bool IsACParamChanged();
@@ -107,17 +109,23 @@ public:
     // returns the ac parameters
     custom_msgs::ActiveConstraintParameters* GetACParameters();
 
-    custom_msgs::TaskState GetTaskStateMsg();
+    // decrements the number of repetitions. Used in case something goes
+    // wrong during that repetition.
+    void ResetCurrentAcquisition();
 
     // resets the number of repetitions and task state;
     void ResetTask();
 
+
+    // calculates the desired tool pose
+    void CalculatedDesiredRingPose(
+        const KDL::Frame ring_pose,
+        KDL::Frame &desired_ring_pose
+    );
+
     // resets the history of the scores and changes the colors to gray
     void ResetScoreHistory();
 
-    // decrements the number of repetitions. Used in case something goes
-    // wrong during that repetition.
-    void ResetCurrentAcquisition();
 
     // this error is just used to provide feedback to the user. Orientation
     // error is not considered.
@@ -128,12 +136,7 @@ public:
 
     void ResetOnGoingEvaluation();
 
-    /**
-    * \brief This is the function that is handled by the desired pose thread.
-     * It first reads the current poses of the tools and then finds the
-     * desired pose from the mesh.
-  *  **/
-    void FindAndPublishDesiredToolPose();
+
 
 private:
 
@@ -230,16 +233,16 @@ private:
     btDefaultCollisionConfiguration* collisionConfiguration;
 
     int ring_num = 4;
-    BulletVTKObject *ring_mesh[6];
-    BulletVTKObject *sep_cylinder[6];
-    BulletVTKObject *tube_meshes[3];
-    BulletVTKObject *tube_mesh_thin;
-    BulletVTKObject *stand_mesh;
-    BulletVTKObject *stand_cube;
+    SimObject *ring_mesh[6];
+    SimObject *sep_cylinder[6];
+    SimObject *tube_meshes[3];
+    SimObject *tube_mesh_thin;
+    SimObject *stand_mesh;
+    SimObject *stand_cube;
     KDL::Vector dir;
 
     Forceps * forceps[2];
-    BulletVTKObject* arm[2];
+    SimObject* arm[2];
     KDL::Vector rcm[2];
 
     double * gripper_position[2];

@@ -82,7 +82,7 @@ public:
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
 
     // updates the task logic and the actors
-    void UpdateActors();
+    void StepWorld();
 
     // calculates the desired tool pose
     void CalculatedDesiredToolPose();
@@ -119,7 +119,7 @@ public:
      * It first reads the current poses of the tools and then finds the
      * desired pose from the mesh.
   *  **/
-    void FindAndPublishDesiredToolPose();
+    void HapticsThread();
 
 private:
 

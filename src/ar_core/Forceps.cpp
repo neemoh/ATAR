@@ -20,9 +20,8 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
     // create the kinematic link
     {
         gripper_links[0] =
-                new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                    link_dims_[0], init_pose,
-                                    0.0, 0);
+                new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                              link_dims_[0], init_pose, 0.0, 0);
         gripper_links[0]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f,
                                                               0.7f);
     }
@@ -36,10 +35,10 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
     // create jaw 1
     {
         gripper_links[1] =
-                new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
-                                    link_dims_[0], init_pose,
-                                    gripper_density, 1, gripper_friction,
-                                    &mesh_file_dir_str);
+                new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                              link_dims_[0], init_pose, gripper_density,
+                              gripper_friction,
+                              mesh_file_dir_str, 1);
         gripper_links[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
         gripper_links[1]->GetBody()->setContactStiffnessAndDamping(500, 100);
         gripper_links[1]->GetBody()->setRollingFriction(btScalar(0.1));
@@ -59,10 +58,10 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
         KDL::Frame gripper_pose(jaw_2_rot, gripper_pose_position);
 
         gripper_links[2] =
-            new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
-                                link_dims_[0], gripper_pose,
-                                gripper_density, 1, gripper_friction,
-                                &mesh_file_dir_str);
+                new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                              link_dims_[0], gripper_pose, gripper_density,
+                              gripper_friction,
+                              mesh_file_dir_str, 1);
         gripper_links[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
         gripper_links[2]->GetBody()->setContactStiffnessAndDamping(500, 100);
         gripper_links[2]->GetBody()->setRollingFriction(btScalar(0.1));

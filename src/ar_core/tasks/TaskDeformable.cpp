@@ -26,10 +26,8 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject* floor= new BulletVTKObject(ObjectShape::STATICPLANE,
-                                                ObjectType::DYNAMIC, floor_dims,
-                                                KDL::Frame(), 0.0, 0, 0,
-                                                NULL);
+    SimObject* floor= new SimObject(ObjectShape::STATICPLANE,
+                                    ObjectType::DYNAMIC, floor_dims);
     dynamics_world->addRigidBody(floor->GetBody());
 
 
@@ -45,7 +43,6 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     board_dimensions[0]  = 0.1;
     board_dimensions[1]  = 0.1;
     board_dimensions[2]  = 0.02;
-    float friction = 0.1;
 
     KDL::Frame board_pose;
     board_pose.p = KDL::Vector(attention_center[0] ,
@@ -54,10 +51,8 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
-    BulletVTKObject* board = new BulletVTKObject(ObjectShape::BOX,
-                                                 ObjectType::DYNAMIC, dim,
-                                                 board_pose, 0.0, 0, friction,
-                                                 NULL);
+    SimObject* board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
+                                     board_pose);
     board->GetActor()->GetProperty()->SetOpacity(1.0);
     board->GetActor()->GetProperty()->SetColor(0.2, 0.3, 0.1);
 
@@ -93,16 +88,16 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     input_file_dir << mesh_files_dir << std::string("task_deformable_sphere.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
 
-    soft_o0 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
-                                     density, friction);
+    soft_o0 = new SimSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
+                                     density);
     soft_o0->GetActor()->GetProperty()->SetDiffuse(0.5);
     dynamics_world->addSoftBody(soft_o0->GetBody());
     actors.push_back(soft_o0->GetActor());
 
     soft_pose.p[0]+=0.03;
     soft_pose.p[2]+=0.05;
-    soft_o1 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
-                                     density, friction);
+    soft_o1 = new SimSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
+                                     density);
     soft_o1->GetActor()->GetProperty()->SetDiffuse(0.5);
 
     dynamics_world->addSoftBody(soft_o1->GetBody());
@@ -112,8 +107,8 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     soft_pose.p[0]-=0.06;
     soft_pose.p[2]+=0.05;
-    soft_o2 = new BulletVTKSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
-                                     density, friction);
+    soft_o2 = new SimSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
+                                     density);
 //    soft_o2->GetActor()->GetProperty()->SetSpecular(0);
     soft_o2->GetActor()->GetProperty()->SetDiffuse(0.5);
 //    soft_o2->GetActor()->GetProperty()->SetSpecularPower(127);
@@ -128,7 +123,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     int rows = 2;
 //    double density = 4; // kg/cm3
 
-    BulletVTKObject* spheres[cols*rows];
+    SimObject* spheres[cols*rows];
     for (int i = 0; i < rows; ++i) {
 
         for (int j = 0; j < cols; ++j) {
@@ -141,9 +136,8 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
                                         attention_center[2] + 0.12 + dim[0] *1.5* (double)j);
 
             spheres[i*rows+j] =
-                new BulletVTKObject(
-                    ObjectShape::SPHERE, ObjectType::DYNAMIC, dim, sphere_pose,
-                    density);
+                    new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC, dim,
+                                  sphere_pose, density);
 
             double ratio = (double)i/4.0;
             spheres[i*rows+j]->GetActor()->GetProperty()->SetColor(
@@ -162,7 +156,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 //    rows = 3;
 //    cols = 2;
 //    int layers = 3;
-//    BulletVTKObject* cubes[layers *rows *cols];
+//    SimObject* cubes[layers *rows *cols];
 //
 //    double sides = 0.01;
 //    density = 7000; // kg/m3
@@ -180,10 +174,9 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 //                    0, 0, 0, 1};
 //
 //                std::vector<double> dim = {sides, sides, 2*sides};
-//                cubes[i*rows+j] = new BulletVTKObject(
+//                cubes[i*rows+j] = new SimObject(
 //                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
-//                    NULL, friction
-//                );
+//                    friction                );
 //                delete [] pose;
 //
 //                double ratio = (double)i/4.0;
@@ -201,7 +194,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     {
 //        std::vector<double> dim = {sides, sides, sides};
-//        cubes[i*rows+j] = new BulletVTKObject(ObjectShape::BOX,
+//        cubes[i*rows+j] = new SimObject(ObjectShape::BOX,
 //                                              ObjectType::DYNAMIC, dim,
 //                                              pose, 0.2), stiffnes, damping;
 
@@ -215,13 +208,13 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 //
 //    pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
 //    std::vector<double> _dim = {0.002};
-//    BulletVTKObject *mesh;
+//    SimObject *mesh;
 //    std::stringstream input_file_dir;
 //    input_file_dir << mesh_files_dir << std::string("monkey.obj");
 //    std::string mesh_file_dir_str = input_file_dir.str();
 //
 //    mesh = new
-//        BulletVTKObject(
+//        SimObject(
 //        ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose, 6000,
 //        &mesh_file_dir_str, friction
 //    );
@@ -235,9 +228,9 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     std::vector<double> kine_box_dim = {0.002, 0.002, 0.01};
     //kine_box =
-    //    new BulletVTKObject(
+    //    new SimObject(
     //        ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim, dummy_pose, 0.0,
-    //        NULL, friction
+    //        friction
     //    );
     //dynamics_world->addRigidBody(kine_box->GetBody());
     //actors.push_back(kine_box->GetActor());
@@ -248,9 +241,8 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
     std::vector<double> kine_sph_dim = {0.002};
     kine_sphere_0 =
-            new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
-                                kine_sph_dim, KDL::Frame(), 0.0, 0, friction,
-                                NULL);
+            new SimObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
+                          kine_sph_dim);
     dynamics_world->addRigidBody(kine_sphere_0->GetBody());
     actors.push_back(kine_sphere_0->GetActor());
     kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
@@ -259,9 +251,8 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     // Create kinematic sphere
 
     kine_sphere_1 =
-            new BulletVTKObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
-                                kine_sph_dim, KDL::Frame(), 0.0, 0, friction,
-                                NULL);
+            new SimObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
+                          kine_sph_dim);
 
     dynamics_world->addRigidBody(kine_sphere_1->GetBody());
     actors.push_back(kine_sphere_1->GetActor());
@@ -298,7 +289,7 @@ tool_id) {
 };
 
 //------------------------------------------------------------------------------
-void TaskDeformable::UpdateActors() {
+void TaskDeformable::StepWorld() {
 
     soft_o0->RenderSoftbody();
     soft_o1->RenderSoftbody();
@@ -380,7 +371,7 @@ void TaskDeformable::ResetCurrentAcquisition() {
 }
 
 
-void TaskDeformable::FindAndPublishDesiredToolPose() {
+void TaskDeformable::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 
@@ -478,7 +469,7 @@ TaskDeformable::~TaskDeformable() {
     }
 
 //    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-//        BulletVTKObject* sphere = spheres[j];
+//        SimObject* sphere = spheres[j];
 //        spheres[j] = 0;
 //        delete sphere;
 //    }

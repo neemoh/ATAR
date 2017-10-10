@@ -2,23 +2,37 @@
 // Created by nima on 15/06/17.
 //
 
-#ifndef ATAR_BULLETVTKOBJECT_H
-#define ATAR_BULLETVTKOBJECT_H
+#ifndef ATAR_SIMOBJECT_H
+#define ATAR_SIMOBJECT_H
 
 #include "BulletVTKMotionState.h"
 #include <btBulletDynamicsCommon.h>
 #include <vector>
 
-// the pose is array for easy initialization, make sure the size is 7 before
-// passing in! {x, y, z, qx, qy, qz, qw}
-// To get static objects make a dynamic one with sero mass.
+/**
+ * \class SimObject
+ * \brief This class represents a simulated object with graphics and physics.
+ * When a SimObject is generated its graphic actor (actor_) and physics body
+ * (rigid_body_) has to be added to the renderer and physics world.
+ * After which, the pose of the graphical representation will be
+ * automatically updated by the physics simulation, thanks the
+ * toBulletVTKMotionState member. To learn more about how to add simObjects
+ * to the simulation world refer to VTKTask.h
+ *
+ * To construct a SimObject at least 5 arguments are needed.
+ *
+ * To get static objects make a dynamic one with zero mass.
+ *
+ * Meshes are decomposed into approximated compound meshes.
+ *
+ * IMPORTANT NOTE: We were interested in objects with dimensions in the
+ * order of a few millimiters. It turned out that the bullet simulation
+ * becomes unstable for such small dimensions. To get around this, the
+ * dimensions of all the bullet related things are multiplied by B_DIM_SCALE.
+ */
 
-// Meshes are decomposed into approximated compound meshes.
-//
-//IMPORTANT NOTE: We were interested in objects with dimensions in the
-//        order of a few millimiters. It turned out that the bullet simulation
-//        becomes unstable for such small dimensions. To get around this, the
-//        dimensions of all the bullet related things are multiplied by B_DIM_SCALE.
+
+
 
 // -----------------------------------------------------------------------------
 enum ObjectType {
@@ -29,27 +43,25 @@ enum ObjectType {
 
 // -----------------------------------------------------------------------------
 enum ObjectShape {
-    STATICPLANE, //dims = [normal_x, normal_y, normal_z]
-    SPHERE,     //dims = [radius]
-    CYLINDER,   //dims = [radius, height]
-    BOX,        //dims = [width, length, height]
-    CONE,       //dims = [radius, height]
-    MESH};
+    STATICPLANE,    //dims = [normal_x, normal_y, normal_z]
+    SPHERE,         //dims = [radius]
+    CYLINDER,       //dims = [radius, height]
+    BOX,            //dims = [width, length, height]
+    CONE,           //dims = [radius, height]
+    MESH
+};
 
 // -----------------------------------------------------------------------------
-class BulletVTKObject {
+class SimObject {
 
 public:
-    BulletVTKObject(ObjectShape shape,
-                    ObjectType type,
-                    std::vector<double> dimensions,
-                    const KDL::Frame &pose,
-                    double density,
-                    const int id = 0,
-                    double friction = 0.1,
-                    void *data = NULL);
+    SimObject(const ObjectShape shape, const ObjectType type,
+              const std::vector<double> dimensions,
+              const KDL::Frame &pose=KDL::Frame(),
+              const double density=0.0, const double friction = 0.1,
+              const std::string data = {}, const int id = 0);
 
-    ~BulletVTKObject();
+    ~SimObject();
 
     btRigidBody* GetBody() { return rigid_body_; }
 
@@ -75,15 +87,12 @@ private:
 // helper functions
 // -----------------------------------------------------------------------------
 //
-
-
 // -----------------------------------------------------------------------------
 vtkSmartPointer<vtkMatrix4x4> PoseArrayToVTKMatrix(double *pose);
+
 vtkSmartPointer<vtkMatrix4x4> KDLFrameToVTKMatrix(const KDL::Frame &pose);
 
-// -----------------------------------------------------------------------------
-KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>);
-
+//KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>);
 
 // -----------------------------------------------------------------------------
 // callback for pairwise collision test
@@ -107,4 +116,4 @@ struct MyContactResultCallback : public btCollisionWorld::ContactResultCallback
 
 
 // ----------------------------------------------------------------------------
-#endif //ATAR_BULLETVTKOBJECT_H
+#endif //ATAR_SIMOBJECT_H

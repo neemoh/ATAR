@@ -10,15 +10,15 @@
 #include <vector>
 #include <BulletSoftBody/btSoftBody.h>
 
-class BulletVTKSoftObject {
+class SimSoftObject {
 
 public:
-    BulletVTKSoftObject(btSoftBodyWorldInfo &world_info,
+    SimSoftObject(btSoftBodyWorldInfo &world_info,
                         const std::string mesh_file_dir,
                         KDL::Frame pose, float density,
-                        float friction);
+                        float friction=0.1);
 
-    ~BulletVTKSoftObject();
+    ~SimSoftObject();
 
     btSoftBody* GetBody() { return body_; }
 

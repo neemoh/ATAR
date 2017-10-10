@@ -4,7 +4,7 @@
 
 #include <src/ar_core/LoadObjGL/LoadMeshFromObj.h>
 #include <ros/ros.h>
-#include "BulletVTKSoftObject.h"
+#include "SimSoftObject.h"
 #include <sys/stat.h>
 #include <BulletSoftBody/btSoftBodyHelpers.h>
 #include <vtkCellArray.h>
@@ -20,7 +20,7 @@ inline bool FileExists (const std::string& name) {
     return (stat (name.c_str(), &buffer) == 0);
 }
 
-BulletVTKSoftObject::BulletVTKSoftObject(btSoftBodyWorldInfo &world_info,
+SimSoftObject::SimSoftObject(btSoftBodyWorldInfo &world_info,
                                          const std::string mesh_file_dir,
                                          KDL::Frame pose,
                                          float density,
@@ -106,7 +106,7 @@ BulletVTKSoftObject::BulletVTKSoftObject(btSoftBodyWorldInfo &world_info,
 
 //------------------------------------------------------------------------------
 
-void BulletVTKSoftObject::RenderSoftbody() {
+void SimSoftObject::RenderSoftbody() {
     // first attempt. I doubt it is the most efficient way.
     //faces
     vtkSmartPointer<vtkCellArray> triangles =

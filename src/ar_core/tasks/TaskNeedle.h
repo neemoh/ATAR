@@ -37,7 +37,7 @@
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
-#include "src/ar_core/BulletVTKObject.h"
+#include "src/ar_core/SimObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
 #include "BulletCollision/CollisionDispatch/btManifoldResult.h"
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
@@ -65,7 +65,7 @@ public:
     tool_id);
 
     // updates the task logic and the actors
-    void UpdateActors();
+    void StepWorld();
 
     bool IsACParamChanged();
 
@@ -88,7 +88,7 @@ public:
      * It first reads the current poses of the tools and then finds the
      * desired pose from the mesh.
   *  **/
-    void FindAndPublishDesiredToolPose();
+    void HapticsThread();
 
     void InitBullet();
 
@@ -97,7 +97,7 @@ public:
     void UpdateGripperLinksPose(const KDL::Frame pose,
         const double grip_angle,
         const std::vector<std::vector<double> > gripper_link_dims,
-                                BulletVTKObject* link_objects[]);
+                                SimObject* link_objects[]);
 
 
 private:
@@ -106,12 +106,12 @@ private:
 
     double board_dimensions[3];
     std::vector<std::vector<double>> gripper_link_dims;
-    BulletVTKObject* right_gripper_links[5];
-    BulletVTKObject* left_gripper_links[5];
+    SimObject* right_gripper_links[5];
+    SimObject* left_gripper_links[5];
 
-    BulletVTKObject *ring_mesh;
-    BulletVTKObject *needle_mesh;
-    BulletVTKObject *board;
+    SimObject *ring_mesh;
+    SimObject *needle_mesh;
+    SimObject *board;
 
     ros::Time time_last;
     //keep track of the shapes, we release memory at exit.

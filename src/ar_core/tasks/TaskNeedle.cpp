@@ -46,9 +46,8 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         std::vector<double> dim = {
                 board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
-        board = new BulletVTKObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim,
-                                    pose, 0.0, 0, friction,
-                                    NULL);
+        board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose,
+                              0.0, friction);
 //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.5, 0.3, 0.1);
 
@@ -65,10 +64,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject *floor = new BulletVTKObject(ObjectShape::STATICPLANE,
-                                                 ObjectType::DYNAMIC,
-                                                 floor_dims, KDL::Frame(), 0.0,
-                                                 0, 0, NULL);
+    SimObject *floor = new SimObject(ObjectShape::STATICPLANE,
+                                     ObjectType::DYNAMIC, floor_dims,
+                                     KDL::Frame(), 0.0);
     dynamics_world->addRigidBody(floor->GetBody());
 
     //// -------------------------------------------------------------------------
@@ -78,7 +76,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     //    uint rows = 3;
     //    float density = 50000; // kg/m3
     //    float friction = 2.2;
-    //    BulletVTKObject *cylinders[cols * rows];
+    //    SimObject *cylinders[cols * rows];
     //    for (int i = 0; i < rows; ++i) {
     //
     //        for (int j = 0; j < cols; ++j) {
@@ -97,10 +95,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     //            };
     //
     //            cylinders[i * rows + j] =
-    //                new BulletVTKObject(
+    //                new SimObject(
     //                    ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
-    //                    density, NULL, friction
-    //                );
+    //                    density                );
     //            double ratio = (double) i / 4.0;
     //            cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
     //                0.6 - 0.2 * ratio, 0.6 - 0.3 * ratio, 0.7 + 0.3 * ratio
@@ -124,7 +121,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     //    uint rows = 3;
     //    uint cols = 2;
     //    int layers = 3;
-    //    BulletVTKObject *cubes[layers * rows * cols];
+    //    SimObject *cubes[layers * rows * cols];
     //
     //    double sides = 0.006;
     //    float density = 50000; // kg/m3
@@ -140,7 +137,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     //                };
     //
     //                std::vector<double> dim = {sides, sides, sides};
-    //                cubes[i * rows + j] = new BulletVTKObject(
+    //                cubes[i * rows + j] = new SimObject(
     //                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose,
     //                    density,
     //                    NULL, friction
@@ -175,9 +172,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         std::string mesh_file_dir_str = input_file_dir.str();
 
         needle_mesh = new
-                BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                                pose, density, 1, friction,
-                                &mesh_file_dir_str);
+                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose,
+                          density, friction,
+                          mesh_file_dir_str, 1);
 
         dynamics_world->addRigidBody(needle_mesh->GetBody());
         actors.push_back(needle_mesh->GetActor());
@@ -204,9 +201,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         input_file_dir << mesh_files_dir << std::string("task_needle_suture_plane.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
-        BulletVTKObject suture_plane_1(ObjectShape::MESH, ObjectType::DYNAMIC,
-                                       _dim, pose, density, 0, friction,
-                                       &mesh_file_dir_str);
+        SimObject suture_plane_1(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                 pose, density, friction,
+                                 mesh_file_dir_str, 0);
 
         dynamics_world->addRigidBody(suture_plane_1.GetBody());
         actors.push_back(suture_plane_1.GetActor());
@@ -226,9 +223,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         input_file_dir << mesh_files_dir << std::string("task_needle_suture_plane.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
-        BulletVTKObject suture_plane_2(ObjectShape::MESH, ObjectType::DYNAMIC,
-                                       _dim, pose, density, 0, friction,
-                                       &mesh_file_dir_str);
+        SimObject suture_plane_2(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                 pose, density, friction,
+                                 mesh_file_dir_str, 0);
 
         dynamics_world->addRigidBody(suture_plane_2.GetBody());
         actors.push_back(suture_plane_2.GetActor());
@@ -250,9 +247,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         std::string mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh = new
-                BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                                pose, density, 0, friction,
-                                &mesh_file_dir_str);
+                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose,
+                          density, friction,
+                          mesh_file_dir_str, 0);
 
         dynamics_world->addRigidBody(ring_mesh->GetBody());
         actors.push_back(ring_mesh->GetActor());
@@ -287,10 +284,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
 
         for (int i = 0; i < 5; ++i) {
             right_gripper_links[i] =
-                    new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                        gripper_link_dims[i], KDL::Frame(),
-                                        gripper_density, 0, gripper_friction,
-                                        NULL);
+                    new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                                  gripper_link_dims[i], KDL::Frame(),
+                                  gripper_density, gripper_friction);
             dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
             actors.push_back(right_gripper_links[i]->GetActor());
             right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,
@@ -303,10 +299,9 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
 
         for (int i = 0; i < 5; ++i) {
             left_gripper_links[i] =
-                    new BulletVTKObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                        gripper_link_dims[i], KDL::Frame(),
-                                        gripper_density, 0, gripper_friction,
-                                        NULL);
+                    new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                                  gripper_link_dims[i], KDL::Frame(),
+                                  gripper_density, gripper_friction);
             dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
             actors.push_back(left_gripper_links[i]->GetActor());
             left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,
@@ -350,7 +345,7 @@ tool_id) {
 };
 
 //------------------------------------------------------------------------------
-void TaskNeedle::UpdateActors() {
+void TaskNeedle::StepWorld() {
 //    MyContactResultCallback result;
 //    dynamics_world->contactPairTest(needle_mesh->GetBody(),
 //                                    board->GetBody(),
@@ -418,7 +413,7 @@ void TaskNeedle::ResetCurrentAcquisition() {
 }
 
 
-void TaskNeedle::FindAndPublishDesiredToolPose() {
+void TaskNeedle::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 
@@ -523,7 +518,7 @@ TaskNeedle::~TaskNeedle() {
     }
 
 //    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-//        BulletVTKObject* sphere = spheres[j];
+//        SimObject* sphere = spheres[j];
 //        spheres[j] = 0;
 //        delete sphere;
 //    }
@@ -558,7 +553,7 @@ TaskNeedle::~TaskNeedle() {
 void TaskNeedle::UpdateGripperLinksPose(const KDL::Frame pose,
                                         const double grip_angle,
                                         const std::vector<std::vector<double> > gripper_link_dims,
-                                        BulletVTKObject *link_objects[]
+                                        SimObject *link_objects[]
 ) {
     KDL::Frame grpr_links_pose[5];
 

@@ -31,7 +31,7 @@ TaskSteadyHand::TaskSteadyHand(
     slave_names[0] = slave_names_in[0];
     slave_names[1] = slave_names_in[1];
 
-    // prevent tools from hitting things at the initializiation
+    // prevent tools from hitting things at the initialization
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);
     tool_current_pose[1].p = KDL::Vector(0.1, 0.2, 0.1);
     // -------------------------------------------------------------------------
@@ -58,21 +58,17 @@ TaskSteadyHand::TaskSteadyHand(
 
     line2_actor = vtkSmartPointer<vtkActor>::New();
 
-
-
     // -------------------------------------------------------------------------
     // static floor
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
 
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    BulletVTKObject *floor = new BulletVTKObject(
-        ObjectShape::STATICPLANE,
-        ObjectType::DYNAMIC,
-        floor_dims, KDL::Frame(),0.0);
+    SimObject *floor = new SimObject(ObjectShape::STATICPLANE,
+                                     ObjectType::DYNAMIC, floor_dims);
     dynamics_world->addRigidBody(floor->GetBody());
 
-    BulletVTKObject *board;
+    SimObject *board;
     // -------------------------------------------------------------------------
     // Create a cube for the board
     {
@@ -87,9 +83,7 @@ TaskSteadyHand::TaskSteadyHand(
         std::vector<double> dim = {
             board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
-        board = new BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, dim,
-            pose, 0.0, 0, friction);
+        board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose);
         board->GetActor()->GetProperty()->SetColor(colors.Gray);
         dynamics_world->addRigidBody(board->GetBody());
         actors.push_back(board->GetActor());
@@ -192,9 +186,8 @@ TaskSteadyHand::TaskSteadyHand(
     std::vector<double> _dim;
     double friction = 0.001;
     stand_mesh = new
-        BulletVTKObject(
-        ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-        stand_frame, 0.0, 0, friction, &mesh_file_dir_str);
+            SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, stand_frame,
+                      0.0, friction, mesh_file_dir_str);
 
     dynamics_world->addRigidBody(stand_mesh->GetBody());
     actors.push_back(stand_mesh->GetActor());
@@ -214,9 +207,8 @@ TaskSteadyHand::TaskSteadyHand(
                                        (M_PI/4), (0.11-0.016-0.025)/4) ;
 
     stand_cube = new
-            BulletVTKObject(
-            ObjectShape::BOX, ObjectType::DYNAMIC, dim_cube,
-            pose_cube, 0.0, 0, friction, &mesh_file_dir_str);
+            SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim_cube,
+                      pose_cube);
 
     dynamics_world->addRigidBody(stand_cube->GetBody());
     actors.push_back(stand_cube->GetActor());
@@ -234,9 +226,8 @@ TaskSteadyHand::TaskSteadyHand(
         mesh_file_dir_str = input_file_dir.str();
 
         tube_meshes[m] = new
-            BulletVTKObject(
-            ObjectShape::MESH, ObjectType::DYNAMIC, {},
-            pose_tube, 0.0, 0, friction, &mesh_file_dir_str);
+                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, {}, pose_tube,
+                          0.0, friction, mesh_file_dir_str);
 
         dynamics_world->addRigidBody(tube_meshes[m]->GetBody());
 
@@ -253,8 +244,8 @@ TaskSteadyHand::TaskSteadyHand(
                    << std::string("task_steady_hand_tube_whole_thin.obj");
     mesh_file_dir_str = input_file_dir.str();
     tube_mesh_thin = new
-        BulletVTKObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim,
-                        pose_tube, 0.0, 0, friction, &mesh_file_dir_str);
+            SimObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim, pose_tube,
+                      0.0, friction, mesh_file_dir_str);
     //actors.push_back(tube_mesh_thin->GetActor());
 
     //// TODO: Locally transform the mesh so that in the findDesiredPose we
@@ -297,9 +288,8 @@ TaskSteadyHand::TaskSteadyHand(
         mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh[ring_num - l -1] = new
-            BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, {},
-                            pose, density, 0, friction,
-                            &mesh_file_dir_str);
+                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, {}, pose,
+                          density, friction, mesh_file_dir_str);
 
         dynamics_world->addRigidBody(ring_mesh[ring_num - l -1]->GetBody());
         actors.push_back(ring_mesh[ring_num - l -1]->GetActor());
@@ -320,10 +310,8 @@ TaskSteadyHand::TaskSteadyHand(
                               ring_holder_bar_pose.p.z()+ (l-0.5) * step *
                                                                   dir.z()) );
         sep_cylinder[l] = new
-            BulletVTKObject(
-            ObjectShape::CYLINDER, ObjectType::KINEMATIC, _dim,
-            pose_cyl, 0.0
-        );
+                SimObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC, _dim,
+                          pose_cyl);
 
         dynamics_world->addRigidBody(sep_cylinder[l]->GetBody());
         actors.push_back(sep_cylinder[l]->GetActor());
@@ -363,9 +351,9 @@ TaskSteadyHand::TaskSteadyHand(
 
         for (int i = 0; i < 1 + (int)bimanual; ++i) {
             std::vector<double> arm_dim = { 0.002, rcm[i].Norm()*2};
-            arm[i] = new BulletVTKObject(
-                ObjectShape::CYLINDER,
-                ObjectType::KINEMATIC, arm_dim, gripper_pose, 0.0);
+            arm[i] = new SimObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC,
+                                   arm_dim, gripper_pose);
+
             dynamics_world->addRigidBody(arm[i]->GetBody());
             actors.push_back(arm[i]->GetActor());
             arm[i]->GetActor()->GetProperty()->SetColor(colors.GrayDark);
@@ -451,7 +439,7 @@ tool_id) {
     gripper_position[tool_id] = &grip_position;
 };
 //------------------------------------------------------------------------------
-void TaskSteadyHand::UpdateActors() {
+void TaskSteadyHand::StepWorld() {
 
     // check if any of the forceps have grasped the ring in action
     for (int i = 0; i < 2; ++i) {
@@ -872,7 +860,7 @@ void TaskSteadyHand::ResetCurrentAcquisition() {
 }
 
 
-void TaskSteadyHand::FindAndPublishDesiredToolPose() {
+void TaskSteadyHand::HapticsThread() {
 
     //----------------------------------------------
     // setting  up haptics

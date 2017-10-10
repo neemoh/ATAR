@@ -58,9 +58,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                        << std::string(".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
-        plane[i] = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
-                                       _dim, pose, 0.0, 0, friction,
-                                       &mesh_file_dir_str);
+        plane[i] = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                 pose, 0.0, friction,
+                                 mesh_file_dir_str, 0);
 
         dynamicsWorld->addRigidBody(plane[i]->GetBody());
         actors.push_back(plane[i]->GetActor());
@@ -82,7 +82,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //
     //pose = new double[7] {0, 0, 0, 0, 0, 0, 1};
     //
-    //arrow = new BulletVTKObject(ObjectShape::MESH,
+    //arrow = new SimObject(ObjectShape::MESH,
     //                              ObjectType::DYNAMIC, _dim, pose, 0.0,
     //                              &mesh_file_dir_str, friction);
     //
@@ -108,9 +108,9 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     std::string mesh_file_dir_str = input_file_dir.str();
 
     kine_p=
-            new BulletVTKObject(ObjectShape::MESH, ObjectType::KINEMATIC,
-                                kine_dim, pose, 0.0, 0, friction,
-                                &mesh_file_dir_str);
+            new SimObject(ObjectShape::MESH, ObjectType::KINEMATIC, kine_dim,
+                          pose, 0.0, friction,
+                          mesh_file_dir_str, 0);
 
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
@@ -140,7 +140,7 @@ tool_id) {
 };
 
 //------------------------------------------------------------------------------
-void TaskBulletTest::UpdateActors() {
+void TaskBulletTest::StepWorld() {
 
     //-----------------POINTER: update position
 
@@ -401,7 +401,7 @@ void TaskBulletTest::ResetCurrentAcquisition() {
 }
 
 
-void TaskBulletTest::FindAndPublishDesiredToolPose() {
+void TaskBulletTest::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 
@@ -521,7 +521,7 @@ TaskBulletTest::~TaskBulletTest() {
     //    delete hinges[j];
     //}
 //    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-//        BulletVTKObject* sphere = spheres[j];
+//        SimObject* sphere = spheres[j];
 //        spheres[j] = 0;
 //        delete sphere;
 //    }

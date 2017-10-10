@@ -29,37 +29,26 @@
 
 class VTKTask{
 public:
-    VTKTask(
-            const bool show_ref_frames,
-            const bool biman,
+    VTKTask(const bool show_ref_frames,
+            const bool bimanual,
             const bool with_guidance,
-            const double haptic_loop_rate
-        ) :
+            const double haptic_loop_rate)
+            :
             show_ref_frames(show_ref_frames),
-            bimanual(biman),
+            bimanual(bimanual),
             with_guidance(with_guidance),
             haptic_loop_rate(haptic_loop_rate){};
 
-    virtual ~VTKTask(){
-    };
+    virtual ~VTKTask() {};
+
+    // The main loop. Updates the steps the physics and graphics
+    virtual void StepWorld() {};
+
+    // This is the function that is handled by the haptics thread.
+    virtual void HapticsThread() = 0;
 
     // returns all the task actors to be sent to the rendering part
-    virtual std::vector< vtkSmartPointer <vtkProp> > GetActors() {
-        return actors;
-    };
-
-    // decrements the number of repetitions. Used in case something goes
-    // wrong during that repetition.
-    virtual void ResetCurrentAcquisition(){};
-
-    // resets the number of repetitions and task state;
-    virtual void ResetTask() {};
-
-
-    virtual custom_msgs::TaskState GetTaskStateMsg() = 0;
-
-    // updates the task logic and the actors
-    virtual void UpdateActors(){};
+    virtual std::vector< vtkSmartPointer <vtkProp> >GetActors() {return actors;};
 
     // sets the pose of the tools
     virtual void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int
@@ -69,14 +58,21 @@ public:
     virtual void SetCurrentGripperpositionPointer(double &gripper_position, const int
     tool_id) {};
 
+    // returns the status of the task
+    virtual custom_msgs::TaskState GetTaskStateMsg() = 0;
+
     // returns the status of the change of the ac_param
     virtual bool IsACParamChanged() = 0;
-
 
     // returns the ac parameters
     virtual custom_msgs::ActiveConstraintParameters * GetACParameters(){};
 
-    virtual void FindAndPublishDesiredToolPose() = 0;
+    // decrements the number of repetitions. Used in case something goes
+    // wrong during that repetition.
+    virtual void ResetCurrentAcquisition(){};
+
+    // resets the number of repetitions and task state;
+    virtual void ResetTask() {};
 
 protected:
 

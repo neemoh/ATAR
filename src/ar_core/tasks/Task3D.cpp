@@ -72,9 +72,9 @@ Task3D::Task3D(const std::string mesh_files_dir,
         ideal_position[i].y(pose.p[1]);
         ideal_position[i].z(pose.p[2]);
 
-        ring[i] = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC,
-                                      _dim, pose, density, 0, friction,
-                                      &mesh_file_dir_str);
+        ring[i] = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                pose, density, friction,
+                                mesh_file_dir_str, 0);
 
         dynamicsWorld->addRigidBody(ring[i]->GetBody());
         actors.push_back(ring[i]->GetActor());
@@ -99,11 +99,9 @@ Task3D::Task3D(const std::string mesh_files_dir,
         KDL::Frame pose2(rot,KDL::Vector(ring_pos.x(),
                                         ring_pos.y(),
                                         ring_pos.z() + 0.025 + radii[i]) );
-        hinge_cyl[i] = new BulletVTKObject(ObjectShape::MESH,
-                                           ObjectType::DYNAMIC, _dim, pose2,
-                                           0.0,
-                                           0, friction,
-                                           &mesh_file_dir_hinge_str);
+        hinge_cyl[i] = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                                     _dim, pose2, 0.0, friction,
+                                     mesh_file_dir_hinge_str, 0);
 
         dynamicsWorld->addRigidBody(hinge_cyl[i]->GetBody());
         hinge_cyl[i]->GetActor()->GetProperty()->SetColor(0.4, 0.4, 0.4);
@@ -121,15 +119,14 @@ Task3D::Task3D(const std::string mesh_files_dir,
     rot.DoRotX(-M_PI/2);
     rot.GetQuaternion(arrow_x, arrow_y, arrow_z, arrow_w);
 
-    arrow = new BulletVTKObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                                KDL::Frame(), 0.0, 0, friction,
-                                &mesh_file_dir_str);
+    arrow = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                          KDL::Frame(), 0.0, friction,
+                          mesh_file_dir_str, 0);
 
     dynamicsWorld->addRigidBody(arrow->GetBody());
     actors.push_back(arrow->GetActor());
     arrow->GetActor()->GetProperty()->SetColor(ThreeDColors::Green_Arrow);
     arrow->GetActor()->GetProperty()->SetOpacity(1);
-
 
     // -------------------------------------------------------------------------
     // Create kinematic pointer
@@ -138,14 +135,13 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
     kine_dim = {0.005, 4*0.007};
     kine_p=
-            new BulletVTKObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC,
-                                kine_dim, KDL::Frame(), 0.0, 0, friction,
-                                NULL);
+            new SimObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC,
+                          kine_dim, KDL::Frame(), 0.0, friction,
+                          NULL, 0);
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
     actors.push_back(kine_p->GetActor());
 }
-
 
 //------------------------------------------------------------------------------
 void Task3D::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
@@ -155,14 +151,13 @@ void Task3D::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 
 }
 
-
 void Task3D::SetCurrentGripperpositionPointer(double &grip_position, const int
 tool_id) {
     gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
-void Task3D::UpdateActors() {
+void Task3D::StepWorld() {
 
     //-----------------POINTER: update position on the upper plane
 
@@ -358,7 +353,7 @@ void Task3D::ResetCurrentAcquisition() {
 }
 
 
-void Task3D::FindAndPublishDesiredToolPose() {
+void Task3D::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 
@@ -478,7 +473,7 @@ Task3D::~Task3D() {
         delete hinges[j];
     }
 //    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-//        BulletVTKObject* sphere = spheres[j];
+//        SimObject* sphere = spheres[j];
 //        spheres[j] = 0;
 //        delete sphere;
 //    }

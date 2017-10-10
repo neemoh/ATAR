@@ -37,7 +37,7 @@
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
-#include "src/ar_core/BulletVTKObject.h"
+#include "src/ar_core/SimObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
 
 
@@ -63,7 +63,7 @@ public:
     tool_id);
 
     // updates the task logic and the actors
-    void UpdateActors();
+    void StepWorld();
 
     bool IsACParamChanged();
 
@@ -89,7 +89,7 @@ public:
      * It first reads the current poses of the tools and then finds the
      * desired pose from the mesh.
   *  **/
-    void FindAndPublishDesiredToolPose();
+    void HapticsThread();
 
     void InitBullet();
 
@@ -104,14 +104,14 @@ private:
     double sides;
     bool out[4];
     ros::Time start_pause;
-    BulletVTKObject* kine_box;
-    BulletVTKObject* kine_scoop;
-    BulletVTKObject* kine_cylinder_1;
-    BulletVTKObject* peg4;
-    BulletVTKObject* peg1;
-    BulletVTKObject* peg2;
-    BulletVTKObject* peg3;
-    BulletVTKObject* cubes[4];
+    SimObject* kine_box;
+    SimObject* kine_scoop;
+    SimObject* kine_cylinder_1;
+    SimObject* peg4;
+    SimObject* peg1;
+    SimObject* peg2;
+    SimObject* peg3;
+    SimObject* cubes[4];
     bool count = 0;
     KDL::Frame peg_pose1;
     KDL::Frame peg_pose2;

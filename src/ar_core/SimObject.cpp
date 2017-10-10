@@ -2,18 +2,19 @@
 // Created by nima on 15/06/17.
 //
 
+#include "SimObject.h"
+#include "LoadObjGL/LoadMeshFromObj.h"
+#include <kdl/frames.hpp>
+// vtk headers
 #include <vtkPolyDataMapper.h>
 #include <vtkSphereSource.h>
 #include <vtkCubeSource.h>
 #include <vtkTransform.h>
-#include <kdl/frames.hpp>
 #include <vtkConeSource.h>
 #include <vtkCylinderSource.h>
 #include <vtkOBJReader.h>
 #include <vtkMassProperties.h>
 #include <vtkTriangleFilter.h>
-#include "BulletVTKObject.h"
-#include "LoadObjGL/LoadMeshFromObj.h"
 //for debug message
 #include "ros/ros.h"
 #include <sys/stat.h>
@@ -23,35 +24,41 @@ inline bool FileExists (const std::string& name) {
     return (stat (name.c_str(), &buffer) == 0);
 }
 
-BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
-                                 std::vector<double> dimensions,
-                                 const KDL::Frame &pose,
-                                 double density, const int id, double friction,
-                                 void *data)
+SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
+                     const std::vector<double> dimensions,
+                     const KDL::Frame &pose,
+                     const double density, const double friction,
+                     const std::string mesh_address, const int id)
         : object_type_(o_type), id_(id)
 {
-
-
+    // -------------------------------------------------------------------------
+    // initializations
     vtkSmartPointer<vtkPolyDataMapper> mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
     actor_ = vtkSmartPointer<vtkActor>::New();
     double volume = 0.0;
     std::string shape_string; // for debug report
 
+    // -------------------------------------------------------------------------
+    // generate vtk actors, collision shapes and calculate volume (used to
+    // find the mass for physics) according to the passed shape.
     switch (shape){
 
+        //
+        // ---------------------------------------------------------------------
+        // Static Plane
         case STATICPLANE : {
             // check if we have all the dimensions
             if (dimensions.size() != 4)
-                throw std::runtime_error("BulletVTKObject STATICPLANE "
-                                             "shape requires a vector of 4 "
-                                             "doubles as dimensions.");
+                throw std::runtime_error("SimObject STATICPLANE "
+                                                 "shape requires a vector of 4 "
+                                                 "doubles as dimensions.");
 
             collision_shape_ = new btStaticPlaneShape(
-                btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
-                          btScalar(B_DIM_SCALE*dimensions[1]),
-                          btScalar(B_DIM_SCALE*dimensions[2])),
-                btScalar(B_DIM_SCALE*dimensions[3]) );
+                    btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
+                              btScalar(B_DIM_SCALE*dimensions[1]),
+                              btScalar(B_DIM_SCALE*dimensions[2])),
+                    btScalar(B_DIM_SCALE*dimensions[3]) );
 
             volume = 0.0;
             shape_string = collision_shape_->getName();
@@ -60,11 +67,14 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         }
 
         case SPHERE : {
+            // -----------------------------------------------------------------
+            // SPHERE
+            //
             // check if we have all the dimensions
             if (dimensions.size() != 1)
-                throw std::runtime_error("BulletVTKObject SPHERE shape requires "
-                                                 "a vector of 1 double "
-                                                 "as dimensions.");
+                throw std::runtime_error(
+                        "SimObject SPHERE shape requires a vector of 1 double "
+                                "as dimensions.");
             // VTK actor_
             vtkSmartPointer<vtkSphereSource> source =
                     vtkSmartPointer<vtkSphereSource>::New();
@@ -85,11 +95,14 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             break;
         }
-// -------------------------------------------------------------------------
+
         case CYLINDER : {
+            // -----------------------------------------------------------------
+            // CYLINDER
+            //
             // check if we have all the dimensions
             if (dimensions.size() != 2)
-                throw std::runtime_error("BulletVTKObject CYLINDER shape requires "
+                throw std::runtime_error("SimObject CYLINDER shape requires "
                                                  "a vector of 2 doubles "
                                                  "as dimensions.");
             // VTK actor_
@@ -104,9 +117,9 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
             // Bullet Shape
             collision_shape_ =
                     new btCylinderShape(
-                        btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
-                                  btScalar(B_DIM_SCALE*dimensions[1]/2), 0.0
-                    ));
+                            btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
+                                      btScalar(B_DIM_SCALE*dimensions[1]/2), 0.0
+                            ));
 
             // calculate volume
             volume = M_PI * pow(dimensions[0], 2) * dimensions[1];
@@ -118,10 +131,12 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         }
 
         case BOX : {
-
+            // -----------------------------------------------------------------
+            // BOX
+            //
             // check if we have all dimensions
             if (dimensions.size() != 3)
-                throw std::runtime_error("BulletVTKObject BOX shape requires "
+                throw std::runtime_error("SimObject BOX shape requires "
                                                  "a vector of three doubles "
                                                  "as dimensions.");
 
@@ -142,8 +157,8 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
                               btScalar(B_DIM_SCALE*dimensions[2]/2)));
             // calculate volume
             volume = dimensions[0] *
-                    dimensions[1] *
-                    dimensions[2];
+                     dimensions[1] *
+                     dimensions[2];
 
             // set name
             shape_string = collision_shape_->getName();;
@@ -151,10 +166,12 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
             break;
         }
         case CONE : {
-
+            // -----------------------------------------------------------------
+            // CONE
+            //
             // check if we have all dimensions
             if (dimensions.size() != 2)
-                throw std::runtime_error("BulletVTKObject CONE shape requires "
+                throw std::runtime_error("SimObject CONE shape requires "
                                                  "a vector of two doubles "
                                                  "as dimensions.");
 
@@ -175,7 +192,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
             // calculate volume
             volume = float(M_PI* pow(dimensions[0], 2) *
-                                   dimensions[1]/3);
+                           dimensions[1]/3);
 
             // set name
             shape_string = collision_shape_->getName();;
@@ -184,29 +201,29 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         }
 
         case MESH : {
-
-            std::string *filepath = static_cast<std::string *>(data);
-
+            // -----------------------------------------------------------------
+            // MESH
+            //
             if(o_type!=NOPHYSICS) {
-                if (!FileExists(filepath->c_str())) {
-                    ROS_ERROR("Can't open mesh file: %s", filepath->c_str());
+                if (!FileExists(mesh_address.c_str())) {
+                    ROS_ERROR("Can't open mesh file: %s", mesh_address.c_str());
                     throw std::runtime_error("Can't open mesh file.");
                 } else
-                    ROS_DEBUG("Loading mesh file from: %s", filepath->c_str());
+                    ROS_DEBUG("Loading mesh file from: %s", mesh_address.c_str());
 
                 collision_shape_ =
-                    LoadCompoundMeshFromObj(*filepath, B_DIM_SCALE);
+                        LoadCompoundMeshFromObj(mesh_address, B_DIM_SCALE);
                 shape_string = collision_shape_->getName();;
             } else
                 collision_shape_ = NULL;
             // set name
 
-            // -------------------------------------------------------------------------
+            // -----------------------------
             // VTK TODO: We have already read the Mesh object, we should use
             // the vertices from that instead of reading it again with VTK
             // reader.
             vtkSmartPointer<vtkOBJReader> reader =
-                vtkSmartPointer<vtkOBJReader>::New();
+                    vtkSmartPointer<vtkOBJReader>::New();
             //if(o_type!=NOPHYSICS) {
             //
             //    //
@@ -223,7 +240,7 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
             //
             //    reader->SetFileName(out_name.str().c_str());
             //} else
-                reader->SetFileName(filepath->c_str());
+            reader->SetFileName(mesh_address.c_str());
 
             reader->Update();
             mapper->SetInputConnection(reader->GetOutputPort());
@@ -262,13 +279,12 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
 
     actor_->SetMapper(mapper);
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // set up dynamics
-    // rigid body_ is dynamic if and only if mass is non zero, otherwise static
-
+    // rigid body_ is dynamic if mass is non zero, otherwise it is static.
     if(object_type_==NOPHYSICS)
         actor_->SetUserMatrix(KDLFrameToVTKMatrix(pose));
-    else    {
+    else{
 
         btScalar bt_mass = float(volume * density);
 
@@ -293,26 +309,25 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         // construct body_ info
         btRigidBody::btRigidBodyConstructionInfo body_info(
                 bt_mass, motion_state_, collision_shape_, local_inertia);
-//        body_info.m_restitution = (btScalar) restitution;
-//        body_info.m_friction = (btScalar) friction;
+        //        body_info.m_restitution = (btScalar) restitution;
+        //        body_info.m_friction = (btScalar) friction;
 
         rigid_body_ = new btRigidBody(body_info);
 
         // set appropriate flags if the body is kinematic
         if (object_type_ == ObjectType::KINEMATIC) {
             rigid_body_->setCollisionFlags(rigid_body_->getCollisionFlags() |
-                                     btCollisionObject::CF_KINEMATIC_OBJECT);
+                                           btCollisionObject::CF_KINEMATIC_OBJECT);
             rigid_body_->setActivationState(DISABLE_DEACTIVATION);
         }
 
-//
 
-        // to prevent rounded objects from rolling for ever we add a bit of
-        // rolling friction
+        // to prevent  objects from rolling forever we add a bit of rolling
+        // friction
         if (shape == ObjectShape::CONE ||
             shape == ObjectShape::CYLINDER ||
             shape == ObjectShape::BOX
-            ){
+                ){
             rigid_body_->setRollingFriction(btScalar(0.001));
             rigid_body_->setSpinningFriction(btScalar(0.001));
             //            body_->setAnisotropicFriction
@@ -327,7 +342,6 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
         rigid_body_->setFriction(btScalar(friction));
         rigid_body_->setSpinningFriction(btScalar(0.001));
 
-
         ////set contact parameters
         //body_->setContactStiffnessAndDamping(btScalar(10000),
         //                                     btScalar(0.1));
@@ -340,14 +354,14 @@ BulletVTKObject::BulletVTKObject(ObjectShape shape, ObjectType o_type,
                   << ", friction = " << rigid_body_->getFriction()
                   << ", Rolling Friction = " << rigid_body_->getRollingFriction()
                   << ", Spinning Friction = " << rigid_body_->getSpinningFriction();
-        ROS_DEBUG("Created BulletVTKObject with properties: %s", debug_msg.str()
+        ROS_DEBUG("Created SimObject with properties: %s", debug_msg.str()
                 .c_str());
     }
 }
 
 
 //------------------------------------------------------------------------------
-BulletVTKObject::~BulletVTKObject() {
+SimObject::~SimObject() {
 // deleting from outside
 //    delete collision_shape_;
 //    delete motion_state_;
@@ -356,7 +370,7 @@ BulletVTKObject::~BulletVTKObject() {
 
 
 //------------------------------------------------------------------------------
-void BulletVTKObject::SetKinematicPose(double *pose) {
+void SimObject::SetKinematicPose(double *pose) {
 
     if(object_type_==KINEMATIC){
 
@@ -373,7 +387,7 @@ void BulletVTKObject::SetKinematicPose(double *pose) {
     }
 }
 
-KDL::Frame BulletVTKObject::GetPose() {
+KDL::Frame SimObject::GetPose() {
     KDL::Frame out = motion_state_->getKDLFrame();
     return out;
 }
@@ -415,17 +429,17 @@ vtkSmartPointer<vtkMatrix4x4> KDLFrameToVTKMatrix(const KDL::Frame &pose) {
     return out;
 }
 
-KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>vtk_mat_in) {
-    KDL::Frame out;
-
-    // Convert to VTK matrix.
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            out.M(i,j) = vtk_mat_in->GetElement(i, j);
-        }
-        out.p[i] = vtk_mat_in->GetElement(i, 3);
-    }
-    return out;
-}
+//KDL::Frame VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4>vtk_mat_in) {
+//    KDL::Frame out;
+//
+//    // Convert to VTK matrix.
+//    for (int i = 0; i < 3; i++) {
+//        for (int j = 0; j < 3; j++) {
+//            out.M(i,j) = vtk_mat_in->GetElement(i, j);
+//        }
+//        out.p[i] = vtk_mat_in->GetElement(i, 3);
+//    }
+//    return out;
+//}
 
 

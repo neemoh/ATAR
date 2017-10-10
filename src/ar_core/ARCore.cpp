@@ -370,15 +370,15 @@ bool ARCore::UpdateWorld() {
 
         // update the moving actors
         if(task_ptr)
-            task_ptr->UpdateActors();
+            task_ptr->StepWorld();
 
-        if(ar_mode)
+        if(ar_mode) {
             // update the camera images
             graphics->UpdateBackgroundImage(cam_images);
 
-        // update  view angle (in case window changes size)
-        if(ar_mode)
+            // update  view angle (in case window changes size)
             graphics->UpdateCameraViewForActualWindowSize();
+        }
 
         // Render!
         graphics->Render();
@@ -391,14 +391,15 @@ bool ARCore::UpdateWorld() {
         if(publish_overlayed_images)
             PublishRenderedImages();
 
-        // publish the active constraint parameters if needed
         if(task_ptr) {
+            // publish the task state
+            PublishTaskState(task_ptr->GetTaskStateMsg());
+
+            // publish the active constraint parameters if needed
             if (task_ptr->IsACParamChanged()) {
                 PublishActiveConstraintParameters(
                         task_ptr->GetACParameters());
             }
-            // publish the task state
-            PublishTaskState(task_ptr->GetTaskStateMsg());
         }
         // check time performance
         //        std::cout <<  "it took: " <<
@@ -517,11 +518,11 @@ void ARCore::StartTask(const uint task_id) {
         task_ptr->SetCurrentGripperpositionPointer(gripper_current[0], 0);
         task_ptr->SetCurrentGripperpositionPointer(gripper_current[1], 1);
 
-        task_ptr->UpdateActors();
+        task_ptr->StepWorld();
 
         // bind the haptics thread
-        haptics_thread = boost::thread(boost::bind(
-                &VTKTask::FindAndPublishDesiredToolPose, task_ptr));
+        haptics_thread = boost::thread(
+                boost::bind(&VTKTask::HapticsThread, task_ptr));
     }
 }
 

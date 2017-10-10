@@ -287,7 +287,7 @@ void TaskKidney::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 }
 
 //------------------------------------------------------------------------------
-void TaskKidney::UpdateActors() {
+void TaskKidney::StepWorld() {
 
 
     // -------------------------------------------------------------------------
@@ -674,7 +674,7 @@ void TaskKidney::ResetCurrentAcquisition() {
 }
 
 
-void TaskKidney::FindAndPublishDesiredToolPose() {
+void TaskKidney::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 

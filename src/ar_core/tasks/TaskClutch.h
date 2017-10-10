@@ -37,7 +37,7 @@
 #include <std_msgs/Empty.h>
 
 #include <btBulletDynamicsCommon.h>
-#include "src/ar_core/BulletVTKObject.h"
+#include "src/ar_core/SimObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
 
 
@@ -63,7 +63,7 @@ public:
     tool_id);
 
     // updates the task logic and the actors
-    void UpdateActors();
+    void StepWorld();
 
     bool IsACParamChanged();
 
@@ -92,7 +92,7 @@ public:
      * It first reads the current poses of the tools and then finds the
      * desired pose from the mesh.
   *  **/
-    void FindAndPublishDesiredToolPose();
+    void HapticsThread();
 
     void InitBullet();
 
@@ -118,7 +118,7 @@ private:
     double actual_distance;
     double target_distance;
     ros::Time start_pause;
-    BulletVTKObject* kine_p;
+    SimObject* kine_p;
     bool count = 0;
     double* peg_pose1;
     double* peg_pose2;
@@ -158,7 +158,7 @@ private:
     // NB You have to set manually the dim of chessboard since it has to be a
     // constant (it is simply cols*rows)
 
-    BulletVTKObject* chessboard[36];
+    SimObject* chessboard[36];
 
     double* ideal_position;
     KDL::Vector pointer_posit;

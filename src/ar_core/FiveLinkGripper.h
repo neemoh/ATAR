@@ -6,13 +6,13 @@
 #define ATAR_SIMPLEGRIPPER_H
 
 
-#include "BulletVTKObject.h"
+#include "SimObject.h"
 #include <kdl/frames.hpp>
 
-class SimpleGripper {
+class FiveLinkGripper {
 
 public:
-    SimpleGripper(const    std::vector<std::vector<double> > gripper_link_dims);
+    FiveLinkGripper(const    std::vector<std::vector<double> > gripper_link_dims);
 
     void SetPoseAndJawAngle(const KDL::Frame pose,
                                 const double grip_angle);
@@ -32,7 +32,7 @@ private:
 
     std::vector<std::vector<double> > link_dims_;
 
-    BulletVTKObject* gripper_links[5];
+    SimObject* gripper_links[5];
 
 };
 
