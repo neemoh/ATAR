@@ -21,41 +21,44 @@ MainWindow::MainWindow(QWidget *parent) :
     //  ui->imageWidgetUI
     //ui->imageLayout->addWidget(imageWidget);
 
-    connect(ui->button_task_1, SIGNAL(released()), this, SLOT(on_task_1_clicked()) );
-    connect(ui->button_task_2, SIGNAL(released()), this, SLOT(on_task_2_clicked()) );
-    connect(ui->button_task_3, SIGNAL(released()), this, SLOT(on_task_3_clicked()) );
-    connect(ui->button_task_4, SIGNAL(released()), this, SLOT(on_task_4_clicked()) );
-    connect(ui->button_task_5, SIGNAL(released()), this, SLOT(on_task_5_clicked()) );
-    connect(ui->button_task_6, SIGNAL(released()), this, SLOT(on_task_6_clicked()) );
-    connect(ui->button_task_7, SIGNAL(released()), this, SLOT(on_task_7_clicked()) );
-    connect(ui->button_task_8, SIGNAL(released()), this, SLOT(on_task_8_clicked()) );
+    connect(ui->button_task_1, SIGNAL(released()), this, SLOT(task_1_clicked()) );
+    connect(ui->button_task_2, SIGNAL(released()), this, SLOT(task_2_clicked()) );
+    connect(ui->button_task_3, SIGNAL(released()), this, SLOT(task_3_clicked()) );
+    connect(ui->button_task_4, SIGNAL(released()), this, SLOT(task_4_clicked()) );
+    connect(ui->button_task_5, SIGNAL(released()), this, SLOT(task_5_clicked()) );
+    connect(ui->button_task_6, SIGNAL(released()), this, SLOT(task_6_clicked()) );
+    connect(ui->button_task_7, SIGNAL(released()), this, SLOT(task_7_clicked()) );
+    connect(ui->button_task_8, SIGNAL(released()), this, SLOT(task_8_clicked()) );
 
     connect(ui->button_home_masters, SIGNAL(released()),
-            this, SLOT(on_home_masters_clicked()) );
+            this, SLOT(home_masters_clicked()) );
 
     connect(ui->checkBox_pub_imgs, SIGNAL(toggled(bool)),
-            this, SLOT(on_pub_imgs_state_changed(bool)) );
+            this, SLOT(pub_imgs_state_changed(bool)) );
 
     connect(ui->button_haptics_disable, SIGNAL(clicked()),
-            this, SLOT(on_button_haptics_disable_checked()) );
+            this, SLOT(button_haptics_disable_checked()) );
 
     connect(ui->button_haptics_manual, SIGNAL(clicked()),
-            this, SLOT(on_button_haptics_manual_checked()) );
+            this, SLOT(button_haptics_manual_checked()) );
 
     connect(ui->button_haptics_skill, SIGNAL(clicked()),
-            this, SLOT(on_button_haptics_skill_checked()) );
+            this, SLOT(button_haptics_skill_checked()) );
 
     connect(ui->button_calib_arm1, SIGNAL(released()),
-            this, SLOT(on_calib_arm1_clicked()) );
+            this, SLOT(calib_arm1_clicked()) );
+
     connect(ui->button_calib_arm2, SIGNAL(released()),
-            this, SLOT(on_calib_arm2_clicked()) );
+            this, SLOT(calib_arm2_clicked()) );
 
     connect(ui->button_exit, SIGNAL(released()),
-            this, SLOT(on_exit_clicked()) );
+            this, SLOT(exit_clicked()) );
+
     connect(ui->button_kill_core, SIGNAL(released()),
-            this, SLOT(on_kill_core_clicked()) );
+            this, SLOT(kill_core_clicked()) );
+
     connect(ui->pause_button, SIGNAL(released()),
-            this, SLOT(on_pause_clicked()) );
+            this, SLOT(pause_clicked()) );
 
     ui->input_init_perf_1->setText("0.0");
     ui->input_init_perf_2->setText("0.0");
@@ -66,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->button_haptics_disable->setChecked(true);
 
     QTimer *timer = new QTimer(this);
+
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 
     timer->start(100);
@@ -101,7 +105,7 @@ void MainWindow::showImage(){
 
 }
 
-void MainWindow::on_task_1_clicked(){
+void MainWindow::task_1_clicked(){
     ros_obj.SetStateLabel(1);
     qDebug() <<"clicked task 1";
     std_msgs::Int8 msg;
@@ -109,7 +113,7 @@ void MainWindow::on_task_1_clicked(){
     ros_obj.publisher_control_events.publish(msg);
 }
 
-void MainWindow::on_task_2_clicked(){
+void MainWindow::task_2_clicked(){
     ros_obj.SetStateLabel(2);
     qDebug() <<"clicked task 2";
     std_msgs::Int8 msg;
@@ -117,7 +121,7 @@ void MainWindow::on_task_2_clicked(){
     ros_obj.publisher_control_events.publish(msg);
 }
 
-void MainWindow::on_task_3_clicked(){
+void MainWindow::task_3_clicked(){
     ros_obj.SetStateLabel(3);
     qDebug() << "clicked task 3";
     std_msgs::Int8 msg;
@@ -126,7 +130,7 @@ void MainWindow::on_task_3_clicked(){
 }
 
 
-void MainWindow::on_task_4_clicked(){
+void MainWindow::task_4_clicked(){
     ros_obj.SetStateLabel(4);
     qDebug() << "clicked task 4";
     std_msgs::Int8 msg;
@@ -134,7 +138,7 @@ void MainWindow::on_task_4_clicked(){
     ros_obj.publisher_control_events.publish(msg);
 }
 
-void MainWindow::on_task_5_clicked()
+void MainWindow::task_5_clicked()
 {
     ros_obj.SetStateLabel(5);
     qDebug() << "clicked task 5";
@@ -145,7 +149,7 @@ void MainWindow::on_task_5_clicked()
 }
 
 
-void MainWindow::on_task_6_clicked()
+void MainWindow::task_6_clicked()
 {
     ros_obj.SetStateLabel(6);
     qDebug() << "clicked task 6";
@@ -156,7 +160,7 @@ void MainWindow::on_task_6_clicked()
 }
 
 
-void MainWindow::on_task_7_clicked()
+void MainWindow::task_7_clicked()
 {
     ros_obj.SetStateLabel(7);
     qDebug() << "clicked task 7";
@@ -167,7 +171,7 @@ void MainWindow::on_task_7_clicked()
 }
 
 
-void MainWindow::on_task_8_clicked()
+void MainWindow::task_8_clicked()
 {
     ros_obj.SetStateLabel(8);
     qDebug() << "clicked task 8";
@@ -177,12 +181,12 @@ void MainWindow::on_task_8_clicked()
 
 }
 
-void MainWindow::on_button_haptics_disable_checked(){
+void MainWindow::button_haptics_disable_checked(){
     if(ui->button_haptics_disable->isChecked())
         ros_obj.SetHapticsMode(0);
 }
 
-void MainWindow::on_button_haptics_manual_checked() {
+void MainWindow::button_haptics_manual_checked() {
     if(ui->button_haptics_manual->isChecked()){
         ros_obj.SetHapticsMode(1);
         double act = MIN(ui->input_ac_activation->text().toDouble(), 1.0);
@@ -191,14 +195,14 @@ void MainWindow::on_button_haptics_manual_checked() {
 
 };
 
-void MainWindow::on_button_haptics_skill_checked() {
+void MainWindow::button_haptics_skill_checked() {
     if(ui->button_haptics_skill->isChecked())
         ros_obj.SetHapticsMode(2);
 };
 
 
 
-void MainWindow::on_home_masters_clicked(){
+void MainWindow::home_masters_clicked(){
 
     std_msgs::Int8 msg;
     msg.data =  CE_HOME_MASTERS;
@@ -206,7 +210,7 @@ void MainWindow::on_home_masters_clicked(){
 
 }
 
-void MainWindow::on_pub_imgs_state_changed(bool state){
+void MainWindow::pub_imgs_state_changed(bool state){
 
     qDebug() << "Toggled pub imgs";
 
@@ -219,14 +223,14 @@ void MainWindow::on_pub_imgs_state_changed(bool state){
     ros_obj.publisher_control_events.publish(msg);
 }
 
-void MainWindow::on_calib_arm1_clicked(){
+void MainWindow::calib_arm1_clicked(){
     std_msgs::Int8 msg;
     msg.data =  CE_CALIB_ARM1;
     ros_obj.publisher_control_events.publish(msg);
 
 }
 
-void MainWindow::on_calib_arm2_clicked(){
+void MainWindow::calib_arm2_clicked(){
     std_msgs::Int8 msg;
     msg.data =  CE_CALIB_ARM2;
     ros_obj.publisher_control_events.publish(msg);
@@ -234,7 +238,7 @@ void MainWindow::on_calib_arm2_clicked(){
 }
 
 
-void MainWindow::on_kill_core_clicked(){
+void MainWindow::kill_core_clicked(){
 
     ROS_INFO("Exiting...");
 
@@ -243,7 +247,7 @@ void MainWindow::on_kill_core_clicked(){
     ros_obj.publisher_control_events.publish(msg);
 
 }
-void MainWindow::on_exit_clicked(){
+void MainWindow::exit_clicked(){
 
     ROS_INFO("Exiting...");
 
@@ -293,7 +297,7 @@ void MainWindow::on_record_clicked()
 }
 
 
-void MainWindow::on_pause_clicked()
+void MainWindow::pause_clicked()
 {
     if(ui->record->isChecked()){
         if(ros_obj.IsRecording()) {

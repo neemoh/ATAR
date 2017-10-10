@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QPushButton>
 #include <QPageLayout>
+#include "ui_mainwindow.h"
 
 #include "rosclass.hpp"
 #include "cvimagewidget.h"
@@ -26,33 +27,32 @@ public:
     void showImage();
 
 private slots:
+    // removed on_ from function names that confused qt autoconnector
+    void task_1_clicked();
+    void task_2_clicked();
+    void task_3_clicked();
+    void task_4_clicked();
+    void task_5_clicked();
+    void task_6_clicked();
+    void task_7_clicked();
+    void task_8_clicked();
 
-    void on_task_1_clicked();
-    void on_task_2_clicked();
-    void on_task_3_clicked();
-    void on_task_4_clicked();
-    void on_task_5_clicked();
-    void on_task_6_clicked();
-    void on_task_7_clicked();
-    void on_task_8_clicked();
+    void home_masters_clicked();
+    void pub_imgs_state_changed(bool state);
 
-    void on_home_masters_clicked();
-    void on_pub_imgs_state_changed(bool state);
+    void button_haptics_disable_checked();
+    void button_haptics_skill_checked();
+    void button_haptics_manual_checked();
 
-    void on_button_haptics_disable_checked();
-    void on_button_haptics_skill_checked();
-    void on_button_haptics_manual_checked();
+    void calib_arm1_clicked();
+    void calib_arm2_clicked();
 
-    void on_calib_arm1_clicked();
-    void on_calib_arm2_clicked();
-
-    void on_exit_clicked();
-    void on_kill_core_clicked();
-
+    void exit_clicked();
+    void kill_core_clicked();
     void on_stop_released();
 
     void on_record_clicked();
-    void on_pause_clicked();
+    void pause_clicked();
     void on_button_repeat_clicked();
 
     void on_button_reset_clicked();
