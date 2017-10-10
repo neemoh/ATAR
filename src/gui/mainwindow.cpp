@@ -107,7 +107,7 @@ void MainWindow::showImage(){
 
 void MainWindow::task_1_clicked(){
     ros_obj.SetStateLabel(1);
-    qDebug() <<"clicked task 1";
+    ROS_DEBUG("clicked task 1");
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK1;
     ros_obj.publisher_control_events.publish(msg);
@@ -115,7 +115,7 @@ void MainWindow::task_1_clicked(){
 
 void MainWindow::task_2_clicked(){
     ros_obj.SetStateLabel(2);
-    qDebug() <<"clicked task 2";
+    ROS_DEBUG("clicked task 2");
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK2;
     ros_obj.publisher_control_events.publish(msg);
@@ -123,7 +123,7 @@ void MainWindow::task_2_clicked(){
 
 void MainWindow::task_3_clicked(){
     ros_obj.SetStateLabel(3);
-    qDebug() << "clicked task 3";
+    ROS_DEBUG("clicked task 3");
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK3;
     ros_obj.publisher_control_events.publish(msg);
@@ -132,7 +132,7 @@ void MainWindow::task_3_clicked(){
 
 void MainWindow::task_4_clicked(){
     ros_obj.SetStateLabel(4);
-    qDebug() << "clicked task 4";
+    ROS_DEBUG("clicked task 4");
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK4;
     ros_obj.publisher_control_events.publish(msg);
@@ -141,7 +141,7 @@ void MainWindow::task_4_clicked(){
 void MainWindow::task_5_clicked()
 {
     ros_obj.SetStateLabel(5);
-    qDebug() << "clicked task 5";
+    ROS_DEBUG("clicked task 5");
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK5;
     ros_obj.publisher_control_events.publish(msg);
@@ -152,7 +152,7 @@ void MainWindow::task_5_clicked()
 void MainWindow::task_6_clicked()
 {
     ros_obj.SetStateLabel(6);
-    qDebug() << "clicked task 6";
+    ROS_DEBUG("clicked task 6");
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK6;
     ros_obj.publisher_control_events.publish(msg);
@@ -163,7 +163,7 @@ void MainWindow::task_6_clicked()
 void MainWindow::task_7_clicked()
 {
     ros_obj.SetStateLabel(7);
-    qDebug() << "clicked task 7";
+    ROS_DEBUG("clicked task 7");
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK7;
     ros_obj.publisher_control_events.publish(msg);
