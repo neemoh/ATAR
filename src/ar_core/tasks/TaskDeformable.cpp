@@ -8,7 +8,7 @@
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 #include <vtkTriangle.h>
-
+#include <vtkCellArray.h>
 
 
 
@@ -306,8 +306,6 @@ void TaskDeformable::UpdateActors() {
     //--------------------------------
     //box
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-
-    KDL::Vector box_posit = tool_pose * KDL::Vector( 0.0 , 0.0, -0.03);
 
     //double x, y, z, w;
     //tool_pose.M.GetQuaternion(x,y,z,w);
