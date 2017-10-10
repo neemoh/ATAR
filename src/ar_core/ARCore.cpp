@@ -19,10 +19,10 @@
 ARCore::ARCore(std::string node_name)
     : n(node_name), running_task_id(0), task_ptr(NULL)
 {
-
     // assign the callback functions
     pose_current_tool_callbacks[0] = &ARCore::Tool1PoseCurrentCallback;
     pose_current_tool_callbacks[1] = &ARCore::Tool2PoseCurrentCallback;
+
     gripper_callbacks[0] = &ARCore::Tool1GripperCurrentCallback;
     gripper_callbacks[1] = &ARCore::Tool2GripperCurrentCallback;
 
@@ -31,7 +31,6 @@ ARCore::ARCore(std::string node_name)
     SetupROSandGetParameters();
 
     SetupGraphics();
-
 }
 
 //------------------------------------------------------------------------------
@@ -46,12 +45,11 @@ void ARCore::SetupROSandGetParameters() {
 
     // Loop frequency
     n.param<double>("desired_pose_update_frequency",
-                    haptic_loop_rate, 100);
+                    haptic_loop_rate, 500);
 
     n.param<bool>("enable_guidance", with_guidance, true);
     ROS_INFO("Starting the BuzzWire task with guidance: %s",
              with_guidance ? "true" : "false");
-
 
     if (n.getParam("mesh_files_dir", mesh_files_dir)) {
         ROS_INFO("stl files will be loaded from: %s", mesh_files_dir.c_str());
@@ -104,7 +102,7 @@ void ARCore::SetupROSandGetParameters() {
     // Left image subscriber
     std::string left_image_topic_name = "/camera/left/image_color";;
     if (n.getParam("left_image_topic_name", left_image_topic_name))
-        ROS_INFO(
+        ROS_DEBUG(
             "[SUBSCRIBERS] Left cam images from '%s'",
             left_image_topic_name.c_str());
     image_subscribers[0] = it->subscribe(
@@ -115,7 +113,7 @@ void ARCore::SetupROSandGetParameters() {
     // Left image subscriber.
     std::string right_image_topic_name = "/camera/right/image_color";
     if (n.getParam("right_image_topic_name", right_image_topic_name))
-        ROS_INFO(
+        ROS_DEBUG(
             "[SUBSCRIBERS] Right cam images from '%s'",
             right_image_topic_name.c_str());
     image_subscribers[1] = it->subscribe(
@@ -168,7 +166,7 @@ void ARCore::SetupROSandGetParameters() {
     std::stringstream topic_name;
     topic_name << std::string("/") << left_cam_name
                << "/world_to_camera_transform";
-    ROS_INFO("[SUBSCRIBERS] Left came pose from '%s'",
+    ROS_DEBUG("[SUBSCRIBERS] Left came pose from '%s'",
              topic_name.str().c_str());
     sub_cam_pose_left = n.subscribe(
         topic_name.str(), 1, &ARCore::LeftCamPoseCallback, this);
@@ -177,32 +175,26 @@ void ARCore::SetupROSandGetParameters() {
     topic_name << std::string("/") << right_cam_name
                << "/world_to_camera_transform";
     // if the topic name is found, check if something is being published on it
-    ROS_INFO("[SUBSCRIBERS] Right cam pose from '%s'",
+    ROS_DEBUG("[SUBSCRIBERS] Right cam pose from '%s'",
              topic_name.str().c_str());
     sub_cam_pose_right = n.subscribe(
         topic_name.str(), 1, &ARCore::RightCamPoseCallback, this);
 
-
     // ------------------------------------- Clutches---------------------------
-    sub_foot_pedal_clutch = n.subscribe( "/dvrk/footpedals/camera", 1,
-                                         &ARCore::FootSwitchCallback, this);
-    ROS_INFO("[SUBSCRIBERS] /dvrk/footpedals/camera");
+    sub_pedal_cam = n.subscribe( "/dvrk/footpedals/camera", 1,
+                                      &ARCore::PedalCameraCallback, this);
 
     // ------------------------------------- TOOLS -----------------------------
     n.param<int>("number_of_arms", n_arms, 1);
     if(n_arms<1 || n_arms>2)
         throw std::runtime_error("number_of_arms must be 1 or 2");
-    ROS_INFO("Expecting '%d' arm(s)", n_arms);
+    ROS_DEBUG("Expecting '%d' arm(s)", n_arms);
 
-    //    publisher_tool_pose_desired = new ros::Publisher[(uint)n_arms];
     subtool_current_pose = new ros::Subscriber[(uint)n_arms];
     subtool_current_gripper = new ros::Subscriber[(uint)n_arms];
-//    publisher_ac_params = new ros::Publisher[(uint)n_arms];
-
 
     std::string slave_names[n_arms];
     std::string master_names[n_arms];
-    //std::string master_names[n_arms];
     std::string check_topic_name;
 
     for(int n_arm = 0; n_arm<n_arms; n_arm++){
@@ -224,7 +216,7 @@ void ARCore::SetupROSandGetParameters() {
         subtool_current_pose[n_arm] =
             n.subscribe(param_name.str(), 1,
                         pose_current_tool_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] %s", param_name.str().c_str());
+
         // we will later check to see if something is publishing on the
         // current slave pose
         check_topic_name = param_name.str();
@@ -235,20 +227,10 @@ void ARCore::SetupROSandGetParameters() {
                    << "/gripper_position_current";
         subtool_current_gripper[n_arm] =
             n.subscribe(param_name.str(), 1, gripper_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS] %s", param_name.str().c_str());
+
         // we will later check to see if something is publishing on the
         // current slave pose
         check_topic_name = param_name.str();
-
-        // Publishing the active constraint parameters that may change during
-        // the task
-//        param_name.str("");
-//        param_name << std::string("/atar/")<< master_names[n_arm]
-//                   << "/active_constraint_param";
-//        publisher_ac_params[n_arm] =
-//            n.advertise<custom_msgs::ActiveConstraintParameters>(
-//                param_name.str().c_str(), 1 );
-//        ROS_INFO("Will publish on %s", param_name.str().c_str());
 
         n.param<bool>("AR_mode", ar_mode, false);
         ROS_INFO("AR mode: %s",
@@ -306,13 +288,10 @@ void ARCore::SetupROSandGetParameters() {
     std::string task_state_topic_name = "/atar/task_state";
     publisher_task_state = n.advertise<custom_msgs::TaskState>(
         task_state_topic_name.c_str(), 1);
-    ROS_INFO("Will publish on %s", task_state_topic_name.c_str());
 
     subscriber_control_events = n.subscribe(
         "/atar/control_events", 1, &ARCore::ControlEventsCallback,
         this);
-    ROS_INFO("[SUBSCRIBERS] /control_events");
-
 
     if (!all_required_params_found)
         throw std::runtime_error("ERROR: some required parameters are not set");
@@ -358,7 +337,6 @@ void ARCore::SetupGraphics() {
         }
     }
 
-
     graphics = new Rendering(ar_mode, 2 - (uint) one_window_mode, with_shadows,
                              offScreen_rendering, windows_position);
 
@@ -377,7 +355,7 @@ void ARCore::SetupGraphics() {
         graphics->SetEnableBackgroundImage(true);
     }
 
-//    graphics->Render();
+    //    graphics->Render();
 
 }
 // -----------------------------------------------------------------------------
@@ -405,7 +383,7 @@ bool ARCore::UpdateWorld() {
     if(GetNewImages(cam_images) || !ar_mode) {
 
         // Time performance debug
-        //ros::Time start =ros::Time::now();
+        //        ros::Time start =ros::Time::now();
 
         // update the moving actors
         if(task_ptr)
@@ -433,19 +411,19 @@ bool ARCore::UpdateWorld() {
         // publish the active constraint parameters if needed
         if(task_ptr) {
             if (task_ptr->IsACParamChanged()) {
-                PublishACtiveConstraintParameters(
-                    task_ptr->GetACParameters());
+                PublishActiveConstraintParameters(
+                        task_ptr->GetACParameters());
             }
             // publish the task state
             PublishTaskState(task_ptr->GetTaskStateMsg());
         }
         // check time performance
-        // std::cout <<  "it took: " <<
-        // (ros::Time::now() - start).toNSec() /1000000 << std::endl;
+        //        std::cout <<  "it took: " <<
+        //        (ros::Time::now() - start).toNSec() /1000000 << std::endl;
 
     } // if new image
 
-    // if no task is running we need to spin our self
+    // if no task is running we need to spin
     if(!task_ptr)
         ros::spinOnce();
 
@@ -712,19 +690,13 @@ bool ARCore::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
 
 
 // -----------------------------------------------------------------------------
-void ARCore::PublishACtiveConstraintParameters(
-    const custom_msgs::ActiveConstraintParameters ac_params[2]) {
-
+void ARCore::PublishActiveConstraintParameters(
+        const custom_msgs::ActiveConstraintParameters *ac_params) {
 //    publisher_ac_params[0].publish(ac_params[0]);
 //    if(n_arms==2)
 //        publisher_ac_params[1].publish(ac_params[1]);
 }
 
-// -----------------------------------------------------------------------------
-void ARCore::PublishTaskState(custom_msgs::TaskState msg) {
-    publisher_task_state.publish(msg);
-
-}
 
 // -----------------------------------------------------------------------------
 void ARCore::DoArmToWorldFrameCalibration(const uint arm_id) {
@@ -815,7 +787,7 @@ void ARCore::StartArmToWorldFrameCalibration(const uint arm_id) {
     else // if no task is running just do the calibration
         DoArmToWorldFrameCalibration(arm_id);
 
-    control_event = running_task_id;
+    control_event = (int8_t)running_task_id;
 }
 
 // -----------------------------------------------------------------------------
@@ -962,8 +934,8 @@ void ARCore::Tool2GripperCurrentCallback(
 }
 
 // -----------------------------------------------------------------------------
-void ARCore::FootSwitchCallback(const sensor_msgs::JoyConstPtr & msg){
-    foot_switch_pressed = (bool)msg->buttons[0];
+void ARCore::PedalCameraCallback(const sensor_msgs::JoyConstPtr &msg){
+    pedal_cam_pressed = (bool)msg->buttons[0];
 }
 
 // -----------------------------------------------------------------------------

@@ -102,11 +102,9 @@ int main(int argc, char * argv[]) {
     // ------------------------------------- Clutches---------------------------
     ros::Subscriber sub_clutch_clutch = n.subscribe(
         "/dvrk/footpedals/clutch", 1, ClutchCallback);
-    ROS_INFO("[SUBSCRIBERS] Subscribed to /dvrk/footpedals/clutch");
 
     ros::Subscriber sub_coag_clutch = n.subscribe(
         "/dvrk/footpedals/coag", 1, CoagCallback);
-    ROS_INFO("[SUBSCRIBERS] Subscribed to /dvrk/footpedals/coag");
 
     // ------------------------------------- ARMS---------------------------
     std::string slave_names[2];
@@ -130,14 +128,12 @@ int main(int argc, char * argv[]) {
                << "/position_cartesian_current";
     ros::Subscriber sub_master_1_current_pose =  n.subscribe(param_name.str(),
                                                              1, Master1PoseCurrentCallback);
-    ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[1]
                << "/position_cartesian_current";
     ros::Subscriber sub_master_2_current_pose =  n.subscribe(param_name.str(),
                                                              1, Master2PoseCurrentCallback);
-    ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
     // ------------ MATERS GET STATE
     param_name.str("");
@@ -145,43 +141,34 @@ int main(int argc, char * argv[]) {
                << "/robot_state";
     ros::Subscriber sub_master_1_state =  n.subscribe(param_name.str(),
                                                       1, Master1StateCallback);
-    ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
 
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[1]
                << "/robot_state";
     ros::Subscriber sub_master_2_state =  n.subscribe(param_name.str(),
                                                       1, Master2StateCallback);
-    ROS_INFO("[SUBSCRIBERS] Subscribed to %s", param_name.str().c_str());
-
 
     // ------------ MATERS SET STATE
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[0]
                << "/set_robot_state";
     ros::Publisher pub_master_1_state = n.advertise<std_msgs::String>(param_name.str(), 2, true);
-    ROS_INFO("[PUBLISHERS] Will publish to %s", param_name.str().c_str());
 
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[1]
                << "/set_robot_state";
     ros::Publisher pub_master_2_state = n.advertise<std_msgs::String>(param_name.str(), 2);
-    ROS_INFO("[PUBLISHERS] Will publish to %s", param_name.str().c_str());
-
 
     // ------------ SLAVE PUBLISH POSE
     param_name.str("");
     param_name << std::string("/dvrk/") << slave_names[0]
                << "/position_cartesian_current";
     ros::Publisher pub_slave_1_pose = n.advertise<geometry_msgs::PoseStamped>(param_name.str(), 2);
-    ROS_INFO("[PUBLISHERS] Will publish to %s", param_name.str().c_str());
 
     param_name.str("");
     param_name << std::string("/dvrk/") << slave_names[1]
                << "/position_cartesian_current";
     ros::Publisher pub_slave_2_pose = n.advertise<geometry_msgs::PoseStamped>(param_name.str(), 2);
-    ROS_INFO("[PUBLISHERS] Will publish to %s", param_name.str().c_str());
-
 
     // ------------ subscribe to control events that come from the GUI
     ros::Subscriber sub_control_events = n.subscribe("/atar/control_events", 1,

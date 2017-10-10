@@ -121,24 +121,12 @@ void RosBridge::GetROSParameterValues() {
         if(!n.getParam(param_name.str(), master_names[n_arm]))
             throw std::runtime_error("No Master names found");
 
-
-
-        //        // publishers
-        //        param_name.str("");
-        //        param_name << std::string("/dvrk/") << master_names[n_arm]
-        //                      << "/set_wrench_body";
-        //        publisher_wrench[n_arm] = n.advertise<geometry_msgs::Wrench>(
-        //                    param_name.str().c_str(), 1);
-        //        ROS_INFO("Will publish on %s", param_name.str().c_str());
-
         // subscribers
         param_name.str("");
         param_name << std::string("/atar/")
                    << slave_names[n_arm]<< "/tool_pose_desired";
         subscriber_slave_pose_desired[n_arm] = n.subscribe(
             param_name.str(), 1, slave_pose_desired_callbacks[n_arm],this);
-        ROS_INFO("[SUBSCRIBERS]  %s",
-                 param_name.str().c_str());
 
         // the current pose of the slaves
         param_name.str("");
@@ -146,9 +134,6 @@ void RosBridge::GetROSParameterValues() {
                    << "/position_cartesian_current";
         subscriber_slave_pose_current[n_arm] = n.subscribe(param_name.str(), 1
             ,slave_pose_current_callbacks[n_arm],this);
-        ROS_INFO("[SUBSCRIBERS]  %s",
-                 param_name.str().c_str());
-
 
         // the current pose of the masters
         param_name.str("");
@@ -156,9 +141,6 @@ void RosBridge::GetROSParameterValues() {
                    << "/position_cartesian_current";
         subscriber_master_pose_current[n_arm] = n.subscribe(param_name.str(), 1
             ,master_pose_current_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS]  %s",
-                 param_name.str().c_str());
-
 
         //  master's joint state
         param_name.str("");
@@ -167,17 +149,12 @@ void RosBridge::GetROSParameterValues() {
         subscriber_master_joint_state[n_arm] = n.subscribe(param_name.str(), 1
             , master_joint_state_callbacks[n_arm], this);
 
-        ROS_INFO("[SUBSCRIBERS]  %s",
-                 param_name.str().c_str());
-
         //  master's gripper
         param_name.str("");
         param_name << std::string("/dvrk/") <<master_names[n_arm]
                    << "/gripper_position_current";
         subscriber_master_current_gripper[n_arm] =n.subscribe(param_name.str()
             , 1, gripper_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS]  %s", param_name.str().c_str());
-
 
         //  master's twist
         param_name.str("");
@@ -185,9 +162,6 @@ void RosBridge::GetROSParameterValues() {
                    << "/twist_filtered";
         subscriber_master_twist[n_arm] = n.subscribe(param_name.str(),1
             ,master_twist_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS]  %s",
-                 param_name.str().c_str());
-
 
         //  Slave's twist
         param_name.str("");
@@ -195,8 +169,6 @@ void RosBridge::GetROSParameterValues() {
                    << "/twist_body_current";
         subscriber_slave_twist[n_arm] = n.subscribe(param_name.str(), 1
             ,slave_twist_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS]  %s",
-                 param_name.str().c_str());
 
         //master's wrench
         param_name.str("");
@@ -204,8 +176,6 @@ void RosBridge::GetROSParameterValues() {
                    << "/set_wrench_body";
         subscriber_master_wrench[n_arm] = n.subscribe(param_name.str(), 1
             ,master_wrench_callbacks[n_arm], this);
-        ROS_INFO("[SUBSCRIBERS]  %s",
-                 param_name.str().c_str());
 
         // Publishing the active constraint parameters that may change during
         // the task
@@ -215,15 +185,6 @@ void RosBridge::GetROSParameterValues() {
         publisher_ac_params[n_arm] =
                 n.advertise<custom_msgs::ActiveConstraintParameters>(
                         param_name.str().c_str(), 1 );
-        ROS_INFO("Will publish on %s", param_name.str().c_str());
-//        // the transformation from the coordinate frame of the slave (RCM) to the task coordinate
-//        // frame.
-//        param_name.str("");
-//        param_name << (std::string) "/calibrations/world_frame_to_"
-//                   << slave_names[n_arm] << "_frame";
-//        if (!n.getParam(param_name.str(), task_frame_to_slave_frame[n_arm]))
-//            ROS_WARN("Parameter %s was not found.", param_name.str().c_str());
-
 
     }
 
@@ -231,35 +192,28 @@ void RosBridge::GetROSParameterValues() {
     subscriber_foot_pedal_coag = n.subscribe("/dvrk/footpedals/coag", 1,
                                              &RosBridge::CoagFootSwitchCallback,
                                              this);
-    ROS_INFO("[SUBSCRIBERS]  /dvrk/footpedals/coag");
 
     subscriber_foot_pedal_clutch = n.subscribe("/dvrk/footpedals/clutch", 1,
                                                &RosBridge::ClutchFootSwitchCallback,
                                                this);
-    ROS_INFO("[SUBSCRIBERS]  /dvrk/footpedals/clutch");
-
 
     subscriber_task_state = n.subscribe("/atar/task_state", 1,
                                         &RosBridge::TaskSTateCallback,
                                         this);
-    ROS_INFO("[SUBSCRIBERS]  /task_state");
 
     //publisher
     publisher_control_events = n.advertise<std_msgs::Int8>
                                     ("/atar/control_events", 1);
-    ROS_INFO("Will publish on /control_events");
 
 
     std::string topic_name = std::string("/atar/ring_pose_current");
     subscriber_ring_pose_current = n.subscribe(
         topic_name.c_str(), 1, &RosBridge::RingPoseCurrentCallback, this);
-    ROS_INFO("[SUBSCRIBERS]  %s", topic_name.c_str());
 
 
     topic_name = std::string("/atar/ring_pose_desired");
     subscriber_ring_pose_desired= n.subscribe(
         topic_name.c_str(), 1, &RosBridge::RingPoseDesiredCallback, this);
-    ROS_INFO("[SUBSCRIBERS]  %s", topic_name.c_str());
 }
 
 

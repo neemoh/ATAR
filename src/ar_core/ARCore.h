@@ -5,32 +5,34 @@
 #ifndef TELEOP_VISION_OVERLAYROSCONFIG_H
 #define TELEOP_VISION_OVERLAYROSCONFIG_H
 
-#include "ros/ros.h"
+// related headers
+#include "VTKTask.h"
+#include "Rendering.h"
 #include <boost/thread/thread.hpp>
+#include <mutex>
+// ros and opencv
+#include "ros/ros.h"
+#include <kdl_conversions/kdl_msg.h>
+#include <cv_bridge/cv_bridge.h>
+#include "opencv2/highgui/highgui.hpp"
+#include <image_transport/image_transport.h>
+// ros messages
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/Joy.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Int8.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <sensor_msgs/Joy.h>
-#include <cv_bridge/cv_bridge.h>
-#include "opencv2/highgui/highgui.hpp"
-#include <kdl_conversions/kdl_msg.h>
-#include <image_transport/image_transport.h>
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
-#include "VTKTask.h"
-#include "Rendering.h"
-#include <mutex>
+
+
 
 class ARCore {
-
-
 public:
 
     ARCore(std::string node_name);
-
 
     bool UpdateWorld();
 
@@ -66,12 +68,16 @@ private:
     // locking call in this method.
     bool GetNewCameraPoses(cv::Vec3d cam_rvec[2], cv::Vec3d cam_tvec[2]);
 
-    // publishes the active constraint parameters
-    void PublishACtiveConstraintParameters(
-            const custom_msgs::ActiveConstraintParameters params[2]);
+    // We used to publish the active constraint parameters from the task
+    // class, but at the moment the GUI node does this. SO this function is
+    // not used.
+    void PublishActiveConstraintParameters(
+            const custom_msgs::ActiveConstraintParameters *params);
 
     // publishes the active constraint parameters
-    void PublishTaskState(custom_msgs::TaskState msg);
+    void PublishTaskState(custom_msgs::TaskState msg){
+        publisher_task_state.publish(msg);
+    };
 
     void DoArmToWorldFrameCalibration(const uint arm_id);
 
@@ -112,7 +118,7 @@ public:
     void Tool2GripperCurrentCallback(const std_msgs::Float32::ConstPtr &msg);
 
     // foot switch used to select the ac path
-    void FootSwitchCallback(const sensor_msgs::JoyConstPtr &msg);
+    void PedalCameraCallback(const sensor_msgs::JoyConstPtr &msg);
 
     // this topic is used to control the task state from the recording node
     // during the acquisitions.
@@ -141,7 +147,7 @@ private:
 
     std::string mesh_files_dir;
 
-    bool foot_switch_pressed = false;
+    bool pedal_cam_pressed = false;
     bool with_guidance;
     cv::Mat camera_matrix[2];
     cv::Mat camera_distortion[2];
@@ -174,7 +180,7 @@ private:
     image_transport::Subscriber subscriber_image_right;
     ros::Subscriber sub_cam_pose_left;
     ros::Subscriber sub_cam_pose_right;
-    ros::Subscriber sub_foot_pedal_clutch;
+    ros::Subscriber sub_pedal_cam;
     ros::Subscriber subscriber_control_events;
 
     ros::Subscriber * subtool_current_pose;
