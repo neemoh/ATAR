@@ -4,7 +4,7 @@
 
 #ifndef TELEOP_VISION_TASKSTEADYHAND_H
 #define TELEOP_VISION_TASKSTEADYHAND_H
-#include "src/ar_core/VTKTask.h"
+#include "src/ar_core/SimTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -28,13 +28,15 @@
 #include <vtkCornerAnnotation.h>
 
 #include "src/ar_core/Rendering.h"
-#include "custom_msgs/TaskState.h"
+
+#include <mutex>
+
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Bool.h>
+#include "custom_msgs/ActiveConstraintParameters.h"
+#include "custom_msgs/TaskState.h"
 
-#include <btBulletDynamicsCommon.h>
-#include <mutex>
 #include "src/ar_core/SimObject.h"
 #include "src/ar_core/Forceps.h"
 #include "src/ar_core/Colors.hpp"
@@ -66,7 +68,7 @@
 enum class SHTaskState: uint8_t {Idle, OnGoing, Finished};
 
 
-class TaskSteadyHand : public VTKTask{
+class TaskSteadyHand : public SimTask{
 public:
 
     TaskSteadyHand(
@@ -81,7 +83,7 @@ public:
 
     ~TaskSteadyHand();
 
-    // updates the task logic and the actors
+    // updates the task logic and the graphics_actors
     void StepWorld();
 
     /**
@@ -91,8 +93,8 @@ public:
     *  **/
     void HapticsThread();
 
-    // returns all the task actors to be sent to the rendering part
-    std::vector< vtkSmartPointer <vtkProp> > GetActors() {return actors;}
+    // returns all the task graphics_actors to be sent to the rendering part
+    std::vector< vtkSmartPointer <vtkProp> > GetActors() {return graphics_actors;}
 
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
@@ -137,7 +139,6 @@ public:
     void ResetOnGoingEvaluation();
 
 
-
 private:
 
     // updates the error actor
@@ -148,7 +149,7 @@ private:
 
     void InitBullet();
 
-    void StepDynamicsWorld();
+    void StepPhysics();
 
     void UpdateCurrentAndDesiredReferenceFrames(
         const KDL::Frame current_pose[2],
@@ -209,10 +210,10 @@ private:
     uint destination_ring_counter;
     custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
-    // actors that are updated during the task
+    // graphics_actors that are updated during the task
     vtkSmartPointer<vtkActor>                       destination_ring_actor;
     std::vector< vtkSmartPointer<vtkActor>>         score_sphere_actors;
-    std::vector<double*>                           score_history_colors;
+    std::vector<double*>                            score_history_colors;
 
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes[2];
     vtkSmartPointer<vtkAxesActor>                   tool_desired_frame_axes[2];
@@ -224,13 +225,7 @@ private:
     vtkSmartPointer<vtkActor>                       line1_actor;
     vtkSmartPointer<vtkActor>                       line2_actor;
 
-    // dynamics
     ros::Time time_last;
-    btDiscreteDynamicsWorld* dynamics_world;
-    btSequentialImpulseConstraintSolver* solver;
-    btBroadphaseInterface* overlappingPairCache;
-    btCollisionDispatcher* dispatcher;
-    btDefaultCollisionConfiguration* collisionConfiguration;
 
     int ring_num = 4;
     SimObject *ring_mesh[6];

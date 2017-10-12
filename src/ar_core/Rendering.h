@@ -2,10 +2,13 @@
 // Created by nima on 4/12/17.
 //
 
-#ifndef TELEOP_VISION_RENDERING_H
-#define TELEOP_VISION_RENDERING_H
-#include "opencv2/core/core.hpp"
+#ifndef ATAR_RENDERING_H
+#define ATAR_RENDERING_H
+
+#include <opencv2/opencv.hpp>
 #include "CalibratedCamera.h"
+#include <kdl/frames.hpp>
+
 #include <vtkImageImport.h>
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
@@ -13,17 +16,13 @@
 #include <vtkRenderWindow.h>
 #include <vtkWindowToImageFilter.h>
 #include <vtkRenderWindowInteractor.h>
-#include <kdl/frames.hpp>
 #include <vtkOpenGLRenderer.h>
 #include <vtkLightActor.h>
 #include <vtkFrameBufferObject.h>
-#include <vtkImageSinusoidSource.h>
 #include <vtkImageData.h>
 #include <vtkImageDataGeometryFilter.h>
-#include <vtkDataSetSurfaceFilter.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkLookupTable.h>
 #include <vtkCamera.h>
+
 #include <vtkCameraPass.h>
 #include <vtkLightsPass.h>
 #include <vtkSequencePass.h>
@@ -35,20 +34,13 @@
 #include <vtkRenderPassCollection.h>
 #include <vtkShadowMapBakerPass.h>
 #include <vtkShadowMapPass.h>
-#include <vtkConeSource.h>
-#include <vtkPlaneSource.h>
-#include <vtkCubeSource.h>
-#include <vtkSphereSource.h>
 #include <vtkInformation.h>
 #include <vtkProperty.h>
 #include <vtkLight.h>
 #include <vtkLightCollection.h>
 #include <assert.h>
-#include <vtkMath.h>
 #include <vtkFrustumSource.h>
-#include <vtkPlanes.h>
-#include <vtkActorCollection.h>
-#include <vtkPolyDataNormals.h>
+
 
 /**
  * \class Rendering
@@ -128,16 +120,5 @@ private:
 
 };
 
-namespace VTKConversions{
 
-    void AxisAngleToVTKMatrix (const cv::Vec3d cam_rvec, const cv::Vec3d cam_tvec,
-                               vtkSmartPointer<vtkMatrix4x4> out);
-
-    void KDLFrameToVTKMatrix (const KDL::Frame in,
-                               vtkSmartPointer<vtkMatrix4x4> out);
-
-    void VTKMatrixToKDLFrame(const vtkSmartPointer<vtkMatrix4x4> in,
-                                               KDL::Frame  & out);
-
-}
-#endif //TELEOP_VISION_RENDERING_H
+#endif //ATAR_RENDERING_H

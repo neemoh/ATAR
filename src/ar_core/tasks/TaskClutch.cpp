@@ -15,7 +15,7 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
                                const bool show_ref_frames, const bool biman,
                                const bool with_guidance)
     :
-    VTKTask(show_ref_frames, biman, with_guidance, 0) ,
+    SimTask(show_ref_frames, biman, with_guidance, 0) ,
     time_last(ros::Time::now()) {
 
     InitBullet();
@@ -70,7 +70,7 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
     board->GetActor()->GetProperty()->SetColor(0.2549, 0.4117, 0.8823);
 
     dynamicsWorld->addRigidBody(board->GetBody());
-    actors.push_back(board->GetActor());
+    graphics_actors.push_back(board->GetActor());
 
 
 
@@ -122,7 +122,7 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
             index = !(index);
 
             dynamicsWorld->addRigidBody(chessboard[i * rows + j]->GetBody());
-            actors.push_back(chessboard[i * rows + j]->GetActor());
+            graphics_actors.push_back(chessboard[i * rows + j]->GetActor());
 
         }
 
@@ -139,7 +139,7 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
                               NULL, 0);
         dynamicsWorld->addRigidBody(kine_p->GetBody());
         kine_p->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
-        actors.push_back(kine_p->GetActor());
+        graphics_actors.push_back(kine_p->GetActor());
 
         //Compute the inverse of rot
         rot_inv=rot.Inverse();
@@ -234,7 +234,7 @@ void TaskClutch::StepWorld() {
 
     //--------------------------------
     // step the world
-    StepDynamicsWorld();
+    StepPhysics();
 }
 
 void TaskClutch::PoseEvaluation() {
@@ -486,7 +486,7 @@ void TaskClutch::InitBullet() {
 
 }
 
-void TaskClutch::StepDynamicsWorld() {
+void TaskClutch::StepPhysics() {
     ///-----stepsimulation_start-----
 
     ///-----stepsimulation_start-----
@@ -511,7 +511,7 @@ void TaskClutch::StepDynamicsWorld() {
 //        }
 //
 //            heights[j] = trans.getOrigin().z();
-//        heights2[j] = actors[j]->GetMatrix()->Element[2][3];
+//        heights2[j] = graphics_actors[j]->GetMatrix()->Element[2][3];
 //    }
 
 }

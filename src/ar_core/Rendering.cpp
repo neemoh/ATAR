@@ -2,27 +2,7 @@
 // Created by nima on 4/12/17.
 //
 #include "Rendering.h"
-
-#include <vtkCamera.h>
-#include <vtkImageData.h>
-#include <opencv2/calib3d.hpp>
-#include <vtkImageActor.h>
-#include <vtkObjectFactory.h>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include <vtk-6.2/vtkFrameBufferObject.h>
-#include <vtk-6.2/vtkOpenGLRenderer.h>
-#include <vtk-6.2/vtkFrameBufferObject2.h>
-#include <vtkRenderPassCollection.h>
-#include <vtkSequencePass.h>
-#include <vtkShadowMapPass.h>
-#include <vtkCameraPass.h>
-#include <vtkLightsPass.h>
-#include <vtkOverlayPass.h>
-#include <vtkVolumetricPass.h>
-#include <vtkTranslucentPass.h>
-#include <vtkDepthPeelingPass.h>
-#include <vtkOpaquePass.h>
+#include "VTKConversions.hpp"
 
 
 // helper function for debugging light related issues
@@ -563,6 +543,8 @@ void Rendering::ToggleFullScreen() {
             render_window_[k]->SetFullScreen(1);
     }
 }
+
+
 
 
 // For each spotlight, add a light frustum wireframe representation and a cone

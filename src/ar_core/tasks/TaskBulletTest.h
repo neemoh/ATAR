@@ -6,7 +6,7 @@
 #define ATAR_TASKBULLETTEST_H
 
 
-#include "src/ar_core/VTKTask.h"
+#include "src/ar_core/SimTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -42,7 +42,7 @@
 
 
 
-class TaskBulletTest : public VTKTask{
+class TaskBulletTest : public SimTask{
 public:
 
     TaskBulletTest(const std::string mesh_files_dir,
@@ -51,9 +51,9 @@ public:
 
     ~TaskBulletTest();
 
-    // returns all the task actors to be sent to the rendering part
+    // returns all the task graphics_actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
-        return actors;
+        return graphics_actors;
     }
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
@@ -62,7 +62,7 @@ public:
     void SetCurrentGripperpositionPointer(double &gripper_position, const int
     tool_id);
 
-    // updates the task logic and the actors
+    // updates the task logic and the graphics_actors
     void StepWorld();
 
     bool IsACParamChanged();
@@ -93,7 +93,7 @@ public:
 
     void InitBullet();
 
-    void StepDynamicsWorld();
+    void StepPhysics();
 
     void CheckCrossing();
 
@@ -165,14 +165,6 @@ private:
 
 
     KDL::Vector pointer_posit;
-
-    //keep track of the shapes, we release memory at exit.
-    //make sure to re-use collision shapes among rigid bodies whenever possible!
-//    btAlignedObjectArray<btCollisionShape*> collisionShapes;
-    btSequentialImpulseConstraintSolver* solver;
-    btBroadphaseInterface* overlappingPairCache;
-    btCollisionDispatcher* dispatcher;
-    btDefaultCollisionConfiguration* collisionConfiguration;
 
     // -------------------------------------------------------------------------
     // graphics

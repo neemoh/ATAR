@@ -2,647 +2,186 @@
 // Created by nima on 13/06/17.
 //
 
-#include "TaskTest.h"
+#include "TaskDemo.h"
 
 #include <custom_conversions/Conversions.h>
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 
-TaskTest::TaskTest(const std::string mesh_files_dir,
+TaskDemo::TaskDemo(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
-    VTKTask(show_ref_frames, biman, with_guidance, 0) ,
+    SimTask(show_ref_frames, biman, with_guidance, 0) ,
     time_last(ros::Time::now())
 {
 
-
-
     InitBullet();
 
-
-
-    SimObject* board;
-    // -----------------------
     // -------------------------------------------------------------------------
-    // Create a cube for the board
-
-    //board_dimensions[0]  = 0.18;
-    //board_dimensions[1]  = 0.14;
-    //board_dimensions[2]  = 0.1;
-
-    board_dimensions[0]  = 0.48;
-    board_dimensions[1]  = 0.54;
-    board_dimensions[2]  = 0.05;
-    double density;
-    double friction = 6;
-
-    KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                             KDL::Vector(board_dimensions[0]/2,
-        board_dimensions[1] / 2, 0) );
-
-    std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
-        board_dimensions[2]};
-    board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0,
-                          friction);
-    board->GetActor()->GetProperty()->SetOpacity(0.0);
-    board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
-
-    dynamicsWorld->addRigidBody(board->GetBody());
-    actors.push_back(board->GetActor());
-
+    // static floor
+    // always add a floor under the workspace of your task to prevent objects
+    // from falling too far and mess things up.
+    std::vector<double> floor_dims = {0., 0., 1., -0.5};
+    SimObject *floor = new SimObject(ObjectShape::STATICPLANE,
+                                     ObjectType::DYNAMIC, floor_dims);
+    dynamics_world->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
-    //// Create spheres
-    //int cols = 4;
-    //int rows = 3;
-    //double density = 7000; // kg/m3
-    //stiffnes = 1000;
-    //damping = 0.1;
-    //friction = 0.2;
-    //SimObject* cylinders[cols*rows];
-    //for (int i = 0; i < rows; ++i) {
-    //
-    //    for (int j = 0; j < cols; ++j) {
-    //
-    //        std::vector<double> dim = {0.005, 0.05};
-    //
-    //        pose = new double[7]{(double)i * 4*dim[0] + (double)j * dim[0]/2,
-    //            0.06,
-    //            0.08 + dim[1] *1.5* (double)j,
-    //            0, 0, 0, 1};
-    //
-    //        cylinders[i*rows+j] =
-    //            new SimObject(ObjectShape::CYLINDER,
-    //                                ObjectType::DYNAMIC, dim, pose, density,
-    //                                NULL, friction, stiffnes, damping
-    //            );
-    //        delete [] pose;
-    //        double ratio = (double)i/4.0;
-    //        cylinders[i*rows+j]->GetActor()->GetProperty()->SetColor(
-    //            0.6 - 0.2*ratio, 0.6 - 0.3*ratio, 0.7 + 0.3*ratio);
-    //        cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecular(0.8);
-    //        cylinders[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(50);
-    //
-    //        dynamics_world->addRigidBody(cylinders[i*rows+j]->GetBody());
-    //        actors.push_back(cylinders[i*rows+j]->GetActor());
-    //
-    //    }
-    //}
+    // Create a floor
+    SimObject *board;
+    {
+        // define object dimensions
+        std::vector<double> board_dimensions = {0.15, 0.10, 0.01};
 
+        // define object Pose
+        KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
+                , KDL::Vector( board_dimensions[0] / 3,
+                               board_dimensions[1] / 2,
+                               -board_dimensions[2]/ 2) );
+
+        // we want a static floor so ObjectType is DYNAMIC and no density is
+        // passed (default is zero)
+        board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC,
+                              board_dimensions, pose);
+
+        // we can access all the properties of a VTK actor
+        board->GetActor()->GetProperty()->SetColor(colors.Gray);
+
+        // we need to add the rigid body to the dynamics workd and the actor
+        // to the graphics_actors vector
+        dynamics_world->addRigidBody(board->GetBody());
+        graphics_actors.push_back(board->GetActor());
+    }
     // -------------------------------------------------------------------------
-//    // Create cubes
-//    rows = 3;
-//    cols = 2;
-//    int layers = 3;
-//    SimObject* cubes[layers *rows *cols];
-//
-//    double sides = 0.01;
-//    density = 7000; // kg/m3
-//    stiffnes = 1000;
-//    damping = 5.1;
-//    friction = 0.1;
-//
-//    for (int k = 0; k < layers; ++k) {
-//        for (int i = 0; i < rows; ++i) {
-//            for (int j = 0; j < cols; ++j) {
-//
-//                pose = new double[7] {(double)i * 2.2*sides + 0.1,
-//                    (double)j * 2.2*sides  + 0.05,
-//                    (double)k * 4*sides  + 0.01,
-//                    0, 0, 0, 1};
-//
-//                std::vector<double> dim = {sides, sides, 2*sides};
-//                cubes[i*rows+j] = new SimObject(ObjectShape::BOX,
-//                                                      ObjectType::DYNAMIC, dim,
-//                                                      pose, density, NULL,
-//                                                      friction, stiffnes, damping);
-//                delete [] pose;
-//
-//                double ratio = (double)i/4.0;
-//                cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
-//                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
-//
-////                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
-////                        (float) stiffnes, (float) damping);
-//                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
-//                actors.push_back(cubes[i*rows+j]->GetActor());
-//
-//            }
-//        }
-//    }
+    // Create 6 dynamic spheres
+    {
+        // define object dimensions
+        std::vector<double> sphere_dimensions = {0.005};
 
-//    {
-//        std::vector<double> dim = {sides, sides, sides};
-//        cubes[i*rows+j] = new SimObject(ObjectShape::BOX,
-//                                              ObjectType::DYNAMIC, dim,
-//                                              pose, 0.2), stiffnes, damping;
-//
-//    }
+        // define object Pose
+        KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
+                , KDL::Vector(0.02, 0.05, 0.05 ));
 
-    // -------------------------------------------------------------------------
-    //// Create mesh
-    //stiffnes = 1000;
-    //damping= 1;
-    //friction = 1;
-    //
-    //pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
-    //std::vector<double> _dim = {0.002};
-    //SimObject *mesh;
-    //std::stringstream input_file_dir;
-    //input_file_dir << mesh_files_dir << std::string("monkey.obj");
-    //std::string mesh_file_dir_str = input_file_dir.str();
-    //
-    //mesh = new
-    //    SimObject(ObjectShape::MESH,
-    //                    ObjectType::DYNAMIC, _dim, pose, 6000,
-    //                    &mesh_file_dir_str,
-    //                    friction);
-    //dynamics_world->addRigidBody(mesh->GetBody());
-    //actors.push_back(mesh->GetActor());
-    //mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
+        // Define
+        double density = 50000; // kg/m3
+        for (int i = 0; i < 6; ++i) {
 
-    // -------------------------------------------------------------------------
-    // Create kinematic box
-    friction = 50.1;
+            pose.p = pose.p+ KDL::Vector(0.0001, 0.0, 0.008);
 
-    std::vector<double> kine_box_dim = {0.005, 0.005, 0.02};
-    kine_box =
-            new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim,
-                          pose, 0.0, friction);
-    dynamicsWorld->addRigidBody(kine_box->GetBody());
-    kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
-    actors.push_back(kine_box->GetActor());
+            sphere[i] = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
+                                   sphere_dimensions, pose, density);
 
+            // we can access all the properties of a VTK actor
+            sphere[i]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
 
-    // -------------------------------------------------------------------------
-    // Create kinematic scoop
-
-    std::vector<double> kine_scoop_dim = {0.02, 0.0002, 0.02};
-    kine_scoop =
-            new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                          kine_scoop_dim, pose, 10.0, friction);
-    dynamicsWorld->addRigidBody(kine_scoop->GetBody());
-    actors.push_back(kine_scoop->GetActor());
-    kine_scoop->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
-
-    // -------------------------------------------------------------------------
-    //// Create kinematic cylinder
-    //     std::vector<double> kine_cyl_dim = {0.01, 0.0002};
-    //kine_cylinder_1 =
-    //    new SimObject(ObjectShape::CYLINDER,
-    //                        ObjectType::KINEMATIC, kine_cyl_dim, pose, 10.0,
-    //                        NULL, friction, stiffnes, damping);
-    //delete [] pose;
-    //dynamics_world->addRigidBody(kine_cylinder_1->GetBody());
-    //actors.push_back(kine_cylinder_1->GetActor());
-    //kine_cylinder_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
-
-
-    // -------------------------------------------------------------------------
-    // Create pegs and spheres
-
-    peg_dimensions[0]  = 0.008;
-    peg_dimensions[1]  = 0.008;
-    peg_dimensions[2]  = 0.008;
-
-    // Set cubic pegs params
-    density = 12;
-    friction = 100;
-
-    // Set spheric pegs params
-    double friction_sphere = 0.2;
-
-    if (peg_type==1){
-        // -------------------------------------------------------------------------
-        // Create sphere 1
-
-        peg_pose1 = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                        KDL::Vector(0.04, 0.04,
-                                    board_dimensions[2]/2+peg_dimensions[2]/2) );
-
-        std::vector<double> peg_SPHERE_dimension = {peg_dimensions[0] / 2};
-
-        peg1 = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
-                             peg_SPHERE_dimension, peg_pose1, density,
-                             friction_sphere);
-        peg1->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg1->GetBody());
-        actors.push_back(peg1->GetActor());
-
-
-        // -------------------------------------------------------------------------
-        // Create sphere 2
-
-        peg_pose2 = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                             KDL::Vector( 0.08, 0.04, board_dimensions[2]/2+peg_dimensions[2]/2) );
-
-        peg2 = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
-                             peg_SPHERE_dimension, peg_pose2, density,
-                             friction_sphere);
-        peg2->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg2->GetBody());
-        actors.push_back(peg2->GetActor());
-
-        // -------------------------------------------------------------------------
-        // Create sphere 3
-        peg_pose3 = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                             KDL::Vector(  0.04, 0.08, board_dimensions[2]/2+peg_dimensions[2]/2) );
-
-        peg3 = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
-                             peg_SPHERE_dimension, peg_pose3, density,
-                             friction_sphere);
-        peg3->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg3->GetBody());
-        actors.push_back(peg3->GetActor());
-
-        // -------------------------------------------------------------------------
-        // Create sphere 4
-        peg_pose4 = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                             KDL::Vector(  0.06, 0.06,
-                                           board_dimensions[2]/2+peg_dimensions[2]/2) );
-
-
-        peg4 = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
-                             peg_SPHERE_dimension, peg_pose4, density,
-                             friction_sphere);
-        peg4->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg4->GetBody());
-        actors.push_back(peg4->GetActor());
+            // we need to add the rigid body to the dynamics workd and the actor
+            // to the graphics_actors vector
+            dynamics_world->addRigidBody(sphere[i]->GetBody());
+            graphics_actors.push_back(sphere[i]->GetActor());
+        }
 
     }
 
-    if (peg_type==0) {
-        // -------------------------------------------------------------------------
-        // Create  cubic peg1
+    // -------------------------------------------------------------------------
+    // Create 6 dynamic cubes
+    // objects can be defined locally too...
+    {
+        // define object dimensions
+        std::vector<double> sphere_dimensions = {0.01, 0.01, 0.005};
 
-        KDL::Frame peg_pose1(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                             KDL::Vector(0.0, 0.0,
-                                         board_dimensions[2]/2+peg_dimensions[2]/2) );
-        std::vector<double> peg_dim = {
-            peg_dimensions[0], peg_dimensions[1], peg_dimensions[2]
-        };
-        peg1 = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim,
-                             peg_pose1, density, friction);
-        peg1->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
+        // define object Pose
+        KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
+                , KDL::Vector(0.02, 0.04, 0.05 ));
 
-        dynamicsWorld->addRigidBody(peg1->GetBody());
-        actors.push_back(peg1->GetActor());
+        // Define
+        double density = 50000; // kg/m3
+        for (int i = 0; i < 6; ++i) {
 
+            pose.p = pose.p+ KDL::Vector(0.0001, 0.0, 0.008);
 
-        // -------------------------------------------------------------------------
-        // Create cubic peg2
+            SimObject cube(ObjectShape::BOX, ObjectType::DYNAMIC,
+                                   sphere_dimensions, pose, density);
 
+            // we can access all the properties of a VTK actor
+            cube.GetActor()->GetProperty()->SetColor(colors.Orange);
 
-        KDL::Frame peg_pose2(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                             KDL::Vector(0.04, 0.0,
-                                         board_dimensions[2]/2+peg_dimensions[2]/2) );
+            // we need to add the rigid body to the dynamics workd and the actor
+            // to the graphics_actors vector
+            dynamics_world->addRigidBody(cube.GetBody());
+            graphics_actors.push_back(cube.GetActor());
+        }
 
-        peg2 = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim,
-                             peg_pose2, density, friction);
-        peg2->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg2->GetBody());
-        actors.push_back(peg2->GetActor());
-
-        // -------------------------------------------------------------------------
-        // Create cubic peg3
-
-        KDL::Frame peg_pose3(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                             KDL::Vector(0.0, 0.04,
-                                         board_dimensions[2]/2+peg_dimensions[2]/2) );
-        peg3 = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim,
-                             peg_pose3, density, friction);
-        peg3->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg3->GetBody());
-        actors.push_back(peg3->GetActor());
-
-        // -------------------------------------------------------------------------
-        // Create cubic peg4
-        KDL::Frame peg_pose4(KDL::Rotation::Quaternion( 0., 0., 0., 1.),
-                             KDL::Vector(0.02, 0.02,
-                                         board_dimensions[2]/2+peg_dimensions[2]/2) );
-
-        peg4 = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim,
-                             peg_pose4, density, friction);
-        peg4->GetActor()->GetProperty()->SetOpacity(1.0);
-        peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-        dynamicsWorld->addRigidBody(peg4->GetBody());
-        actors.push_back(peg4->GetActor());
     }
-
-    //// Create a ring (mesh object)
-    //
-    //density=10;
-    //stiffnes = 100;
-    //damping= 20;
-    //friction = 10;
-    //
-    //pose = new double[7] {0.05, 0.01,  0,
-    //    0, 0, 0, 1};
-    //std::vector<double> _dim = {0.002};
-    //SimObject *mesh;
-    //std::stringstream input_file_dir;
-    //
-    ////to change
-    //input_file_dir << mesh_files_dir << std::string("ring.obj");
-    //
-    //
-    //std::string mesh_file_dir_str = input_file_dir.str();
-    //
-    //mesh = new
-    //    SimObject(ObjectShape::MESH,
-    //                    ObjectType::DYNAMIC, _dim, pose, density,
-    //                    &mesh_file_dir_str,
-    //                    friction, stiffnes, damping);
-    //
-    //dynamics_world->addRigidBody(mesh->GetBody());
-    //actors.push_back(mesh->GetActor());
-    //mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
-
-
-    // -------------------------------------------------------------------------
-    // Create a static target made of cubes
-
-    sides = peg_dimensions[0]+0.002;
-    friction = 0.51;
-    std::vector<double> dim1 = {sides/2, 3*sides-0.5*sides, 2*sides};
-    std::vector<double> dim2 = {2*sides-0.5*sides, sides/2, 2*sides};
-
-    target_pos = {0.10, 0.13, board_dimensions[2]/2+sides};
-
-    // Create Cube1
-
-    pose.p  = KDL::Vector(target_pos[0]+sides, target_pos[1], target_pos[2]);
-
-    cubes[0] = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose,
-                             0.0, friction);
-    cubes[0]->GetActor()->GetProperty()->SetColor(
-        0.9, 0.4, 0.1);
-    dynamicsWorld->addRigidBody(cubes[0]->GetBody());
-    actors.push_back(cubes[0]->GetActor());
-
-    // Create Cube2
-
-    pose.p  = KDL::Vector(target_pos[0], target_pos[1]-sides, target_pos[2]);
-
-    cubes[1] = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose,
-                             0.0, friction);
-    cubes[1]->GetActor()->GetProperty()->SetColor(
-        0.9, 0.4, 0.1);
-    dynamicsWorld->addRigidBody(cubes[1]->GetBody());
-    actors.push_back(cubes[1]->GetActor());
-
-    // Create Cube3
-    pose.p  = KDL::Vector(target_pos[0], target_pos[1]+sides, target_pos[2]);
-
-
-    cubes[2] = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose,
-                             0.0, friction);
-    cubes[2]->GetActor()->GetProperty()->SetColor(
-        0.9, 0.4, 0.1);
-    dynamicsWorld->addRigidBody(cubes[2]->GetBody());
-    actors.push_back(cubes[2]->GetActor());
-
-    // Create Cube4
-    pose.p  = KDL::Vector(target_pos[0]-sides, target_pos[1], target_pos[2]);
-
-
-    cubes[3] = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose,
-                             0.0, friction);
-    cubes[3]->GetActor()->GetProperty()->SetColor(
-        0.9, 0.4, 0.1);
-    dynamicsWorld->addRigidBody(cubes[3]->GetBody());
-    actors.push_back(cubes[3]->GetActor());
-
-    // -------------------------------------------------------------------------
-    // FRAMES
-    //vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
-    //    vtkSmartPointer<vtkAxesActor>::New();
-    //
-    //task_coordinate_axes->SetXAxisLabelText("");
-    //task_coordinate_axes->SetYAxisLabelText("");
-    //task_coordinate_axes->SetZAxisLabelText("");
-    //task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
-    //task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-    //
-    //
-    //actors.push_back(task_coordinate_axes);
-
-    // compute the euclidean distance between the peg and the target
-    // (this should be the ideal path)
-    //KDL::Vector peg_position(peg_pose[0], peg_pose[1], peg_pose[2]);
-    //KDL::Vector target_position(target_pos[0], target_pos[1], target_pos[2]);
-    //target_distance=(target_position - peg_position).Norm();
-    //previous_point = peg_position;
-
-    ResetTask();
 }
 
 
 //------------------------------------------------------------------------------
-void TaskTest::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+void TaskDemo::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                            const int tool_id) {
-
     tool_current_pose_kdl[tool_id] = &tool_pose;
-
 }
 
-
-void TaskTest::SetCurrentGripperpositionPointer(double &grip_position, const int
+//------------------------------------------------------------------------------
+void TaskDemo::SetCurrentGripperpositionPointer(double &grip_position, const int
 tool_id) {
     gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
-void TaskTest::StepWorld() {
+void TaskDemo::StepWorld() {
 
     //--------------------------------
-    //box
+    //use the tool pose for moving the virtual tools ...
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-
-    KDL::Vector box_posit = tool_pose * KDL::Vector( -0.0, -0.0, -0.03+0.01);
-
-    double x, y, z, w;
-    tool_pose.M.GetQuaternion(x,y,z,w);
-    double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
-    kine_box->SetKinematicPose(box_pose);
-
-
-    //--------------------------------
-    //scoop
-    KDL::Vector gripper_pos = KDL::Vector( -0.0, -0.0, -0.01+0.01); //previously (4 the cylinder) y=(1+grip_posit)* 0.004
-    gripper_pos = tool_pose * gripper_pos;
-
-    double scoop_pose[7] = {
-        gripper_pos[0],
-        gripper_pos[1],
-        gripper_pos[2],
-        x,y,z,w};
-    kine_scoop->SetKinematicPose(scoop_pose);
 
     //--------------------------------
     // step the world
-    StepDynamicsWorld();
+    StepPhysics();
+
+    ROS_INFO("Sphere0 z: %f",sphere[0]->GetPose().p[2]);
 
     //--------------------------------
     // Check if the task is completed
-    count=1;
-    EndChecking();
-
 }
 
 
 //------------------------------------------------------------------------------
-void TaskTest::EndChecking() {
-    // Check if the pegs are in the correct position.
-    double *peg_position;
-    peg_position = peg1->GetActor()->GetCenter();
-    peg1->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
-
-    if (count == 1) {
-        // check if the first peg is inside the target or fallen
-        if (peg_position[2] < 0) {
-            out[0] = 1;
-
-        }
-        if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
-            && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
-            && fabs((peg_position[2] - target_pos[2]) <= sides))
-            || out[0] == 1) {
-
-            // the first peg is in the target! the second peg turns green
-            peg2->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
-
-            // check if the second peg is inside the target or fallen
-            peg_position = peg2->GetActor()->GetCenter();
-
-            if (peg_position[2] < 0) {
-                out[1] = 1;
-            }
-            if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
-                && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
-                && fabs(peg_position[2] - target_pos[2]) <= sides)
-                || out[1] == 1) {
-
-                // the second peg is in the target! the third peg turns green
-                peg3->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
-
-                // check if the third peg is inside the target or fallen
-                peg_position = peg3->GetActor()->GetCenter();
-
-                if (peg_position[2] < 0) {
-                    out[2] = 1;
-                }
-                if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
-                    && fabs(peg_position[1] - target_pos[1]) <= 3 * sides / 2
-                    && fabs(peg_position[2] - target_pos[2]) <= sides)
-                    || out[2] == 1) {
-
-                    // the third peg is in the target! the last peg turns green
-                    peg4->GetActor()->GetProperty()->SetColor(0.0, 0.9, 0.0);
-
-                    // check if the last peg is inside the target or fallen
-                    peg_position = peg4->GetActor()->GetCenter();
-
-                    if (peg_position[2] < 0) {
-                        out[3] = 1;
-                    }
-                    if ((fabs(peg_position[0] - target_pos[0]) <= 3 * sides / 2
-                        && fabs(peg_position[1] - target_pos[1])
-                            <= 3 * sides / 2
-                        && fabs(peg_position[2] - target_pos[2]) <= sides)
-                        || out[3] == 1) {
-                        std::cout << "daje regaz final" << std::endl;
-                        ResetTask();
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-
-
-//------------------------------------------------------------------------------
-bool TaskTest::IsACParamChanged() {
+bool TaskDemo::IsACParamChanged() {
     return false;
 }
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskTest::GetACParameters() {
+custom_msgs::ActiveConstraintParameters * TaskDemo::GetACParameters() {
     custom_msgs::ActiveConstraintParameters *msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }
 
 
-custom_msgs::TaskState TaskTest::GetTaskStateMsg() {
+custom_msgs::TaskState TaskDemo::GetTaskStateMsg() {
     custom_msgs::TaskState task_state_msg;
     return task_state_msg;
 }
 
-void TaskTest::ResetTask() {
+void TaskDemo::ResetTask() {
 
     // save the measurements and the metrics and reset the initial conditions
     // to start a new repetition of the task
     ROS_INFO("Repetition completed. Resetting the task.");
 
     // save metrics
-    // DO WE SAVE THE METRICS IN A PARAMETER?
-    // OR DO WE SAVE THEM THROUGH THE NODE REPORTER?
 
-    //// reset
-    count=0;
 
-    for (int i = 0; i < 4; ++i) {
-        out[i]=0;
-    }
-
-    peg1->GetActor()->SetUserMatrix(KDLFrameToVTKMatrix(peg_pose1));
-    motion_state_ = new BulletVTKMotionState(peg_pose1, peg1->GetActor());
-    peg1->GetBody()->setMotionState(motion_state_);
-    peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-    peg2->GetActor()->SetUserMatrix(KDLFrameToVTKMatrix(peg_pose2));
-    motion_state_ = new BulletVTKMotionState(peg_pose2, peg2->GetActor());
-    peg2->GetBody()->setMotionState(motion_state_);
-    peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-    peg3->GetActor()->SetUserMatrix(KDLFrameToVTKMatrix(peg_pose3));
-    motion_state_ = new BulletVTKMotionState(peg_pose3, peg3->GetActor());
-    peg3->GetBody()->setMotionState(motion_state_);
-    peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
-
-    peg4->GetActor()->SetUserMatrix(KDLFrameToVTKMatrix(peg_pose4));
-    motion_state_ = new BulletVTKMotionState(peg_pose4, peg4->GetActor());
-    peg4->GetBody()->setMotionState(motion_state_);
-    peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 }
 
-void TaskTest::ResetCurrentAcquisition() {
+void TaskDemo::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
-
 }
 
 
-void TaskTest::HapticsThread() {
+void TaskDemo::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 
@@ -658,7 +197,7 @@ void TaskTest::HapticsThread() {
     while (ros::ok())
     {
 
-//        CalculatedDesiredToolPose();
+        //        CalculatedDesiredToolPose();
 
         // publish desired poses
         for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
@@ -683,7 +222,7 @@ void TaskTest::HapticsThread() {
 
 
 
-void TaskTest::InitBullet() {
+void TaskDemo::InitBullet() {
 
     ///-----initialization_start-----
 
@@ -699,81 +238,55 @@ void TaskTest::InitBullet() {
     ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
     solver = new btSequentialImpulseConstraintSolver;
 
-    dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,
-                                                overlappingPairCache, solver,
-                                                collisionConfiguration);
 
-    dynamicsWorld->setGravity(btVector3(0, 0, -10));
+    dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
+                                                 overlappingPairCache, solver,
+                                                 collisionConfiguration);
+
+    dynamics_world->setGravity(btVector3(0, 0, -10));
+
+
+    btContactSolverInfo& info = dynamics_world->getSolverInfo();
+    //optionally set the m_splitImpulsePenetrationThreshold (only used when m_splitImpulse  is enabled)
+    //only enable split impulse position correction when the penetration is
+    // deeper than this m_splitImpulsePenetrationThreshold, otherwise use the
+    // regular velocity/position constraint coupling (Baumgarte).
+    info.m_splitImpulsePenetrationThreshold = -0.02f;
+    info.m_numIterations = 15;
+    info.m_solverMode = SOLVER_USE_2_FRICTION_DIRECTIONS;
 
 
 }
 
+void TaskDemo::StepPhysics() {
 
-void TaskTest::StepDynamicsWorld() {
-    ///-----stepsimulation_start-----
-
-    ///-----stepsimulation_start-----
     double time_step = (ros::Time::now() - time_last).toSec();
-
-    // simulation seems more realistic when time_step is halved right now!
-    dynamicsWorld->stepSimulation(btScalar(time_step), 5);
+    //std::cout << "time_step: " << time_step << std::endl;
+    dynamics_world->stepSimulation(btScalar(time_step), 100, 1.f/128.f);
     time_last = ros::Time::now();
-//    //print positions of all objects
-//    for (int j = dynamics_world->getNumCollisionObjects() - 1; j >= 0; j--)
-//    {
-//        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[j];
-//        btRigidBody* body_ = btRigidBody::upcast(obj);
-//        btTransform trans;
-//        if (body_ && body_->getMotionState())
-//        {
-//            body_->getMotionState()->getWorldTransform(trans);
-//        }
-//        else
-//        {
-//            trans = obj->getWorldTransform();
-//        }
-//
-//            heights[j] = trans.getOrigin().z();
-//        heights2[j] = actors[j]->GetMatrix()->Element[2][3];
-//    }
 
 }
 
 
-TaskTest::~TaskTest() {
+TaskDemo::~TaskDemo() {
 
-    ROS_INFO("Destructing Bullet task: %d",
-             dynamicsWorld->getNumCollisionObjects());
+    ROS_INFO("Destructing Demo task objects: %d",
+             dynamics_world->getNumCollisionObjects());
     //remove the rigidbodies from the dynamics world and delete them
-    for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+    for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
     {
-        btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];
         btRigidBody* body = btRigidBody::upcast(obj);
         if (body && body->getMotionState())
         {
             delete body->getMotionState();
         }
-        dynamicsWorld->removeCollisionObject(obj);
+        dynamics_world->removeCollisionObject(obj);
         delete obj;
     }
 
-//    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-//        SimObject* sphere = spheres[j];
-//        spheres[j] = 0;
-//        delete sphere;
-//    }
-//    //delete collision shapes
-////    for (int j = 0; j < collisionShapes.size(); j++)
-//    for (int j = 0; j < 2; j++) // because we use the same collision shape
-//        // for all spheres
-//    {
-//        btCollisionShape* shape = collisionShapes[j];
-//        collisionShapes[j] = 0;
-//        delete shape;
-//    }
-
     //delete dynamics world
-    delete dynamicsWorld;
+    delete dynamics_world;
 
     //delete solver
     delete solver;
@@ -786,8 +299,6 @@ TaskTest::~TaskTest() {
 
     delete collisionConfiguration;
 
-    //next line is optional: it will be cleared by the destructor when the array goes out of scope
-//    collisionShapes.clear();
 }
 
 

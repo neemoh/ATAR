@@ -17,7 +17,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
         :
-        VTKTask(show_ref_frames, biman, with_guidance, 0),
+        SimTask(show_ref_frames, biman, with_guidance, 0),
         time_last(ros::Time::now()) {
 
     InitBullet();
@@ -52,7 +52,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         board->GetActor()->GetProperty()->SetColor(0.5, 0.3, 0.1);
 
         dynamics_world->addRigidBody(board->GetBody());
-        actors.push_back(board->GetActor());
+        graphics_actors.push_back(board->GetActor());
 //        board->GetBody()->
 //                setCollisionFlags(board->GetBody()->getCollisionFlags() |
 //                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
@@ -110,7 +110,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     //
     //            dynamics_world->addRigidBody(
     //                cylinders[i * rows + j]->GetBody());
-    //            actors.push_back(cylinders[i * rows + j]->GetActor());
+    //            graphics_actors.push_back(cylinders[i * rows + j]->GetActor());
     //
     //        }
     //    }
@@ -149,7 +149,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     //
     //                dynamics_world->addRigidBody(
     //                    cubes[i * rows + j]->GetBody());
-    //                actors.push_back(cubes[i * rows + j]->GetActor());
+    //                graphics_actors.push_back(cubes[i * rows + j]->GetActor());
     //
     //            }
     //        }
@@ -177,7 +177,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                           mesh_file_dir_str, 1);
 
         dynamics_world->addRigidBody(needle_mesh->GetBody());
-        actors.push_back(needle_mesh->GetActor());
+        graphics_actors.push_back(needle_mesh->GetActor());
         needle_mesh->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
 
 //        needle_mesh->GetBody()->
@@ -206,7 +206,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                                  mesh_file_dir_str, 0);
 
         dynamics_world->addRigidBody(suture_plane_1.GetBody());
-        actors.push_back(suture_plane_1.GetActor());
+        graphics_actors.push_back(suture_plane_1.GetActor());
         suture_plane_1.GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
     }
 
@@ -228,7 +228,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                                  mesh_file_dir_str, 0);
 
         dynamics_world->addRigidBody(suture_plane_2.GetBody());
-        actors.push_back(suture_plane_2.GetActor());
+        graphics_actors.push_back(suture_plane_2.GetActor());
         suture_plane_2.GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
     }
 
@@ -252,7 +252,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                           mesh_file_dir_str, 0);
 
         dynamics_world->addRigidBody(ring_mesh->GetBody());
-        actors.push_back(ring_mesh->GetActor());
+        graphics_actors.push_back(ring_mesh->GetActor());
         ring_mesh->GetActor()->GetProperty()->SetColor(0.4f, 0.3f, 0.3f);
         //ring_mesh->GetBody()->setContactStiffnessAndDamping(5000, 10);
     }
@@ -288,7 +288,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                                   gripper_link_dims[i], KDL::Frame(),
                                   gripper_density, gripper_friction);
             dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
-            actors.push_back(right_gripper_links[i]->GetActor());
+            graphics_actors.push_back(right_gripper_links[i]->GetActor());
             right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,
                                                                         0.7f,
                                                                         0.7f);
@@ -303,7 +303,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
                                   gripper_link_dims[i], KDL::Frame(),
                                   gripper_density, gripper_friction);
             dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
-            actors.push_back(left_gripper_links[i]->GetActor());
+            graphics_actors.push_back(left_gripper_links[i]->GetActor());
             left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,
                                                                        0.7f,
                                                                        0.7f);
@@ -325,7 +325,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
-    actors.push_back(task_coordinate_axes);
+    graphics_actors.push_back(task_coordinate_axes);
 
 }
 
@@ -378,7 +378,7 @@ void TaskNeedle::StepWorld() {
 
     //--------------------------------
     // step the world
-    StepDynamicsWorld();
+    StepPhysics();
 
 }
 
@@ -490,7 +490,7 @@ void TaskNeedle::InitBullet() {
 }
 
 
-void TaskNeedle::StepDynamicsWorld() {
+void TaskNeedle::StepPhysics() {
     ///-----stepsimulation_start-----
     double time_step = (ros::Time::now() - time_last).toSec();
 

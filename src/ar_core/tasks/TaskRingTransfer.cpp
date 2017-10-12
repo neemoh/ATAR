@@ -2,12 +2,12 @@
 // Created by nima on 21/07/17.
 //
 
-#include "TaskHook.h"
+#include "TaskRingTransfer.h"
 #include <custom_conversions/Conversions.h>
 #include <boost/thread/thread.hpp>
 
 
-TaskHook::TaskHook(const std::string mesh_files_dir,
+TaskRingTransfer::TaskRingTransfer(const std::string mesh_files_dir,
                    const bool show_ref_frames, const bool biman,
                    const bool with_guidance)
         :
@@ -225,7 +225,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
 
 //------------------------------------------------------------------------------
-void TaskHook::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
+void TaskRingTransfer::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
                                          const int tool_id) {
 
     tool_current_pose_kdl[tool_id] = &tool_pose;
@@ -233,13 +233,13 @@ void TaskHook::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
 }
 
 
-void TaskHook::SetCurrentGripperpositionPointer(double &grip_position, const int
+void TaskRingTransfer::SetCurrentGripperpositionPointer(double &grip_position, const int
 tool_id) {
     jaw_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
-void TaskHook::StepWorld() {
+void TaskRingTransfer::StepWorld() {
 
 
     //-------------------------------- UPDATE RIGHT GRIPPER
@@ -294,36 +294,36 @@ void TaskHook::StepWorld() {
 
 
 //------------------------------------------------------------------------------
-bool TaskHook::IsACParamChanged() {
+bool TaskRingTransfer::IsACParamChanged() {
     return false;
 }
 
 
 //------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskHook::GetACParameters() {
+custom_msgs::ActiveConstraintParameters * TaskRingTransfer::GetACParameters() {
     custom_msgs::ActiveConstraintParameters* msg;
     // assuming once we read it we can consider it unchanged
     return msg;
 }
 
 
-custom_msgs::TaskState TaskHook::GetTaskStateMsg() {
+custom_msgs::TaskState TaskRingTransfer::GetTaskStateMsg() {
     custom_msgs::TaskState task_state_msg;
     return task_state_msg;
 }
 
-void TaskHook::ResetTask() {
+void TaskRingTransfer::ResetTask() {
     ROS_INFO("Resetting the task.");
 
 }
 
-void TaskHook::ResetCurrentAcquisition() {
+void TaskRingTransfer::ResetCurrentAcquisition() {
     ROS_INFO("Resetting current acquisition.");
 
 }
 
 
-void TaskHook::HapticsThread() {
+void TaskRingTransfer::HapticsThread() {
 
     ros::Publisher pub_desired[2];
 
@@ -364,7 +364,7 @@ void TaskHook::HapticsThread() {
 
 
 
-void TaskHook::InitBullet() {
+void TaskRingTransfer::InitBullet() {
 
     ///-----initialization_start-----
 
@@ -398,7 +398,7 @@ void TaskHook::InitBullet() {
 }
 
 
-void TaskHook::StepPhysics() {
+void TaskRingTransfer::StepPhysics() {
     ///-----stepsimulation_start-----
     double time_step = (ros::Time::now() - time_last).toSec();
     // check http://bulletphysics.org/mediawiki-1.5.8/index.php/Stepping_The_World
@@ -408,7 +408,7 @@ void TaskHook::StepPhysics() {
 }
 
 
-TaskHook::~TaskHook() {
+TaskRingTransfer::~TaskRingTransfer() {
 
     ROS_INFO("Destructing Bullet task: %d",
              dynamics_world->getNumCollisionObjects());

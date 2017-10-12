@@ -6,7 +6,7 @@
 #define TELEOP_VISION_OVERLAYROSCONFIG_H
 
 // related headers
-#include "VTKTask.h"
+#include "SimTask.h"
 #include "Rendering.h"
 #include <boost/thread/thread.hpp>
 #include <mutex>
@@ -127,7 +127,7 @@ public:
 
 private:
 
-    VTKTask *task_ptr;
+    SimTask *task_ptr;
 
     Rendering * graphics;
 

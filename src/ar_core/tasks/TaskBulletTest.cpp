@@ -14,7 +14,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                                const bool show_ref_frames, const bool biman,
                                const bool with_guidance)
         :
-        VTKTask(show_ref_frames, biman, with_guidance, 0) ,
+        SimTask(show_ref_frames, biman, with_guidance, 0) ,
         time_last(ros::Time::now())
 {
 
@@ -63,7 +63,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                                  mesh_file_dir_str, 0);
 
         dynamicsWorld->addRigidBody(plane[i]->GetBody());
-        actors.push_back(plane[i]->GetActor());
+        graphics_actors.push_back(plane[i]->GetActor());
         double colour[3] = {colors[i][0], colors[i][1], colors[i][2]};
         plane[i]->GetActor()->GetProperty()->SetColor(colour);
         plane[i]->GetActor()->GetProperty()->SetOpacity(0.0);
@@ -86,8 +86,8 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //                              ObjectType::DYNAMIC, _dim, pose, 0.0,
     //                              &mesh_file_dir_str, friction);
     //
-    //dynamicsWorld->addRigidBody(arrow->GetBody());
-    //actors.push_back(arrow->GetActor());
+    //dynamics_world->addRigidBody(arrow->GetBody());
+    //graphics_actors.push_back(arrow->GetActor());
     //arrow->GetActor()->GetProperty()->SetColor(Green_Arrow);
     //arrow->GetActor()->GetProperty()->SetOpacity(1);
 
@@ -114,7 +114,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
 
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
-    actors.push_back(kine_p->GetActor());
+    graphics_actors.push_back(kine_p->GetActor());
 
     // Direction of movement
 
@@ -202,7 +202,7 @@ void TaskBulletTest::StepWorld() {
 
     //--------------------------------
     // step the world
-    StepDynamicsWorld();
+    StepPhysics();
 
 
 
@@ -468,7 +468,7 @@ void TaskBulletTest::InitBullet() {
 }
 
 
-void TaskBulletTest::StepDynamicsWorld() {
+void TaskBulletTest::StepPhysics() {
     ///-----stepsimulation_start-----
 
     ///-----stepsimulation_start-----
@@ -493,7 +493,7 @@ void TaskBulletTest::StepDynamicsWorld() {
 //        }
 //
 //            heights[j] = trans.getOrigin().z();
-//        heights2[j] = actors[j]->GetMatrix()->Element[2][3];
+//        heights2[j] = graphics_actors[j]->GetMatrix()->Element[2][3];
 //    }
 
 }

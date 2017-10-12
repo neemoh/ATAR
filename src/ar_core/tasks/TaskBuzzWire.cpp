@@ -3,13 +3,12 @@
 //
 
 #include <custom_conversions/Conversions.h>
-#include <vtkCubeSource.h>
-#include <vtkConeSource.h>
 #include <boost/thread/thread.hpp>
 #include <geometry_msgs/PoseStamped.h>
-#include <kdl_conversions/kdl_msg.h>
 #include "TaskBuzzWire.h"
 #include "src/ar_core/Colors.hpp"
+#include "src/ar_core/VTKConversions.hpp"
+#include <vtkCubeSource.h>
 
 TaskBuzzWire::TaskBuzzWire(
         const std::string stl_file_dir,
@@ -21,7 +20,7 @@ TaskBuzzWire::TaskBuzzWire(
         KDL::Frame *slave_to_world_tr
     )
     :
-    VTKTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
+    SimTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
     stl_files_dir(stl_file_dir),
     slave_frame_to_world_frame_tr(slave_to_world_tr),
 //        show_ref_frames(show_ref_frames),
@@ -386,39 +385,39 @@ TaskBuzzWire::TaskBuzzWire(
 
 
     // -------------------------------------------------------------------------
-    // Add all actors to a vector
+    // Add all graphics_actors to a vector
     if (show_ref_frames) {
-        actors.push_back(task_coordinate_axes);
+        graphics_actors.push_back(task_coordinate_axes);
 
         for (int k = 0; k < 1 + (int)bimanual; ++k) {
-            actors.push_back(tool_current_frame_axes[k]);
-            actors.push_back(tool_desired_frame_axes[k]);
+            graphics_actors.push_back(tool_current_frame_axes[k]);
+            graphics_actors.push_back(tool_desired_frame_axes[k]);
         }
     }
 
-    actors.push_back(tube_mesh_actor);
-    actors.push_back(stand_mesh_actor);
-    actors.push_back(lq_mesh_actor);
-        actors.push_back(floor_actor);
-    actors.push_back(ring_actor[0]);
+    graphics_actors.push_back(tube_mesh_actor);
+    graphics_actors.push_back(stand_mesh_actor);
+    graphics_actors.push_back(lq_mesh_actor);
+        graphics_actors.push_back(floor_actor);
+    graphics_actors.push_back(ring_actor[0]);
     if(bimanual){
-        actors.push_back(ring_actor[1]);
-        actors.push_back(line1_actor);
-        actors.push_back(line2_actor);
+        graphics_actors.push_back(ring_actor[1]);
+        graphics_actors.push_back(line1_actor);
+        graphics_actors.push_back(line2_actor);
     }
-    actors.push_back(destination_ring_actor);
+    graphics_actors.push_back(destination_ring_actor);
     for (int j = 0; j < score_sphere_actors.size(); ++j) {
-        actors.push_back(score_sphere_actors[j]);
+        graphics_actors.push_back(score_sphere_actors[j]);
     }
-    //    actors.push_back(ring_guides_mesh_actor);
-    //    actors.push_back(cornerAnnotation);
+    //    graphics_actors.push_back(ring_guides_mesh_actor);
+    //    graphics_actors.push_back(cornerAnnotation);
 
 
 }
 
 //------------------------------------------------------------------------------
 //std::vector<vtkSmartPointer<vtkProp> > TaskBuzzWire::GetActors() {
-//    return actors;
+//    return graphics_actors;
 //}
 
 //------------------------------------------------------------------------------

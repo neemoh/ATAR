@@ -6,6 +6,7 @@
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 #include "TaskKidney.h"
+#include "src/ar_core/VTKConversions.hpp"
 
 
 namespace COLORS {
@@ -24,7 +25,7 @@ TaskKidney::TaskKidney(const std::string stl_file_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
         :
-    VTKTask(show_ref_frames, biman, with_guidance, 0),
+    SimTask(show_ref_frames, biman, with_guidance, 0),
         stl_files_dir(stl_file_dir),
 //        show_ref_frames(show_ref_frames),
 //        bimanual(biman),
@@ -239,43 +240,43 @@ TaskKidney::TaskKidney(const std::string stl_file_dir,
     box3_actor->GetProperty()->SetOpacity(1.0);
     box3_actor->GetProperty()->SetColor(COLORS::Pink);
     // -------------------------------------------------------------------------
-    // Add all actors to a vector
+    // Add all graphics_actors to a vector
     if (show_ref_frames) {
-        actors.push_back(task_coordinate_axes);
+        graphics_actors.push_back(task_coordinate_axes);
 
         for (int k = 0; k < 1 + (int)bimanual; ++k) {
-            actors.push_back(tool_current_frame_axes[k]);
-            actors.push_back(tool_desired_frame_axes[k]);
+            graphics_actors.push_back(tool_current_frame_axes[k]);
+            graphics_actors.push_back(tool_desired_frame_axes[k]);
         }
     }
 
 
-    actors.push_back(mesh_actor);
-    //actors.push_back(box1_actor);
-    //actors.push_back(box2_actor);
-    //actors.push_back(box3_actor);
-//    actors.push_back(ring_actor[0]);
-//    actors.push_back(ring_actor[0]);
+    graphics_actors.push_back(mesh_actor);
+    //graphics_actors.push_back(box1_actor);
+    //graphics_actors.push_back(box2_actor);
+    //graphics_actors.push_back(box3_actor);
+//    graphics_actors.push_back(ring_actor[0]);
+//    graphics_actors.push_back(ring_actor[0]);
 //    if(bimanual){
-//        actors.push_back(ring_actor[1]);
-//        actors.push_back(line1_actor);
-//        actors.push_back(line2_actor);
+//        graphics_actors.push_back(ring_actor[1]);
+//        graphics_actors.push_back(line1_actor);
+//        graphics_actors.push_back(line2_actor);
 //    }
-//    actors.push_back(destination_cone_actor);
-//    actors.push_back(destination_ring_actor);
+//    graphics_actors.push_back(destination_cone_actor);
+//    graphics_actors.push_back(destination_ring_actor);
 //    for (int j = 0; j < score_sphere_actors.size(); ++j) {
-//        actors.push_back(score_sphere_actors[j]);
+//        graphics_actors.push_back(score_sphere_actors[j]);
 //    }
 
-    //    actors.push_back(ring_guides_mesh_actor);
-    //    actors.push_back(cornerAnnotation);
+    //    graphics_actors.push_back(ring_guides_mesh_actor);
+    //    graphics_actors.push_back(cornerAnnotation);
 
 
 }
 
 //------------------------------------------------------------------------------
 //std::vector<vtkSmartPointer<vtkProp> > TaskKidney::GetActors() {
-//    return actors;
+//    return graphics_actors;
 //}
 
 //------------------------------------------------------------------------------

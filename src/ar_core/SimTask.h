@@ -2,21 +2,22 @@
 // Created by nima on 25/05/17.
 //
 
-#ifndef ATAR_VTKTASK_H
-#define ATAR_VTKTASK_H
+#ifndef ATAR_SIMTASK_H
+#define ATAR_SIMTASK_H
 
 
 #include <vtkSmartPointer.h>
-#include <vtkProp.h>
+#include <vtkProperty.h>
+#include <vtkActor.h>
 #include <vtkPolyDataMapper.h>
 #include <vector>
 #include <custom_msgs/TaskState.h>
-#include <kdl/frames.hpp>
 #include <custom_msgs/ActiveConstraintParameters.h>
-#include <ros/ros.h>
-#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <kdl/frames.hpp>
+#include <btBulletDynamicsCommon.h>
 
-//n ote about vtkSmartPointer:
+
+//note about vtkSmartPointer:
 // One way to create a VTK object is
 //      vtkObject* MyObject = vtkObject::New();
 // This method, however, can (and likely will) lead to memory management
@@ -28,9 +29,9 @@
 
 
 
-class VTKTask{
+class SimTask{
 public:
-    VTKTask(const bool show_ref_frames,
+    SimTask(const bool show_ref_frames,
             const bool bimanual,
             const bool with_guidance,
             const double haptic_loop_rate)
@@ -40,10 +41,13 @@ public:
             with_guidance(with_guidance),
             haptic_loop_rate(haptic_loop_rate){};
 
-    virtual ~VTKTask() {};
+    virtual ~SimTask() {};
 
-    // The main loop. Updates the steps the physics and graphics
+    // The main loop. Updates physics, graphics and task logic
     virtual void StepWorld() {};
+
+    // steps the physics simulation
+    virtual void StepPhysics() {};
 
     // This is the function that is handled by the haptics thread.
     virtual void HapticsThread() = 0;
@@ -84,8 +88,13 @@ protected:
     std::vector<vtkSmartPointer<vtkProp>>   graphics_actors;
     btDiscreteDynamicsWorld*                dynamics_world;
 
+    //make sure to re-use collision shapes among rigid bodies whenever possible!
+    btSequentialImpulseConstraintSolver* solver;
+    btBroadphaseInterface* overlappingPairCache;
+    btCollisionDispatcher* dispatcher;
+    btDefaultCollisionConfiguration* collisionConfiguration;
 };
 
 
 
-#endif //ATAR_VTKTASK_H
+#endif //ATAR_SIMTASK_H

@@ -18,7 +18,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
                const bool show_ref_frames, const bool biman,
                const bool with_guidance)
         :
-        VTKTask(show_ref_frames, biman, with_guidance, 0) ,
+        SimTask(show_ref_frames, biman, with_guidance, 0) ,
         time_last(ros::Time::now())
 {
 
@@ -77,7 +77,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
                                 mesh_file_dir_str, 0);
 
         dynamicsWorld->addRigidBody(ring[i]->GetBody());
-        actors.push_back(ring[i]->GetActor());
+        graphics_actors.push_back(ring[i]->GetActor());
         ring[i]->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
 
 
@@ -105,7 +105,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
         dynamicsWorld->addRigidBody(hinge_cyl[i]->GetBody());
         hinge_cyl[i]->GetActor()->GetProperty()->SetColor(0.4, 0.4, 0.4);
-        actors.push_back(hinge_cyl[i]->GetActor());
+        graphics_actors.push_back(hinge_cyl[i]->GetActor());
     }
 
     // -------------------------------------------------------------------------
@@ -124,7 +124,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
                           mesh_file_dir_str, 0);
 
     dynamicsWorld->addRigidBody(arrow->GetBody());
-    actors.push_back(arrow->GetActor());
+    graphics_actors.push_back(arrow->GetActor());
     arrow->GetActor()->GetProperty()->SetColor(ThreeDColors::Green_Arrow);
     arrow->GetActor()->GetProperty()->SetOpacity(1);
 
@@ -140,7 +140,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
                           NULL, 0);
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
-    actors.push_back(kine_p->GetActor());
+    graphics_actors.push_back(kine_p->GetActor());
 }
 
 //------------------------------------------------------------------------------
@@ -174,7 +174,7 @@ void Task3D::StepWorld() {
 
     //--------------------------------
     // step the world
-    StepDynamicsWorld();
+    StepPhysics();
 
     if (task_state == TaskState::Idle){
         // Manage the position of the arrow
@@ -420,7 +420,7 @@ void Task3D::InitBullet() {
 }
 
 
-void Task3D::StepDynamicsWorld() {
+void Task3D::StepPhysics() {
     ///-----stepsimulation_start-----
 
     ///-----stepsimulation_start-----
@@ -445,7 +445,7 @@ void Task3D::StepDynamicsWorld() {
 //        }
 //
 //            heights[j] = trans.getOrigin().z();
-//        heights2[j] = actors[j]->GetMatrix()->Element[2][3];
+//        heights2[j] = graphics_actors[j]->GetMatrix()->Element[2][3];
 //    }
 
 }

@@ -4,7 +4,7 @@
 
 #ifndef TELEOP_VISION_TASKKIDNEY_H
 #define TELEOP_VISION_TASKKIDNEY_H
-#include "src/ar_core/VTKTask.h"
+#include "src/ar_core/SimTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -65,7 +65,7 @@ enum class TaskKidneyState: uint8_t {Idle, ToEndPoint, ToStartPoint,
 // -------------------------------------------------------------------------
 
 
-class TaskKidney : public VTKTask{
+class TaskKidney : public SimTask{
 public:
 
     TaskKidney(const std::string stl_files_dir,
@@ -74,14 +74,14 @@ public:
 
 //    ~TaskKidney();
 
-    // returns all the task actors to be sent to the rendering part
+    // returns all the task graphics_actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
-        return actors;
+        return graphics_actors;
     }
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
 
-    // updates the task logic and the actors
+    // updates the task logic and the graphics_actors
     void StepWorld();
 
     // calculates the desired tool pose
@@ -183,9 +183,9 @@ private:
     uint destination_ring_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];
 
-//    std::vector<vtkSmartPointer<vtkProp>>           actors;
+//    std::vector<vtkSmartPointer<vtkProp>>           graphics_actors;
 
-    // actors that are updated during the task
+    // graphics_actors that are updated during the task
     vtkSmartPointer<vtkActor>                       ring_actor[2];
 
     vtkSmartPointer<vtkAxesActor>                   tool_current_frame_axes[2];

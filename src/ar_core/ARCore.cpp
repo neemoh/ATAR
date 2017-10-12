@@ -5,15 +5,17 @@
 #include "ARCore.h"
 #include <custom_conversions/Conversions.h>
 #include <pwd.h>
+#include "ControlEvents.h"
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
+// tasks
 #include "src/ar_core/tasks/TaskBuzzWire.h"
 #include "src/ar_core/tasks/TaskKidney.h"
 #include "src/ar_core/tasks/TaskDeformable.h"
 #include "src/ar_core/tasks/TaskBulletTest.h"
-#include "ControlEvents.h"
 #include "src/ar_core/tasks/TaskNeedle.h"
-#include "src/ar_core/tasks/TaskHook.h"
+#include "src/ar_core/tasks/TaskRingTransfer.h"
 #include "src/ar_core/tasks/TaskSteadyHand.h"
+#include "src/ar_core/tasks/TaskDemo.h"
 
 // -----------------------------------------------------------------------------
 ARCore::ARCore(std::string node_name)
@@ -37,7 +39,7 @@ ARCore::ARCore(std::string node_name)
 void ARCore::SetupROSandGetParameters() {
 
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
-                                       ros::console::levels::Info) ) {
+                                       ros::console::levels::Debug) ) {
         ros::console::notifyLoggerLevelsChanged();
     }
 
@@ -368,7 +370,7 @@ bool ARCore::UpdateWorld() {
         // Time performance debug
         //        ros::Time start =ros::Time::now();
 
-        // update the moving actors
+        // update the moving graphics_actors
         if(task_ptr)
             task_ptr->StepWorld();
 
@@ -430,7 +432,7 @@ void ARCore::HandleTaskEvent() {
         StartTask(running_task_id);
 
         if(task_ptr)
-            // If task initialized, add the task actors to the graphics
+            // If task initialized, add the task graphics_actors to the graphics
             graphics->AddActorsToScene(task_ptr->GetActors());
 
         new_task_event = false;
@@ -484,13 +486,12 @@ void ARCore::StartTask(const uint task_id) {
 
     }
     else if(task_id ==6) {
-        ROS_DEBUG("No task assigned yet. ");
-        task_ptr   = new TaskHook(mesh_files_dir, show_reference_frames,
+        ROS_DEBUG("Starting new TaskRingTransfer. ");
+        task_ptr   = new TaskRingTransfer(mesh_files_dir, show_reference_frames,
                                   (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==7) {
-        ROS_DEBUG("No task assigned yet. ");
-
+        ROS_DEBUG("Starting new BuzzWireTask task. ");
         // getting the names of the slaves
         std::string slave_names[n_arms];
         for (int n_arm = 0; n_arm < n_arms; n_arm++) {
@@ -500,14 +501,17 @@ void ARCore::StartTask(const uint task_id) {
             param_name << std::string("slave_") << n_arm + 1 << "_name";
             n.getParam(param_name.str(), slave_names[n_arm]);
         }
-
         // starting the task
-        ROS_DEBUG("Starting new BuzzWireTask task. ");
         task_ptr = new TaskBuzzWire(
                 mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
                 with_guidance, haptic_loop_rate, slave_names,
                 slave_frame_to_world_frame
         );
+    }
+    else if(task_id == 8) {
+        ROS_DEBUG("Starting new TestTask task. ");
+        task_ptr   = new TaskDemo(mesh_files_dir, show_reference_frames,
+                                  (bool) (n_arms - 1), with_guidance);
     }
     if(task_ptr) {
         // assign the tool pose pointers
@@ -522,7 +526,7 @@ void ARCore::StartTask(const uint task_id) {
 
         // bind the haptics thread
         haptics_thread = boost::thread(
-                boost::bind(&VTKTask::HapticsThread, task_ptr));
+                boost::bind(&SimTask::HapticsThread, task_ptr));
     }
 }
 
@@ -969,6 +973,11 @@ void ARCore::ControlEventsCallback(const std_msgs::Int8ConstPtr
 
         case CE_START_TASK7:
             running_task_id = 7;
+            new_task_event = true;
+            break;
+
+        case CE_START_TASK8:
+            running_task_id = 8;
             new_task_event = true;
             break;
 

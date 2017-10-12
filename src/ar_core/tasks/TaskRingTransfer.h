@@ -43,14 +43,14 @@
 
 
 
-class TaskHook : public SimTask{
+class TaskRingTransfer : public SimTask{
 public:
 
-    TaskHook(const std::string mesh_files_dir,
+    TaskRingTransfer(const std::string mesh_files_dir,
             const bool show_ref_frames, const bool num_tools,
             const bool with_guidance);
 
-    ~TaskHook();
+    ~TaskRingTransfer();
 
     // returns all the task graphics_actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {

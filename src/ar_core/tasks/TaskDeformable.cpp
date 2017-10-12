@@ -16,7 +16,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
-    VTKTask(show_ref_frames, biman, with_guidance, 0),
+    SimTask(show_ref_frames, biman, with_guidance, 0),
     time_last(ros::Time::now())
 
 {
@@ -57,7 +57,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     board->GetActor()->GetProperty()->SetColor(0.2, 0.3, 0.1);
 
     dynamics_world->addRigidBody(board->GetBody());
-    actors.push_back(board->GetActor());
+    graphics_actors.push_back(board->GetActor());
 
 
 
@@ -92,7 +92,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
                                      density);
     soft_o0->GetActor()->GetProperty()->SetDiffuse(0.5);
     dynamics_world->addSoftBody(soft_o0->GetBody());
-    actors.push_back(soft_o0->GetActor());
+    graphics_actors.push_back(soft_o0->GetActor());
 
     soft_pose.p[0]+=0.03;
     soft_pose.p[2]+=0.05;
@@ -101,7 +101,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     soft_o1->GetActor()->GetProperty()->SetDiffuse(0.5);
 
     dynamics_world->addSoftBody(soft_o1->GetBody());
-    actors.push_back(soft_o1->GetActor());
+    graphics_actors.push_back(soft_o1->GetActor());
 
 
 
@@ -113,7 +113,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     soft_o2->GetActor()->GetProperty()->SetDiffuse(0.5);
 //    soft_o2->GetActor()->GetProperty()->SetSpecularPower(127);
     dynamics_world->addSoftBody(soft_o2->GetBody());
-    actors.push_back(soft_o2->GetActor());
+    graphics_actors.push_back(soft_o2->GetActor());
 
 
 
@@ -146,7 +146,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
             spheres[i*rows+j]->GetActor()->GetProperty()->SetSpecularPower(10);
 
             dynamics_world->addRigidBody(spheres[i*rows+j]->GetBody());
-            actors.push_back(spheres[i*rows+j]->GetActor());
+            graphics_actors.push_back(spheres[i*rows+j]->GetActor());
 
         }
     }
@@ -233,7 +233,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     //        friction
     //    );
     //dynamics_world->addRigidBody(kine_box->GetBody());
-    //actors.push_back(kine_box->GetActor());
+    //graphics_actors.push_back(kine_box->GetActor());
     //kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
 
     // -------------------------------------------------------------------------
@@ -244,7 +244,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
             new SimObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
                           kine_sph_dim);
     dynamics_world->addRigidBody(kine_sphere_0->GetBody());
-    actors.push_back(kine_sphere_0->GetActor());
+    graphics_actors.push_back(kine_sphere_0->GetActor());
     kine_sphere_0->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
     // -------------------------------------------------------------------------
@@ -255,7 +255,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
                           kine_sph_dim);
 
     dynamics_world->addRigidBody(kine_sphere_1->GetBody());
-    actors.push_back(kine_sphere_1->GetActor());
+    graphics_actors.push_back(kine_sphere_1->GetActor());
     kine_sphere_1->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
 
     vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
@@ -266,7 +266,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     task_coordinate_axes->SetZAxisLabelText("");
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-    actors.push_back(task_coordinate_axes);
+    graphics_actors.push_back(task_coordinate_axes);
 
 
 
@@ -334,7 +334,7 @@ void TaskDeformable::StepWorld() {
 
     //--------------------------------
     // step the world
-    StepDynamicsWorld();
+    StepPhysics();
 
 }
 
@@ -440,7 +440,7 @@ void TaskDeformable::InitBullet() {
 }
 
 
-void TaskDeformable::StepDynamicsWorld() {
+void TaskDeformable::StepPhysics() {
 
     double time_step = (ros::Time::now() - time_last).toSec();
 

@@ -6,7 +6,7 @@
 #define ATAR_TASKDEFORMABLE_H
 
 
-#include "src/ar_core/VTKTask.h"
+#include "src/ar_core/SimTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -48,7 +48,7 @@
 #include <memory>
 
 
-class TaskDeformable : public VTKTask{
+class TaskDeformable : public SimTask{
 public:
 
     TaskDeformable(const std::string mesh_files_dir,
@@ -57,9 +57,9 @@ public:
 
     ~TaskDeformable();
 
-    // returns all the task actors to be sent to the rendering part
+    // returns all the task graphics_actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
-        return actors;
+        return graphics_actors;
     }
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
@@ -68,7 +68,7 @@ public:
     void SetCurrentGripperpositionPointer(double &gripper_position, const int
     tool_id);
 
-    // updates the task logic and the actors
+    // updates the task logic and the graphics_actors
     void StepWorld();
 
     bool IsACParamChanged();
@@ -96,7 +96,7 @@ public:
 
     void InitBullet();
 
-    void StepDynamicsWorld();
+    void StepPhysics();
 
 
     void RenderSoftbody(btSoftBody* b, vtkSmartPointer<vtkActor> actor);

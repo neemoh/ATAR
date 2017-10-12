@@ -3,6 +3,7 @@
 //
 
 #include <custom_conversions/Conversions.h>
+#include "src/ar_core/VTKConversions.hpp"
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 #include "TaskSteadyHand.h"
@@ -17,7 +18,7 @@ TaskSteadyHand::TaskSteadyHand(
     const std::string slave_names_in[],
     KDL::Frame *slave_to_world_tr)
     :
-    VTKTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
+    SimTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
     mesh_files_dir(mesh_file_dir),
     slave_frame_to_world_frame_tr(slave_to_world_tr),
     destination_ring_counter(0),
@@ -86,7 +87,7 @@ TaskSteadyHand::TaskSteadyHand(
         board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose);
         board->GetActor()->GetProperty()->SetColor(colors.Gray);
         dynamics_world->addRigidBody(board->GetBody());
-        actors.push_back(board->GetActor());
+        graphics_actors.push_back(board->GetActor());
     }
 
     // -------------------------------------------------------------------------
@@ -149,14 +150,14 @@ TaskSteadyHand::TaskSteadyHand(
 
 
     // -------------------------------------------------------------------------
-    // Add all actors to a vector
+    // Add all graphics_actors to a vector
     if (show_ref_frames) {
-        //actors.push_back(task_coordinate_axes);
+        //graphics_actors.push_back(task_coordinate_axes);
         //
         //for (int k = 0; k < 1 + (int)bimanual; ++k) {
         for (int k = 0; k < 1 ; ++k) {
-            actors.push_back(tool_current_frame_axes[k]);
-            actors.push_back(tool_desired_frame_axes[k]);
+            graphics_actors.push_back(tool_current_frame_axes[k]);
+            graphics_actors.push_back(tool_desired_frame_axes[k]);
         }
     }
 
@@ -190,7 +191,7 @@ TaskSteadyHand::TaskSteadyHand(
                       0.0, friction, mesh_file_dir_str);
 
     dynamics_world->addRigidBody(stand_mesh->GetBody());
-    actors.push_back(stand_mesh->GetActor());
+    graphics_actors.push_back(stand_mesh->GetActor());
     stand_mesh->GetActor()->GetProperty()->SetColor(colors.GrayLight);
     //stand_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
     //stand_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
@@ -211,7 +212,7 @@ TaskSteadyHand::TaskSteadyHand(
                       pose_cube);
 
     dynamics_world->addRigidBody(stand_cube->GetBody());
-    actors.push_back(stand_cube->GetActor());
+    graphics_actors.push_back(stand_cube->GetActor());
     stand_cube->GetActor()->GetProperty()->SetColor(colors.GrayLight);
 
     // -------------------------------------------------------------------------
@@ -231,7 +232,7 @@ TaskSteadyHand::TaskSteadyHand(
 
         dynamics_world->addRigidBody(tube_meshes[m]->GetBody());
 
-        actors.push_back(tube_meshes[m]->GetActor());
+        graphics_actors.push_back(tube_meshes[m]->GetActor());
         tube_meshes[m]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(1);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(100);
@@ -246,7 +247,7 @@ TaskSteadyHand::TaskSteadyHand(
     tube_mesh_thin = new
             SimObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim, pose_tube,
                       0.0, friction, mesh_file_dir_str);
-    //actors.push_back(tube_mesh_thin->GetActor());
+    //graphics_actors.push_back(tube_mesh_thin->GetActor());
 
     //// TODO: Locally transform the mesh so that in the findDesiredPose we
     /// don't repeat the transform every time.
@@ -292,7 +293,7 @@ TaskSteadyHand::TaskSteadyHand(
                           density, friction, mesh_file_dir_str);
 
         dynamics_world->addRigidBody(ring_mesh[ring_num - l -1]->GetBody());
-        actors.push_back(ring_mesh[ring_num - l -1]->GetActor());
+        graphics_actors.push_back(ring_mesh[ring_num - l -1]->GetActor());
         ring_mesh[ring_num-l-1]->GetActor()->GetProperty()->SetColor(colors.Turquoise);
         ring_mesh[ring_num-l-1]->GetBody()->setContactStiffnessAndDamping
             (3000, 100);
@@ -314,7 +315,7 @@ TaskSteadyHand::TaskSteadyHand(
                           pose_cyl);
 
         dynamics_world->addRigidBody(sep_cylinder[l]->GetBody());
-        actors.push_back(sep_cylinder[l]->GetActor());
+        graphics_actors.push_back(sep_cylinder[l]->GetActor());
         sep_cylinder[l]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
 
         ////---------------------------------------------------
@@ -334,7 +335,7 @@ TaskSteadyHand::TaskSteadyHand(
 
         for (int j = 0; j < 2; ++j) {
             forceps[j]->AddToWorld(dynamics_world);
-            forceps[j]->AddToActorsVector(actors);
+            forceps[j]->AddToActorsVector(graphics_actors);
         }
     }
 
@@ -355,7 +356,7 @@ TaskSteadyHand::TaskSteadyHand(
                                    arm_dim, gripper_pose);
 
             dynamics_world->addRigidBody(arm[i]->GetBody());
-            actors.push_back(arm[i]->GetActor());
+            graphics_actors.push_back(arm[i]->GetActor());
             arm[i]->GetActor()->GetProperty()->SetColor(colors.GrayDark);
             //arm[i]->GetActor()->GetProperty()->SetOpacity(0.1);
             arm[i]->GetBody()->setContactStiffnessAndDamping(2000, 100);
@@ -417,12 +418,12 @@ TaskSteadyHand::TaskSteadyHand(
     }
 
     if(bimanual){
-        actors.push_back(line1_actor);
-        actors.push_back(line2_actor);
+        graphics_actors.push_back(line1_actor);
+        graphics_actors.push_back(line2_actor);
     }
-    actors.push_back(destination_ring_actor);
+    graphics_actors.push_back(destination_ring_actor);
     for (int j = 0; j < score_sphere_actors.size(); ++j) {
-        actors.push_back(score_sphere_actors[j]);
+        graphics_actors.push_back(score_sphere_actors[j]);
     }
 
 }
@@ -642,7 +643,7 @@ void TaskSteadyHand::StepWorld() {
 
     //--------------------------------
     // step the world
-    StepDynamicsWorld();
+    StepPhysics();
 
 }
 
@@ -1175,7 +1176,7 @@ void TaskSteadyHand::InitBullet() {
 }
 
 
-void TaskSteadyHand::StepDynamicsWorld() {
+void TaskSteadyHand::StepPhysics() {
     ///-----stepsimulation_start-----
     double time_step = (ros::Time::now() - time_last).toSec();
     //std::cout << "time_step: " << time_step << std::endl;
