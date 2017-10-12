@@ -6,7 +6,7 @@
 #define ATAR_TASKHOOK_H
 
 
-#include "src/ar_core/VTKTask.h"
+#include "src/ar_core/SimTask.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -43,7 +43,7 @@
 
 
 
-class TaskHook : public VTKTask{
+class TaskHook : public SimTask{
 public:
 
     TaskHook(const std::string mesh_files_dir,
@@ -52,9 +52,9 @@ public:
 
     ~TaskHook();
 
-    // returns all the task actors to be sent to the rendering part
+    // returns all the task graphics_actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
-        return actors;
+        return graphics_actors;
     }
     // sets the pose of the tools
     void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
@@ -63,7 +63,7 @@ public:
     void SetCurrentGripperpositionPointer(double &gripper_position, const int
     tool_id);
 
-    // updates the task logic and the actors
+    // updates the task logic and the graphics_actors
     void StepWorld();
 
     bool IsACParamChanged();
@@ -91,7 +91,7 @@ public:
 
     void InitBullet();
 
-    void StepDynamicsWorld();
+    void StepPhysics();
 
 private:
 
@@ -104,11 +104,6 @@ private:
     SimObject *hook_mesh;
 
     ros::Time time_last;
-    btDiscreteDynamicsWorld* dynamics_world;
-    btSequentialImpulseConstraintSolver* solver;
-    btBroadphaseInterface* overlappingPairCache;
-    btCollisionDispatcher* dispatcher;
-    btDefaultCollisionConfiguration* collisionConfiguration;
 
     // -------------------------------------------------------------------------
     // graphics

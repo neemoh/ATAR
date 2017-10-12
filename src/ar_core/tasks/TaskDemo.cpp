@@ -44,8 +44,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     std::vector<double> dim = { board_dimensions[0], board_dimensions[1],
         board_dimensions[2]};
     board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, 0.0,
-                          friction,
-                          NULL, 0);
+                          friction);
     board->GetActor()->GetProperty()->SetOpacity(0.0);
     board->GetActor()->GetProperty()->SetColor(0.8, 0.3, 0.1);
 
@@ -170,8 +169,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     std::vector<double> kine_box_dim = {0.005, 0.005, 0.02};
     kine_box =
             new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC, kine_box_dim,
-                          pose, 0.0, friction,
-                          NULL, 0);
+                          pose, 0.0, friction);
     dynamicsWorld->addRigidBody(kine_box->GetBody());
     kine_box->GetActor()->GetProperty()->SetColor(1., 0.1, 0.1);
     actors.push_back(kine_box->GetActor());
@@ -183,8 +181,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     std::vector<double> kine_scoop_dim = {0.02, 0.0002, 0.02};
     kine_scoop =
             new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                          kine_scoop_dim, pose, 10.0, friction,
-                          NULL, 0);
+                          kine_scoop_dim, pose, 10.0, friction);
     dynamicsWorld->addRigidBody(kine_scoop->GetBody());
     actors.push_back(kine_scoop->GetActor());
     kine_scoop->GetActor()->GetProperty()->SetColor(1., 0.4, 0.1);
@@ -228,8 +225,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
         peg1 = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
                              peg_SPHERE_dimension, peg_pose1, density,
-                             friction_sphere,
-                             NULL, 0);
+                             friction_sphere);
         peg1->GetActor()->GetProperty()->SetOpacity(1.0);
         peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
@@ -245,8 +241,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
         peg2 = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
                              peg_SPHERE_dimension, peg_pose2, density,
-                             friction_sphere,
-                             NULL, 0);
+                             friction_sphere);
         peg2->GetActor()->GetProperty()->SetOpacity(1.0);
         peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
@@ -260,8 +255,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
         peg3 = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
                              peg_SPHERE_dimension, peg_pose3, density,
-                             friction_sphere,
-                             NULL, 0);
+                             friction_sphere);
         peg3->GetActor()->GetProperty()->SetOpacity(1.0);
         peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
@@ -277,8 +271,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
         peg4 = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
                              peg_SPHERE_dimension, peg_pose4, density,
-                             friction_sphere,
-                             NULL, 0);
+                             friction_sphere);
         peg4->GetActor()->GetProperty()->SetOpacity(1.0);
         peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
@@ -298,8 +291,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
             peg_dimensions[0], peg_dimensions[1], peg_dimensions[2]
         };
         peg1 = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim,
-                             peg_pose1, density, friction,
-                             NULL, 0);
+                             peg_pose1, density, friction);
         peg1->GetActor()->GetProperty()->SetOpacity(1.0);
         peg1->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
@@ -316,8 +308,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
                                          board_dimensions[2]/2+peg_dimensions[2]/2) );
 
         peg2 = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim,
-                             peg_pose2, density, friction,
-                             NULL, 0);
+                             peg_pose2, density, friction);
         peg2->GetActor()->GetProperty()->SetOpacity(1.0);
         peg2->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
@@ -331,8 +322,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
                              KDL::Vector(0.0, 0.04,
                                          board_dimensions[2]/2+peg_dimensions[2]/2) );
         peg3 = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim,
-                             peg_pose3, density, friction,
-                             NULL, 0);
+                             peg_pose3, density, friction);
         peg3->GetActor()->GetProperty()->SetOpacity(1.0);
         peg3->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
@@ -346,8 +336,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
                                          board_dimensions[2]/2+peg_dimensions[2]/2) );
 
         peg4 = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, peg_dim,
-                             peg_pose4, density, friction,
-                             NULL, 0);
+                             peg_pose4, density, friction);
         peg4->GetActor()->GetProperty()->SetOpacity(1.0);
         peg4->GetActor()->GetProperty()->SetColor(0.1, 0.2, 0.6);
 
@@ -400,8 +389,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     pose.p  = KDL::Vector(target_pos[0]+sides, target_pos[1], target_pos[2]);
 
     cubes[0] = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose,
-                             0.0, friction,
-                             NULL, 0);
+                             0.0, friction);
     cubes[0]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
     dynamicsWorld->addRigidBody(cubes[0]->GetBody());
@@ -412,8 +400,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
     pose.p  = KDL::Vector(target_pos[0], target_pos[1]-sides, target_pos[2]);
 
     cubes[1] = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose,
-                             0.0, friction,
-                             NULL, 0);
+                             0.0, friction);
     cubes[1]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
     dynamicsWorld->addRigidBody(cubes[1]->GetBody());
@@ -424,8 +411,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
 
     cubes[2] = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim2, pose,
-                             0.0, friction,
-                             NULL, 0);
+                             0.0, friction);
     cubes[2]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
     dynamicsWorld->addRigidBody(cubes[2]->GetBody());
@@ -436,8 +422,7 @@ TaskTest::TaskTest(const std::string mesh_files_dir,
 
 
     cubes[3] = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim1, pose,
-                             0.0, friction,
-                             NULL, 0);
+                             0.0, friction);
     cubes[3]->GetActor()->GetProperty()->SetColor(
         0.9, 0.4, 0.1);
     dynamicsWorld->addRigidBody(cubes[3]->GetBody());

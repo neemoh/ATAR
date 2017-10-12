@@ -212,7 +212,7 @@ add_executable(
         src/ar_core/BulletVTKMotionState.h
         src/ar_core/SimObject.cpp
         src/ar_core/SimObject.h
-        src/ar_core/VTKTask.h
+        src/ar_core/SimTask.h
         ${tasks_src}
         ${tasks_h}
         src/ar_core/SimSoftObject.cpp
@@ -221,7 +221,8 @@ add_executable(
         src/ar_core/FiveLinkGripper.h
         src/ar_core/Forceps.cpp
         src/ar_core/Forceps.h
-        src/ar_core/Colors.hpp)
+        src/ar_core/Colors.hpp src/ar_core/VTKConversions.hpp src/ar_core/VTKConversions.cpp)
+
 
 target_link_libraries(
         ar_core

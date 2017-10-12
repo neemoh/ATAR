@@ -11,7 +11,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                    const bool show_ref_frames, const bool biman,
                    const bool with_guidance)
         :
-        VTKTask(show_ref_frames, biman, with_guidance, 0),
+        SimTask(show_ref_frames, biman, with_guidance, 0),
         time_last(ros::Time::now()) {
 
     InitBullet();
@@ -42,7 +42,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
         board->GetActor()->GetProperty()->SetColor(0.6, 0.5, 0.5);
 
         dynamics_world->addRigidBody(board->GetBody());
-        actors.push_back(board->GetActor());
+        graphics_actors.push_back(board->GetActor());
     }
     // -------------------------------------------------------------------------
     // static floor
@@ -86,7 +86,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                         ->SetSpecularPower(50);
 
                 dynamics_world->addRigidBody(cylinders[i * rows + j]->GetBody());
-                actors.push_back(cylinders[i * rows + j]->GetActor());
+                graphics_actors.push_back(cylinders[i * rows + j]->GetActor());
 
             }
         }
@@ -102,7 +102,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                                   rod_dim, pose);
 
         dynamics_world->addRigidBody(rod.GetBody());
-        actors.push_back(rod.GetActor());
+        graphics_actors.push_back(rod.GetActor());
         rod.GetActor()->GetProperty()->SetColor(0.3, 0.3, 0.3);
 
     }
@@ -129,7 +129,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                               density, friction,
                               mesh_file_dir_str, 0);
             dynamics_world->addRigidBody(rings[l]->GetBody());
-            actors.push_back(rings[l]->GetActor());
+            graphics_actors.push_back(rings[l]->GetActor());
             rings[l]->GetActor()->GetProperty()->SetColor(0., 0.5, 0.6);
 
         }
@@ -162,7 +162,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
 
         for (int j = 0; j < 1 ;++j) {
             grippers[j]->AddToWorld(dynamics_world);
-            grippers[j]->AddToActorsVector(actors);
+            grippers[j]->AddToActorsVector(graphics_actors);
         }
 
         std::vector<std::vector<double>> gripper_3link_dims =
@@ -189,7 +189,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
                           density, 0,
                           mesh_file_dir_str, 0);
         dynamics_world->addRigidBody(hook_mesh->GetBody());
-        actors.push_back(hook_mesh->GetActor());
+        graphics_actors.push_back(hook_mesh->GetActor());
         hook_mesh->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
     }
 
@@ -203,7 +203,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     //        ObjectShape::CYLINDER, ObjectType::KINEMATIC, dim, pose,
     //       );
     //    dynamics_world->addRigidBody(tool_cyl->GetBody());
-    //    actors.push_back(tool_cyl->GetActor());
+    //    graphics_actors.push_back(tool_cyl->GetActor());
     //    tool_cyl->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
     //}
 
@@ -219,7 +219,7 @@ TaskHook::TaskHook(const std::string mesh_files_dir,
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
 
     if(show_ref_frames)
-        actors.push_back(task_coordinate_axes);
+        graphics_actors.push_back(task_coordinate_axes);
 
 }
 
@@ -286,7 +286,7 @@ void TaskHook::StepWorld() {
 
     //--------------------------------
     // step the world
-    StepDynamicsWorld();
+    StepPhysics();
 
 }
 
@@ -398,7 +398,7 @@ void TaskHook::InitBullet() {
 }
 
 
-void TaskHook::StepDynamicsWorld() {
+void TaskHook::StepPhysics() {
     ///-----stepsimulation_start-----
     double time_step = (ros::Time::now() - time_last).toSec();
     // check http://bulletphysics.org/mediawiki-1.5.8/index.php/Stepping_The_World

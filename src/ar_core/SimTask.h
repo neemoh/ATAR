@@ -14,6 +14,7 @@
 #include <kdl/frames.hpp>
 #include <custom_msgs/ActiveConstraintParameters.h>
 #include <ros/ros.h>
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 
 //n ote about vtkSmartPointer:
 // One way to create a VTK object is
@@ -47,8 +48,8 @@ public:
     // This is the function that is handled by the haptics thread.
     virtual void HapticsThread() = 0;
 
-    // returns all the task actors to be sent to the rendering part
-    virtual std::vector< vtkSmartPointer <vtkProp> >GetActors() {return actors;};
+    // returns all the task graphics_actors to be sent to the rendering part
+    virtual std::vector< vtkSmartPointer <vtkProp> >GetActors() {return graphics_actors;};
 
     // sets the pose of the tools
     virtual void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int
@@ -80,7 +81,8 @@ protected:
     bool with_guidance;
     bool show_ref_frames;
     double haptic_loop_rate;
-    std::vector<vtkSmartPointer<vtkProp>>           actors;
+    std::vector<vtkSmartPointer<vtkProp>>   graphics_actors;
+    btDiscreteDynamicsWorld*                dynamics_world;
 
 };
 
