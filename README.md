@@ -37,7 +37,7 @@ Download vtk: https://www.vtk.org/download/
 modify the CMakeLists.txt in bullet3/Extras directory
  SUBDIRS( obj2sdf Serialize ConvexDecomposition HACD VHACD GIMPACTUtils )
 
-cmake -DBUILD_PYBULLET_NUMPY=OFF -DUSE_DOUBLE_PRECISION=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_EXTRAS=ON ..
+cmake -DBUILD_PYBULLET_NUMPY=OFF -DUSE_DOUBLE_PRECISION=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_EXTRAS=ON DINSTALL_EXTRA_LIBS=ON ..
 
 
 Creating mesh objects with Blender:
