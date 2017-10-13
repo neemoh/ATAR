@@ -25,7 +25,25 @@ git clone https://github.com/neemoh/custom_conversions.git
 git clone https://github.com/neemoh/active_constraints.git
 catkin build
 ```
+You should also be able to use catkin_make, but I suggest to use catkin tools. 
 
 Next download VTK compile and install it. 
 TODO: add details about shadows etc
 Then download, compile and install the Bullet physics library. Make sure that you compile the Extra VHACD module and that its headers are in your system paths.
+
+
+Download vtk: https://www.vtk.org/download/
+
+modify the CMakeLists.txt in bullet3/Extras directory
+ SUBDIRS( obj2sdf Serialize ConvexDecomposition HACD VHACD GIMPACTUtils )
+
+cmake -DBUILD_PYBULLET_NUMPY=OFF -DUSE_DOUBLE_PRECISION=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_EXTRAS=ON ..
+
+
+Creating mesh objects with Blender:
+You can use blender to easily create msh objects. When the object is ready follow these steps to make sure you have the correct units even if your mesh's dimensions are as small as a few millimiters:
+convert it to mesh (alt-c)
+go to the Scene tab and in the Units section selec Centimeters
+Go to File-> Export and select Wavefront(.obj)
+In the options set the scale as 0.01 and save.
+
