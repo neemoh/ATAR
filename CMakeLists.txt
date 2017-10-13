@@ -130,14 +130,20 @@ add_executable(stereo_usb_cam_publisher
         src/stereo_usb_cam_publisher/main_stereo_usb_cam_publisher.cpp)
 
 add_executable(
-        teleop_dummy
+        teleop_dummy_dvrk
         src/teleop_dummy/main_teleop_dummy.cpp)
+
+add_executable(
+        teleop_dummy_sigma
+        src/teleop_dummy/main_teleop_dummy_sigma.cpp)
 
 set(executables
         stereo_image_view
         stereo_image_split
         stereo_usb_cam_publisher
-        teleop_dummy)
+        teleop_dummy_dvrk
+        teleop_dummy_sigma
+        )
 
 foreach (_ex ${executables})
     target_link_libraries(
@@ -234,7 +240,7 @@ target_link_libraries(
         LinearMath
         LoadObjGL
         BulletSoftBody
-        vhacd
+        VHACD
         pthread)
 
 
