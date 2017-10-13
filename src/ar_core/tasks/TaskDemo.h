@@ -13,6 +13,7 @@
 #include "src/ar_core/SimTask.h"
 #include "src/ar_core/SimObject.h"
 #include "src/ar_core/Colors.hpp"
+#include "src/ar_core/Forceps.h"
 
 
 class TaskDemo : public SimTask{
@@ -62,12 +63,13 @@ public:
 private:
     // task specific members
     SimObject *sphere[6];
-
+    Forceps * forceps[2];
 
 
 private:
     // task template members
     Colors colors;
+    std::string mesh_files_dir;
 
     ros::Time time_last;
 

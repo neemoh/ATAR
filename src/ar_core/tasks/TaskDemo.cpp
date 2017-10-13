@@ -13,6 +13,7 @@ TaskDemo::TaskDemo(const std::string mesh_files_dir,
                        const bool with_guidance)
     :
     SimTask(show_ref_frames, biman, with_guidance, 0) ,
+    mesh_files_dir(mesh_files_dir),
     time_last(ros::Time::now())
 {
 
@@ -74,11 +75,16 @@ TaskDemo::TaskDemo(const std::string mesh_files_dir,
 
             // we can access all the properties of a VTK actor
             sphere[i]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
+            // same applies for bullet parameters
+            sphere[i]->GetBody()->setFriction(1.5f);
+            sphere[i]->GetBody()->setRollingFriction(0.5f);
+            sphere[i]->GetBody()->setSpinningFriction(0.5f);
 
             // we need to add the rigid body to the dynamics workd and the actor
             // to the graphics_actors vector
             dynamics_world->addRigidBody(sphere[i]->GetBody());
             graphics_actors.push_back(sphere[i]->GetActor());
+
         }
 
     }
@@ -96,12 +102,15 @@ TaskDemo::TaskDemo(const std::string mesh_files_dir,
 
         // Define
         double density = 50000; // kg/m3
+        //override the default friction value
+        float friction = 0.2;
+
         for (int i = 0; i < 6; ++i) {
 
             pose.p = pose.p+ KDL::Vector(0.0001, 0.0, 0.008);
 
             SimObject cube(ObjectShape::BOX, ObjectType::DYNAMIC,
-                                   sphere_dimensions, pose, density);
+                                   sphere_dimensions, pose, density, friction);
 
             // we can access all the properties of a VTK actor
             cube.GetActor()->GetProperty()->SetColor(colors.Orange);
@@ -112,6 +121,21 @@ TaskDemo::TaskDemo(const std::string mesh_files_dir,
             graphics_actors.push_back(cube.GetActor());
         }
 
+    }
+    // -------------------------------------------------------------------------
+    // Create Forceps
+    {
+        KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
+        forceps_pose.M.DoRotZ(M_PI/2);
+        forceps[0] = new Forceps(mesh_files_dir, forceps_pose);
+
+        forceps_pose.p.x(0.07);
+        forceps[1] = new Forceps(mesh_files_dir, forceps_pose);
+
+        for (int j = 0; j < 2; ++j) {
+            forceps[j]->AddToWorld(dynamics_world);
+            forceps[j]->AddToActorsVector(graphics_actors);
+        }
     }
 }
 
@@ -134,12 +158,15 @@ void TaskDemo::StepWorld() {
     //--------------------------------
     //use the tool pose for moving the virtual tools ...
     KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
+    double grip_angle = 1;
+    forceps[0]->SetPoseAndJawAngle(tool_pose, grip_angle);
 
     //--------------------------------
     // step the world
     StepPhysics();
 
-    ROS_INFO("Sphere0 z: %f",sphere[0]->GetPose().p[2]);
+    // you can access the pose of the objects:
+//    ROS_INFO("Sphere0 z: %f",sphere[0]->GetPose().p[2]);
 
     //--------------------------------
     // Check if the task is completed
