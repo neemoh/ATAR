@@ -1,5 +1,5 @@
 INCLUDE_DIRECTORIES(
- ${BULLET_PHYSICS_SOURCE_DIR}/Extras/VHACD/inc
+        inc/
 )
 
 file(GLOB VHACD_SRCS "src/*.cpp")
