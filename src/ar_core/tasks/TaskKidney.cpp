@@ -6,7 +6,7 @@
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 #include "TaskKidney.h"
-#include "src/ar_core/VTKConversions.hpp"
+#include "src/ar_core/VTKConversions.h"
 
 
 namespace COLORS {

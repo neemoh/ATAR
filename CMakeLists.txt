@@ -196,6 +196,7 @@ add_library(LoadObjGL
 
 target_link_libraries(
         LoadObjGL
+        VHACD_local
         BulletDynamics
         BulletCollision
         LinearMath
@@ -229,7 +230,9 @@ add_executable(
         src/ar_core/FiveLinkGripper.h
         src/ar_core/Forceps.cpp
         src/ar_core/Forceps.h
-        src/ar_core/Colors.hpp src/ar_core/VTKConversions.hpp src/ar_core/VTKConversions.cpp)
+        src/ar_core/Colors.hpp
+        src/ar_core/VTKConversions.h
+        src/ar_core/VTKConversions.cpp)
 
 
 target_link_libraries(
@@ -242,7 +245,6 @@ target_link_libraries(
         LinearMath
         LoadObjGL
         BulletSoftBody
-        VHACD_local
         pthread)
 
 

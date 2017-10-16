@@ -7,7 +7,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include "TaskBuzzWire.h"
 #include "src/ar_core/Colors.hpp"
-#include "src/ar_core/VTKConversions.hpp"
+#include "src/ar_core/VTKConversions.h"
 #include <vtkCubeSource.h>
 
 TaskBuzzWire::TaskBuzzWire(

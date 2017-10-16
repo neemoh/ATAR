@@ -2,7 +2,7 @@
 // Created by nima on 4/12/17.
 //
 #include "Rendering.h"
-#include "VTKConversions.hpp"
+#include "VTKConversions.h"
 
 
 // helper function for debugging light related issues

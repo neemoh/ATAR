@@ -3,7 +3,7 @@
 //
 
 #include <custom_conversions/Conversions.h>
-#include "src/ar_core/VTKConversions.hpp"
+#include "src/ar_core/VTKConversions.h"
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 #include "TaskSteadyHand.h"
