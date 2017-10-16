@@ -27,7 +27,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string.h>
-#include "VHACD.h"
+#include "VHACD/inc/VHACD.h"
 
 using namespace VHACD;
 

@@ -52,7 +52,9 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
         ${BULLET_INCLUDE_DIR})
 
-##########################################################################
+SUBDIRS( src/ar_core/LoadObjGL/VHACD)
+
+        ##########################################################################
 #                    Build Client and Service Nodes
 ##########################################################################
 
@@ -240,7 +242,7 @@ target_link_libraries(
         LinearMath
         LoadObjGL
         BulletSoftBody
-        VHACD
+        VHACD_local
         pthread)
 
 
