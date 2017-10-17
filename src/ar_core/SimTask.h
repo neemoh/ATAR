@@ -5,7 +5,7 @@
 #ifndef ATAR_SIMTASK_H
 #define ATAR_SIMTASK_H
 
-
+#include <ros/ros.h>
 #include <vtkSmartPointer.h>
 #include <vtkProperty.h>
 #include <vtkActor.h>
@@ -31,14 +31,10 @@
 
 class SimTask{
 public:
-    SimTask(const bool show_ref_frames,
-            const bool bimanual,
-            const bool with_guidance,
+    SimTask(ros::NodeHandle *n,
             const double haptic_loop_rate)
             :
-            show_ref_frames(show_ref_frames),
-            bimanual(bimanual),
-            with_guidance(with_guidance),
+            nh(n),
             haptic_loop_rate(haptic_loop_rate){};
 
     virtual ~SimTask() {};
@@ -81,9 +77,7 @@ public:
 
 protected:
 
-    bool bimanual;
-    bool with_guidance;
-    bool show_ref_frames;
+    ros::NodeHandle * nh;
     double haptic_loop_rate;
     std::vector<vtkSmartPointer<vtkProp>>   graphics_actors;
     btDiscreteDynamicsWorld*                dynamics_world;

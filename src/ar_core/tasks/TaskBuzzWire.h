@@ -138,8 +138,8 @@ private:
 
     // -------------------------------------------------------------------------
     // task logic
-//    bool bimanual;
-//    bool with_guidance;
+    bool bimanual;
+    bool with_guidance;
     TaskState task_state;
     std::string stl_files_dir;
     std::string *slave_names;

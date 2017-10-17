@@ -510,8 +510,7 @@ void ARCore::StartTask(const uint task_id) {
     }
     else if(task_id == 8) {
         ROS_DEBUG("Starting new TestTask task. ");
-        task_ptr   = new TaskDemo(mesh_files_dir, show_reference_frames,
-                                  (bool) (n_arms - 1), with_guidance);
+        task_ptr   = new TaskDemo(n, mesh_files_dir, &pose_cam[0]);
     }
     if(task_ptr) {
         // assign the tool pose pointers
@@ -591,42 +590,18 @@ bool ARCore::GetNewImages( cv::Mat images[]) {
 bool ARCore::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
                                cv::Vec3d cam_tvec_out[2]) {
 
-    // // estimate left_to_right_cam transform:
-
-    //left_cam_to_right_cam_tr = pose_cam[1] * pose_cam[0].Inverse();
-    //double x,y,z,w;
-    //left_cam_to_right_cam_tr.M.GetQuaternion(x, y, z, w);
-    ////
-    //left_cam_to_right_cam_tr_loop_count++;
-    //left_cam_to_right_cam_tr_sum_pos+= left_cam_to_right_cam_tr.p;
-    //if(left_cam_to_right_cam_tr_loop_count == 200){
-    //    left_cam_to_right_cam_tr_sum_pos=
-    //        left_cam_to_right_cam_tr_sum_pos / double(left_cam_to_right_cam_tr_loop_count);
-    //    std::cout << "estimated laft to right cam tr: {"
-    //              << left_cam_to_right_cam_tr_sum_pos.x() << ", "
-    //              << left_cam_to_right_cam_tr_sum_pos.y() << ", "
-    //              << left_cam_to_right_cam_tr_sum_pos.z() << ", "
-    //              << x << ", "
-    //              << y << ", "
-    //              << z << ", "
-    //              << w << "} "
-    //              << std::endl;
-    //    left_cam_to_right_cam_tr_loop_count = 0;
-    //}
-
     // if one of the poses is not available estimate the other one through
     // the left to right fixed transform
     if (new_cam_pose[0] && !new_cam_pose[1]) {
-        KDL::Frame pose_camZZ;
-        pose_camZZ = left_cam_to_right_cam_tr * pose_cam[0];
-        conversions::KDLFrameToRvectvec(pose_camZZ, cam_rvec_curr[1],
-                                        cam_tvec_curr[1]);
-    } else if (!new_cam_pose[0] && new_cam_pose[1]) {
-        pose_cam[0] = left_cam_to_right_cam_tr.Inverse() * pose_cam[1];
-        conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec_curr[0],
-                                        cam_tvec_curr[0]);
+        pose_cam[1] = left_cam_to_right_cam_tr * pose_cam[0];
+        conversions::KDLFrameToRvectvec(pose_cam[1],
+                                        cam_rvec_curr[1],cam_tvec_curr[1]);
     }
-
+    else if (!new_cam_pose[0] && new_cam_pose[1]) {
+        pose_cam[0] = left_cam_to_right_cam_tr.Inverse() * pose_cam[1];
+        conversions::KDLFrameToRvectvec(pose_cam[0],
+                                        cam_rvec_curr[0], cam_tvec_curr[0]);
+    }
 
 
     double avg_factor;

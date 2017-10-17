@@ -16,7 +16,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
                        const bool show_ref_frames, const bool biman,
                        const bool with_guidance)
     :
-    SimTask(show_ref_frames, biman, with_guidance, 0),
+    SimTask(NULL, 100),
     time_last(ros::Time::now())
 
 {
@@ -378,9 +378,9 @@ void TaskDeformable::HapticsThread() {
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
                              ("/PSM1/tool_pose_desired", 10);
-    if(bimanual)
-        pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                 ("/PSM2/tool_pose_desired", 10);
+//    if(bimanual)
+//        pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
+//                                 ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(200);
 
@@ -389,18 +389,18 @@ void TaskDeformable::HapticsThread() {
 
 //        CalculatedDesiredToolPose();
 
-        // publish desired poses
-        for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
-
-            // convert to pose message
-            geometry_msgs::PoseStamped pose_msg;
-            tf::poseKDLToMsg(tool_desired_pose_kdl[n_arm], pose_msg.pose);
-            // fill the header
-            pose_msg.header.frame_id = "/task_space";
-            pose_msg.header.stamp = ros::Time::now();
-            // publish
-            pub_desired[n_arm].publish(pose_msg);
-        }
+//        // publish desired poses
+//        for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
+//
+//            // convert to pose message
+//            geometry_msgs::PoseStamped pose_msg;
+//            tf::poseKDLToMsg(tool_desired_pose_kdl[n_arm], pose_msg.pose);
+//            // fill the header
+//            pose_msg.header.frame_id = "/task_space";
+//            pose_msg.header.stamp = ros::Time::now();
+//            // publish
+//            pub_desired[n_arm].publish(pose_msg);
+//        }
 
         ros::spinOnce();
         loop_rate.sleep();

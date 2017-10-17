@@ -20,12 +20,12 @@ TaskBuzzWire::TaskBuzzWire(
         KDL::Frame *slave_to_world_tr
     )
     :
-    SimTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
+    SimTask(NULL, haptic_loop_rate),
     stl_files_dir(stl_file_dir),
     slave_frame_to_world_frame_tr(slave_to_world_tr),
 //        show_ref_frames(show_ref_frames),
-//        bimanual(biman),
-//        with_guidance(with_guidance),
+    bimanual(biman),
+    with_guidance(with_guidance),
     destination_ring_counter(0),
     ac_params_changed(true),
     task_state(TaskState::Idle),
@@ -37,7 +37,6 @@ TaskBuzzWire::TaskBuzzWire(
     slave_names = new std::string[bimanual+1];
 
     *slave_names = *slave_names_in;
-
     // -------------------------------------------------------------------------
     //  ACTIVE CONSTRAINT
     // -------------------------------------------------------------------------

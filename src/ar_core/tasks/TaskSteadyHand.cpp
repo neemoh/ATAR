@@ -10,21 +10,21 @@
 
 
 TaskSteadyHand::TaskSteadyHand(
-    const std::string mesh_file_dir,
-    const bool show_ref_frames,
-    const bool biman,
-    const bool with_guidance,
-    const double haptic_loop_rate,
-    const std::string slave_names_in[],
-    KDL::Frame *slave_to_world_tr)
-    :
-    SimTask(show_ref_frames, biman, with_guidance, haptic_loop_rate),
-    mesh_files_dir(mesh_file_dir),
-    slave_frame_to_world_frame_tr(slave_to_world_tr),
-    destination_ring_counter(0),
-    ac_params_changed(true),
-    task_state(SHTaskState::Idle),
-    time_last(ros::Time::now())
+        const std::string mesh_file_dir,
+        const bool show_ref_frames,
+        const bool biman,
+        const bool with_guidance,
+        const double haptic_loop_rate,
+        const std::string slave_names_in[],
+        KDL::Frame *slave_to_world_tr)
+        :
+        SimTask(NULL, haptic_loop_rate),
+        mesh_files_dir(mesh_file_dir),
+        slave_frame_to_world_frame_tr(slave_to_world_tr),
+        destination_ring_counter(0),
+        ac_params_changed(true),
+        task_state(SHTaskState::Idle),
+        time_last(ros::Time::now())
 {
 
     InitBullet();
@@ -82,7 +82,7 @@ TaskSteadyHand::TaskSteadyHand(
                                -board_dimensions[2]/ 2) );
 
         std::vector<double> dim = {
-            board_dimensions[0], board_dimensions[1], board_dimensions[2]
+                board_dimensions[0], board_dimensions[1], board_dimensions[2]
         };
         board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose);
         board->GetActor()->GetProperty()->SetColor(colors.Gray);
@@ -97,21 +97,21 @@ TaskSteadyHand::TaskSteadyHand(
     double source_scales = 0.006;
 
     vtkSmartPointer<vtkParametricTorus> parametricObject =
-        vtkSmartPointer<vtkParametricTorus>::New();
+            vtkSmartPointer<vtkParametricTorus>::New();
     parametricObject->SetCrossSectionRadius(
-        ring_cross_section_radius / source_scales
+            ring_cross_section_radius / source_scales
     );
     parametricObject->SetRingRadius(ring_radius / source_scales);
 
     vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource =
-        vtkSmartPointer<vtkParametricFunctionSource>::New();
+            vtkSmartPointer<vtkParametricFunctionSource>::New();
     parametricFunctionSource->SetParametricFunction(parametricObject);
     parametricFunctionSource->Update();
 
     vtkSmartPointer<vtkPolyDataMapper> destination_ring_mapper =
-        vtkSmartPointer<vtkPolyDataMapper>::New();
+            vtkSmartPointer<vtkPolyDataMapper>::New();
     destination_ring_mapper->SetInputConnection(
-        parametricFunctionSource->GetOutputPort());
+            parametricFunctionSource->GetOutputPort());
     destination_ring_actor->SetMapper(destination_ring_mapper);
     destination_ring_actor->SetScale(0.002);
     destination_ring_actor->RotateX(90);
@@ -178,9 +178,9 @@ TaskSteadyHand::TaskSteadyHand(
 
     // Define the rotation of the tube mesh
 
-   pose_tube =   KDL::Frame( KDL::Rotation::RotX(M_PI/2)*
-                               KDL::Rotation::RotY(-10./180.*M_PI),
-                           base_position);
+    pose_tube =   KDL::Frame( KDL::Rotation::RotX(M_PI/2)*
+                              KDL::Rotation::RotY(-10./180.*M_PI),
+                              base_position);
     KDL::Frame stand_frame = pose_tube;
     stand_frame.M.DoRotY(-49./180.*M_PI);
 
@@ -272,7 +272,7 @@ TaskSteadyHand::TaskSteadyHand(
     double step = 0.0045;
 
     KDL::Rotation rings_orient = ring_holder_bar_pose.M *
-        KDL::Rotation::RotY(M_PI/2);
+                                 KDL::Rotation::RotY(M_PI/2);
 
     for (int l = 0; l < ring_num; ++l) {
 
@@ -284,7 +284,7 @@ TaskSteadyHand::TaskSteadyHand(
         input_file_dir.str("");
         //input_file_dir <<mesh_file_dir << std::string("torus_D10mm_d1.2mm.obj");
         input_file_dir <<mesh_file_dir << std::string("task_steady_hand_torus_D10mm_d1.2mm"
-                                                          ".obj");
+                                                              ".obj");
 
         mesh_file_dir_str = input_file_dir.str();
 
@@ -296,7 +296,7 @@ TaskSteadyHand::TaskSteadyHand(
         graphics_actors.push_back(ring_mesh[ring_num - l -1]->GetActor());
         ring_mesh[ring_num-l-1]->GetActor()->GetProperty()->SetColor(colors.Turquoise);
         ring_mesh[ring_num-l-1]->GetBody()->setContactStiffnessAndDamping
-            (3000, 100);
+                (3000, 100);
         ring_mesh[ring_num-l-1]->GetBody()->setRollingFriction(btScalar(0.01));
         ring_mesh[ring_num-l-1]->GetBody()->setSpinningFriction(btScalar(0.01));
 
@@ -309,7 +309,7 @@ TaskSteadyHand::TaskSteadyHand(
                 , KDL::Vector(ring_holder_bar_pose.p.x() + (l -0.5+1) * step * dir.x(),
                               ring_holder_bar_pose.p.y() + (l -0.5+ 0.2) * step * dir.y(),
                               ring_holder_bar_pose.p.z()+ (l-0.5) * step *
-                                                                  dir.z()) );
+                                                          dir.z()) );
         sep_cylinder[l] = new
                 SimObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC, _dim,
                           pose_cyl);
@@ -350,7 +350,7 @@ TaskSteadyHand::TaskSteadyHand(
 
         KDL::Frame gripper_pose(rings_orient , KDL::Vector(.04, 0.2, 0.1) );
 
-        for (int i = 0; i < 1 + (int)bimanual; ++i) {
+        for (int i = 0; i < 2; ++i) {
             std::vector<double> arm_dim = { 0.002, rcm[i].Norm()*2};
             arm[i] = new SimObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC,
                                    arm_dim, gripper_pose);
@@ -398,13 +398,13 @@ TaskSteadyHand::TaskSteadyHand(
     // Error history spheres
 
     vtkSmartPointer<vtkSphereSource>  source =
-        vtkSmartPointer<vtkSphereSource>::New();
+            vtkSmartPointer<vtkSphereSource>::New();
 
     source->SetRadius(0.002);
     source->SetPhiResolution(15);
     source->SetThetaResolution(15);
     vtkSmartPointer<vtkPolyDataMapper> sphere_mapper =
-        vtkSmartPointer<vtkPolyDataMapper>::New();
+            vtkSmartPointer<vtkPolyDataMapper>::New();
     sphere_mapper->SetInputConnection(source->GetOutputPort());
 
     for (int i = 0; i < ring_num; ++i) {
@@ -417,10 +417,9 @@ TaskSteadyHand::TaskSteadyHand(
         score_sphere_actors.push_back(actor);
     }
 
-    if(bimanual){
-        graphics_actors.push_back(line1_actor);
-        graphics_actors.push_back(line2_actor);
-    }
+    graphics_actors.push_back(line1_actor);
+    graphics_actors.push_back(line2_actor);
+
     graphics_actors.push_back(destination_ring_actor);
     for (int j = 0; j < score_sphere_actors.size(); ++j) {
         graphics_actors.push_back(score_sphere_actors[j]);
@@ -529,7 +528,7 @@ void TaskSteadyHand::StepWorld() {
     if (task_state == SHTaskState::Idle) {
         destination_ring_position = start_point;
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
-            (colors.Orange);
+                (colors.Orange);
     } else
         destination_ring_position = end_point;
 
@@ -555,28 +554,28 @@ void TaskSteadyHand::StepWorld() {
         // reset score related vars
         ResetOnGoingEvaluation();
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
-            (colors.Orange);
+                (colors.Orange);
         stand_cube->GetActor()->GetProperty()->SetColor(colors.Coral);
 
     }
 
     else if (task_state == SHTaskState::OnGoing &&
-        (ring_pose.p - end_point).Norm() <
-            positioning_tolerance)
+             (ring_pose.p - end_point).Norm() <
+             positioning_tolerance)
     {
         task_state = SHTaskState::Finished;
         destination_ring_actor->RotateY(-100);
         ring_mesh[ring_in_action]->GetActor()->GetProperty()->SetColor
-            (colors.Turquoise);
+                (colors.Turquoise);
         if(ring_in_action<(ring_num-1))
             ring_in_action +=  1;
 
         KDL::Vector base_position = KDL::Vector(0.11-0.016, 0.08, 0.025+0.035);
 
         double pose_cube[7] = {
-            base_position[0]+0.02*cos(M_PI/4), base_position[1]-0.02*cos
-                (M_PI/4), (0.11-0.016-0.025)
-                /4,0,0,0,1};
+                base_position[0]+0.02*cos(M_PI/4), base_position[1]-0.02*cos
+                        (M_PI/4), (0.11-0.016-0.025)
+                                  /4,0,0,0,1};
         sep_cylinder[ring_num-ring_in_action]->SetKinematicPose(pose_cube);
 
         //dynamics_world->removeRigidBody(sep_cylinder[ring_in_action]->GetBody());
@@ -613,7 +612,7 @@ void TaskSteadyHand::StepWorld() {
     task_state_msg.task_state = (uint8_t)task_state;
     task_state_msg.number_of_repetition = uchar(ring_in_action+1);
     task_state_msg.uint_slot = (uchar)gripper_in_contact[0] +
-        (uchar)gripper_in_contact[1] *(uchar)2;
+                               (uchar)gripper_in_contact[1] *(uchar)2;
 
     if (task_state == SHTaskState::OnGoing) {
 
@@ -653,8 +652,8 @@ void TaskSteadyHand::StepWorld() {
 
 //------------------------------------------------------------------------------
 void TaskSteadyHand::CalculatedDesiredRingPose(
-    const KDL::Frame ring_pose,
-    KDL::Frame &desired_ring_pose
+        const KDL::Frame ring_pose,
+        KDL::Frame &desired_ring_pose
 ) {
     // NOTE: All the closest points are on the wire mesh
 
@@ -693,8 +692,8 @@ void TaskSteadyHand::CalculatedDesiredRingPose(
     KDL::Vector center_point_in_mesh_local = tube_mesh_pose_inv*ring_pose.p;
 
     double ring_central_point_in_mesh_local[3] = {center_point_in_mesh_local[0],
-        center_point_in_mesh_local[1],
-        center_point_in_mesh_local[2]};
+                                                  center_point_in_mesh_local[1],
+                                                  center_point_in_mesh_local[2]};
 
     double closest_point[3] = {0.0, 0.0, 0.0};
     double closestPointDist2; //the squared distance to the closest point
@@ -706,41 +705,41 @@ void TaskSteadyHand::CalculatedDesiredRingPose(
                                   cell_id, subId, closestPointDist2);
     // take the closest point to the current pose of the object
     KDL::Vector closest_point_to_center_point = tube_mesh_pose *
-        KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
+                                                KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
 
     // ----------------------- SECOND CLOSEST POINT
     //Find the closest cell to the grip point
     KDL::Vector radial_x_point_kdl = ring_pose *
-        KDL::Vector(ring_radius, 0.0, 0.0);
+                                     KDL::Vector(ring_radius, 0.0, 0.0);
     KDL::Vector radial_x_point_in_mesh_local_kdl =tube_mesh_pose_inv*radial_x_point_kdl;
 
     double radial_x_point_in_mesh_local[3] = {radial_x_point_in_mesh_local_kdl[0],
-        radial_x_point_in_mesh_local_kdl[1],
-        radial_x_point_in_mesh_local_kdl[2]};
+                                              radial_x_point_in_mesh_local_kdl[1],
+                                              radial_x_point_in_mesh_local_kdl[2]};
 
     cellLocator->Update();
     cellLocator->FindClosestPoint(radial_x_point_in_mesh_local, closest_point,
                                   cell_id, subId, closestPointDist2);
     // take the closest point to the current pose of the object
     KDL::Vector closest_point_to_x_point = tube_mesh_pose *
-        KDL::Vector(closest_point[0],closest_point[1],closest_point[2]);
+                                           KDL::Vector(closest_point[0],closest_point[1],closest_point[2]);
 
     // ----------------------- THIRD CLOSEST POINT
     //Find the closest cell to the radial tool point
     KDL::Vector radial_y_point_kdl = ring_pose *
-        KDL::Vector(0., ring_radius, 0.f);
+                                     KDL::Vector(0., ring_radius, 0.f);
     KDL::Vector radial_y_point_in_mesh_local_kdl = tube_mesh_pose_inv*radial_y_point_kdl;
 
     double radial_y_point_in_mesh_local[3] = {radial_y_point_in_mesh_local_kdl[0],
-        radial_y_point_in_mesh_local_kdl[1],
-        radial_y_point_in_mesh_local_kdl[2]};
+                                              radial_y_point_in_mesh_local_kdl[1],
+                                              radial_y_point_in_mesh_local_kdl[2]};
 
     cellLocator->Update();
     cellLocator->FindClosestPoint(radial_y_point_in_mesh_local, closest_point,
                                   cell_id, subId, closestPointDist2);
     // take the closest point to the current pose of the object
     KDL::Vector closest_point_to_y_point = tube_mesh_pose *
-        KDL::Vector(closest_point[0],closest_point[1],closest_point[2]);
+                                           KDL::Vector(closest_point[0],closest_point[1],closest_point[2]);
 
 
     // Find the vector from ring center to the corresponding closest point on
@@ -762,10 +761,10 @@ void TaskSteadyHand::CalculatedDesiredRingPose(
     KDL::Vector desired_z, desired_y, desired_x;
 
     KDL::Vector point_y_to_cp =
-        closest_point_to_y_point - radial_y_point_kdl;
+            closest_point_to_y_point - radial_y_point_kdl;
 
     KDL::Vector point_x_to_cp =
-        closest_point_to_x_point - radial_x_point_kdl;
+            closest_point_to_x_point - radial_x_point_kdl;
 
     desired_x = -point_x_to_cp / point_x_to_cp.Norm();
     desired_y = -point_y_to_cp / point_y_to_cp.Norm();
@@ -779,7 +778,7 @@ void TaskSteadyHand::CalculatedDesiredRingPose(
     desired_y = desired_y / desired_y.Norm();
 
     desired_ring_pose.M =
-        KDL::Rotation(desired_x, desired_y, desired_z);
+            KDL::Rotation(desired_x, desired_y, desired_z);
 
     // draw the connection lines for debug
     //line1_source->SetPoint1(radial_x_point_kdl[0],
@@ -832,10 +831,10 @@ void TaskSteadyHand::UpdateRingColor() {
         error_ratio = 0.3;
 
     ring_mesh[ring_in_action]->GetActor()->GetProperty()
-                             ->SetColor(colors.Orange[0],
-                                        colors.Orange[1]- 0.6*
-                                            (error_ratio-0.3),
-                                        colors.Orange[2]);
+            ->SetColor(colors.Orange[0],
+                       colors.Orange[1]- 0.6*
+                                         (error_ratio-0.3),
+                       colors.Orange[2]);
 }
 
 custom_msgs::TaskState TaskSteadyHand::GetTaskStateMsg() {
@@ -875,7 +874,7 @@ void TaskSteadyHand::HapticsThread() {
                "/tool_pose_desired";
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_slave_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                                   (param_name.str(), 1);
+            (param_name.str(), 1);
     ROS_INFO("Will publish on %s", param_name.str().c_str());
 
     // make sure the masters are in wrench absolute orientation
@@ -893,7 +892,7 @@ void TaskSteadyHand::HapticsThread() {
     param_name << std::string("/atar/") << slave_names[1] <<
                "/tool_pose_desired";
     pub_slave_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                   (param_name.str(), 1);
+            (param_name.str(), 1);
     ROS_INFO("Will publish on %s", param_name.str().c_str());
 
     // make sure the masters are in wrench absolute orientation
@@ -911,12 +910,12 @@ void TaskSteadyHand::HapticsThread() {
     ros::Publisher pub_ring_desired, pub_ring_current;
     std::string ring_topic = "/atar/ring_pose_current";
     pub_ring_current = node->advertise<geometry_msgs::Pose>
-                               (ring_topic.c_str(), 10);
+            (ring_topic.c_str(), 10);
     ROS_INFO("Will publish on %s", ring_topic.c_str());
 
     ring_topic = "/atar/ring_pose_desired";
     pub_ring_desired = node->advertise<geometry_msgs::Pose>
-                               (ring_topic.c_str(), 10);
+            (ring_topic.c_str(), 10);
     ROS_INFO("Will publish on %s", ring_topic.c_str());
     int lower_freq_pub_counter = 0;
 
@@ -961,13 +960,13 @@ void TaskSteadyHand::HapticsThread() {
 
         tr_to_desired_ring_pose.p = desired_ring_pose.p - estimated_ring_pose_loc.p;
         tr_to_desired_ring_pose.M = desired_ring_pose.M * estimated_ring_pose_loc.M
-                                                                     .Inverse();
+                .Inverse();
         //tr_to_desired_ring_pose = desired_ring_pose * estimated_ring_pose_loc.Inverse();
 
         // --------------- Soft start delta calculation
         // did we grasp the ring just now?
         if( (gripper_in_contact[0] & !gripper_in_contact_last[0]) ||
-                (gripper_in_contact[1] & !gripper_in_contact_last[1]) )
+            (gripper_in_contact[1] & !gripper_in_contact_last[1]) )
             ac_soft_start_counter = 0;
 
         double soft_start_delta;
@@ -980,7 +979,7 @@ void TaskSteadyHand::HapticsThread() {
             soft_start_delta = 1.0;
 
         // --------------- Publish desired poses
-        for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
+        for (int n_arm = 0; n_arm < 2; ++n_arm) {
 
             if(gripper_in_contact[n_arm]) {
 
@@ -989,9 +988,9 @@ void TaskSteadyHand::HapticsThread() {
                 // to its desired pose to the current pose of the tool;
                 tool_desired_pose[n_arm].p =
                         soft_start_delta * tr_to_desired_ring_pose.p +
-                                tool_current_pose[n_arm].p;
+                        tool_current_pose[n_arm].p;
                 tool_desired_pose[n_arm].M =
-                    tr_to_desired_ring_pose.M * tool_current_pose[n_arm].M;
+                        tr_to_desired_ring_pose.M * tool_current_pose[n_arm].M;
 
             }
             else {
@@ -1002,7 +1001,7 @@ void TaskSteadyHand::HapticsThread() {
             geometry_msgs::PoseStamped pose_msg;
             KDL::Frame tool_desired_pose_in_slave_frame;
             tool_desired_pose_in_slave_frame =
-                slave_frame_to_world_frame_tr->Inverse()*
+                    slave_frame_to_world_frame_tr->Inverse()*
                     tool_desired_pose[n_arm];
 
             tf::poseKDLToMsg(tool_desired_pose_in_slave_frame, pose_msg.pose);
@@ -1022,7 +1021,7 @@ void TaskSteadyHand::HapticsThread() {
             lower_freq_pub_counter = 0;
             pub_ring_current.publish(conversions::KDLFramePoseMsg(estimated_ring_pose_loc));
             pub_ring_desired.publish(conversions::KDLFramePoseMsg
-                                         (desired_ring_pose));
+                                             (desired_ring_pose));
         }
         //------------------------------------------------------------------
         // Calculate errors
@@ -1070,11 +1069,11 @@ void TaskSteadyHand::CalculateAndSaveError() {
         duration = duration_ideal;
 
     double score = ( posit_error_avg_ideal/posit_error_avg
-        + posit_error_max_ideal/posit_error_max
-        + orient_error_max_ideal/orient_error_max
-        + duration_ideal/duration
-        + orient_error_avg_ideal/orient_error_avg)
-        * 100 / 5;
+                     + posit_error_max_ideal/posit_error_max
+                     + orient_error_max_ideal/orient_error_max
+                     + duration_ideal/duration
+                     + orient_error_avg_ideal/orient_error_avg)
+                   * 100 / 5;
 
     // when the history gets full we start a new set
     if (score_history.size() == ring_num)
@@ -1187,8 +1186,8 @@ void TaskSteadyHand::StepPhysics() {
 
 
 void TaskSteadyHand::UpdateToolRodsPose(
-    const KDL::Frame pose,
-    int gripper_side
+        const KDL::Frame pose,
+        int gripper_side
 ) {
 
     //------------------------------ ARM
@@ -1215,9 +1214,9 @@ void TaskSteadyHand::UpdateToolRodsPose(
 
         orientation.p= (rcm[i]+displacement*(shift)/shift.Norm());
         double arm_pose[7]={orientation.p.x(),
-            orientation.p.y(),
-            orientation.p.z(),
-            x,y,z,w};
+                            orientation.p.y(),
+                            orientation.p.z(),
+                            x,y,z,w};
         arm[i]->SetKinematicPose(arm_pose);
 
     } else
@@ -1232,9 +1231,9 @@ void TaskSteadyHand::UpdateToolRodsPose(
         orientation.M.GetQuaternion(x,y,z,w);
         orientation.p= (rcm[i]-displacement*(shift)/shift.Norm());
         double arm_pose[7]={orientation.p.x(),
-            orientation.p.y(),
-            orientation.p.z(),
-            x,y,z,w};
+                            orientation.p.y(),
+                            orientation.p.z(),
+                            x,y,z,w};
         arm[i]->SetKinematicPose(arm_pose);
     }
 }
@@ -1259,8 +1258,8 @@ TaskSteadyHand::~TaskSteadyHand() {
 }
 
 void TaskSteadyHand::UpdateCurrentAndDesiredReferenceFrames(
-    const KDL::Frame current_pose[2],
-    const KDL::Frame desired_pose[2]
+        const KDL::Frame current_pose[2],
+        const KDL::Frame desired_pose[2]
 ) {
 
     vtkSmartPointer<vtkMatrix4x4> tool_desired_pose_vtk[2];

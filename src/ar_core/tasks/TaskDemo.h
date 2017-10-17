@@ -14,14 +14,13 @@
 #include "src/ar_core/SimObject.h"
 #include "src/ar_core/Colors.hpp"
 #include "src/ar_core/Forceps.h"
-
+#include "src/ar_core/ManipulatorMaster.h"
 
 class TaskDemo : public SimTask{
 public:
 
-    TaskDemo(const std::string mesh_files_dir,
-            const bool show_ref_frames, const bool num_tools,
-            const bool with_guidance);
+    TaskDemo(ros::NodeHandle n, const std::string mesh_files_dir,
+             const KDL::Frame *cam_pose);
 
     ~TaskDemo();
 
@@ -63,7 +62,9 @@ public:
 private:
     // task specific members
     SimObject *sphere[6];
-    Forceps * forceps[2];
+    Forceps * forceps;
+    KDL::Frame tool_pose;
+    double grip_angle;
 
 
 private:
@@ -74,6 +75,8 @@ private:
     ros::Time time_last;
 
     custom_msgs::ActiveConstraintParameters ac_parameters;
+
+    ManipulatorMaster *master;
 
     KDL::Frame tool_desired_pose_kdl[2];
     KDL::Frame * tool_current_pose_kdl[2];

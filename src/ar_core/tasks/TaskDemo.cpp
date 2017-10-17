@@ -8,17 +8,24 @@
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 
-TaskDemo::TaskDemo(const std::string mesh_files_dir,
-                       const bool show_ref_frames, const bool biman,
-                       const bool with_guidance)
-    :
-    SimTask(show_ref_frames, biman, with_guidance, 0) ,
-    mesh_files_dir(mesh_files_dir),
-    time_last(ros::Time::now())
+TaskDemo::TaskDemo(ros::NodeHandle n, const std::string mesh_files_dir,
+                   const KDL::Frame *cam_pose)
+        :
+        SimTask(&n, 500) ,
+        mesh_files_dir(mesh_files_dir),
+        time_last(ros::Time::now())
 {
 
+    // Define a master manipulator
+    master = new ManipulatorMaster(nh, "/dvrk/MTML",
+                                   "/position_cartesian_current",
+                                   "/gripper_position_current",
+                                   cam_pose);
+
+    // Initialize Bullet Physics
     InitBullet();
 
+    // DEFINE THE OBJECTS
     // -------------------------------------------------------------------------
     // static floor
     // always add a floor under the workspace of your task to prevent objects
@@ -71,7 +78,7 @@ TaskDemo::TaskDemo(const std::string mesh_files_dir,
             pose.p = pose.p+ KDL::Vector(0.0001, 0.0, 0.008);
 
             sphere[i] = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
-                                   sphere_dimensions, pose, density);
+                                      sphere_dimensions, pose, density);
 
             // we can access all the properties of a VTK actor
             sphere[i]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
@@ -98,7 +105,7 @@ TaskDemo::TaskDemo(const std::string mesh_files_dir,
 
         // define object Pose
         KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
-                , KDL::Vector(0.02, 0.04, 0.05 ));
+                , KDL::Vector(0.05, 0.055, 0.05 ));
 
         // Define
         double density = 50000; // kg/m3
@@ -110,7 +117,7 @@ TaskDemo::TaskDemo(const std::string mesh_files_dir,
             pose.p = pose.p+ KDL::Vector(0.0001, 0.0, 0.008);
 
             SimObject cube(ObjectShape::BOX, ObjectType::DYNAMIC,
-                                   sphere_dimensions, pose, density, friction);
+                           sphere_dimensions, pose, density, friction);
 
             // we can access all the properties of a VTK actor
             cube.GetActor()->GetProperty()->SetColor(colors.Orange);
@@ -127,22 +134,17 @@ TaskDemo::TaskDemo(const std::string mesh_files_dir,
     {
         KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
         forceps_pose.M.DoRotZ(M_PI/2);
-        forceps[0] = new Forceps(mesh_files_dir, forceps_pose);
+        forceps = new Forceps(mesh_files_dir, forceps_pose);
+        forceps->AddToWorld(dynamics_world);
+        forceps->AddToActorsVector(graphics_actors);
 
-        forceps_pose.p.x(0.07);
-        forceps[1] = new Forceps(mesh_files_dir, forceps_pose);
-
-        for (int j = 0; j < 2; ++j) {
-            forceps[j]->AddToWorld(dynamics_world);
-            forceps[j]->AddToActorsVector(graphics_actors);
-        }
     }
 }
 
 
 //------------------------------------------------------------------------------
 void TaskDemo::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                           const int tool_id) {
+                                         const int tool_id) {
     tool_current_pose_kdl[tool_id] = &tool_pose;
 }
 
@@ -157,19 +159,18 @@ void TaskDemo::StepWorld() {
 
     //--------------------------------
     //use the tool pose for moving the virtual tools ...
-    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-    double grip_angle = 1;
-    forceps[0]->SetPoseAndJawAngle(tool_pose, grip_angle);
+    //    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
+    forceps->SetPoseAndJawAngle(tool_pose, grip_angle);
 
     //--------------------------------
     // step the world
     StepPhysics();
 
     // you can access the pose of the objects:
-//    ROS_INFO("Sphere0 z: %f",sphere[0]->GetPose().p[2]);
+    //    ROS_INFO("Sphere0 z: %f",sphere[0]->GetPose().p[2]);
 
     //--------------------------------
-    // Check if the task is completed
+    // Task logics
 }
 
 
@@ -214,30 +215,33 @@ void TaskDemo::HapticsThread() {
 
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-                             ("/PSM1/tool_pose_desired", 10);
-    if(bimanual)
-        pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-                                 ("/PSM2/tool_pose_desired", 10);
+            ("PSM1/tool_pose_desired", 10);
+//    if(bimanual)
+//        pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
+//                ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(200);
 
     while (ros::ok())
     {
+        // read the master pose and gripper angle
+        master->GetPoseWorld(tool_pose);
+        master->GetGripper(grip_angle);
 
         //        CalculatedDesiredToolPose();
 
-        // publish desired poses
-        for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
-
-            // convert to pose message
-            geometry_msgs::PoseStamped pose_msg;
-            tf::poseKDLToMsg(tool_desired_pose_kdl[n_arm], pose_msg.pose);
-            // fill the header
-            pose_msg.header.frame_id = "/task_space";
-            pose_msg.header.stamp = ros::Time::now();
-            // publish
-            pub_desired[n_arm].publish(pose_msg);
-        }
+//        // publish desired poses
+//        for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
+//
+//            // convert to pose message
+//            geometry_msgs::PoseStamped pose_msg;
+//            tf::poseKDLToMsg(tool_desired_pose_kdl[n_arm], pose_msg.pose);
+//            // fill the header
+//            pose_msg.header.frame_id = "/task_space";
+//            pose_msg.header.stamp = ros::Time::now();
+//            // publish
+//            pub_desired[n_arm].publish(pose_msg);
+//        }
 
         ros::spinOnce();
         loop_rate.sleep();
@@ -325,6 +329,8 @@ TaskDemo::~TaskDemo() {
     delete dispatcher;
 
     delete collisionConfiguration;
+
+    delete master;
 
 }
 

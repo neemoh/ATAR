@@ -136,8 +136,8 @@ private:
 
     // -------------------------------------------------------------------------
     // task logic
-//    bool bimanual;
-//    bool with_guidance;
+    bool bimanual;
+    bool with_guidance;
     TaskKidneyState task_state;
     std::string stl_files_dir;
 
