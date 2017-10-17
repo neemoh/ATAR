@@ -39,11 +39,11 @@ Next download VTK from https://www.vtk.org/download/ , compile it with
 VTK_RENDERING_BACKEND=OpenGL and install it. In case you are not familiar 
 with building libraries:
 copy and extract the downloaded library somewhere (I personally put it in /opt).
-then:
+then inside the extracted vtk folder:
 
 ```bash
 mkdir build  && cd build
-cmake  -DVTK_RENDERING_BACKEND=OpenGL
+cmake  -DVTK_RENDERING_BACKEND=OpenGL ..
 make -j8
 sudo make install
 ```
@@ -57,7 +57,7 @@ cd bullet_physics
 git clone https://github.com/bulletphysics/bullet3.git
 cd bullet3
 mkdir build && cd build
-cmake -DBUILD_PYBULLET_NUMPY=OFF -DUSE_DOUBLE_PRECISION=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_EXTRAS=ON DINSTALL_EXTRA_LIBS=ON ..
+cmake -DUSE_DOUBLE_PRECISION=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_EXTRAS=ON DINSTALL_EXTRA_LIBS=ON ..
 make -j8
 sudo make install
 ```
@@ -69,9 +69,14 @@ git clone https://github.com/neemoh/ATAR.git
 catkin build
 ```
 To test it, first make a folder named camera_info in the .ros folder in your 
-home directory and copy the default_intrinsics.yaml file from the resources 
-folder in it. Then run the vr_test.launch file and click on task 8. Wait for 
-the compound convex mesh to be generated and the task should run after that.
+home directory and copy the default_intrinsics.yaml file from the 
+/ATAR/resources folder in camera_info. Then run the vr_test.launch file and click on 
+task 8. Wait for the compound convex mesh to be generated and the task should
+ run after that. You should see some spheres and cubes falling on a floor, 
+ which would mean you have successfully built the libs. Congrats! 
+ In case you have an nvidia card and its driver has benn installed, you can 
+ have faster graphics and also shadows. To test the shadows set the 
+ with_shadows flag to true in the vr_test.lanuch file.
 
 ## Creating tasks
 Details will be updated.
