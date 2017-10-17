@@ -17,10 +17,14 @@ TaskDemo::TaskDemo(ros::NodeHandle n, const std::string mesh_files_dir,
 {
 
     // Define a master manipulator
-    master = new ManipulatorMaster(nh, "/dvrk/MTML",
-                                   "/position_cartesian_current",
-                                   "/gripper_position_current",
+    master = new ManipulatorMaster(nh, "/sigma7/sigma0",
+                                   "/pose",
+                                   "/gripper_angle",
                                    cam_pose);
+    //    master = new ManipulatorMaster(nh, "/dvrk/MTML",
+    //                                   "/position_cartesian_current",
+    //                                   "/gripper_position_current",
+    //                                   cam_pose);
 
     // Initialize Bullet Physics
     InitBullet();

@@ -40,7 +40,9 @@ ManipulatorMaster::ManipulatorMaster(ros::NodeHandle *n,
         if(world_to_camera_tr!=NULL)
             local_to_world_frame_tr = (*world_to_camera_tr).Inverse() *
                 local_to_image_frame_tr;
-    } else
+        local_to_world_frame_tr.p = KDL::Vector(0.0, 0.0,0.0);
+    }
+    else
         ROS_WARN("Parameter %s was not found.", param.c_str());
 }
 
@@ -53,10 +55,9 @@ ManipulatorMaster::PoseCallback(const geometry_msgs::PoseStampedConstPtr
 
 }
 
-void ManipulatorMaster::GripperCallback(const std_msgs::Float32ConstPtr &msg) {
+void ManipulatorMaster::GripperCallback(const std_msgs::Float64ConstPtr &msg) {
     gripper_angle = msg->data;
 }
-
 
 void
 ManipulatorMaster::TwistCallback(const geometry_msgs::TwistStampedConstPtr

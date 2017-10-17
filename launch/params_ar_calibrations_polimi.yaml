@@ -42,3 +42,5 @@
   PSM1_DUMMY_frame_to_image_frame: [0.0, 0.0, 0.0, 0.0, 0.7071, -0.7071, 0.0]
 
   PSM2_DUMMY_frame_to_image_frame: [0.0, 0.0, 0.0, 0.0, 0.7071, -0.7071, 0.0]
+
+  sigma7/sigma0_frame_to_image_frame: [0.0, 0.0, 0.0, 0.5, 0.5, -0.5, 0.5]
