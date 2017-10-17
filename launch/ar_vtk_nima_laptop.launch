@@ -11,13 +11,13 @@
     <arg name="right_camera_img_topic" value="/image_raw"/>
     <arg name= "left_cam_name" value= "asus_webcam" />
     <arg name= "right_cam_name" value= "asus_webcam" />
-    <arg name= "haptic_referesh_rate" value= "500" />-->
+    <arg name= "haptic_referesh_rate" value= "500" /> -->
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
         <!--<rosparam command="load"-->
-                  <!--file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />-->
+        <!--file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />-->
         <rosparam command="load"
                   file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
     </group>
@@ -26,19 +26,19 @@
     <!--</node>-->
 
     <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
-          <!--name="extrinsic_charuco_left" output="screen" >-->
-        <!--<param name="camera_name" value="$(arg left_cam_name)"/>-->
-        <!--<param name="camera_img_topic"-->
-               <!--value="$(arg left_camera_img_topic)"/>-->
-        <!--<param name="show_image" value="false"/>-->
+    <!--name="extrinsic_charuco_left" output="screen" >-->
+    <!--<param name="camera_name" value="$(arg left_cam_name)"/>-->
+    <!--<param name="camera_img_topic"-->
+    <!--value="$(arg left_camera_img_topic)"/>-->
+    <!--<param name="show_image" value="false"/>-->
     <!--</node>-->
 
     <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
-          <!--name="extrinsic_charuco_right" output="screen" >-->
-        <!--<param name="camera_name" value="$(arg right_cam_name)"/>-->
-        <!--<param name="camera_img_topic"-->
-               <!--value="$(arg right_camera_img_topic)"/>-->
-        <!--<param name="show_image" value="false"/>-->
+    <!--name="extrinsic_charuco_right" output="screen" >-->
+    <!--<param name="camera_name" value="$(arg right_cam_name)"/>-->
+    <!--<param name="camera_img_topic"-->
+    <!--value="$(arg right_camera_img_topic)"/>-->
+    <!--<param name="show_image" value="false"/>-->
     <!--</node>-->
 
     <!-- Node recording the data-->
@@ -76,34 +76,38 @@
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_2_name" value="$(arg master_2_name)"/>
 
-        <!-- AR_mode:
-
+        <!--
+        AR_mode: Augmented reality mode uses the cameras and their poses.
+        False mean VR mode
          -->
         <param name= "AR_mode" value= "false" />
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
         -->
-        <param name= "show_reference_frames" value= "true" />
+        <param name= "show_reference_frames" value= "false" />
         <!-- About stl_files_dir:
         The directory of the stl files -->
         <param name= "mesh_files_dir" value= "$(find atar)/resources/mesh/" />
 
-        <!-- About desired_pose_update_frequency:
-            //The overlayed images will be published only when new images are received.
-            // The desired pose according to the active constraint geometry on the other
-            // hand needs to be update faster (even if the ac geometry may be updated at the
-            // rate of the received images if it is generated based on the image).
+        <!--
+        About desired_pose_update_frequency:
+        The overlayed images will be published only when new images are
+        received. The desired pose according to the active constraint
+        geometry on the other hand needs to be update faster (even if the ac
+        geometry may be updated at the rate of the received images if it is
+        generated based on the image).
         -->
         <param name= "/desired_pose_update_frequency" value= "$(arg haptic_referesh_rate)" />
 
-        <!-- num_calib_points: Number of points used for arm to world
-        calibration -->
+        <!--
+        num_calib_points: Number of points used for arm to world calibration.
+        -->
         <param name= "number_of_calibration_points" value= "6" />
 
-
-        <!--[0-1] weigthed average of the estimated cam pose. lower number
-        results in smoother estimation but adds delay. Set 1.0 if you don't
-        want averaging.
+        <!--
+        cam_pose_averaging_factor: [0-1] weigthed average of the estimated cam
+         pose. lower number results in smoother estimation but adds delay.
+         Set 1.0 if you don't want averaging.
          -->
         <param name= "cam_pose_averaging_factor" value= "0.5" />
 
@@ -128,7 +132,8 @@
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
         <rosparam param="windows_position"> [1280, 0, 0, 0]</rosparam>
 
-        <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
+        <!-- <param name="image_transport" value="compressed"/> --> <!--
+         Remove if image is not received over network -->
     </node>
 
     <node pkg="atar" type="teleop_dummy" name="teleop_dummy" output="screen">
@@ -146,18 +151,18 @@
 	desired pose topic. The sampling_frequency param is for filtering.
     -->
     <!--<node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">-->
-        <!--<param name="number_of_arms" value="1"/>-->
-        <!--<param name="slave_1_name" value="$(arg slave_1_name)"/>-->
-        <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
-        <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
-        <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
-        <!--<param name="max_force" value="3"/>-->
-        <!--<param name="max_torque" value="0.03"/>&lt;!&ndash; 0.03 &ndash;&gt;-->
-        <!--<param name="linear_elastic_coeff" value="1000"/>-->
-        <!--<param name="linear_damping_coeff" value="10"/>-->
-        <!--<param name="angular_elastic_coeff" value="0.04"/>-->
-        <!--<param name="angular_damping_coeff" value="0.002"/>-->
-        <!--<param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>-->
+    <!--<param name="number_of_arms" value="1"/>-->
+    <!--<param name="slave_1_name" value="$(arg slave_1_name)"/>-->
+    <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
+    <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
+    <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
+    <!--<param name="max_force" value="3"/>-->
+    <!--<param name="max_torque" value="0.03"/>&lt;!&ndash; 0.03 &ndash;&gt;-->
+    <!--<param name="linear_elastic_coeff" value="1000"/>-->
+    <!--<param name="linear_damping_coeff" value="10"/>-->
+    <!--<param name="angular_elastic_coeff" value="0.04"/>-->
+    <!--<param name="angular_damping_coeff" value="0.002"/>-->
+    <!--<param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>-->
     <!--</node>-->
 
 

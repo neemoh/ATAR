@@ -233,7 +233,8 @@ add_executable(
         src/ar_core/Colors.hpp
         src/ar_core/VTKConversions.h
         src/ar_core/VTKConversions.cpp
-#        src/ar_core/ManipulatorMaster.cpp src/ar_core/ManipulatorMaster.h
+        src/ar_core/ManipulatorMaster.cpp
+        src/ar_core/ManipulatorMaster.h
 )
 
 
