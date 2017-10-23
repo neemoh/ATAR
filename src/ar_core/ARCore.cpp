@@ -55,8 +55,7 @@ void ARCore::SetupROSandGetParameters() {
     if (n.getParam("mesh_files_dir", mesh_files_dir)) {
         ROS_INFO("mesh directory: %s", mesh_files_dir.c_str());
     } else {
-        ROS_ERROR(
-                "Parameter '%s' is required. ",
+        ROS_ERROR("Parameter '%s' is required. ",
                 n.resolveName("mesh_files_dir").c_str());
         all_params_found = false;
     }
@@ -67,37 +66,37 @@ void ARCore::SetupROSandGetParameters() {
     struct passwd *pw = getpwuid(getuid());
     const char *home_dir = pw->pw_dir;
 
-    std::string left_cam_name;
-    if (n.getParam("left_cam_name", left_cam_name)) {
-
-        std::stringstream path;
-        path << std::string(home_dir) << std::string("/.ros/camera_info/")
-             << left_cam_name << "_intrinsics.yaml";
-        ReadCameraParameters(path.str(), camera_matrix[0],
-                             camera_distortion[0]);
-    } else {
-        ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n.resolveName("left_cam_name").c_str());
-        all_params_found = false;
-    }
-    std::string right_cam_name;
-    if (n.getParam("right_cam_name", right_cam_name)) {
-        std::stringstream path;
-        path << std::string(home_dir) << std::string("/.ros/camera_info/")
-             << right_cam_name << "_intrinsics.yaml";
-        ReadCameraParameters(path.str(), camera_matrix[1],
-                             camera_distortion[1]);
-    } else {
-        ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n.resolveName("right_cam_name").c_str());
-        all_params_found = false;
-    }
+//    std::string left_cam_name;
+//    if (n.getParam("left_cam_name", left_cam_name)) {
+//
+//        std::stringstream path;
+//        path << std::string(home_dir) << std::string("/.ros/camera_info/")
+//             << left_cam_name << "_intrinsics.yaml";
+//        ReadCameraParameters(path.str(), camera_matrix[0],
+//                             camera_distortion[0]);
+//    } else {
+//        ROS_ERROR(
+//                "Parameter '%s' is required. Place the intrinsic calibration "
+//                        "file of each camera in ~/.ros/camera_info/ named as "
+//                        "<cam_name>_intrinsics.yaml",
+//                n.resolveName("left_cam_name").c_str());
+//        all_params_found = false;
+//    }
+//    std::string right_cam_name;
+//    if (n.getParam("right_cam_name", right_cam_name)) {
+//        std::stringstream path;
+//        path << std::string(home_dir) << std::string("/.ros/camera_info/")
+//             << right_cam_name << "_intrinsics.yaml";
+//        ReadCameraParameters(path.str(), camera_matrix[1],
+//                             camera_distortion[1]);
+//    } else {
+//        ROS_ERROR(
+//                "Parameter '%s' is required. Place the intrinsic calibration "
+//                        "file of each camera in ~/.ros/camera_info/ named as "
+//                        "<cam_name>_intrinsics.yaml",
+//                n.resolveName("right_cam_name").c_str());
+//        all_params_found = false;
+//    }
 
     // ------------------------------------- IMAGES ----------------------------
     // Left image subscriber
@@ -163,23 +162,23 @@ void ARCore::SetupROSandGetParameters() {
         new_cam_pose[1] = true;
     }
 
-    // now we set up the subscribers
-    std::stringstream topic_name;
-    topic_name << std::string("/") << left_cam_name
-               << "/world_to_camera_transform";
-    ROS_DEBUG("[SUBSCRIBERS] Left came pose from '%s'",
-              topic_name.str().c_str());
-    sub_cam_pose_left = n.subscribe(
-            topic_name.str(), 1, &ARCore::LeftCamPoseCallback, this);
-
-    topic_name.str("");
-    topic_name << std::string("/") << right_cam_name
-               << "/world_to_camera_transform";
-    // if the topic name is found, check if something is being published on it
-    ROS_DEBUG("[SUBSCRIBERS] Right cam pose from '%s'",
-              topic_name.str().c_str());
-    sub_cam_pose_right = n.subscribe(
-            topic_name.str(), 1, &ARCore::RightCamPoseCallback, this);
+//    // now we set up the subscribers
+//    std::stringstream topic_name;
+//    topic_name << std::string("/") << left_cam_name
+//               << "/world_to_camera_transform";
+//    ROS_DEBUG("[SUBSCRIBERS] Left came pose from '%s'",
+//              topic_name.str().c_str());
+//    sub_cam_pose_left = n.subscribe(
+//            topic_name.str(), 1, &ARCore::LeftCamPoseCallback, this);
+//
+//    topic_name.str("");
+//    topic_name << std::string("/") << right_cam_name
+//               << "/world_to_camera_transform";
+//    // if the topic name is found, check if something is being published on it
+//    ROS_DEBUG("[SUBSCRIBERS] Right cam pose from '%s'",
+//              topic_name.str().c_str());
+//    sub_cam_pose_right = n.subscribe(
+//            topic_name.str(), 1, &ARCore::RightCamPoseCallback, this);
 
     // ------------------------------------- Clutches---------------------------
     sub_pedal_cam = n.subscribe( "/dvrk/footpedals/camera", 1,
@@ -321,23 +320,28 @@ void ARCore::SetupGraphics() {
         }
     }
 
-    graphics = new Rendering(ar_mode, 2 - (uint) one_window_mode, with_shadows,
+
+
+
+
+    graphics = new Rendering(&n, ar_mode, 2 - (uint) one_window_mode,
+                             with_shadows,
                              offScreen_rendering, windows_position);
 
-    // in case camera poses are set as parameters
-    graphics->SetWorldToCameraTransform(cam_rvec_curr, cam_tvec_curr);
-
-    // set the intrinsics and configure the background image
-    graphics->SetCameraIntrinsics(camera_matrix);
-
-    // in AR mode we read real camera images and show them as the background
-    // of our rendering
-    if (ar_mode){
-        cv::Mat cam_images[2];
-        LockAndGetImages(ros::Duration(1), cam_images);
-        graphics->ConfigureBackgroundImage(cam_images);
-        graphics->SetEnableBackgroundImage(true);
-    }
+//    // in case camera poses are set as parameters
+//    graphics->SetWorldToCameraTransform(cam_rvec_curr, cam_tvec_curr);
+//
+//    // set the intrinsics and configure the background image
+//    graphics->SetCameraIntrinsics(camera_matrix);
+//
+//    // in AR mode we read real camera images and show them as the background
+//    // of our rendering
+//    if (ar_mode){
+//        cv::Mat cam_images[2];
+//        LockAndGetImages(ros::Duration(1), cam_images);
+//        graphics->ConfigureBackgroundImage(cam_images);
+//        graphics->SetEnableBackgroundImage(true);
+//    }
 
     //    graphics->Render();
 
@@ -345,14 +349,14 @@ void ARCore::SetupGraphics() {
 // -----------------------------------------------------------------------------
 bool ARCore::UpdateWorld() {
 
-    // -------------------------------------------------------------------------
-    // Update cam poses if needed
-    cv::Vec3d cam_rvec[2];    cv::Vec3d cam_tvec[2];
-
-    // in AR mode we would like to change the virtual cam poses as the real
-    // camera moves. In VR mode this returns the fixed cam poses only once.
-    if(GetNewCameraPoses(cam_rvec, cam_tvec))
-        graphics->SetWorldToCameraTransform(cam_rvec, cam_tvec);
+//    // -------------------------------------------------------------------------
+//    // Update cam poses if needed
+//    cv::Vec3d cam_rvec[2];    cv::Vec3d cam_tvec[2];
+//
+//    // in AR mode we would like to change the virtual cam poses as the real
+//    // camera moves. In VR mode this returns the fixed cam poses only once.
+//    if(GetNewCameraPoses(cam_rvec, cam_tvec))
+//        graphics->SetWorldToCameraTransform(cam_rvec, cam_tvec);
 
     // -------------------------------------------------------------------------
     if (control_event == CE_EXIT) {// Esc
@@ -365,7 +369,7 @@ bool ARCore::UpdateWorld() {
         HandleTaskEvent();
 
     cv::Mat cam_images[2];
-    if(GetNewImages(cam_images) || !ar_mode) {
+    if(graphics->AreImagesNew() || !ar_mode) {
 
         // Time performance debug
         //        ros::Time start =ros::Time::now();
@@ -374,13 +378,10 @@ bool ARCore::UpdateWorld() {
         if(task_ptr)
             task_ptr->StepWorld();
 
-        if(ar_mode) {
-            // update the camera images
-            graphics->UpdateBackgroundImage(cam_images);
-
-            // update  view angle (in case window changes size)
-            graphics->UpdateCameraViewForActualWindowSize();
-        }
+//        if(ar_mode) {
+//            // update the camera images
+////            graphics->UpdateBackgroundImage(cam_images);
+//        }
 
         // Render!
         graphics->Render();
@@ -571,20 +572,6 @@ void ARCore::LockAndGetImages(ros::Duration timeout,
     new_image[1] = false;
 }
 
-// -----------------------------------------------------------------------------
-bool ARCore::GetNewImages( cv::Mat images[]) {
-
-    if(new_image[0] && new_image[1]) {
-        image_from_ros[0].copyTo(images[0]);
-        image_from_ros[1].copyTo(images[1]);
-        new_image[0] = false;
-        new_image[1] = false;
-        return true;
-    }
-
-    return false;
-
-}
 
 // -----------------------------------------------------------------------------
 bool ARCore::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],

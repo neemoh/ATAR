@@ -58,8 +58,6 @@ private:
     // Locking call to retrieve the images
     void LockAndGetImages(ros::Duration timeout, cv::Mat images[]);
 
-    // return true if both images are newly received and copy them in imgs
-    bool GetNewImages( cv::Mat images[]);
 
     // If the poses of the cameras are published, this method will return
     // true when any of the cam poses are updated. If left or right pose is
@@ -149,6 +147,9 @@ private:
 
     bool pedal_cam_pressed = false;
     bool with_guidance;
+//    CalibratedCamera  *                     cameras_background[2];
+//    CalibratedCamera  *                     cameras_scene[3];
+
     cv::Mat camera_matrix[2];
     cv::Mat camera_distortion[2];
     KDL::Frame pose_cam[2];

@@ -9,16 +9,41 @@
 void AddLightActors(vtkRenderer *r);
 
 
-Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
+Rendering::Rendering(ros::NodeHandle *n,
+                     bool AR_mode, uint num_windows, bool with_shaodws,
                      bool offScreen_rendering,
                      std::vector<int> window_position)
-        : num_render_windows_(num_windows),
-          with_shadows_(with_shaodws),
-          ar_mode_(AR_mode)
+        :
+        num_render_windows_(num_windows),
+        with_shadows_(with_shaodws),
+        ar_mode_(AR_mode)
 {
     // make sure the number of windows are alright
     if(num_render_windows_ <1) num_render_windows_ =1;
     else if(num_render_windows_ >2) num_render_windows_ = 2;
+
+
+    std::string left_cam_name;
+    if (n->getParam("left_cam_name", left_cam_name))
+        cameras[0] = new CalibratedCamera(n, left_cam_name);
+    else {
+        ROS_ERROR(
+                "Parameter '%s' is required. Place the intrinsic calibration "
+                        "file of each camera in ~/.ros/camera_info/ named as "
+                        "<cam_name>_intrinsics.yaml",
+                n->resolveName("left_cam_name").c_str());
+    }
+    std::string right_cam_name;
+    if (n->getParam("right_cam_name", right_cam_name))
+        cameras[1] = new CalibratedCamera(n, right_cam_name);
+    else {
+        ROS_ERROR(
+                "Parameter '%s' is required. Place the intrinsic calibration "
+                        "file of each camera in ~/.ros/camera_info/ named as "
+                        "<cam_name>_intrinsics.yaml",
+                n->resolveName("right_cam_name").c_str());
+    }
+
 
     double view_port[3][4] = {{0.333, 0.0, 0.666, 1.0}
             , {0.666, 0.0, 1.0, 1.0}
@@ -66,11 +91,7 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
 
     for (int i = 0; i < 2; ++i) {
 
-        image_importer_[i] = vtkSmartPointer<vtkImageImport>::New();
-        image_actor_[i] = vtkSmartPointer<vtkImageActor>::New();
-        camera_image_[i] = vtkSmartPointer<vtkImageData>::New();
 
-        scene_camera_[i] = new CalibratedCamera;
         scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
 
         // In AR the background renderer shows the real camera images from
@@ -79,8 +100,7 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
         background_renderer_[i]->InteractiveOff();
         background_renderer_[i]->SetLayer(0);
 
-        background_camera_[i] = new CalibratedCamera;
-        background_renderer_[i]->SetActiveCamera(background_camera_[i]->camera);
+        background_renderer_[i]->SetActiveCamera(cameras[i]->camera_real);
 
         // in AR we do not need interactive windows or dual layer render
         scene_renderer_[i]->InteractiveOff();
@@ -96,7 +116,8 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
         scene_renderer_[i]->AddLight(lights[1]);
 
         //scene_renderer_[i]->ResetCamera();
-        scene_camera_[i]->camera = scene_renderer_[i]->GetActiveCamera();
+        cameras[i]->camera_virtual=
+                scene_renderer_[i]->GetActiveCamera();
 
         if(with_shadows_)
             AddShadowPass(scene_renderer_[i]);
@@ -134,15 +155,14 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
     background_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
     background_renderer_[2]->InteractiveOff();
     background_renderer_[2]->SetLayer(0);
-    background_renderer_[2]->SetActiveCamera(background_camera_[0]->camera);
+    background_renderer_[2]->SetActiveCamera(cameras[0]->camera_real);
 
 //    if(ar_mode_)
     scene_renderer_[2]->InteractiveOff();
     scene_renderer_[2]->SetLayer(1);
 
-
-    scene_camera_[2] = new CalibratedCamera;
-    scene_camera_[2]->camera = scene_renderer_[2]->GetActiveCamera();
+    cameras[2]->camera_virtual =
+            scene_renderer_[2]->GetActiveCamera();
 
     if(num_render_windows_==1){
         background_renderer_[2]->SetViewport(view_port[2]);
@@ -182,6 +202,7 @@ Rendering::Rendering(bool AR_mode, uint num_windows, bool with_shaodws,
     }
 
 
+    SetEnableBackgroundImage(true);
 
 }
 
@@ -199,56 +220,7 @@ Rendering::~Rendering()
 }
 
 
-//------------------------------------------------------------------------------
-void Rendering::SetWorldToCameraTransform(const cv::Vec3d cam_rvec[],
-                                          const cv::Vec3d cam_tvec[]) {
 
-
-    for (int k = 0; k < 2; ++k) {
-
-        cv::Mat rotationMatrix(3, 3, cv::DataType<double>::type);
-        cv::Rodrigues(cam_rvec[k], rotationMatrix);
-
-        vtkSmartPointer<vtkMatrix4x4>
-                world_to_camera_transform =
-                vtkSmartPointer<vtkMatrix4x4>::New();
-        world_to_camera_transform->Identity();
-
-        // Convert to VTK matrix.
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                world_to_camera_transform->SetElement(
-                        i, j, rotationMatrix.at<double>(
-                                i, j
-                        ));
-            }
-            world_to_camera_transform->SetElement(i, 3, cam_tvec[k][i]);
-        }
-
-        vtkSmartPointer<vtkMatrix4x4> camera_to_world_transform =
-                vtkSmartPointer<vtkMatrix4x4>::New();
-        camera_to_world_transform->Identity();
-
-        camera_to_world_transform->DeepCopy(world_to_camera_transform);
-
-        camera_to_world_transform->Invert();
-
-        scene_camera_[k]->SetExtrinsicParameters(camera_to_world_transform);
-        if(k==1)
-            scene_camera_[2]->SetExtrinsicParameters(camera_to_world_transform);
-
-
-    }
-
-
-    //lights[0]->SetPosition(
-    //    camera_to_world_transform_[0]->Element[0][3],
-    //    camera_to_world_transform_[0]->Element[1][3],
-    //    camera_to_world_transform_[0]->Element[2][3]
-    //);
-
-
-}
 
 //------------------------------------------------------------------------------
 void Rendering::SetEnableBackgroundImage(bool isEnabled)
@@ -257,78 +229,28 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
         if (isEnabled)
         {
             if(background_renderer_[i]->GetActors()->GetNumberOfItems() == 0)
-                background_renderer_[i]->AddActor(image_actor_[i]);
+                background_renderer_[i]->AddActor(cameras[i]->image_actor_);
         }
         else
         {
             if(background_renderer_[i]->GetActors()->GetNumberOfItems() > 0)
-                background_renderer_[i]->RemoveActor(image_actor_[i]);
+                background_renderer_[i]->RemoveActor(cameras[i]->image_actor_);
         }
     }
     if (isEnabled)
     {
         if(background_renderer_[2]->GetActors()->GetNumberOfItems() == 0)
-            background_renderer_[2]->AddActor(image_actor_[1]);
+            background_renderer_[2]->AddActor(cameras[1]->image_actor_);
     }
     else
     {
         if(background_renderer_[2]->GetActors()->GetNumberOfItems() > 0)
-            background_renderer_[2]->RemoveActor(image_actor_[1]);
+            background_renderer_[2]->RemoveActor(cameras[1]->image_actor_);
     }
 }
 
 
-//------------------------------------------------------------------------------
-void Rendering::SetCameraIntrinsics(const cv::Mat intrinsics[])
-{
-    for (int i = 0; i < 2; ++i) {
 
-        background_camera_[i]->SetIntrinsicParameters(intrinsics[i].at<double>(0, 0),
-                                                      intrinsics[i].at<double>(1, 1),
-                                                      intrinsics[i].at<double>(0, 2),
-                                                      intrinsics[i].at<double>(1, 2));
-        scene_camera_[i]->SetIntrinsicParameters(intrinsics[i].at<double>(0, 0),
-                                                 intrinsics[i].at<double>(1, 1),
-                                                 intrinsics[i].at<double>(0, 2),
-                                                 intrinsics[i].at<double>(1, 2));
-    }
-    scene_camera_[2]->SetIntrinsicParameters(intrinsics[1].at<double>(0, 0),
-                                             intrinsics[1].at<double>(1, 1),
-                                             intrinsics[1].at<double>(0, 2),
-                                             intrinsics[1].at<double>(1, 2));
-}
-
-
-//------------------------------------------------------------------------------
-void
-Rendering::SetImageCameraToFaceImage(const int id, const int *window_size) {
-
-    int imageSize[3];
-    image_importer_[id]->GetOutput()->GetDimensions(imageSize);
-
-    double spacing[3];
-    image_importer_[id]->GetOutput()->GetSpacing(spacing);
-
-    double origin[3];
-    image_importer_[id]->GetOutput()->GetOrigin(origin);
-
-    background_camera_[id]->SetCemraToFaceImage(window_size, imageSize,
-                                                spacing, origin);
-
-}
-
-
-//------------------------------------------------------------------------------
-void Rendering::UpdateBackgroundImage(cv::Mat  img[]) {
-
-    for (int i = 0; i < 2; ++i) {
-//    cv::flip(src, _src, 0);
-        cv::cvtColor(img[i], img[i], cv::COLOR_BGR2RGB);
-        image_importer_[i]->SetImportVoidPointer( img[i].data );
-        image_importer_[i]->Modified();
-        image_importer_[i]->Update();
-    }
-}
 
 
 //------------------------------------------------------------------------------
@@ -345,48 +267,17 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
                 = {window_size[0] / (4-num_render_windows_), window_size[1]};
 
         // update each windows view
-        scene_camera_[i]->UpdateView(single_win_size[0],
-                                     single_win_size[1]);
+        cameras[i]->UpdateVirtualView(single_win_size[0],
+                                      single_win_size[1]);
         if(i==1)
-            scene_camera_[2]->UpdateView(single_win_size[0],
-                                         single_win_size[1]);
+            cameras[2]->UpdateVirtualView(single_win_size[0],
+                                          single_win_size[1]);
 
         // update the background image for each camera
-        SetImageCameraToFaceImage(i, single_win_size);
+        cameras[i]->SetRealCameraToFaceImage(single_win_size);
     }
 }
 
-
-//------------------------------------------------------------------------------
-void Rendering::ConfigureBackgroundImage(cv::Mat *img) {
-
-    int image_width = img[0].size().width;
-    int image_height = img[0].size().height;
-
-    for (int i = 0; i < 2; ++i) {
-        assert( img[i].data != NULL );
-
-        scene_camera_[i]->SetCameraImageSize(image_width, image_height);
-        background_camera_[i]->SetCameraImageSize(image_width, image_height);
-
-        if (camera_image_[i]) {
-            image_importer_[i]->SetOutput(camera_image_[i]);
-        }
-        image_importer_[i]->SetDataSpacing(1, 1, 1);
-        image_importer_[i]->SetDataOrigin(0, 0, 0);
-        image_importer_[i]->SetWholeExtent(0, image_width - 1, 0,
-                                           image_height - 1, 0, 0);
-        image_importer_[i]->SetDataExtentToWholeExtent();
-        image_importer_[i]->SetDataScalarTypeToUnsignedChar();
-        image_importer_[i]->SetNumberOfScalarComponents(img[i].channels());
-        image_importer_[i]->SetImportVoidPointer(img[i].data);
-        image_importer_[i]->Update();
-
-        image_actor_[i]->SetInputData(camera_image_[i]);
-    }
-    scene_camera_[2]->SetCameraImageSize(image_width, image_height);
-
-}
 
 
 //------------------------------------------------------------------------------
@@ -431,6 +322,9 @@ void Rendering::Render() {
 //    scene_renderer_->Modified();
 //    background_renderer_->Modified();
 //    render_window_->Modified();
+    // update  view angle (in case window changes size)
+    if(ar_mode_)
+        UpdateCameraViewForActualWindowSize();
     for (int i = 0; i < num_render_windows_; ++i) {
 //    for (int i = 0; i < 1; ++i) {
         render_window_[i]->Render();
@@ -544,7 +438,11 @@ void Rendering::ToggleFullScreen() {
     }
 }
 
+bool Rendering::AreImagesNew() {
 
+    return (cameras[0]->IsImageNew() && cameras[1]->IsImageNew());
+
+}
 
 
 // For each spotlight, add a light frustum wireframe representation and a cone
