@@ -1,6 +1,7 @@
 //
 // Created by nima on 4/12/17.
 //
+#include <custom_conversions/Conversions.h>
 #include "Rendering.h"
 #include "VTKConversions.h"
 
@@ -27,21 +28,45 @@ Rendering::Rendering(ros::NodeHandle *n,
     if (n->getParam("left_cam_name", left_cam_name))
         cameras[0] = new CalibratedCamera(n, left_cam_name);
     else {
-        ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n->resolveName("left_cam_name").c_str());
+        cameras[0] = new CalibratedCamera(n);
+        cv::Vec3d cam_rvec_;
+        cv::Vec3d cam_tvec_;
+        std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
+                                        0.87903000839, -0.472201765689, 0.0599719016889};
+            KDL::Frame pose_cam;
+            conversions::VectorToKDLFrame(temp_vec, pose_cam);
+            conversions::KDLFrameToRvectvec(pose_cam, cam_rvec_, cam_tvec_);
+
+        cameras[0]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
+//        ROS_ERROR(
+//                "Parameter '%s' is required. Place the intrinsic calibration "
+//                        "file of each camera in ~/.ros/camera_info/ named as "
+//                        "<cam_name>_intrinsics.yaml",
+//                n->resolveName("left_cam_name").c_str());
     }
     std::string right_cam_name;
-    if (n->getParam("right_cam_name", right_cam_name))
+    if (n->getParam("right_cam_name", right_cam_name)) {
         cameras[1] = new CalibratedCamera(n, right_cam_name);
+        cameras[2] = new CalibratedCamera(n, right_cam_name);
+    }
     else {
-        ROS_ERROR(
-                "Parameter '%s' is required. Place the intrinsic calibration "
-                        "file of each camera in ~/.ros/camera_info/ named as "
-                        "<cam_name>_intrinsics.yaml",
-                n->resolveName("right_cam_name").c_str());
+        cameras[1] = new CalibratedCamera(n);
+        cameras[2] = new CalibratedCamera(n);
+        cv::Vec3d cam_rvec_;
+        cv::Vec3d cam_tvec_;
+        std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
+                                        0.87903000839, -0.472201765689, 0.0599719016889};
+        KDL::Frame pose_cam;
+        conversions::VectorToKDLFrame(temp_vec, pose_cam);
+        conversions::KDLFrameToRvectvec(pose_cam, cam_rvec_, cam_tvec_);
+
+        cameras[1]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
+        cameras[2]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
+//        ROS_ERROR(
+//                "Parameter '%s' is required. Place the intrinsic calibration "
+//                        "file of each camera in ~/.ros/camera_info/ named as "
+//                        "<cam_name>_intrinsics.yaml",
+//                n->resolveName("right_cam_name").c_str());
     }
 
 
@@ -96,19 +121,23 @@ Rendering::Rendering(ros::NodeHandle *n,
 
         // In AR the background renderer shows the real camera images from
         // the world
-        background_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
-        background_renderer_[i]->InteractiveOff();
-        background_renderer_[i]->SetLayer(0);
+        if(ar_mode_) {
+            background_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
+            background_renderer_[i]->InteractiveOff();
+            background_renderer_[i]->SetLayer(0);
+            background_renderer_[i]->SetActiveCamera(cameras[i]->camera_real);
 
-        background_renderer_[i]->SetActiveCamera(cameras[i]->camera_real);
+        }
+
 
         // in AR we do not need interactive windows or dual layer render
         scene_renderer_[i]->InteractiveOff();
-        scene_renderer_[i]->SetLayer(1);
+        scene_renderer_[i]->SetLayer((int)ar_mode_);
 
 
         if(num_render_windows_==1){
-            background_renderer_[i]->SetViewport(view_port[i]);
+            if(ar_mode_)
+                background_renderer_[i]->SetViewport(view_port[i]);
             scene_renderer_[i]->SetViewport(view_port[i]);
         }
 
@@ -116,8 +145,9 @@ Rendering::Rendering(ros::NodeHandle *n,
         scene_renderer_[i]->AddLight(lights[1]);
 
         //scene_renderer_[i]->ResetCamera();
-        cameras[i]->camera_virtual=
-                scene_renderer_[i]->GetActiveCamera();
+//        cameras[i]->camera_virtual= scene_renderer_[i]->GetActiveCamera();
+        scene_renderer_[i]->SetActiveCamera(cameras[i]->camera_virtual);
+
 
         if(with_shadows_)
             AddShadowPass(scene_renderer_[i]);
@@ -128,7 +158,8 @@ Rendering::Rendering(ros::NodeHandle *n,
             j=i;
 
         render_window_[j]->SetNumberOfLayers(2);
-        render_window_[j]->AddRenderer(background_renderer_[i]);
+        if(ar_mode_)
+            render_window_[j]->AddRenderer(background_renderer_[i]);
 
         render_window_[j]->AddRenderer(scene_renderer_[i]);
 
@@ -152,20 +183,22 @@ Rendering::Rendering(ros::NodeHandle *n,
     // integrated in the loop above later...
     scene_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
 
-    background_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
-    background_renderer_[2]->InteractiveOff();
-    background_renderer_[2]->SetLayer(0);
-    background_renderer_[2]->SetActiveCamera(cameras[0]->camera_real);
-
+    if(ar_mode_){
+        background_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
+        background_renderer_[2]->InteractiveOff();
+        background_renderer_[2]->SetLayer(0);
+        background_renderer_[2]->SetActiveCamera(cameras[0]->camera_real);
+    }
 //    if(ar_mode_)
     scene_renderer_[2]->InteractiveOff();
-    scene_renderer_[2]->SetLayer(1);
+    scene_renderer_[2]->SetLayer((int)ar_mode_);
 
-    cameras[2]->camera_virtual =
-            scene_renderer_[2]->GetActiveCamera();
+//    cameras[2]->camera_virtual = scene_renderer_[2]->GetActiveCamera();
+    scene_renderer_[2]->SetActiveCamera(cameras[2]->camera_virtual);
 
     if(num_render_windows_==1){
-        background_renderer_[2]->SetViewport(view_port[2]);
+        if(ar_mode_)
+            background_renderer_[2]->SetViewport(view_port[2]);
         scene_renderer_[2]->SetViewport(view_port[2]);
     }
 
@@ -176,7 +209,8 @@ Rendering::Rendering(ros::NodeHandle *n,
     if(with_shadows_)
         AddShadowPass(scene_renderer_[2]);
 
-    render_window_[0]->AddRenderer(background_renderer_[2]);
+    if(ar_mode_)
+        render_window_[0]->AddRenderer(background_renderer_[2]);
     render_window_[0]->AddRenderer(scene_renderer_[2]);
 
     //------------------------------------------------
@@ -202,7 +236,8 @@ Rendering::Rendering(ros::NodeHandle *n,
     }
 
 
-    SetEnableBackgroundImage(true);
+    if(ar_mode_)
+        SetEnableBackgroundImage(true);
 
 }
 
@@ -212,10 +247,14 @@ Rendering::~Rendering()
 {
 
     for (int j = 0; j < num_render_windows_; ++j) {
-        render_window_[j]->RemoveRenderer(background_renderer_[j]);
+        if(ar_mode_)
+            render_window_[j]->RemoveRenderer(background_renderer_[j]);
         render_window_[j]->RemoveRenderer(scene_renderer_[j]);
     }
 
+    delete cameras[0];
+    delete cameras[1];
+    delete cameras[2];
 
 }
 

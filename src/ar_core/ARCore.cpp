@@ -98,32 +98,32 @@ void ARCore::SetupROSandGetParameters() {
 //        all_params_found = false;
 //    }
 
-    // ------------------------------------- IMAGES ----------------------------
-    // Left image subscriber
-    std::string left_image_topic_name = "/camera/left/image_color";;
-    if (n.getParam("left_image_topic_name", left_image_topic_name))
-        ROS_DEBUG(
-                "[SUBSCRIBERS] Left cam images from '%s'",
-                left_image_topic_name.c_str());
-    image_subscribers[0] = it->subscribe(
-            left_image_topic_name, 1, &ARCore::ImageLeftCallback,
-            this);
-
-    //--------
-    // Left image subscriber.
-    std::string right_image_topic_name = "/camera/right/image_color";
-    if (n.getParam("right_image_topic_name", right_image_topic_name))
-        ROS_DEBUG(
-                "[SUBSCRIBERS] Right cam images from '%s'",
-                right_image_topic_name.c_str());
-    image_subscribers[1] = it->subscribe(
-            right_image_topic_name, 1, &ARCore::ImageRightCallback,
-            this);
+//    // ------------------------------------- IMAGES ----------------------------
+//    // Left image subscriber
+//    std::string left_image_topic_name = "/camera/left/image_color";;
+//    if (n.getParam("left_image_topic_name", left_image_topic_name))
+//        ROS_DEBUG(
+//                "[SUBSCRIBERS] Left cam images from '%s'",
+//                left_image_topic_name.c_str());
+//    image_subscribers[0] = it->subscribe(
+//            left_image_topic_name, 1, &ARCore::ImageLeftCallback,
+//            this);
+//
+//    //--------
+//    // Left image subscriber.
+//    std::string right_image_topic_name = "/camera/right/image_color";
+//    if (n.getParam("right_image_topic_name", right_image_topic_name))
+//        ROS_DEBUG(
+//                "[SUBSCRIBERS] Right cam images from '%s'",
+//                right_image_topic_name.c_str());
+//    image_subscribers[1] = it->subscribe(
+//            right_image_topic_name, 1, &ARCore::ImageRightCallback,
+//            this);
 
     // KEPT FOR THE OLD OVERLAY NODE TO WORK THE NEW NODE HAS JUST ONE PUBLISHER
     // publishers for the overlayed images
-    publisher_overlayed[0] = it->advertise("left/image_color", 1);
-    publisher_overlayed[1] = it->advertise("right/image_color", 1);
+//    publisher_overlayed[0] = it->advertise("left/image_color", 1);
+//    publisher_overlayed[1] = it->advertise("right/image_color", 1);
 
     publisher_stereo_overlayed = it->advertise("stereo/image_color", 1);
 
@@ -343,7 +343,7 @@ void ARCore::SetupGraphics() {
 //        graphics->SetEnableBackgroundImage(true);
 //    }
 
-    //    graphics->Render();
+        graphics->Render();
 
 }
 // -----------------------------------------------------------------------------
@@ -368,7 +368,6 @@ bool ARCore::UpdateWorld() {
     if(new_task_event)
         HandleTaskEvent();
 
-    cv::Mat cam_images[2];
     if(graphics->AreImagesNew() || !ar_mode) {
 
         // Time performance debug

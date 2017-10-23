@@ -69,10 +69,18 @@ public:
 
     bool IsImageNew();
 
+
+    void ImageCallback(const sensor_msgs::ImageConstPtr &msg);
+
+    void PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+
     void ConfigureBackgroundImage(cv::Mat img);
 
     void UpdateBackgroundImage(cv::Mat  img);
 
+    void SetWorldToCamTf(cv::Vec3d cam_rvec, cv::Vec3d cam_tvec);
+
+private:
     /**
      * \brief FaceImage
      */
@@ -81,10 +89,6 @@ public:
                              const double origin[]);
 
     void ReadCameraParameters(const std::string file_path);
-
-    void ImageCallback(const sensor_msgs::ImageConstPtr &msg);
-
-    void PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
     void LockAndGetImage(cv::Mat &image);
 

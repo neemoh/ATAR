@@ -34,8 +34,8 @@
 
         <!-- About left/right_cam_name: expecting to find Place the intrinsic calibration
              file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml -->
-        <param name= "left_cam_name" value= "$(arg left_cam_name)" />
-        <param name= "right_cam_name" value= "$(arg right_cam_name)" />
+        <!--<param name= "left_cam_name" value= "$(arg left_cam_name)" />-->
+        <!--<param name= "right_cam_name" value= "$(arg right_cam_name)" />-->
 
         <param name= "left_image_topic_name" value= "$(arg left_camera_img_topic)" />
         <param name= "right_image_topic_name" value=
@@ -103,7 +103,7 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="windows_position"> [1280, 0, 0, 0]</rosparam>
+        <rosparam param="windows_position"> [128, 0, 0, 0]</rosparam>
 
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
