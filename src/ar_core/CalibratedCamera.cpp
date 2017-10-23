@@ -36,6 +36,7 @@ CalibratedCamera::CalibratedCamera(ros::NodeHandle *n,
     intrinsic_matrix->Identity();
 
     camera_virtual = vtkSmartPointer<vtkCamera>::New();
+    it = new image_transport::ImageTransport(*n);
 
     //--------------- SET INTRINSICS
     if(is_ar) {
@@ -75,6 +76,8 @@ CalibratedCamera::CalibratedCamera(ros::NodeHandle *n,
         // poses if new messages are arrived on the topics
         std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
         // left cam pose as parameter
+        std::cout << "uuuuuuuuuuu " <<
+                                   "/calibrations/world_frame_to_"+cam_name+"_frame" << std::endl;
         if (n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame",
                         temp_vec)) {
             KDL::Frame pose_cam;
@@ -357,13 +360,12 @@ void CalibratedCamera::SetRealCameraToFaceImage(const int *window_size) {
 
 void CalibratedCamera::UpdateBackgroundImage(cv::Mat img) {
 
-    for (int i = 0; i < 2; ++i) {
 //    cv::flip(src, _src, 0);
         cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
         image_importer_->SetImportVoidPointer( img.data );
         image_importer_->Modified();
         image_importer_->Update();
-    }
+
 }
 
 void CalibratedCamera::ConfigureBackgroundImage(cv::Mat img) {
