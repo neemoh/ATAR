@@ -147,8 +147,8 @@ private:
 
     bool pedal_cam_pressed = false;
     bool with_guidance;
-//    CalibratedCamera  *                     cameras_background[2];
-//    CalibratedCamera  *                     cameras_scene[3];
+//    ARCamera  *                     cameras_background[2];
+//    ARCamera  *                     cameras_scene[3];
 
     cv::Mat camera_matrix[2];
     cv::Mat camera_distortion[2];

@@ -22,8 +22,10 @@
                   file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
     </group>
 
-    <!--<node pkg="uvc_camera" type="uvc_camera_node" name="webcam">-->
-    <!--</node>-->
+    <node pkg="uvc_camera" type="uvc_camera_node" name="asus_webcam">
+        <param name="device" type="string" value="/dev/video0" />
+        <param name="camera_name" type="string" value="$(arg left_cam_name)" />
+    </node>
 
     <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
     <!--name="extrinsic_charuco_left" output="screen" >-->
@@ -80,7 +82,7 @@
         AR_mode: Augmented reality mode uses the cameras and their poses.
         False mean VR mode
          -->
-        <param name= "AR_mode" value= "false" />
+        <param name= "AR_mode" value= "true" />
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
         -->

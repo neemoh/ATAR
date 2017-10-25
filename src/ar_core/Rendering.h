@@ -7,7 +7,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
-#include "CalibratedCamera.h"
+#include "ARCamera.h"
 #include <kdl/frames.hpp>
 
 #include <vtkImageImport.h>
@@ -96,7 +96,7 @@ private:
     bool with_shadows_;
     bool ar_mode_;
     //cameras
-    CalibratedCamera  *                     cameras [3];
+    ARCamera  *                     cameras [3];
 
     vtkSmartPointer<vtkLight>               lights[2];
     // renderer

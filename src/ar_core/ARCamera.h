@@ -30,19 +30,16 @@
  * a correct rendering view (still need to add).
  */
 
-class CalibratedCamera
+class ARCamera
 {
 public:
 
+    ARCamera(ros::NodeHandle *n, const std::string cam_name="");
 
+    ~ARCamera() {}
 
-    CalibratedCamera(ros::NodeHandle *n,
-                     const std::string cam_name="");
-
-    ~CalibratedCamera() {}
-
-    //static CalibratedCamera *New();
-    //vtkTypeMacro(CalibratedCamera, vtkOpenGLCamera);
+    //static ARCamera *New();
+    //vtkTypeMacro(ARCamera, vtkOpenGLCamera);
 
     //    /**
     //     * \brief Set the window size currently used
@@ -90,13 +87,12 @@ private:
 
     void ReadCameraParameters(const std::string file_path);
 
-    void LockAndGetImage(cv::Mat &image);
+    void LockAndGetImage(cv::Mat &image, std::string cam_name);
 
     /**
      * \brief Sets the pose of the camera with respect to world (task frame)
      */
-    void SetWorldToCameraTransform(const cv::Vec3d cam_rvec,
-                                   const cv::Vec3d cam_tvec);
+    void SetWorldToCameraTransform();
 
 public:
 
@@ -109,8 +105,8 @@ private:
     image_transport::Subscriber sub_image;
 
     ros::Subscriber sub_pose;
-    CalibratedCamera(const CalibratedCamera&);  // Purposefully not implemented.
-    void operator=(const CalibratedCamera&);  // Purposefully not implemented.
+    ARCamera(const ARCamera&);  // Purposefully not implemented.
+    void operator=(const ARCamera&);  // Purposefully not implemented.
 
     vtkSmartPointer<vtkImageImport>         image_importer_;
     vtkSmartPointer<vtkImageData>           camera_image_;

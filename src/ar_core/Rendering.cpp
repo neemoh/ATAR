@@ -26,49 +26,30 @@ Rendering::Rendering(ros::NodeHandle *n,
 
     std::string left_cam_name;
     if (n->getParam("left_cam_name", left_cam_name))
-        cameras[0] = new CalibratedCamera(n, left_cam_name);
+        cameras[0] = new ARCamera(n, left_cam_name);
     else {
-        cameras[0] = new CalibratedCamera(n);
-        cv::Vec3d cam_rvec_;
-        cv::Vec3d cam_tvec_;
+        cameras[0] = new ARCamera(n);
+        cv::Vec3d cam_rvec_, cam_tvec_;
         std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
                                         0.87903000839, -0.472201765689, 0.0599719016889};
-            KDL::Frame pose_cam;
-            conversions::VectorToKDLFrame(temp_vec, pose_cam);
-            conversions::KDLFrameToRvectvec(pose_cam, cam_rvec_, cam_tvec_);
-
+        conversions::VectorToRvectvec(temp_vec, cam_rvec_, cam_tvec_);
         cameras[0]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
-//        ROS_ERROR(
-//                "Parameter '%s' is required. Place the intrinsic calibration "
-//                        "file of each camera in ~/.ros/camera_info/ named as "
-//                        "<cam_name>_intrinsics.yaml",
-//                n->resolveName("left_cam_name").c_str());
     }
     std::string right_cam_name;
     if (n->getParam("right_cam_name", right_cam_name)) {
-        cameras[1] = new CalibratedCamera(n, right_cam_name);
-        cameras[2] = new CalibratedCamera(n, right_cam_name);
+        cameras[1] = new ARCamera(n, right_cam_name);
+        cameras[2] = new ARCamera(n, right_cam_name);
     }
     else {
-        cameras[1] = new CalibratedCamera(n);
-        cameras[2] = new CalibratedCamera(n);
-        cv::Vec3d cam_rvec_;
-        cv::Vec3d cam_tvec_;
+        cameras[1] = new ARCamera(n);
+        cameras[2] = new ARCamera(n);
+        cv::Vec3d cam_rvec_, cam_tvec_;
         std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
                                         0.87903000839, -0.472201765689, 0.0599719016889};
-        KDL::Frame pose_cam;
-        conversions::VectorToKDLFrame(temp_vec, pose_cam);
-        conversions::KDLFrameToRvectvec(pose_cam, cam_rvec_, cam_tvec_);
-
+        conversions::VectorToRvectvec(temp_vec, cam_rvec_, cam_tvec_);
         cameras[1]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
         cameras[2]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
-//        ROS_ERROR(
-//                "Parameter '%s' is required. Place the intrinsic calibration "
-//                        "file of each camera in ~/.ros/camera_info/ named as "
-//                        "<cam_name>_intrinsics.yaml",
-//                n->resolveName("right_cam_name").c_str());
     }
-
 
     double view_port[3][4] = {{0.333, 0.0, 0.666, 1.0}
             , {0.666, 0.0, 1.0, 1.0}
@@ -333,7 +314,6 @@ void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 void
 Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
 
-
     vtkSmartPointer<vtkInformation> key_properties = vtkSmartPointer<vtkInformation>::New();
     key_properties->Set(vtkShadowMapBakerPass::OCCLUDER(),0);
     key_properties->Set(vtkShadowMapBakerPass::RECEIVER(),0);
@@ -365,7 +345,6 @@ void Rendering::Render() {
     if(ar_mode_)
         UpdateCameraViewForActualWindowSize();
     for (int i = 0; i < num_render_windows_; ++i) {
-//    for (int i = 0; i < 1; ++i) {
         render_window_[i]->Render();
     }
 
@@ -387,8 +366,6 @@ void Rendering::GetRenderedImage(cv::Mat *images) {
         int dims[3];
         image->GetDimensions(dims);
 
-//    std::cout << " dims[0] " << dims[0] << " dims[1] " << dims[1] << " "
-//            "dims[2] " << dims[2] <<std::endl;
         if (dims[0] > 0) {
             cv::Mat openCVImage(dims[1], dims[0], CV_8UC3,
                                 image->GetScalarPointer()); // Unsigned int, 4 channels

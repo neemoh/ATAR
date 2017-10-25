@@ -2,23 +2,18 @@
 // Created by nima on 4/12/17.
 //
 
-#include "CalibratedCamera.h"
-#include <vtkObjectFactory.h>
-#include <vtkOpenGLRenderer.h>
-#include <vtkOpenGLRenderWindow.h>
-#include <ros/ros.h> // added only for ros_debug
+#include "ARCamera.h"
 #include <pwd.h>
 #include <custom_conversions/Conversions.h>
 
 //
 //
 //#ifndef VTK_IMPLEMENT_MESA_CXX
-//vtkStandardNewMacro(CalibratedCamera);
+//vtkStandardNewMacro(ARCamera);
 //#endif
 
 //----------------------------------------------------------------------------
-CalibratedCamera::CalibratedCamera(ros::NodeHandle *n,
-                                   const std::string cam_name)
+ARCamera::ARCamera(ros::NodeHandle *n, const std::string cam_name)
         : intrinsic_matrix(NULL)
         , image_width_(640)
         , image_height_(480)
@@ -54,68 +49,45 @@ CalibratedCamera::CalibratedCamera(ros::NodeHandle *n,
 
     if(is_ar) {
 
-
         image_importer_ = vtkSmartPointer<vtkImageImport>::New();
         image_actor_ = vtkSmartPointer<vtkImageActor>::New();
         camera_image_ = vtkSmartPointer<vtkImageData>::New();
         camera_real = vtkSmartPointer<vtkCamera>::New();
 
-        // --------------------GET IMAGE IF AR
+        // --------------------Images
         // image subscriber
-        std::string left_image_topic_name = "/camera/left/image_color";;
-        if (n->getParam("left_image_topic_name", left_image_topic_name))
-            ROS_DEBUG(
-                    "[SUBSCRIBERS] Left cam images from '%s'",
-                    left_image_topic_name.c_str());
-        sub_image = it->subscribe(
-                left_image_topic_name, 1, &CalibratedCamera::ImageCallback, this);
-
-        // ------------------ CAM POSE
-
-        // we first try to read the poses as parameters and later update the
-        // poses if new messages are arrived on the topics
-        std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
-        // left cam pose as parameter
-        std::cout << "uuuuuuuuuuu " <<
-                                   "/calibrations/world_frame_to_"+cam_name+"_frame" << std::endl;
-        if (n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame",
-                        temp_vec)) {
-            KDL::Frame pose_cam;
-            conversions::VectorToKDLFrame(temp_vec, pose_cam);
-            conversions::KDLFrameToRvectvec(pose_cam, cam_rvec_, cam_tvec_);
-        }
-
-        // now we set up the subscribers
-        std::stringstream topic_name;
-        topic_name << std::string("/") << cam_name
-                   << "/world_to_camera_transform";
-        ROS_DEBUG("[SUBSCRIBERS] Left came pose from '%s'",
-                  topic_name.str().c_str());
-        sub_pose = n->subscribe(
-                topic_name.str(), 1, &CalibratedCamera::PoseCallback, this);
+        std::string img_topic = "/"+cam_name+ "/image_raw";;
+        sub_image = it->subscribe(img_topic, 1, &ARCamera::ImageCallback, this);
 
         // in AR mode we read real camera images and show them as the background
         // of our rendering
         cv::Mat cam_image;
-        LockAndGetImage(cam_image);
+        LockAndGetImage(cam_image, img_topic);
         ConfigureBackgroundImage(cam_image);
+
+        // ------------------ CAM POSE
+        // we first try to read the poses as parameters and later update the
+        // poses if new messages are arrived on the topics
+        std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
+        if (n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame", temp_vec))
+            conversions::VectorToRvectvec(temp_vec, cam_rvec_, cam_tvec_);
+
+        SetWorldToCameraTransform();
+
+        // now we set up the subscribers
+        sub_pose = n->subscribe("/"+cam_name+ "/world_to_camera_transform",
+                                1, &ARCamera::PoseCallback, this);
 
     }
 
     is_initialized = true;
-
-
-
-
-
-
 
 }
 
 
 
 ////----------------------------------------------------------------------------
-//void CalibratedCamera::SetIntrinsicParameters(const double& fx, const double& fy,
+//void ARCamera::SetIntrinsicParameters(const double& fx, const double& fy,
 //                                              const double& cx, const double& cy)
 //{
 //    fx_ = fx;
@@ -130,7 +102,7 @@ CalibratedCamera::CalibratedCamera(ros::NodeHandle *n,
 
 
 
-void CalibratedCamera::UpdateVirtualView(const double &window_width,
+void ARCamera::UpdateVirtualView(const double &window_width,
                                          const double &window_height) {
 
     //When window aspect ratio is different than that of the image we need to
@@ -159,7 +131,7 @@ void CalibratedCamera::UpdateVirtualView(const double &window_width,
     camera_virtual->Modified();
 }
 
-void CalibratedCamera::SetCemraToFaceImage(const int *window_size,
+void ARCamera::SetCemraToFaceImage(const int *window_size,
                                            const int imageSize[], const double spacing[],
                                            const double origin[]) {
 
@@ -225,7 +197,7 @@ void CalibratedCamera::SetCemraToFaceImage(const int *window_size,
 
 
 // -----------------------------------------------------------------------------
-void CalibratedCamera::ReadCameraParameters(const std::string file_path) {
+void ARCamera::ReadCameraParameters(const std::string file_path) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
 
 
@@ -258,11 +230,13 @@ void CalibratedCamera::ReadCameraParameters(const std::string file_path) {
                              << ", cy= " <<  cy_ );
 }
 
-void CalibratedCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
+void ARCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try
     {
         image_from_ros = cv_bridge::toCvCopy(msg, "bgr8")->image;
         new_image= true;
+        // we shouldn't do time consuming things in the callback. So this
+        // should be ultimately moved to somewhere else
         if(is_initialized)
             UpdateBackgroundImage(image_from_ros);
     }
@@ -272,7 +246,7 @@ void CalibratedCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
     }
 }
 
-void CalibratedCamera::PoseCallback(
+void ARCamera::PoseCallback(
         const geometry_msgs::PoseStampedConstPtr & msg)
 {
     KDL::Frame world_to_cam_pose;
@@ -280,17 +254,15 @@ void CalibratedCamera::PoseCallback(
     tf::poseMsgToKDL(msg->pose, world_to_cam_pose);
     conversions::KDLFrameToRvectvec(world_to_cam_pose, cam_rvec_, cam_tvec_);
 
-    SetWorldToCameraTransform(cam_rvec_, cam_tvec_);
+    SetWorldToCameraTransform();
 }
 
 
 //------------------------------------------------------------------------------
-void CalibratedCamera::SetWorldToCameraTransform(const cv::Vec3d cam_rvec,
-                                                 const cv::Vec3d cam_tvec) {
-
+void ARCamera::SetWorldToCameraTransform() {
 
     cv::Mat rotationMatrix(3, 3, cv::DataType<double>::type);
-    cv::Rodrigues(cam_rvec, rotationMatrix);
+    cv::Rodrigues(cam_rvec_, rotationMatrix);
 
     vtkSmartPointer<vtkMatrix4x4>
             world_to_camera_transform =
@@ -301,11 +273,9 @@ void CalibratedCamera::SetWorldToCameraTransform(const cv::Vec3d cam_rvec,
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             world_to_camera_transform->SetElement(
-                    i, j, rotationMatrix.at<double>(
-                            i, j
-                    ));
+                    i, j, rotationMatrix.at<double>(i, j));
         }
-        world_to_camera_transform->SetElement(i, 3, cam_tvec[i]);
+        world_to_camera_transform->SetElement(i, 3, cam_tvec_[i]);
     }
 
     vtkSmartPointer<vtkMatrix4x4> camera_to_world_transform =
@@ -333,18 +303,9 @@ void CalibratedCamera::SetWorldToCameraTransform(const cv::Vec3d cam_rvec,
     camera_virtual->SetClippingRange(0.05, 10);
     camera_virtual->Modified();
 
-
-
-    //lights[0]->SetPosition(
-    //    camera_to_world_transform_[0]->Element[0][3],
-    //    camera_to_world_transform_[0]->Element[1][3],
-    //    camera_to_world_transform_[0]->Element[2][3]
-    //);
-
-
 }
 
-void CalibratedCamera::SetRealCameraToFaceImage(const int *window_size) {
+void ARCamera::SetRealCameraToFaceImage(const int *window_size) {
     int imageSize[3];
     image_importer_->GetOutput()->GetDimensions(imageSize);
 
@@ -354,21 +315,21 @@ void CalibratedCamera::SetRealCameraToFaceImage(const int *window_size) {
     double origin[3];
     image_importer_->GetOutput()->GetOrigin(origin);
 
-    SetCemraToFaceImage(window_size, imageSize,
-                        spacing, origin);
+    SetCemraToFaceImage(window_size, imageSize, spacing, origin);
 }
 
-void CalibratedCamera::UpdateBackgroundImage(cv::Mat img) {
+void ARCamera::UpdateBackgroundImage(cv::Mat img) {
 
-//    cv::flip(src, _src, 0);
+    if(!img.empty()) {
+        //    cv::flip(src, _src, 0);
         cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
-        image_importer_->SetImportVoidPointer( img.data );
+        image_importer_->SetImportVoidPointer(img.data);
         image_importer_->Modified();
         image_importer_->Update();
-
+    }
 }
 
-void CalibratedCamera::ConfigureBackgroundImage(cv::Mat img) {
+void ARCamera::ConfigureBackgroundImage(cv::Mat img) {
 
     assert( img.data != NULL );
 
@@ -393,27 +354,24 @@ void CalibratedCamera::ConfigureBackgroundImage(cv::Mat img) {
 }
 
 void
-CalibratedCamera::LockAndGetImage(cv::Mat &images) {
+ARCamera::LockAndGetImage(cv::Mat &images, std::string img_topic) {
 
-
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(2);
     ros::Time timeout_time = ros::Time::now() + ros::Duration(1);
 
-    while(image_from_ros.empty()) {
+    while(ros::ok() && image_from_ros.empty()) {
         ros::spinOnce();
         loop_rate.sleep();
-
         if (ros::Time::now() > timeout_time)
-            ROS_WARN("Timeout: No new left Image. Trying again...");
+            ROS_WARN_STREAM(("Timeout: No Image on."+img_topic+
+                    " Trying again...").c_str());
     }
     image_from_ros.copyTo(images);
 
     new_image = false;
-
-
 }
 
-bool CalibratedCamera::IsImageNew() {
+bool ARCamera::IsImageNew() {
     if(new_image){
         new_image = false;
         return true;
@@ -422,10 +380,10 @@ bool CalibratedCamera::IsImageNew() {
 }
 
 void
-CalibratedCamera::SetWorldToCamTf(cv::Vec3d cam_rvec, cv::Vec3d cam_tvec) {
+ARCamera::SetWorldToCamTf(cv::Vec3d cam_rvec, cv::Vec3d cam_tvec) {
     cam_rvec_ = cam_rvec;
     cam_tvec_ = cam_tvec;
-    SetWorldToCameraTransform(cam_rvec_, cam_tvec_);
+    SetWorldToCameraTransform();
 
 
 }
