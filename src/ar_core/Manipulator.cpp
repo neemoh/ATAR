@@ -6,7 +6,7 @@
 #include <custom_conversions/Conversions.h>
 #include "Manipulator.h"
 
-Manipulator::Manipulator(ros::NodeHandle *n,
+Manipulator::Manipulator(ros::NodeHandlePtr n,
                                      const std::string arm_ns,
                                      const std::string pose_topic,
                                      const std::string gripper_topic,

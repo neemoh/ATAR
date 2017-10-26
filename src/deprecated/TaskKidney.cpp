@@ -280,14 +280,6 @@ TaskKidney::TaskKidney(const std::string stl_file_dir,
 //}
 
 //------------------------------------------------------------------------------
-void TaskKidney::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                           const int tool_id) {
-
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-
-}
-
-//------------------------------------------------------------------------------
 void TaskKidney::StepWorld() {
 
 
@@ -468,7 +460,7 @@ void TaskKidney::CalculatedDesiredToolPose() {
     for (int k = 0; k < 1 + (int)bimanual; ++k) {
 
         // make a copy of the current pose
-        KDL::Frame tool_current_pose= *tool_current_pose_kdl[k];
+        KDL::Frame tool_current_pose;
 
         //Find the closest cell to the grip point
         double grip_point[3] = {(tool_current_pose).p[0],
@@ -606,21 +598,6 @@ void TaskKidney::CalculatedDesiredToolPose() {
 
     }
 
-}
-
-
-//------------------------------------------------------------------------------
-bool TaskKidney::IsACParamChanged() {
-    return ac_params_changed;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskKidney::GetACParameters() {
-
-    ac_params_changed = false;
-    // assuming once we read it we can consider it unchanged
-    return &ac_parameters;
 }
 
 

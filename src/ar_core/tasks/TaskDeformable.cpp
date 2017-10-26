@@ -12,14 +12,13 @@
 
 
 
-TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
-                       const bool show_ref_frames, const bool biman,
-                       const bool with_guidance)
+TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
     :
-    SimTask(NULL, 100),
+    SimTask(n, 100),
     time_last(ros::Time::now())
 
 {
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
 
     InitBullet();
 
@@ -85,7 +84,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
     KDL::Frame soft_pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
             , KDL::Vector(attention_center[0], attention_center[1], attention_center[2]) );
     std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("task_deformable_sphere.obj");
+    input_file_dir << MESH_DIRECTORY << std::string("task_deformable_sphere.obj");
     std::string mesh_file_dir_str = input_file_dir.str();
 
     soft_o0 = new SimSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
@@ -210,7 +209,7 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 //    std::vector<double> _dim = {0.002};
 //    SimObject *mesh;
 //    std::stringstream input_file_dir;
-//    input_file_dir << mesh_files_dir << std::string("monkey.obj");
+//    input_file_dir << MESH_DIRECTORY << std::string("monkey.obj");
 //    std::string mesh_file_dir_str = input_file_dir.str();
 //
 //    mesh = new
@@ -271,21 +270,6 @@ TaskDeformable::TaskDeformable(const std::string mesh_files_dir,
 
 
 
-}
-
-
-//------------------------------------------------------------------------------
-void TaskDeformable::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                           const int tool_id) {
-
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-
-}
-
-
-void TaskDeformable::SetCurrentGripperpositionPointer(double &grip_position, const int
-tool_id) {
-    gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
@@ -296,8 +280,10 @@ void TaskDeformable::StepWorld() {
     soft_o2->RenderSoftbody();
     //--------------------------------
     //box
-    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-
+    KDL::Frame tool_pose;
+    master->GetPoseWorld(tool_pose);
+    double grip_posit;
+    master->GetGripper(grip_posit);
     //double x, y, z, w;
     //tool_pose.M.GetQuaternion(x,y,z,w);
     //double box_pose[7] = {box_posit[0], box_posit[1], box_posit[2],x,y,z,w};
@@ -306,8 +292,6 @@ void TaskDeformable::StepWorld() {
 
     //--------------------------------
     //sphere 0
-    double grip_posit = (*gripper_position[0]);
-
     KDL::Vector gripper_pos = KDL::Vector( 0.0, (1+grip_posit)* 0.002, 0.001);
     gripper_pos = tool_pose * gripper_pos;
 
@@ -336,22 +320,6 @@ void TaskDeformable::StepWorld() {
     // step the world
     StepPhysics();
 
-}
-
-
-
-
-//------------------------------------------------------------------------------
-bool TaskDeformable::IsACParamChanged() {
-    return false;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskDeformable::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters *msg;
-    // assuming once we read it we can consider it unchanged
-    return msg;
 }
 
 

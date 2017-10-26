@@ -15,7 +15,7 @@
 class Manipulator {
 
 public:
-    Manipulator(ros::NodeHandle *n,
+    Manipulator(ros::NodeHandlePtr n,
                       const std::string topic_ns,
                       const std::string pose_topic,
                       const std::string gripper_topic,

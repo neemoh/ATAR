@@ -8,18 +8,16 @@
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 #include <math.h>
-#define _USE_MATH_DEFINES
 
 
 
-
-TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
-                       const bool show_ref_frames, const bool biman,
-                       const bool with_guidance)
+TaskNeedle::TaskNeedle(ros::NodeHandlePtr nh)
         :
-        SimTask(NULL, 100),
+        SimTask(nh, 100),
         time_last(ros::Time::now()) {
 
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
     InitBullet();
 
 
@@ -167,7 +165,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         float friction = 20;
         float density = 90000; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("task_needle_needle_L3cm_d3mm"
+        input_file_dir << MESH_DIRECTORY << std::string("task_needle_needle_L3cm_d3mm"
                                                                 ".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
@@ -198,7 +196,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         float friction = 3;
         float density = 0; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("task_needle_suture_plane.obj");
+        input_file_dir << MESH_DIRECTORY << std::string("task_needle_suture_plane.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         SimObject suture_plane_1(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
@@ -220,7 +218,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         float friction = 3;
         float density = 0; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("task_needle_suture_plane.obj");
+        input_file_dir << MESH_DIRECTORY << std::string("task_needle_suture_plane.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         SimObject suture_plane_2(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
@@ -243,7 +241,7 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
         float friction = 20;
         float density = 50000; // kg/m3
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("task_needle_ring_D2cm_D5mm.obj");
+        input_file_dir << MESH_DIRECTORY << std::string("task_needle_ring_D2cm_D5mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
         ring_mesh = new
@@ -297,20 +295,6 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
             right_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
         }
 
-        for (int i = 0; i < 5; ++i) {
-            left_gripper_links[i] =
-                    new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                  gripper_link_dims[i], KDL::Frame(),
-                                  gripper_density, gripper_friction);
-            dynamics_world->addRigidBody(left_gripper_links[i]->GetBody());
-            graphics_actors.push_back(left_gripper_links[i]->GetActor());
-            left_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,
-                                                                       0.7f,
-                                                                       0.7f);
-            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(
-                    50);
-            left_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
-        }
 
     }
 
@@ -324,24 +308,10 @@ TaskNeedle::TaskNeedle(const std::string mesh_files_dir,
     task_coordinate_axes->SetZAxisLabelText("");
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
+    bool show_ref_frames = 1;
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
 
-}
-
-
-//------------------------------------------------------------------------------
-void TaskNeedle::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                           const int tool_id) {
-
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-
-}
-
-
-void TaskNeedle::SetCurrentGripperpositionPointer(double &grip_position, const int
-tool_id) {
-    gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
@@ -351,11 +321,12 @@ void TaskNeedle::StepWorld() {
 //                                    board->GetBody(),
 //                                    result);
 //    std::cout << "in " << result.connected << std::endl;
-
+    KDL::Frame grpr_right_pose;
+    master->GetPoseWorld(grpr_right_pose);
+    double grip_posit;
+    master->GetGripper(grip_posit);
     //-------------------------------- UPDATE RIGHT GRIPPER
-    KDL::Frame grpr_right_pose = (*tool_current_pose_kdl[0]);
     // map gripper value to an angle
-    double grip_posit = (*gripper_position[0]);
     double theta_min=14*M_PI/180;
     double theta_max=40*M_PI/180;
     double grip_angle = theta_max*(grip_posit+0.5)/1.55;
@@ -365,35 +336,11 @@ void TaskNeedle::StepWorld() {
     UpdateGripperLinksPose(grpr_right_pose, grip_angle, gripper_link_dims,
                            right_gripper_links);
 
-    //-------------------------------- UPDATE LEFT GRIPPER
-    KDL::Frame grpr_left_pose = (*tool_current_pose_kdl[1]);
-    // map gripper value to an angle
-    grip_posit = (*gripper_position[1]);
-    grip_angle = theta_max*(grip_posit+0.5)/1.55;
-    if(grip_angle<theta_min)
-        grip_angle=theta_min;
-
-    UpdateGripperLinksPose(grpr_left_pose, grip_angle, gripper_link_dims,
-                           left_gripper_links);
 
     //--------------------------------
     // step the world
     StepPhysics();
 
-}
-
-
-//------------------------------------------------------------------------------
-bool TaskNeedle::IsACParamChanged() {
-    return false;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskNeedle::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters *msg;
-    // assuming once we read it we can consider it unchanged
-    return msg;
 }
 
 

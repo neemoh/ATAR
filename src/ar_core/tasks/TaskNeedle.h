@@ -39,6 +39,7 @@
 #include <btBulletDynamicsCommon.h>
 #include "src/ar_core/SimObject.h"
 #include <vtkMinimalStandardRandomSequence.h>
+#include <src/ar_core/Manipulator.h>
 #include "BulletCollision/CollisionDispatch/btManifoldResult.h"
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
 #include "BulletCollision/CollisionDispatch/btCollisionWorld.h"
@@ -47,9 +48,7 @@
 class TaskNeedle : public SimTask{
 public:
 
-    TaskNeedle(const std::string mesh_files_dir,
-            const bool show_ref_frames, const bool num_tools,
-            const bool with_guidance);
+    TaskNeedle(ros::NodeHandlePtr nh);
 
     ~TaskNeedle();
 
@@ -57,20 +56,9 @@ public:
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
         return graphics_actors;
     }
-    // sets the pose of the tools
-    void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
-
-    // sets the position of the gripper
-    void SetCurrentGripperpositionPointer(double &gripper_position, const int
-    tool_id);
 
     // updates the task logic and the graphics_actors
     void StepWorld();
-
-    bool IsACParamChanged();
-
-    // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters * GetACParameters();
 
     custom_msgs::TaskState GetTaskStateMsg();
 
@@ -107,7 +95,6 @@ private:
     double board_dimensions[3];
     std::vector<std::vector<double>> gripper_link_dims;
     SimObject* right_gripper_links[5];
-    SimObject* left_gripper_links[5];
 
     SimObject *ring_mesh;
     SimObject *needle_mesh;
@@ -122,11 +109,8 @@ private:
     // for not we use the same type of active constraint for both arms
     custom_msgs::ActiveConstraintParameters ac_parameters;
 
-    KDL::Frame tool_desired_pose_kdl[2];
-    KDL::Frame *tool_current_pose_kdl[2];
-    double * gripper_position[2];
-//    vtkSmartPointer<vtkActor>                       d_board_actor;
-//    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
+    Manipulator *master;
+
 
 };
 

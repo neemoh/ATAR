@@ -55,7 +55,7 @@
 class Rendering {
 public:
 
-    Rendering(ros::NodeHandle *n);
+    Rendering(ros::NodeHandlePtr n);
 
     ~Rendering();
 

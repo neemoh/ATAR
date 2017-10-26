@@ -5,23 +5,18 @@
 #include "TaskDemo.h"
 
 #include <custom_conversions/Conversions.h>
-#include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
 
-TaskDemo::TaskDemo(ros::NodeHandle n, const std::string mesh_files_dir,
-                   const KDL::Frame *cam_pose)
+TaskDemo::TaskDemo(ros::NodeHandlePtr n, const KDL::Frame *cam_pose)
         :
-        SimTask(&n, 500) ,
-        mesh_files_dir(mesh_files_dir),
+        SimTask(n, 500) ,
         time_last(ros::Time::now())
 {
 
     // Define a master manipulator
-    master = new ManipulatorMaster(nh, "/sigma7/sigma0",
-                                   "/pose",
-                                   "/gripper_angle",
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle",
                                    cam_pose);
-    //    master = new ManipulatorMaster(nh, "/dvrk/MTML",
+    //    master = new Manipulator(nh, "/dvrk/MTML",
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",
     //                                   cam_pose);
@@ -138,24 +133,11 @@ TaskDemo::TaskDemo(ros::NodeHandle n, const std::string mesh_files_dir,
     {
         KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
         forceps_pose.M.DoRotZ(M_PI/2);
-        forceps = new Forceps(mesh_files_dir, forceps_pose);
+        forceps = new Forceps(MESH_DIRECTORY, forceps_pose);
         forceps->AddToWorld(dynamics_world);
         forceps->AddToActorsVector(graphics_actors);
 
     }
-}
-
-
-//------------------------------------------------------------------------------
-void TaskDemo::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                         const int tool_id) {
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-}
-
-//------------------------------------------------------------------------------
-void TaskDemo::SetCurrentGripperpositionPointer(double &grip_position, const int
-tool_id) {
-    gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
@@ -175,20 +157,6 @@ void TaskDemo::StepWorld() {
 
     //--------------------------------
     // Task logics
-}
-
-
-//------------------------------------------------------------------------------
-bool TaskDemo::IsACParamChanged() {
-    return false;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskDemo::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters *msg;
-    // assuming once we read it we can consider it unchanged
-    return msg;
 }
 
 

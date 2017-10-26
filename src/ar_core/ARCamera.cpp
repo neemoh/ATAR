@@ -8,7 +8,7 @@
 
 
 //----------------------------------------------------------------------------
-ARCamera::ARCamera(ros::NodeHandle *n, image_transport::ImageTransport *it,
+ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
                    const std::string cam_name)
         :
         intrinsic_matrix(NULL)
@@ -21,9 +21,9 @@ ARCamera::ARCamera(ros::NodeHandle *n, image_transport::ImageTransport *it,
 {
     // if there is no name and image transport we assume the camera is not
     // augmented reality type
-    bool is_ar = false;
-    if(cam_name!="" && it!=NULL)
-        is_ar = true;
+    bool is_ar = true;
+    if(cam_name=="" || it==NULL)
+        is_ar = false;
 
     intrinsic_matrix = vtkMatrix4x4::New();
     intrinsic_matrix->Identity();

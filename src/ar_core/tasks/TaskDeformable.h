@@ -7,6 +7,7 @@
 
 
 #include "src/ar_core/SimTask.h"
+#include "src/ar_core/Manipulator.h"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
@@ -51,9 +52,7 @@
 class TaskDeformable : public SimTask{
 public:
 
-    TaskDeformable(const std::string mesh_files_dir,
-            const bool show_ref_frames, const bool num_tools,
-            const bool with_guidance);
+    TaskDeformable(ros::NodeHandlePtr n);
 
     ~TaskDeformable();
 
@@ -61,20 +60,9 @@ public:
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
         return graphics_actors;
     }
-    // sets the pose of the tools
-    void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
-
-    // sets the position of the gripper
-    void SetCurrentGripperpositionPointer(double &gripper_position, const int
-    tool_id);
 
     // updates the task logic and the graphics_actors
     void StepWorld();
-
-    bool IsACParamChanged();
-
-    // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters * GetACParameters();
 
     custom_msgs::TaskState GetTaskStateMsg();
 
@@ -103,11 +91,14 @@ public:
 private:
     std::vector<std::array<double, 3> > sphere_positions;
 
+    Manipulator *master;
+
     double board_dimensions[3];
     SimObject* kine_box;
     SimObject* kine_sphere_0;
     SimObject* kine_sphere_1;
     btSoftRigidDynamicsWorld* dynamics_world;
+
     //keep track of the shapes, we release memory at exit.
     //make sure to re-use collision shapes among rigid bodies whenever possible!
 //    btAlignedObjectArray<btCollisionShape*> collisionShapes;
@@ -129,11 +120,7 @@ private:
     // for not we use the same type of active constraint for both arms
     custom_msgs::ActiveConstraintParameters ac_parameters;
 
-    KDL::Frame tool_desired_pose_kdl[2];
-    KDL::Frame *tool_current_pose_kdl[2];
-    double * gripper_position[2];
-//    vtkSmartPointer<vtkActor>                       d_board_actor;
-//    std::vector< vtkSmartPointer<vtkActor>>         d_sphere_actors;
+
 
 };
 

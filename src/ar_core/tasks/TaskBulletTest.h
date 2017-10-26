@@ -45,9 +45,8 @@
 class TaskBulletTest : public SimTask{
 public:
 
-    TaskBulletTest(const std::string mesh_files_dir,
-            const bool show_ref_frames, const bool num_tools,
-            const bool with_guidance);
+    TaskBulletTest(const bool show_ref_frames, const bool num_tools,
+                       const bool with_guidance);
 
     ~TaskBulletTest();
 
@@ -55,20 +54,9 @@ public:
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
         return graphics_actors;
     }
-    // sets the pose of the tools
-    void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
-
-    // sets the position of the gripper
-    void SetCurrentGripperpositionPointer(double &gripper_position, const int
-    tool_id);
 
     // updates the task logic and the graphics_actors
     void StepWorld();
-
-    bool IsACParamChanged();
-
-    // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters* GetACParameters();
 
     custom_msgs::TaskState GetTaskStateMsg();
 
@@ -173,8 +161,7 @@ private:
     custom_msgs::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl[2];
-    KDL::Frame *tool_current_pose_kdl[2];
-    double *gripper_position[2];
+
 };
 
 #endif //ATAR_TASKBULLETt_H

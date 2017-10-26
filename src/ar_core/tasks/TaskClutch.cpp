@@ -145,24 +145,6 @@ TaskClutch::TaskClutch(const std::string mesh_files_dir,
         rot_inv=rot.Inverse();
         //ResetTask();
     }
-}
-
-
-//------------------------------------------------------------------------------
-void TaskClutch::SetCurrentToolPosePointer(
-    KDL::Frame &tool_pose,
-    const int tool_id
-) {
-
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-
-}
-
-void TaskClutch::SetCurrentGripperpositionPointer(
-    double &grip_position, const int
-tool_id
-) {
-    gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
@@ -396,19 +378,6 @@ void TaskClutch::TaskEvaluation() {
     std::cout << task_state_msg << std::endl;
 }
 
-
-//------------------------------------------------------------------------------
-bool TaskClutch::IsACParamChanged() {
-    return false;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskClutch::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters* msg;
-    // assuming once we read it we can consider it unchanged
-    return msg;
-}
 
 custom_msgs::TaskState TaskClutch::GetTaskStateMsg() {
     return task_state_msg;

@@ -7,12 +7,13 @@
 #include <boost/thread/thread.hpp>
 
 
-TaskRingTransfer::TaskRingTransfer(const std::string mesh_files_dir,
-                   const bool show_ref_frames, const bool biman,
-                   const bool with_guidance)
+TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
         :
-        SimTask(NULL, 100),
+        SimTask(n, 100),
         time_last(ros::Time::now()) {
+
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
 
     InitBullet();
 
@@ -114,7 +115,7 @@ TaskRingTransfer::TaskRingTransfer(const std::string mesh_files_dir,
         size_t n_rings = 4;
         SimObject *rings[n_rings];
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("task_Hook_ring_D2cm_D5mm.obj");
+        input_file_dir << MESH_DIRECTORY << std::string("task_Hook_ring_D2cm_D5mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
         float density = 50000;
         float friction = 5;
@@ -179,7 +180,7 @@ TaskRingTransfer::TaskRingTransfer(const std::string mesh_files_dir,
         KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
                         KDL::Vector(0.09, 0.07, 0.08));
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("task_hook_hook.obj");
+        input_file_dir << MESH_DIRECTORY << std::string("task_hook_hook.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
         std::vector<double> dim; // not used
         float density = 50000;
@@ -217,25 +218,10 @@ TaskRingTransfer::TaskRingTransfer(const std::string mesh_files_dir,
     task_coordinate_axes->SetZAxisLabelText("");
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-
+    bool show_ref_frames = 0;
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
 
-}
-
-
-//------------------------------------------------------------------------------
-void TaskRingTransfer::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                         const int tool_id) {
-
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-
-}
-
-
-void TaskRingTransfer::SetCurrentGripperpositionPointer(double &grip_position, const int
-tool_id) {
-    jaw_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
@@ -243,28 +229,23 @@ void TaskRingTransfer::StepWorld() {
 
 
     //-------------------------------- UPDATE RIGHT GRIPPER
-    KDL::Frame grpr_right_pose = (*tool_current_pose_kdl[0]);
+    KDL::Frame grpr_right_pose;
+    master->GetPoseWorld(grpr_right_pose);
     // map gripper value to an angle
-    double grip_posit = (*jaw_position[0]);
+
+    double grip_posit;
+    master->GetGripper(grip_posit);
     double theta_min=0*M_PI/180;
     double theta_max=40*M_PI/180;
     double grip_angle = theta_max*(grip_posit+0.5)/1.55;
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
-    //grippers[0]->SetPoseAndJawAngle(grpr_right_pose, grip_angle);
-
-    double y = 0.05 * sin(M_PI*(double)counter/50.);
-    counter++;
-    double grip_angle_1 = theta_min + theta_min * sin(M_PI*(double)counter/40.);
-    KDL::Frame th_gripper_pose;
-    th_gripper_pose.p = KDL::Vector(0.03 + y , 0.03 , 0.01);
-    th_gripper_pose.M.DoRotY(M_PI/2);
-    th_gripper_pose.M.DoRotZ(M_PI/2);
+    grippers[0]->SetPoseAndJawAngle(grpr_right_pose, grip_angle);
 
     //Update the pose of hook
     {
-        KDL::Frame tool_pose = (*tool_current_pose_kdl[1]);
+        KDL::Frame tool_pose;
         KDL::Frame local_tool_transform;
 
         // locally transform the tool if needed
@@ -288,22 +269,6 @@ void TaskRingTransfer::StepWorld() {
     // step the world
     StepPhysics();
 
-}
-
-
-
-
-//------------------------------------------------------------------------------
-bool TaskRingTransfer::IsACParamChanged() {
-    return false;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskRingTransfer::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters* msg;
-    // assuming once we read it we can consider it unchanged
-    return msg;
 }
 
 

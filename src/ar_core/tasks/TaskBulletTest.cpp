@@ -10,8 +10,7 @@
 
 
 
-TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
-                               const bool show_ref_frames, const bool biman,
+TaskBulletTest::TaskBulletTest(const bool show_ref_frames, const bool biman,
                                const bool with_guidance)
         :
         SimTask(NULL,500) ,
@@ -53,7 +52,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     for (int i = 0; i < planes_number; i++) {
 
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("task_bullet_test_arrowplane")
+        input_file_dir << MESH_DIRECTORY << std::string("task_bullet_test_arrowplane")
                        << std::string(".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
@@ -72,7 +71,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     //// Arrow for Idle
     //
     //std::stringstream input_file_dir;
-    //input_file_dir << mesh_files_dir << std::string("arrow")
+    //input_file_dir << MESH_DIRECTORY << std::string("arrow")
     //               <<std::string(".obj");
     //std::string mesh_file_dir_str = input_file_dir.str();
     //
@@ -102,7 +101,7 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
     kine_dim = {0.005, 4*0.007};
 
     std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("task_bullet_test_orientation_arrow")
+    input_file_dir << MESH_DIRECTORY << std::string("task_bullet_test_orientation_arrow")
                    << std::string(".obj");
     std::string mesh_file_dir_str = input_file_dir.str();
 
@@ -121,21 +120,6 @@ TaskBulletTest::TaskBulletTest(const std::string mesh_files_dir,
                  pointer_posit[1] - starting_point*direction[1],
                  pointer_posit[2] - starting_point*direction[2] + 0.05};
     movement = movement/movement.Norm();
-}
-
-
-//------------------------------------------------------------------------------
-void TaskBulletTest::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                               const int tool_id) {
-
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-
-}
-
-
-void TaskBulletTest::SetCurrentGripperpositionPointer(double &grip_position, const int
-tool_id) {
-    gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
@@ -154,7 +138,7 @@ void TaskBulletTest::StepWorld() {
     //kine_box->SetKinematicPose(box_pose);
 
 
-    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
+    KDL::Frame tool_pose;
     double x, y, z, w;
     tool_pose.M.GetQuaternion(x, y, z, w);
     double pointer_pose[7] = {
@@ -368,20 +352,6 @@ void TaskBulletTest::ExitChecking() {
     //        arrow->GetActor()->GetProperty()->SetOpacity(1);
     //    }
     //}
-}
-
-
-//------------------------------------------------------------------------------
-bool TaskBulletTest::IsACParamChanged() {
-    return false;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters* TaskBulletTest::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters *msg;
-    // assuming once we read it we can consider it unchanged
-    return msg;
 }
 
 

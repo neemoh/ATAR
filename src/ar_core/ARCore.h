@@ -84,21 +84,6 @@ public:
     // -------------------------------------------------------------------------
     // ROS CALLBACKS
 
-    // Tool poses in task coordinate frame (taskspace).
-    void Tool1PoseCurrentCallback(
-            const geometry_msgs::PoseStamped::ConstPtr &msg);
-
-    void Tool2PoseCurrentCallback(
-            const geometry_msgs::PoseStamped::ConstPtr &msg);
-
-    // Tool gripper callbacks
-    void Tool1GripperCurrentCallback(const std_msgs::Float32::ConstPtr &msg);
-
-    void Tool2GripperCurrentCallback(const std_msgs::Float32::ConstPtr &msg);
-
-    // foot switch used to select the ac path
-    void PedalCameraCallback(const sensor_msgs::JoyConstPtr &msg);
-
     // this topic is used to control the task state from the recording node
     // during the acquisitions.
     void ControlEventsCallback(const std_msgs::Int8ConstPtr &msg);
@@ -114,7 +99,8 @@ private:
     // IN ALL CODE 0 is Left Cam, 1 is Right cam
     // ----------------------------------
 
-    ros::NodeHandle n;
+    ros::NodeHandlePtr n;
+
     double   haptic_loop_rate;
     int n_arms;
     bool ar_mode                        = false;
@@ -123,18 +109,11 @@ private:
     bool new_task_event                 = false;
     bool show_reference_frames          = false;
 
-    std::string mesh_files_dir;
-
-    bool pedal_cam_pressed = false;
     bool with_guidance;
-//    ARCamera  *                     cameras_background[2];
-//    ARCamera  *                     cameras_scene[3];
 
     cv::Mat camera_matrix[2];
     cv::Mat camera_distortion[2];
     KDL::Frame pose_cam[2];
-    KDL::Frame pose_current_tool[2];
-    double gripper_current[2];
     KDL::Frame slave_frame_to_world_frame[2];
     KDL::Frame left_cam_to_right_cam_tr;
 
@@ -156,7 +135,6 @@ private:
 
     ros::Subscriber sub_cam_pose_left;
     ros::Subscriber sub_cam_pose_right;
-    ros::Subscriber sub_pedal_cam;
     ros::Subscriber subscriber_control_events;
 
     ros::Subscriber * subtool_current_pose;
@@ -167,14 +145,6 @@ private:
     //overlay image publishers
     image_transport::Publisher publisher_overlayed[2];
     image_transport::Publisher publisher_stereo_overlayed;
-
-    // two function pointers for slave pose callbacks
-    void (ARCore::*pose_current_tool_callbacks[2])
-            (const geometry_msgs::PoseStamped::ConstPtr &msg);
-
-    // two function pointers for slave gripper callbacks
-    void (ARCore::*gripper_callbacks[2])
-            (const std_msgs::Float32::ConstPtr &msg);
 
 
 };

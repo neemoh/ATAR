@@ -420,14 +420,6 @@ TaskBuzzWire::TaskBuzzWire(
 //}
 
 //------------------------------------------------------------------------------
-void TaskBuzzWire::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                             const int tool_id) {
-
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-
-}
-
-//------------------------------------------------------------------------------
 void TaskBuzzWire::StepWorld() {
 
     // -------------------------------------------------------------------------
@@ -827,21 +819,6 @@ void TaskBuzzWire::CalculatedDesiredToolPose() {
 
 
 
-}
-
-
-//------------------------------------------------------------------------------
-bool TaskBuzzWire::IsACParamChanged() {
-    return ac_params_changed;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * TaskBuzzWire::GetACParameters() {
-
-    ac_params_changed = false;
-    // assuming once we read it we can consider it unchanged
-    return &ac_parameters;
 }
 
 

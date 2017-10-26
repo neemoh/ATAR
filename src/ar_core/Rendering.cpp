@@ -10,7 +10,9 @@
 void AddLightActors(vtkRenderer *r);
 
 
-Rendering::Rendering(ros::NodeHandle *n)
+Rendering::Rendering(ros::NodeHandlePtr n)
+:
+it(NULL)
 {
 
     n->param<bool>("AR_mode", ar_mode_, false);

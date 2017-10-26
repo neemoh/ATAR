@@ -14,15 +14,14 @@ namespace  ThreeDColors {
     double Yellow[3]{1.0, 0.702, 0.0};
 
 }
-Task3D::Task3D(const std::string mesh_files_dir,
-               const bool show_ref_frames, const bool biman,
-               const bool with_guidance)
+Task3D::Task3D()
         :
         SimTask(NULL,100) ,
         time_last(ros::Time::now())
 {
 
-
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
 
     InitBullet();
 
@@ -56,9 +55,8 @@ Task3D::Task3D(const std::string mesh_files_dir,
 
     for (int i = 0; i<rings_number; i++){
 
-
         std::stringstream input_file_dir;
-        input_file_dir << mesh_files_dir << std::string("3Dring")
+        input_file_dir << MESH_DIRECTORY << std::string("3Dring")
                        << i+1 <<std::string(".obj");
         std::string mesh_file_dir_str = input_file_dir.str();
 
@@ -92,7 +90,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
         // hinge objects
 
         std::stringstream input_file_dir_hinge;
-        input_file_dir_hinge << mesh_files_dir << std::string("hinge")
+        input_file_dir_hinge << MESH_DIRECTORY << std::string("hinge")
                              <<std::string(".obj");
         std::string mesh_file_dir_hinge_str = input_file_dir_hinge.str();
 
@@ -112,7 +110,7 @@ Task3D::Task3D(const std::string mesh_files_dir,
     // Arrow for Idle
 
     std::stringstream input_file_dir;
-    input_file_dir << mesh_files_dir << std::string("arrow")
+    input_file_dir << MESH_DIRECTORY << std::string("arrow")
                    <<std::string(".obj");
     std::string mesh_file_dir_str = input_file_dir.str();
 
@@ -141,19 +139,6 @@ Task3D::Task3D(const std::string mesh_files_dir,
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
     graphics_actors.push_back(kine_p->GetActor());
-}
-
-//------------------------------------------------------------------------------
-void Task3D::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                       const int tool_id) {
-
-    tool_current_pose_kdl[tool_id] = &tool_pose;
-
-}
-
-void Task3D::SetCurrentGripperpositionPointer(double &grip_position, const int
-tool_id) {
-    gripper_position[tool_id] = &grip_position;
 };
 
 //------------------------------------------------------------------------------
@@ -161,7 +146,9 @@ void Task3D::StepWorld() {
 
     //-----------------POINTER: update position on the upper plane
 
-    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
+    KDL::Frame tool_pose;
+
+    master->GetPoseWorld(tool_pose);
 
     pointer_posit = tool_pose * KDL::Vector( -0.0, -0.0, -0.03+0.01);
     KDL::Rotation _rot;
@@ -321,20 +308,6 @@ void Task3D::ExitChecking() {
             arrow->GetActor()->GetProperty()->SetOpacity(1);
         }
     }
-}
-
-
-//------------------------------------------------------------------------------
-bool Task3D::IsACParamChanged() {
-    return false;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters * Task3D::GetACParameters() {
-    custom_msgs::ActiveConstraintParameters *msg;
-    // assuming once we read it we can consider it unchanged
-    return msg;
 }
 
 

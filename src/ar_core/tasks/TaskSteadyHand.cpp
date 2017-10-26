@@ -9,17 +9,11 @@
 #include "TaskSteadyHand.h"
 
 
-TaskSteadyHand::TaskSteadyHand(
-        const std::string mesh_file_dir,
-        const bool show_ref_frames,
-        const bool biman,
-        const bool with_guidance,
-        const double haptic_loop_rate,
-        const std::string slave_names_in[],
-        KDL::Frame *slave_to_world_tr)
+TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n, const double haptic_loop_rate,
+                               const std::string slave_names_in[],
+                               KDL::Frame *slave_to_world_tr)
         :
-        SimTask(NULL, haptic_loop_rate),
-        mesh_files_dir(mesh_file_dir),
+        SimTask(n, haptic_loop_rate),
         slave_frame_to_world_frame_tr(slave_to_world_tr),
         destination_ring_counter(0),
         ac_params_changed(true),
@@ -27,6 +21,14 @@ TaskSteadyHand::TaskSteadyHand(
         time_last(ros::Time::now())
 {
 
+    // Define a master manipulator
+    master[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
+                                "/position_cartesian_current",
+                                "/gripper_position_current");
+
+    master[1] = new Manipulator(nh, "/dvrk/PSM2_DUMMY",
+                                "/position_cartesian_current",
+                                "/gripper_position_current");
     InitBullet();
 
     slave_names[0] = slave_names_in[0];
@@ -148,7 +150,7 @@ TaskSteadyHand::TaskSteadyHand(
         tool_desired_frame_axes[k]->SetTipType(vtkAxesActor::SPHERE_TIP);
     }
 
-
+    bool show_ref_frames = false;
     // -------------------------------------------------------------------------
     // Add all graphics_actors to a vector
     if (show_ref_frames) {
@@ -172,7 +174,7 @@ TaskSteadyHand::TaskSteadyHand(
     std::stringstream input_file_dir;
     std::string mesh_file_dir_str;
     input_file_dir.str("");
-    input_file_dir << mesh_files_dir
+    input_file_dir << MESH_DIRECTORY
                    << std::string("task_steady_hand_stand.obj");
     mesh_file_dir_str = input_file_dir.str();
 
@@ -222,7 +224,7 @@ TaskSteadyHand::TaskSteadyHand(
     for (int m = 0; m <4; ++m) {
 
         input_file_dir.str("");
-        input_file_dir << mesh_files_dir
+        input_file_dir << MESH_DIRECTORY
                        << std::string("task_steady_hand_tube_quarter_mesh") << m+1 <<".obj";
         mesh_file_dir_str = input_file_dir.str();
 
@@ -241,7 +243,7 @@ TaskSteadyHand::TaskSteadyHand(
     // -------------------------------------------------------------------------
     // MESH thin
     input_file_dir.str("");
-    input_file_dir << mesh_files_dir
+    input_file_dir << MESH_DIRECTORY
                    << std::string("task_steady_hand_tube_whole_thin.obj");
     mesh_file_dir_str = input_file_dir.str();
     tube_mesh_thin = new
@@ -283,8 +285,8 @@ TaskSteadyHand::TaskSteadyHand(
 
         input_file_dir.str("");
         //input_file_dir <<mesh_file_dir << std::string("torus_D10mm_d1.2mm.obj");
-        input_file_dir <<mesh_file_dir << std::string("task_steady_hand_torus_D10mm_d1.2mm"
-                                                              ".obj");
+        input_file_dir <<MESH_DIRECTORY << std::string
+                ("task_steady_hand_torus_D10mm_d1.2mm.obj");
 
         mesh_file_dir_str = input_file_dir.str();
 
@@ -329,9 +331,9 @@ TaskSteadyHand::TaskSteadyHand(
     {
         KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
         forceps_pose.M.DoRotZ(M_PI/2);
-        forceps[0] = new Forceps(mesh_file_dir, forceps_pose);
+        forceps[0] = new Forceps(MESH_DIRECTORY, forceps_pose);
         forceps_pose.p.x(0.07);
-        forceps[1] = new Forceps(mesh_file_dir, forceps_pose);
+        forceps[1] = new Forceps(MESH_DIRECTORY, forceps_pose);
 
         for (int j = 0; j < 2; ++j) {
             forceps[j]->AddToWorld(dynamics_world);
@@ -425,18 +427,6 @@ TaskSteadyHand::TaskSteadyHand(
         graphics_actors.push_back(score_sphere_actors[j]);
     }
 
-}
-
-
-//------------------------------------------------------------------------------
-void TaskSteadyHand::SetCurrentToolPosePointer(KDL::Frame &tool_pose,
-                                               const int tool_id) {
-    tool_current_pose_ptr[tool_id] = &tool_pose;
-}
-
-void TaskSteadyHand::SetCurrentGripperpositionPointer(double &grip_position, const int
-tool_id) {
-    gripper_position[tool_id] = &grip_position;
 };
 //------------------------------------------------------------------------------
 void TaskSteadyHand::StepWorld() {
@@ -499,10 +489,9 @@ void TaskSteadyHand::StepWorld() {
 
     //-------------------------------- UPDATE RIGHT GRIPPER
     // map gripper value to an angle
-    double grip_posit = (*gripper_position[0]);
     double theta_min=0*M_PI/180;
     double theta_max=20*M_PI/180;
-    double grip_angle = theta_max*(grip_posit)/1.55;
+    double grip_angle = theta_max*(gripper_angle[0])/1.55;
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
@@ -510,8 +499,7 @@ void TaskSteadyHand::StepWorld() {
 
     //-------------------------------- UPDATE LEFT GRIPPER
     // map gripper value to an angle
-    grip_posit = (*gripper_position[1]);
-    grip_angle = theta_max*(grip_posit+0.5)/1.55;
+    grip_angle = theta_max*(gripper_angle[1]+0.5)/1.55;
     if(grip_angle<theta_min)
         grip_angle=theta_min;
 
@@ -799,20 +787,6 @@ void TaskSteadyHand::CalculatedDesiredRingPose(
 
 
 //------------------------------------------------------------------------------
-bool TaskSteadyHand::IsACParamChanged() {
-    return ac_params_changed;
-}
-
-
-//------------------------------------------------------------------------------
-custom_msgs::ActiveConstraintParameters* TaskSteadyHand::GetACParameters() {
-
-    // assuming once we read it we can consider it unchanged
-    return ac_parameters;
-}
-
-
-//------------------------------------------------------------------------------
 void TaskSteadyHand::UpdateRingColor() {
 
     double max_pos_error = 0.002;
@@ -923,14 +897,15 @@ void TaskSteadyHand::HapticsThread() {
     // loop
     while (ros::ok())
     {
+        master[0]->GetPoseWorld(tool_current_pose[0]);
+        master[0]->GetGripper(gripper_angle[0]);
+        master[1]->GetPoseWorld(tool_current_pose[1]);
+        master[1]->GetGripper(gripper_angle[1]);
+
         KDL::Frame ring_pose_loc;
 
         //ring_pose = ring_mesh[ring_in_action]->GetPose();
         ring_pose_loc = ring_pose;
-
-        // find the center of the ring
-        tool_current_pose[0] = *tool_current_pose_ptr[0];
-        tool_current_pose[1] = *tool_current_pose_ptr[1];
 
         KDL::Frame tr_to_desired_ring_pose, desired_ring_pose;
         KDL::Frame estimated_ring_pose_loc;

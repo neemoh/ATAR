@@ -34,6 +34,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Bool.h>
+#include <src/ar_core/Manipulator.h>
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 
@@ -71,15 +72,9 @@ enum class SHTaskState: uint8_t {Idle, OnGoing, Finished};
 class TaskSteadyHand : public SimTask{
 public:
 
-    TaskSteadyHand(
-            const std::string mesh_file_dir,
-            const bool show_ref_frames,
-            const bool num_tools,
-            const bool with_guidance,
-            const double haptic_loop_rate,
-            const std::string slave_names[],
-            KDL::Frame *slave_to_world_tr
-        );
+    TaskSteadyHand(ros::NodeHandlePtr n, const double haptic_loop_rate,
+                       const std::string slave_names[],
+                       KDL::Frame *slave_to_world_tr);
 
     ~TaskSteadyHand();
 
@@ -96,20 +91,7 @@ public:
     // returns all the task graphics_actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {return graphics_actors;}
 
-    // sets the pose of the tools
-    void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
-
-    // sets the position of the gripper
-    void SetCurrentGripperpositionPointer(double &gripper_position, const int
-    tool_id);
-
     custom_msgs::TaskState GetTaskStateMsg();
-
-    // returns the status of the change of the ac_param
-    bool IsACParamChanged();
-
-    // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters* GetACParameters();
 
     // decrements the number of repetitions. Used in case something goes
     // wrong during that repetition.
@@ -165,7 +147,6 @@ private:
     // task logic
 
     SHTaskState task_state;
-    std::string mesh_files_dir;
     std::string slave_names[2];
     KDL::Frame *slave_frame_to_world_frame_tr;
     Colors colors;
@@ -203,10 +184,11 @@ private:
     double orientation_error_norm;
     bool ac_params_changed;
 
-    KDL::Frame tool_desired_pose[2];
-    KDL::Frame *tool_current_pose_ptr[2];
-    KDL::Frame tool_current_pose[2];
+    Manipulator *master[2];
 
+    KDL::Frame tool_desired_pose[2];
+    KDL::Frame tool_current_pose[2];
+    double gripper_angle[2];
     uint destination_ring_counter;
     custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
@@ -239,9 +221,6 @@ private:
     Forceps * forceps[2];
     SimObject* arm[2];
     KDL::Vector rcm[2];
-
-    double * gripper_position[2];
-
 
 };
 

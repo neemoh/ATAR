@@ -55,20 +55,9 @@ public:
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
         return graphics_actors;
     }
-    // sets the pose of the tools
-    void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
-
-    // sets the position of the gripper
-    void SetCurrentGripperpositionPointer(double &gripper_position, const int
-    tool_id);
 
     // updates the task logic and the graphics_actors
     void StepWorld();
-
-    bool IsACParamChanged();
-
-    // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters * GetACParameters();
 
     custom_msgs::TaskState GetTaskStateMsg();
 

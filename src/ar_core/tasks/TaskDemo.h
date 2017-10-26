@@ -14,13 +14,12 @@
 #include "src/ar_core/SimObject.h"
 #include "src/ar_core/Colors.hpp"
 #include "src/ar_core/Forceps.h"
-#include "src/ar_core/ManipulatorMaster.h"
+#include "src/ar_core/Manipulator.h"
 
 class TaskDemo : public SimTask{
 public:
 
-    TaskDemo(ros::NodeHandle n, const std::string mesh_files_dir,
-             const KDL::Frame *cam_pose);
+    TaskDemo(ros::NodeHandlePtr n, const KDL::Frame *cam_pose);
 
     ~TaskDemo();
 
@@ -36,19 +35,7 @@ public:
         return graphics_actors;
     }
 
-    // sets the pose of the tools
-    void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
-
-    // sets the position of the gripper
-    void SetCurrentGripperpositionPointer(double &gripper_position, const int
-    tool_id);
-
     custom_msgs::TaskState GetTaskStateMsg();
-
-    bool IsACParamChanged();
-
-    // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters * GetACParameters();
 
     void ResetCurrentAcquisition();
 
@@ -70,17 +57,12 @@ private:
 private:
     // task template members
     Colors colors;
-    std::string mesh_files_dir;
-
     ros::Time time_last;
 
     custom_msgs::ActiveConstraintParameters ac_parameters;
 
-    ManipulatorMaster *master;
+    Manipulator *master;
 
-    KDL::Frame tool_desired_pose_kdl[2];
-    KDL::Frame * tool_current_pose_kdl[2];
-    double * gripper_position[2];
 };
 
 #endif //ATAR_TASKBULLETt_H

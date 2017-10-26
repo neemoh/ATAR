@@ -78,20 +78,12 @@ public:
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {
         return graphics_actors;
     }
-    // sets the pose of the tools
-    void SetCurrentToolPosePointer(KDL::Frame &tool_pose, const int tool_id);
 
     // updates the task logic and the graphics_actors
     void StepWorld();
 
     // calculates the desired tool pose
     void CalculatedDesiredToolPose();
-
-    // returns the status of the change of the ac_param
-    bool IsACParamChanged();
-
-    // returns the ac parameters
-    custom_msgs::ActiveConstraintParameters * GetACParameters();
 
     custom_msgs::TaskState GetTaskStateMsg();
 
@@ -178,7 +170,6 @@ private:
     custom_msgs::ActiveConstraintParameters ac_parameters;
 
     KDL::Frame tool_desired_pose_kdl[2];
-    KDL::Frame *tool_current_pose_kdl[2];
 
     uint destination_ring_counter;
     vtkSmartPointer<vtkMatrix4x4> tool_current_pose[2];

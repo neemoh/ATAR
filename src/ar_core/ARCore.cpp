@@ -9,7 +9,6 @@
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
 // tasks
 #include "src/ar_core/tasks/TaskBuzzWire.h"
-#include "src/ar_core/tasks/TaskKidney.h"
 #include "src/ar_core/tasks/TaskDeformable.h"
 #include "src/ar_core/tasks/TaskBulletTest.h"
 #include "src/ar_core/tasks/TaskNeedle.h"
@@ -17,17 +16,14 @@
 #include "src/ar_core/tasks/TaskSteadyHand.h"
 #include "src/ar_core/tasks/TaskDemo.h"
 
+std::string MESH_DIRECTORY;
+
 // -----------------------------------------------------------------------------
 ARCore::ARCore(std::string node_name)
-        : n(node_name), running_task_id(0), task_ptr(NULL)
+        : running_task_id(0), task_ptr(NULL)
 {
-    // assign the callback functions
-    pose_current_tool_callbacks[0] = &ARCore::Tool1PoseCurrentCallback;
-    pose_current_tool_callbacks[1] = &ARCore::Tool2PoseCurrentCallback;
 
-    gripper_callbacks[0] = &ARCore::Tool1GripperCurrentCallback;
-    gripper_callbacks[1] = &ARCore::Tool2GripperCurrentCallback;
-
+    n = ros::NodeHandlePtr(new ros::NodeHandle(node_name));
     SetupROSandGetParameters();
 
     SetupGraphics();
@@ -37,25 +33,24 @@ ARCore::ARCore(std::string node_name)
 void ARCore::SetupROSandGetParameters() {
 
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
-                                       ros::console::levels::Debug) ) {
+                                       ros::console::levels::Info) ) {
         ros::console::notifyLoggerLevelsChanged();
     }
 
     bool all_params_found = true;
 
-    n.param<double>("desired_pose_update_frequency", haptic_loop_rate, 500);
+    n->param<double>("desired_pose_update_frequency", haptic_loop_rate, 500);
 
-    n.param<bool>("enable_guidance", with_guidance, true);
+    n->param<bool>("enable_guidance", with_guidance, true);
 
-    n.param<bool>("AR_mode", ar_mode, false);
+    n->param<bool>("AR_mode", ar_mode, false);
     ROS_INFO("AR mode: %s", ar_mode ? "true" : "false");
 
-    if (n.getParam("mesh_files_dir", mesh_files_dir)) {
-        ROS_INFO("mesh directory: %s", mesh_files_dir.c_str());
+    if (n->getParam("mesh_directory", MESH_DIRECTORY)) {
+        ROS_INFO("mesh directory: %s", MESH_DIRECTORY.c_str());
     } else {
         ROS_ERROR("Parameter '%s' is required. ",
-                n.resolveName("mesh_files_dir").c_str());
-        all_params_found = false;
+                  n->resolveName("MESH_DIRECTORY").c_str());
     }
 
     // ---------------------------- CAM INTRINSICS  ----------------------------
@@ -65,7 +60,7 @@ void ARCore::SetupROSandGetParameters() {
 //    const char *home_dir = pw->pw_dir;
 
 //    std::string left_cam_name;
-//    if (n.getParam("left_cam_name", left_cam_name)) {
+//    if (n->getParam("left_cam_name", left_cam_name)) {
 //
 //        std::stringstream path;
 //        path << std::string(home_dir) << std::string("/.ros/camera_info/")
@@ -77,11 +72,11 @@ void ARCore::SetupROSandGetParameters() {
 //                "Parameter '%s' is required. Place the intrinsic calibration "
 //                        "file of each camera in ~/.ros/camera_info/ named as "
 //                        "<cam_name>_intrinsics.yaml",
-//                n.resolveName("left_cam_name").c_str());
+//                n->resolveName("left_cam_name").c_str());
 //        all_params_found = false;
 //    }
 //    std::string right_cam_name;
-//    if (n.getParam("right_cam_name", right_cam_name)) {
+//    if (n->getParam("right_cam_name", right_cam_name)) {
 //        std::stringstream path;
 //        path << std::string(home_dir) << std::string("/.ros/camera_info/")
 //             << right_cam_name << "_intrinsics.yaml";
@@ -92,14 +87,14 @@ void ARCore::SetupROSandGetParameters() {
 //                "Parameter '%s' is required. Place the intrinsic calibration "
 //                        "file of each camera in ~/.ros/camera_info/ named as "
 //                        "<cam_name>_intrinsics.yaml",
-//                n.resolveName("right_cam_name").c_str());
+//                n->resolveName("right_cam_name").c_str());
 //        all_params_found = false;
 //    }
 
 //    // ------------------------------------- IMAGES ----------------------------
 //    // Left image subscriber
 //    std::string left_image_topic_name = "/camera/left/image_color";;
-//    if (n.getParam("left_image_topic_name", left_image_topic_name))
+//    if (n->getParam("left_image_topic_name", left_image_topic_name))
 //        ROS_DEBUG(
 //                "[SUBSCRIBERS] Left cam images from '%s'",
 //                left_image_topic_name.c_str());
@@ -110,7 +105,7 @@ void ARCore::SetupROSandGetParameters() {
 //    //--------
 //    // Left image subscriber.
 //    std::string right_image_topic_name = "/camera/right/image_color";
-//    if (n.getParam("right_image_topic_name", right_image_topic_name))
+//    if (n->getParam("right_image_topic_name", right_image_topic_name))
 //        ROS_DEBUG(
 //                "[SUBSCRIBERS] Right cam images from '%s'",
 //                right_image_topic_name.c_str());
@@ -143,7 +138,7 @@ void ARCore::SetupROSandGetParameters() {
     // poses if new messages are arrived on the topics
     std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
     // left cam pose as parameter
-    if (n.getParam("/calibrations/world_frame_to_left_cam_frame", temp_vec)) {
+    if (n->getParam("/calibrations/world_frame_to_left_cam_frame", temp_vec)) {
         conversions::VectorToKDLFrame(temp_vec, pose_cam[0]);
         conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec_curr[0], cam_tvec_curr[0]);
         cam_tvec_avg[0] = cam_tvec_curr[0];
@@ -166,7 +161,7 @@ void ARCore::SetupROSandGetParameters() {
 //               << "/world_to_camera_transform";
 //    ROS_DEBUG("[SUBSCRIBERS] Left came pose from '%s'",
 //              topic_name.str().c_str());
-//    sub_cam_pose_left = n.subscribe(
+//    sub_cam_pose_left = n->subscribe(
 //            topic_name.str(), 1, &ARCore::LeftCamPoseCallback, this);
 //
 //    topic_name.str("");
@@ -175,15 +170,12 @@ void ARCore::SetupROSandGetParameters() {
 //    // if the topic name is found, check if something is being published on it
 //    ROS_DEBUG("[SUBSCRIBERS] Right cam pose from '%s'",
 //              topic_name.str().c_str());
-//    sub_cam_pose_right = n.subscribe(
+//    sub_cam_pose_right = n->subscribe(
 //            topic_name.str(), 1, &ARCore::RightCamPoseCallback, this);
 
-    // ------------------------------------- Clutches---------------------------
-    sub_pedal_cam = n.subscribe( "/dvrk/footpedals/camera", 1,
-                                 &ARCore::PedalCameraCallback, this);
 
     // ------------------------------------- TOOLS -----------------------------
-    n.param<int>("number_of_arms", n_arms, 1);
+    n->param<int>("number_of_arms", n_arms, 1);
     if(n_arms<1 || n_arms>2)
         throw std::runtime_error("number_of_arms must be 1 or 2");
     ROS_DEBUG("Expecting '%d' arm(s)", n_arms);
@@ -199,26 +191,26 @@ void ARCore::SetupROSandGetParameters() {
         //getting the name of the arms
         std::stringstream param_name;
         param_name << std::string("slave_") << n_arm + 1 << "_name";
-        n.getParam(param_name.str(), slave_names[n_arm]);
+        n->getParam(param_name.str(), slave_names[n_arm]);
 
         param_name.str("");
         param_name << std::string("master_") << n_arm + 1 << "_name";
-        n.getParam(param_name.str(), master_names[n_arm]);
+        n->getParam(param_name.str(), master_names[n_arm]);
 
-        // the current pose of the tools (slaves)
-        param_name.str("");
-        param_name << std::string("/dvrk/") <<slave_names[n_arm]
-                   << "/position_cartesian_current";
-        subtool_current_pose[n_arm] =
-                n.subscribe(param_name.str(), 1,
-                            pose_current_tool_callbacks[n_arm], this);
-
-        // the current pose of the tools (slaves)
-        param_name.str("");
-        param_name << std::string("/dvrk/") <<master_names[n_arm]
-                   << "/gripper_position_current";
-        subtool_current_gripper[n_arm] =
-                n.subscribe(param_name.str(), 1, gripper_callbacks[n_arm], this);
+//        // the current pose of the tools (slaves)
+//        param_name.str("");
+//        param_name << std::string("/dvrk/") <<slave_names[n_arm]
+//                   << "/position_cartesian_current";
+//        subtool_current_pose[n_arm] =
+//                n->subscribe(param_name.str(), 1,
+//                            pose_current_tool_callbacks[n_arm], this);
+//
+//        // the current pose of the tools (slaves)
+//        param_name.str("");
+//        param_name << std::string("/dvrk/") <<master_names[n_arm]
+//                   << "/gripper_position_current";
+//        subtool_current_gripper[n_arm] =
+//                n->subscribe(param_name.str(), 1, gripper_callbacks[n_arm], this);
 
         // the transformation from the coordinate frame of the slave (RCM)
         // to the task coordinate frame is needed in AR mode.
@@ -227,7 +219,7 @@ void ARCore::SetupROSandGetParameters() {
             param_name << (std::string) "/calibrations/world_frame_to_" <<
                        slave_names[n_arm] << "_frame";
             std::vector<double> vect_temp = std::vector<double>(7, 0.0);
-            if (n.getParam(param_name.str(), vect_temp)) {
+            if (n->getParam(param_name.str(), vect_temp)) {
                 conversions::VectorToKDLFrame(vect_temp,
                                               slave_frame_to_world_frame[n_arm]);
                 // param is from task to RCM, we want the inverse
@@ -248,7 +240,7 @@ void ARCore::SetupROSandGetParameters() {
             param_name << (std::string) "/calibrations/" <<
                        slave_names[n_arm] << "_frame_to_image_frame";
             std::vector<double> vect_temp = std::vector<double>(7, 0.0);
-            if (n.getParam(param_name.str(), vect_temp)) {
+            if (n->getParam(param_name.str(), vect_temp)) {
                 KDL::Frame mtm_to_image;
                 conversions::VectorToKDLFrame(vect_temp, mtm_to_image);
 
@@ -270,10 +262,10 @@ void ARCore::SetupROSandGetParameters() {
 
     // Publisher for the task state
     std::string task_state_topic_name = "/atar/task_state";
-    publisher_task_state = n.advertise<custom_msgs::TaskState>(
+    publisher_task_state = n->advertise<custom_msgs::TaskState>(
             task_state_topic_name.c_str(), 1);
 
-    subscriber_control_events = n.subscribe(
+    subscriber_control_events = n->subscribe(
             "/atar/control_events", 1, &ARCore::ControlEventsCallback, this);
 
     if (!all_params_found)
@@ -285,12 +277,12 @@ void ARCore::SetupROSandGetParameters() {
 void ARCore::SetupGraphics() {
 
 
-    n.param<bool>("publish_overlayed_images", publish_overlayed_images, true);
+    n->param<bool>("publish_overlayed_images", publish_overlayed_images, true);
     ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
              publish_overlayed_images ? "true" : "false");
 
 
-    n.param<bool>("show_reference_frames", show_reference_frames, true);
+    n->param<bool>("show_reference_frames", show_reference_frames, true);
 
     // Create the window for the video feed if we publish the images
     if (publish_overlayed_images) {
@@ -310,7 +302,7 @@ void ARCore::SetupGraphics() {
 
 
 
-    graphics = new Rendering(&n);
+    graphics = new Rendering(n);
 
 //    // in case camera poses are set as parameters
 //    graphics->SetWorldToCameraTransform(cam_rvec_curr, cam_tvec_curr);
@@ -420,9 +412,8 @@ void ARCore::StartTask(const uint task_id) {
     // create the task
     if(task_id ==1){
         // allocate anew dynamic task
-        ROS_DEBUG("Starting new TaskKidney. ");
-        task_ptr   = new TaskKidney(mesh_files_dir, show_reference_frames,
-                                    (bool) (n_arms - 1), with_guidance);
+        ROS_DEBUG("Starting new TestTask task. ");
+        task_ptr   = new TaskDemo(n, &pose_cam[0]);
     }
     else if(task_id ==2){
 
@@ -433,36 +424,31 @@ void ARCore::StartTask(const uint task_id) {
             //getting the name of the arms
             std::stringstream param_name;
             param_name << std::string("slave_") << n_arm + 1 << "_name";
-            n.getParam(param_name.str(), slave_names[n_arm]);
+            n->getParam(param_name.str(), slave_names[n_arm]);
         }
 
         // starting the task
         ROS_DEBUG("Starting new BuzzWireTask task. ");
-        task_ptr   = new TaskSteadyHand(
-                mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
-                with_guidance, haptic_loop_rate, slave_names, slave_frame_to_world_frame
-        );
+        task_ptr   = new TaskSteadyHand(n, haptic_loop_rate,
+                                        slave_names, slave_frame_to_world_frame);
     }
     else if(task_id ==3){
         ROS_DEBUG("Starting new TaskNeedle. ");
-        task_ptr   = new TaskNeedle(mesh_files_dir, show_reference_frames,
-                                    (bool) (n_arms - 1), with_guidance);
+        task_ptr   = new TaskNeedle(n);
     }
     else if(task_id ==4){
         ROS_DEBUG("Starting new TaskBulletTest. ");
-        task_ptr   = new TaskBulletTest(mesh_files_dir, show_reference_frames,
+        task_ptr   = new TaskBulletTest(show_reference_frames,
                                         (bool) (n_arms - 1), with_guidance);
     }
     else if(task_id ==5){
         ROS_DEBUG("Starting new TaskDeformable . ");
-        task_ptr   = new TaskDeformable(mesh_files_dir, show_reference_frames,
-                                        (bool) (n_arms - 1), with_guidance);
+        task_ptr   = new TaskDeformable(n);
 
     }
     else if(task_id ==6) {
         ROS_DEBUG("Starting new TaskRingTransfer. ");
-        task_ptr   = new TaskRingTransfer(mesh_files_dir, show_reference_frames,
-                                  (bool) (n_arms - 1), with_guidance);
+        task_ptr   = new TaskRingTransfer(n);
     }
     else if(task_id ==7) {
         ROS_DEBUG("Starting new BuzzWireTask task. ");
@@ -473,27 +459,22 @@ void ARCore::StartTask(const uint task_id) {
             //getting the name of the arms
             std::stringstream param_name;
             param_name << std::string("slave_") << n_arm + 1 << "_name";
-            n.getParam(param_name.str(), slave_names[n_arm]);
+            n->getParam(param_name.str(), slave_names[n_arm]);
         }
         // starting the task
         task_ptr = new TaskBuzzWire(
-                mesh_files_dir, show_reference_frames, (bool) (n_arms - 1),
+                MESH_DIRECTORY, show_reference_frames, (bool) (n_arms - 1),
                 with_guidance, haptic_loop_rate, slave_names,
                 slave_frame_to_world_frame
         );
     }
     else if(task_id == 8) {
-        ROS_DEBUG("Starting new TestTask task. ");
-        task_ptr   = new TaskDemo(n, mesh_files_dir, &pose_cam[0]);
+//        ROS_DEBUG("Starting new TestTask task. ");
+//        task_ptr   = new TaskDemo(n, MESH_DIRECTORY, &pose_cam[0]);
     }
     if(task_ptr) {
         // assign the tool pose pointers
         ros::spinOnce();
-        task_ptr->SetCurrentToolPosePointer(pose_current_tool[0], 0);
-        task_ptr->SetCurrentToolPosePointer(pose_current_tool[1], 1);
-
-        task_ptr->SetCurrentGripperpositionPointer(gripper_current[0], 0);
-        task_ptr->SetCurrentGripperpositionPointer(gripper_current[1], 1);
 
         task_ptr->StepWorld();
 
@@ -534,7 +515,7 @@ bool ARCore::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
 
 
     double avg_factor;
-    n.param<double>("cam_pose_averaging_factor", avg_factor, 0.5);
+    n->param<double>("cam_pose_averaging_factor", avg_factor, 0.5);
 
     // FIXME change to normal averaging with buffer.
     // populate the out values
@@ -584,7 +565,7 @@ void ARCore::DoArmToWorldFrameCalibration(const uint arm_id) {
     std::stringstream param_name;
     std::string slave_name;
     param_name << std::string("slave_") << arm_id + 1 << "_name";
-    n.getParam(param_name.str(), slave_name);
+    n->getParam(param_name.str(), slave_name);
 
     std::stringstream arm_pose_namespace;
     arm_pose_namespace << std::string("/dvrk/") <<slave_name
@@ -592,12 +573,12 @@ void ARCore::DoArmToWorldFrameCalibration(const uint arm_id) {
 
     std::stringstream cam_pose_namespace;
     std::string left_cam_name;
-    n.getParam("left_cam_name", left_cam_name);
+    n->getParam("left_cam_name", left_cam_name);
     cam_pose_namespace << std::string("/") << left_cam_name
                        << "/world_to_camera_transform";
 
     std::string cam_image_name_space ;
-    n.getParam("left_image_topic_name", cam_image_name_space);
+    n->getParam("left_image_topic_name", cam_image_name_space);
 
     // putting the calibration point on the corners of the board squares
     // the parameter can be set directly, unless there is the global
@@ -605,14 +586,14 @@ void ARCore::DoArmToWorldFrameCalibration(const uint arm_id) {
     double calib_points_distance = 0.01;
     std::vector<float> board_params = std::vector<float>(5, 0.0);
 
-    if(!n.getParam("calib_points_distance", calib_points_distance)){
-        if(n.getParam("/calibrations/board_params", board_params))
+    if(!n->getParam("calib_points_distance", calib_points_distance)){
+        if(n->getParam("/calibrations/board_params", board_params))
             calib_points_distance = board_params[3];
 
     };
 
     int num_calib_points;
-    n.param<int>("number_of_calibration_points", num_calib_points, 6);
+    n->param<int>("number_of_calibration_points", num_calib_points, 6);
 
     ArmToWorldCalibration AWC;
     KDL::Frame world_to_arm_frame;
@@ -634,7 +615,7 @@ void ARCore::DoArmToWorldFrameCalibration(const uint arm_id) {
 
         std::vector<double> vec7(7, 0.0);
         conversions::KDLFrameToVector(world_to_arm_frame, vec7);
-        n.setParam(param_name.str(), vec7);
+        n->setParam(param_name.str(), vec7);
 
         // set output
         slave_frame_to_world_frame[arm_id] = world_to_arm_frame.Inverse();
@@ -651,7 +632,7 @@ void ARCore::Cleanup() {
 // -----------------------------------------------------------------------------
 void ARCore::StartArmToWorldFrameCalibration(const uint arm_id) {
 
-    ROS_INFO("Starting Arm 1 to world calibration.");
+    ROS_INFO("Starting Arm 1 to world calibration->");
     if(running_task_id>0) {
         // if a task is running first stop it
         graphics->RemoveAllActorsFromScene();
@@ -725,43 +706,6 @@ void ARCore::ReadCameraParameters(const std::string file_path,
 }
 
 
-
-// Reading the pose of the slaves and take them to task space
-// -----------------------------------------------------------------------------
-void ARCore::Tool1PoseCurrentCallback(
-        const geometry_msgs::PoseStamped::ConstPtr &msg) {
-    // take the pose from the arm frame to the task frame
-    KDL::Frame frame;
-    tf::poseMsgToKDL(msg->pose, frame);
-    pose_current_tool[0] =  slave_frame_to_world_frame[0] * frame;
-
-}
-
-void ARCore::Tool2PoseCurrentCallback(
-        const geometry_msgs::PoseStamped::ConstPtr &msg) {
-    // take the pose from the arm frame to the task frame
-    KDL::Frame frame;
-    tf::poseMsgToKDL(msg->pose, frame);
-    pose_current_tool[1] =  slave_frame_to_world_frame[1] * frame;
-}
-
-// -----------------------------------------------------------------------------
-// Reading the gripper positions
-void ARCore::Tool1GripperCurrentCallback(
-        const std_msgs::Float32::ConstPtr &msg) {
-    gripper_current[0] =  msg->data;
-}
-
-void ARCore::Tool2GripperCurrentCallback(
-        const std_msgs::Float32::ConstPtr &msg) {
-    gripper_current[1] =  msg->data;
-
-}
-
-// -----------------------------------------------------------------------------
-void ARCore::PedalCameraCallback(const sensor_msgs::JoyConstPtr &msg){
-    pedal_cam_pressed = (bool)msg->buttons[0];
-}
 
 // -----------------------------------------------------------------------------
 void ARCore::ControlEventsCallback(const std_msgs::Int8ConstPtr
