@@ -2,8 +2,8 @@
 // Created by nima on 16/10/17.
 //
 
-#ifndef ATAR_MANIPULATORMASTER_H
-#define ATAR_MANIPULATORMASTER_H
+#ifndef ATAR_MANIPULATOR_H
+#define ATAR_MANIPULATOR_H
 
 
 #include <ros/ros.h>
@@ -12,10 +12,10 @@
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/TwistStamped.h>
 
-class ManipulatorMaster {
+class Manipulator {
 
 public:
-    ManipulatorMaster(ros::NodeHandle *n,
+    Manipulator(ros::NodeHandle *n,
                       const std::string topic_ns,
                       const std::string pose_topic,
                       const std::string gripper_topic,
@@ -54,4 +54,4 @@ private:
 };
 
 
-#endif //ATAR_MANIPULATORMASTER_H
+#endif //ATAR_MANIPULATOR_H

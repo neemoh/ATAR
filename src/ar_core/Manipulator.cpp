@@ -4,9 +4,9 @@
 
 #include <kdl_conversions/kdl_msg.h>
 #include <custom_conversions/Conversions.h>
-#include "ManipulatorMaster.h"
+#include "Manipulator.h"
 
-ManipulatorMaster::ManipulatorMaster(ros::NodeHandle *n,
+Manipulator::Manipulator(ros::NodeHandle *n,
                                      const std::string arm_ns,
                                      const std::string pose_topic,
                                      const std::string gripper_topic,
@@ -16,14 +16,14 @@ ManipulatorMaster::ManipulatorMaster(ros::NodeHandle *n,
     //--------------------------------------------------------------------------
     // Define subscribers
     sub_pose = n->subscribe(arm_ns+pose_topic, 1,
-                           &ManipulatorMaster::PoseCallback, this);
+                           &Manipulator::PoseCallback, this);
 
     sub_gripper = n->subscribe(arm_ns+gripper_topic, 1,
-                        &ManipulatorMaster::GripperCallback, this);
+                        &Manipulator::GripperCallback, this);
 
     if(twist_topic!="")
         sub_twist = n->subscribe(arm_ns+twist_topic, 1,
-                                  &ManipulatorMaster::TwistCallback, this);
+                                  &Manipulator::TwistCallback, this);
 
     //--------------------------------------------------------------------------
     // Get the transformation to the display and calculate the tr to the
@@ -47,20 +47,19 @@ ManipulatorMaster::ManipulatorMaster(ros::NodeHandle *n,
 }
 
 void
-ManipulatorMaster::PoseCallback(const geometry_msgs::PoseStampedConstPtr
-                                &msg) {
+Manipulator::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
 
     tf::poseMsgToKDL(msg->pose, pose_local);
     pose_world =  local_to_world_frame_tr * pose_local;
 
 }
 
-void ManipulatorMaster::GripperCallback(const std_msgs::Float64ConstPtr &msg) {
+void Manipulator::GripperCallback(const std_msgs::Float64ConstPtr &msg) {
     gripper_angle = msg->data;
 }
 
 void
-ManipulatorMaster::TwistCallback(const geometry_msgs::TwistStampedConstPtr
+Manipulator::TwistCallback(const geometry_msgs::TwistStampedConstPtr
                                  &msg) {
 
     tf::twistMsgToKDL(msg->twist, twist_local);
