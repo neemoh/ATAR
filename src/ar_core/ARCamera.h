@@ -34,25 +34,12 @@ class ARCamera
 {
 public:
 
-    ARCamera(ros::NodeHandle *n, const std::string cam_name="");
+    ARCamera(ros::NodeHandle *n, image_transport::ImageTransport *it=NULL ,const
+    std::string cam_name="");
+
+//    ARCamera(const ARCamera&);
 
     ~ARCamera() {}
-
-    //static ARCamera *New();
-    //vtkTypeMacro(ARCamera, vtkOpenGLCamera);
-
-    //    /**
-    //     * \brief Set the window size currently used
-    //     * \param width in pixels.
-    //     * \param height in pixels.
-    //     */
-    //    void SetActualWindowSize(const int& width, const int& height);
-
-//    /**
-//     * \brief Set the intrinsic parameters from camera calibration.
-//     */
-//    void SetIntrinsicParameters(const double& fx, const double& fy,
-//                                const double& cx, const double& cy);
 
     /**
     * \brief Update the view angle of the virtual Camera according to window size
@@ -62,7 +49,7 @@ public:
 
     // Set up the background scene_camera to fill the renderer with the image
 
-    void SetRealCameraToFaceImage(const int *window_size);
+    void UpdateBackgroundImage(const int *window_size);
 
     bool IsImageNew();
 
@@ -73,9 +60,7 @@ public:
 
     void ConfigureBackgroundImage(cv::Mat img);
 
-    void UpdateBackgroundImage(cv::Mat  img);
-
-    void SetWorldToCamTf(cv::Vec3d cam_rvec, cv::Vec3d cam_tvec);
+    void SetWorldToCamTf(const KDL::Frame & frame);
 
 private:
     /**
@@ -92,7 +77,7 @@ private:
     /**
      * \brief Sets the pose of the camera with respect to world (task frame)
      */
-    void SetWorldToCameraTransform();
+    void SetCameraPose();
 
 public:
 
@@ -101,8 +86,8 @@ public:
     vtkSmartPointer<vtkImageActor>          image_actor_;
 
 private:
-    image_transport::ImageTransport *it;
     image_transport::Subscriber sub_image;
+//    image_transport::ImageTransport * it_;
 
     ros::Subscriber sub_pose;
     ARCamera(const ARCamera&);  // Purposefully not implemented.
@@ -121,8 +106,11 @@ private:
     bool is_initialized = false;
     // TODO stop using rvec/tvec representation?
     //    KDL::Frame world_to_cam_pose;
-    cv::Vec3d cam_rvec_;
-    cv::Vec3d cam_tvec_;
+//    cv::Vec3d cam_rvec_;
+//    cv::Vec3d cam_tvec_;
+    KDL::Frame world_to_cam_pose;
+
+    cv::Mat img;
 
     double image_width_;
     double image_height_;

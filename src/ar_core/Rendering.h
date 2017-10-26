@@ -58,10 +58,7 @@ public:
     //    vtkTypeMacro(Rendering, vtkRenderWindow);
     //    static Rendering *New();
 
-    Rendering(ros::NodeHandle *n,
-    bool AR_mode, uint num_windows, bool with_shaodws,
-                  bool offScreen_rendering,
-                  std::vector<int> window_position);
+    Rendering(ros::NodeHandle *n);
 
     ~Rendering();
 
@@ -71,8 +68,6 @@ public:
     void UpdateCameraViewForActualWindowSize();
 
 //    void SetCameraIntrinsics(const cv::Mat intrinsics[]);
-
-    void AddActorToScene(vtkSmartPointer<vtkProp> actor);
 
     void AddActorsToScene(std::vector< vtkSmartPointer<vtkProp> > actors);
 
@@ -90,6 +85,7 @@ private:
 
     void AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer>);
 
+    void SetupLights();
 
 private:
     int num_render_windows_;
@@ -97,6 +93,7 @@ private:
     bool ar_mode_;
     //cameras
     ARCamera  *                     cameras [3];
+    image_transport::ImageTransport *it;
 
     vtkSmartPointer<vtkLight>               lights[2];
     // renderer

@@ -10,54 +10,63 @@
 void AddLightActors(vtkRenderer *r);
 
 
-Rendering::Rendering(ros::NodeHandle *n,
-                     bool AR_mode, uint num_windows, bool with_shaodws,
-                     bool offScreen_rendering,
-                     std::vector<int> window_position)
-        :
-        num_render_windows_(num_windows),
-        with_shadows_(with_shaodws),
-        ar_mode_(AR_mode)
+Rendering::Rendering(ros::NodeHandle *n)
 {
+
+    n->param<bool>("AR_mode", ar_mode_, false);
+    ROS_INFO("AR mode: %s", ar_mode_ ? "true" : "false");
+
+    n->param<int>("one_window_mode", num_render_windows_, false);
+    ROS_INFO("Rendered Images will be shown in %i window(s): ",
+             num_render_windows_);
+
+    n->param<bool>("with_shadows", with_shadows_, false);
+    ROS_INFO("Shadows Generation: %s", with_shadows_ ? "true" : "false");
+
+    bool offScreen_rendering;
+    n->param<bool>("offScreen_rendering", offScreen_rendering, false);
+    ROS_INFO("offScreen_rendering: %s", offScreen_rendering ? "true" : "false");
+
+
     // make sure the number of windows are alright
     if(num_render_windows_ <1) num_render_windows_ =1;
     else if(num_render_windows_ >2) num_render_windows_ = 2;
 
+    if(ar_mode_)
+        it = new image_transport::ImageTransport(*n);
 
     std::string left_cam_name;
     if (n->getParam("left_cam_name", left_cam_name))
-        cameras[0] = new ARCamera(n, left_cam_name);
+        cameras[0] = new ARCamera(n, it, left_cam_name);
     else {
         cameras[0] = new ARCamera(n);
-        cv::Vec3d cam_rvec_, cam_tvec_;
         std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
                                         0.87903000839, -0.472201765689, 0.0599719016889};
-        conversions::VectorToRvectvec(temp_vec, cam_rvec_, cam_tvec_);
-        cameras[0]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
+        KDL::Frame temp_frame;
+        conversions::VectorToKDLFrame(temp_vec, temp_frame);
+        cameras[0]->SetWorldToCamTf(temp_frame);
     }
     std::string right_cam_name;
     if (n->getParam("right_cam_name", right_cam_name)) {
-        cameras[1] = new ARCamera(n, right_cam_name);
-        cameras[2] = new ARCamera(n, right_cam_name);
+        cameras[1] = new ARCamera(n, it, right_cam_name);
+        cameras[2] = new ARCamera(n, it, right_cam_name);
     }
     else {
         cameras[1] = new ARCamera(n);
         cameras[2] = new ARCamera(n);
-        cv::Vec3d cam_rvec_, cam_tvec_;
         std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
                                         0.87903000839, -0.472201765689, 0.0599719016889};
-        conversions::VectorToRvectvec(temp_vec, cam_rvec_, cam_tvec_);
-        cameras[1]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
-        cameras[2]->SetWorldToCamTf(cam_rvec_, cam_tvec_);
+        KDL::Frame temp_frame;
+        conversions::VectorToKDLFrame(temp_vec, temp_frame);
+        cameras[0]->SetWorldToCamTf(temp_frame);
+        cameras[2]->SetWorldToCamTf(temp_frame);
     }
-
-    double view_port[3][4] = {{0.333, 0.0, 0.666, 1.0}
-            , {0.666, 0.0, 1.0, 1.0}
-            ,{0.0, 0.0, 0.333, 1.0}};
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
     render_window_[0]->BordersOff();
 
+    std::vector<int> window_position(4, 0);
+    n->getParam("window_position", window_position);
     if(num_render_windows_==1)
         render_window_[0]->SetPosition(window_position[0], window_position[1]);
     else if(num_render_windows_==2) {
@@ -66,36 +75,18 @@ Rendering::Rendering(ros::NodeHandle *n,
         render_window_[1]->BordersOff();
     }
 
-    // line 182 of vtkShadowMapPass.cxx
-    lights[0] =   vtkSmartPointer<vtkLight>::New();
-    lights[1] =   vtkSmartPointer<vtkLight>::New();
+    SetupLights();
 
-    double lights_focal_point[3] {0.07, -0.30, -0.3};
-    double lights_position[3] {0.08, 0.7, 0.7};
+    double view_port[3][4] = {{0.333, 0.0, 0.666, 1.0}
+            , {0.666, 0.0, 1.0, 1.0}
+            ,{0.0, 0.0, 0.333, 1.0}};
 
-    lights[0]->SetPosition(lights_position[0], lights_position[1],
-                           lights_position[2]);
-    lights[0]->SetFocalPoint(lights_focal_point[0], lights_focal_point[1],
-                             lights_focal_point[2]);
-    //lights[0]->SetColor(1.0,1.0,1.0);
-    lights[0]->SetPositional(1);
-    lights[0]->SetConeAngle(15);
-    //lights[0]->SetLightTypeToCameraLight( );
-    lights[0]->SetExponent(60);
-    lights[0]->SetSwitch(1);
+    bool publish_overlayed_images;
+    n->param<bool>("publish_overlayed_images", publish_overlayed_images, false);
+    ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
+             publish_overlayed_images ? "true" : "false");
 
-    lights[1]->SetPosition(lights_position[0]+0.02, lights_position[1],
-                           lights_position[2]);
-    lights[1]->SetFocalPoint(lights_focal_point[0], lights_focal_point[1],
-                             lights_focal_point[2]);
-    lights[1]->SetPositional(1);
-    lights[1]->SetConeAngle(15);
-    //lights[1]->SetLightTypeToCameraLight();
-    lights[1]->SetExponent(60);
-    lights[1]->SetSwitch(1);
-
-
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 3; ++i) {
 
 
         scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
@@ -114,6 +105,7 @@ Rendering::Rendering(ros::NodeHandle *n,
         // in AR we do not need interactive windows or dual layer render
         scene_renderer_[i]->InteractiveOff();
         scene_renderer_[i]->SetLayer((int)ar_mode_);
+//        scene_renderer_[i]->SetLayer(0);
 
 
         if(num_render_windows_==1){
@@ -129,10 +121,8 @@ Rendering::Rendering(ros::NodeHandle *n,
 //        cameras[i]->camera_virtual= scene_renderer_[i]->GetActiveCamera();
         scene_renderer_[i]->SetActiveCamera(cameras[i]->camera_virtual);
 
-
         if(with_shadows_)
             AddShadowPass(scene_renderer_[i]);
-
 
         int j=0;
         if(num_render_windows_==2)
@@ -144,15 +134,17 @@ Rendering::Rendering(ros::NodeHandle *n,
 
         render_window_[j]->AddRenderer(scene_renderer_[i]);
 
-        window_to_image_filter_[j] =
-                vtkSmartPointer<vtkWindowToImageFilter>::New();
-        window_to_image_filter_[j]->SetInput(render_window_[j]);
-        //    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record  he
-        // alpha (transparency) channel for future use
-        window_to_image_filter_[j]->ReadFrontBufferOff(); // read from the
-        // back buffer
-        // important for getting high update rate (If needed, images can be shown
-        // with opencv)
+        if(publish_overlayed_images) {
+            window_to_image_filter_[j] =
+                    vtkSmartPointer<vtkWindowToImageFilter>::New();
+            window_to_image_filter_[j]->SetInput(render_window_[j]);
+            //    window_to_image_filter_->SetInputBufferTypeToRGBA(); //record  he
+            // alpha (transparency) channel for future use
+            window_to_image_filter_[j]->ReadFrontBufferOff(); // read from
+            // the back buffer important for getting high update rate (If
+            // needed, images can be shown with opencv)
+        }
+
         render_window_[j]->Render();
 
         //AddLightActors(scene_renderer_[j]);
@@ -162,37 +154,6 @@ Rendering::Rendering(ros::NodeHandle *n,
     // I added the third renderer to have a way of showing what is happening
     // to the other people who are not behind the console. this should be
     // integrated in the loop above later...
-    scene_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
-
-    if(ar_mode_){
-        background_renderer_[2] = vtkSmartPointer<vtkOpenGLRenderer>::New();
-        background_renderer_[2]->InteractiveOff();
-        background_renderer_[2]->SetLayer(0);
-        background_renderer_[2]->SetActiveCamera(cameras[0]->camera_real);
-    }
-//    if(ar_mode_)
-    scene_renderer_[2]->InteractiveOff();
-    scene_renderer_[2]->SetLayer((int)ar_mode_);
-
-//    cameras[2]->camera_virtual = scene_renderer_[2]->GetActiveCamera();
-    scene_renderer_[2]->SetActiveCamera(cameras[2]->camera_virtual);
-
-    if(num_render_windows_==1){
-        if(ar_mode_)
-            background_renderer_[2]->SetViewport(view_port[2]);
-        scene_renderer_[2]->SetViewport(view_port[2]);
-    }
-
-
-    scene_renderer_[2]->AddLight(lights[0]);
-    scene_renderer_[2]->AddLight(lights[1]);
-
-    if(with_shadows_)
-        AddShadowPass(scene_renderer_[2]);
-
-    if(ar_mode_)
-        render_window_[0]->AddRenderer(background_renderer_[2]);
-    render_window_[0]->AddRenderer(scene_renderer_[2]);
 
     //------------------------------------------------
 
@@ -220,6 +181,7 @@ Rendering::Rendering(ros::NodeHandle *n,
     if(ar_mode_)
         SetEnableBackgroundImage(true);
 
+
 }
 
 
@@ -236,6 +198,9 @@ Rendering::~Rendering()
     delete cameras[0];
     delete cameras[1];
     delete cameras[2];
+
+    if(ar_mode_)
+        delete it;
 
 }
 
@@ -260,12 +225,12 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
     if (isEnabled)
     {
         if(background_renderer_[2]->GetActors()->GetNumberOfItems() == 0)
-            background_renderer_[2]->AddActor(cameras[1]->image_actor_);
+            background_renderer_[2]->AddActor(cameras[2]->image_actor_);
     }
     else
     {
         if(background_renderer_[2]->GetActors()->GetNumberOfItems() > 0)
-            background_renderer_[2]->RemoveActor(cameras[1]->image_actor_);
+            background_renderer_[2]->RemoveActor(cameras[2]->image_actor_);
     }
 }
 
@@ -276,7 +241,7 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
 //------------------------------------------------------------------------------
 void Rendering::UpdateCameraViewForActualWindowSize() {
 
-    for (int i = 0; i <2; ++i) {
+    for (int i = 0; i <3; ++i) {
 
         int k = 0;
         if(num_render_windows_==2)
@@ -289,27 +254,11 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
         // update each windows view
         cameras[i]->UpdateVirtualView(single_win_size[0],
                                       single_win_size[1]);
-        if(i==1)
-            cameras[2]->UpdateVirtualView(single_win_size[0],
-                                          single_win_size[1]);
 
         // update the background image for each camera
-        cameras[i]->SetRealCameraToFaceImage(single_win_size);
+        cameras[i]->UpdateBackgroundImage(single_win_size);
     }
 }
-
-
-
-//------------------------------------------------------------------------------
-void Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
-
-    scene_renderer_[0]->AddActor(actor);
-    scene_renderer_[1]->AddActor(actor);
-    scene_renderer_[2]->AddActor(actor);
-
-}
-
-
 
 void
 Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
@@ -458,6 +407,36 @@ bool Rendering::AreImagesNew() {
 
     return (cameras[0]->IsImageNew() && cameras[1]->IsImageNew());
 
+}
+
+void Rendering::SetupLights() {
+
+    lights[0] =   vtkSmartPointer<vtkLight>::New();
+    lights[1] =   vtkSmartPointer<vtkLight>::New();
+
+    double lights_focal_point[3] {0.07, -0.30, -0.3};
+    double lights_position[3] {0.08, 0.7, 0.7};
+
+    lights[0]->SetPosition(lights_position[0], lights_position[1],
+                           lights_position[2]);
+    lights[0]->SetFocalPoint(lights_focal_point[0], lights_focal_point[1],
+                             lights_focal_point[2]);
+    //lights[0]->SetColor(1.0,1.0,1.0);
+    lights[0]->SetPositional(1);
+    lights[0]->SetConeAngle(15);
+    //lights[0]->SetLightTypeToCameraLight( );
+    lights[0]->SetExponent(60);
+    lights[0]->SetSwitch(1);
+
+    lights[1]->SetPosition(lights_position[0]+0.02, lights_position[1],
+                           lights_position[2]);
+    lights[1]->SetFocalPoint(lights_focal_point[0], lights_focal_point[1],
+                             lights_focal_point[2]);
+    lights[1]->SetPositional(1);
+    lights[1]->SetConeAngle(15);
+    //lights[1]->SetLightTypeToCameraLight();
+    lights[1]->SetExponent(60);
+    lights[1]->SetSwitch(1);
 }
 
 
