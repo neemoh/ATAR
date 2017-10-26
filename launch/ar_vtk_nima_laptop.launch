@@ -110,7 +110,7 @@
         <param name= "publish_overlayed_images" value= "false" />
 
         <!--Combine left and right images in one window -->
-        <param name= "one_window_mode" value= "true" />
+        <param name= "num_windows" value= "1" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
         <param name= "with_shadows" value= "false" />
@@ -122,7 +122,7 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="windows_position"> [1280, 0, 0, 0]</rosparam>
+        <rosparam param="window_position"> [1280, 0, 0, 0]</rosparam>
 
         <!-- <param name="image_transport" value="compressed"/> --> <!--
          Remove if image is not received over network -->
