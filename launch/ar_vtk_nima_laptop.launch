@@ -72,14 +72,14 @@
         AR_mode: Augmented reality mode uses the cameras and their poses.
         False mean VR mode
          -->
-        <param name= "AR_mode" value= "true" />
+        <param name= "AR_mode" value= "false" />
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
         -->
         <param name= "show_reference_frames" value= "false" />
         <!-- About stl_files_dir:
         The directory of the stl files -->
-        <param name= "mesh_files_dir" value= "$(find atar)/resources/mesh/" />
+        <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
 
         <!--
         About desired_pose_update_frequency:
@@ -122,7 +122,7 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_position"> [1280, 0, 0, 0]</rosparam>
+        <rosparam param="window_position"> [1200, 100, 0, 0]</rosparam>
 
         <!-- <param name="image_transport" value="compressed"/> --> <!--
          Remove if image is not received over network -->

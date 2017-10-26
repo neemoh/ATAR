@@ -63,7 +63,7 @@
         <param name= "show_reference_frames" value= "true" />
         <!-- About stl_files_dir:
         The directory of the stl files -->
-        <param name= "mesh_files_dir" value= "$(find atar)/resources/mesh/" />
+        <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
 
         <!-- About desired_pose_update_frequency:
             //The overlayed images will be published only when new images are received.
@@ -103,7 +103,7 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_position"> [128, 0, 0, 0]</rosparam>
+        <rosparam param="window_position"> [1200, 0, 0, 0]</rosparam>
 
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
