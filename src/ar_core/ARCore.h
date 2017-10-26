@@ -174,11 +174,6 @@ private:
     std::string cv_window_names[2];
     int8_t control_event;
 
-    image_transport::ImageTransport *it;
-    image_transport::Subscriber image_subscribers[2];
-
-    image_transport::Subscriber subscriber_image_left;
-    image_transport::Subscriber subscriber_image_right;
     ros::Subscriber sub_cam_pose_left;
     ros::Subscriber sub_cam_pose_right;
     ros::Subscriber sub_pedal_cam;

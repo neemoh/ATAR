@@ -28,8 +28,6 @@ ARCore::ARCore(std::string node_name)
     gripper_callbacks[0] = &ARCore::Tool1GripperCurrentCallback;
     gripper_callbacks[1] = &ARCore::Tool2GripperCurrentCallback;
 
-    it = new image_transport::ImageTransport(n);
-
     SetupROSandGetParameters();
 
     SetupGraphics();
@@ -63,8 +61,8 @@ void ARCore::SetupROSandGetParameters() {
     // ---------------------------- CAM INTRINSICS  ----------------------------
     // ------- load the intrinsic calibration files
     // get home directory
-    struct passwd *pw = getpwuid(getuid());
-    const char *home_dir = pw->pw_dir;
+//    struct passwd *pw = getpwuid(getuid());
+//    const char *home_dir = pw->pw_dir;
 
 //    std::string left_cam_name;
 //    if (n.getParam("left_cam_name", left_cam_name)) {
@@ -125,7 +123,7 @@ void ARCore::SetupROSandGetParameters() {
 //    publisher_overlayed[0] = it->advertise("left/image_color", 1);
 //    publisher_overlayed[1] = it->advertise("right/image_color", 1);
 
-    publisher_stereo_overlayed = it->advertise("stereo/image_color", 1);
+//    publisher_stereo_overlayed = it->advertise("stereo/image_color", 1);
 
 
     // -------------------------------- CAM POSES ------------------------------
@@ -286,25 +284,13 @@ void ARCore::SetupROSandGetParameters() {
 // -----------------------------------------------------------------------------
 void ARCore::SetupGraphics() {
 
+
     n.param<bool>("publish_overlayed_images", publish_overlayed_images, true);
     ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
              publish_overlayed_images ? "true" : "false");
 
-    n.param<bool>("one_window_mode", one_window_mode, false);
-    ROS_INFO("Rendered Images will be shown in a single window: %s",
-             one_window_mode ? "true" : "false");
-
-    bool offScreen_rendering, with_shadows;
-    n.param<bool>("with_shadows", with_shadows, false);
-    ROS_INFO("Shadows Generation: %s", with_shadows ? "true" : "false");
-
-    n.param<bool>("offScreen_rendering", offScreen_rendering, false);
-    ROS_INFO("offScreen_rendering: %s", offScreen_rendering ? "true" : "false");
 
     n.param<bool>("show_reference_frames", show_reference_frames, true);
-
-    std::vector<int> windows_position(4, 0);
-    n.getParam("windows_position", windows_position);
 
     // Create the window for the video feed if we publish the images
     if (publish_overlayed_images) {
@@ -324,9 +310,7 @@ void ARCore::SetupGraphics() {
 
 
 
-    graphics = new Rendering(&n, ar_mode, 2 - (uint) one_window_mode,
-                             with_shadows,
-                             offScreen_rendering, windows_position);
+    graphics = new Rendering(&n);
 
 //    // in case camera poses are set as parameters
 //    graphics->SetWorldToCameraTransform(cam_rvec_curr, cam_tvec_curr);
