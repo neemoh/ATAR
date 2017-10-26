@@ -42,9 +42,7 @@ Rendering::Rendering(ros::NodeHandle *n)
         cameras[0] = new ARCamera(n);
         std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
                                         0.87903000839, -0.472201765689, 0.0599719016889};
-        KDL::Frame temp_frame;
-        conversions::VectorToKDLFrame(temp_vec, temp_frame);
-        cameras[0]->SetWorldToCamTf(temp_frame);
+        cameras[0]->SetWorldToCamTf(conversions::VectorToKDLFrame(temp_vec));
     }
     std::string right_cam_name;
     if (n->getParam("right_cam_name", right_cam_name)) {
@@ -56,10 +54,8 @@ Rendering::Rendering(ros::NodeHandle *n)
         cameras[2] = new ARCamera(n);
         std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
                                         0.87903000839, -0.472201765689, 0.0599719016889};
-        KDL::Frame temp_frame;
-        conversions::VectorToKDLFrame(temp_vec, temp_frame);
-        cameras[0]->SetWorldToCamTf(temp_frame);
-        cameras[2]->SetWorldToCamTf(temp_frame);
+        cameras[1]->SetWorldToCamTf(conversions::VectorToKDLFrame(temp_vec));
+        cameras[2]->SetWorldToCamTf(conversions::VectorToKDLFrame(temp_vec));
     }
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();

@@ -14,10 +14,10 @@ ARCamera::ARCamera(ros::NodeHandle *n, image_transport::ImageTransport *it,
         intrinsic_matrix(NULL)
         , image_width_(640)
         , image_height_(480)
-        , fx_(444)
-        , fy_(446)
-        , cx_(166)
-        , cy_(132)
+        , fx_(240)
+        , fy_(320)
+        , cx_(0)
+        , cy_(0)
 {
     // if there is no name and image transport we assume the camera is not
     // augmented reality type
@@ -201,19 +201,20 @@ void ARCamera::ReadCameraParameters(const std::string file_path) {
     if (!fs.isOpened())
         throw std::runtime_error("Unable to read the camera parameters file.");
     cv::Mat camera_matrix;
-    cv::Mat camera_distortion;
     fs["camera_matrix"] >> camera_matrix;
-    fs["distortion_coefficients"] >> camera_distortion;
+
+    //    cv::Mat camera_distortion;
+    //    fs["distortion_coefficients"] >> camera_distortion;
 
     // check if we got something
     if(camera_matrix.empty()){
-        ROS_ERROR("distortion_coefficients not found in '%s' ", file_path.c_str());
-        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
-    }
-    if(camera_distortion.empty()){
         ROS_ERROR("camera_matrix not found in '%s' ", file_path.c_str());
         throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
     }
+    //    if(camera_distortion.empty()){
+    //        ROS_ERROR("distortion_coefficients  not found in '%s' ", file_path.c_str());
+    //        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
+    //    }
 
     fx_ = camera_matrix.at<double>(0, 0);
     fy_ = camera_matrix.at<double>(1, 1);

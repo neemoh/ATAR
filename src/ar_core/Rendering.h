@@ -55,19 +55,13 @@
 class Rendering {
 public:
 
-    //    vtkTypeMacro(Rendering, vtkRenderWindow);
-    //    static Rendering *New();
-
     Rendering(ros::NodeHandle *n);
 
     ~Rendering();
 
-
     void SetEnableBackgroundImage(bool isEnabled);
 
     void UpdateCameraViewForActualWindowSize();
-
-//    void SetCameraIntrinsics(const cv::Mat intrinsics[]);
 
     void AddActorsToScene(std::vector< vtkSmartPointer<vtkProp> > actors);
 
@@ -91,23 +85,20 @@ private:
     int num_render_windows_;
     bool with_shadows_;
     bool ar_mode_;
+
     //cameras
-    ARCamera  *                     cameras [3];
-    image_transport::ImageTransport *it;
+    ARCamera *                              cameras [3];
+    image_transport::ImageTransport *       it;
 
     vtkSmartPointer<vtkLight>               lights[2];
+
     // renderer
     vtkSmartPointer<vtkOpenGLRenderer>      background_renderer_[3];
     vtkSmartPointer<vtkOpenGLRenderer>      scene_renderer_[3];
-    // image importing
-//    vtkSmartPointer<vtkImageImport>         image_importer_[2];
-//    vtkSmartPointer<vtkImageActor>          image_actor_[2];
-//    vtkSmartPointer<vtkImageData>           camera_image_[2];
-    // transforms
 
     // windows
     vtkSmartPointer<vtkRenderWindow>        render_window_[3];
-    //    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+
     // reading images back
     vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter_[2] ;
 

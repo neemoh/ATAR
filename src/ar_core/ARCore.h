@@ -55,22 +55,12 @@ private:
     // stop the running haptic thread and destruct the  task object
     void DeleteTask();
 
-    // Locking call to retrieve the images
-    void LockAndGetImages(ros::Duration timeout, cv::Mat images[]);
-
-
     // If the poses of the cameras are published, this method will return
     // true when any of the cam poses are updated. If left or right pose is
     // missing it will be found transforming the other available pose with the
     // left_cam_to_right_cam_tr. This transformation is calculated once in a
     // locking call in this method.
     bool GetNewCameraPoses(cv::Vec3d cam_rvec[2], cv::Vec3d cam_tvec[2]);
-
-    // We used to publish the active constraint parameters from the task
-    // class, but at the moment the GUI node does this. SO this function is
-    // not used.
-    void PublishActiveConstraintParameters(
-            const custom_msgs::ActiveConstraintParameters *params);
 
     // publishes the active constraint parameters
     void PublishTaskState(custom_msgs::TaskState msg){
@@ -93,15 +83,6 @@ private:
 public:
     // -------------------------------------------------------------------------
     // ROS CALLBACKS
-    void ImageLeftCallback(const sensor_msgs::ImageConstPtr &msg);
-
-    void ImageRightCallback(const sensor_msgs::ImageConstPtr &msg);
-
-    // The camera poses. Note that this actually defines the pose of the
-    // task coordinate frame in camera coordinate frame
-    void LeftCamPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
-
-    void RightCamPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
     // Tool poses in task coordinate frame (taskspace).
     void Tool1PoseCurrentCallback(
@@ -121,7 +102,6 @@ public:
     // this topic is used to control the task state from the recording node
     // during the acquisitions.
     void ControlEventsCallback(const std_msgs::Int8ConstPtr &msg);
-
 
 private:
 

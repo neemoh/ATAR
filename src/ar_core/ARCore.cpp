@@ -361,11 +361,6 @@ bool ARCore::UpdateWorld() {
         if(task_ptr)
             task_ptr->StepWorld();
 
-//        if(ar_mode) {
-//            // update the camera images
-////            graphics->UpdateBackgroundImage(cam_images);
-//        }
-
         // Render!
         graphics->Render();
 
@@ -381,11 +376,6 @@ bool ARCore::UpdateWorld() {
             // publish the task state
             PublishTaskState(task_ptr->GetTaskStateMsg());
 
-            // publish the active constraint parameters if needed
-            if (task_ptr->IsACParamChanged()) {
-                PublishActiveConstraintParameters(
-                        task_ptr->GetACParameters());
-            }
         }
         // check time performance
         //        std::cout <<  "it took: " <<
@@ -524,37 +514,6 @@ void ARCore::DeleteTask() {
     task_ptr = 0;
 }
 
-// -----------------------------------------------------------------------------
-void ARCore::LockAndGetImages(ros::Duration timeout,
-                              cv::Mat images[]) {
-
-    ros::Rate loop_rate(10);
-    ros::Time timeout_time = ros::Time::now() + timeout;
-
-    while(image_from_ros[0].empty()) {
-        ros::spinOnce();
-        loop_rate.sleep();
-
-        if (ros::Time::now() > timeout_time)
-            ROS_WARN("Timeout: No new left Image. Trying again...");
-    }
-    image_from_ros[0].copyTo(images[0]);
-
-    new_image[0] = false;
-
-    while(image_from_ros[1].empty()) {
-        ros::spinOnce();
-        loop_rate.sleep();
-
-        if (ros::Time::now() > timeout_time) {
-            ROS_WARN("Timeout: No new right Image. Trying again...");
-        }
-    }
-    image_from_ros[1].copyTo(images[1]);
-
-    new_image[1] = false;
-}
-
 
 // -----------------------------------------------------------------------------
 bool ARCore::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
@@ -615,15 +574,6 @@ bool ARCore::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
     }
 
     return false;
-}
-
-
-// -----------------------------------------------------------------------------
-void ARCore::PublishActiveConstraintParameters(
-        const custom_msgs::ActiveConstraintParameters *ac_params) {
-//    publisher_ac_params[0].publish(ac_params[0]);
-//    if(n_arms==2)
-//        publisher_ac_params[1].publish(ac_params[1]);
 }
 
 
@@ -774,52 +724,7 @@ void ARCore::ReadCameraParameters(const std::string file_path,
     }
 }
 
-// -----------------------------------------------------------------------------
-void ARCore::ImageRightCallback(const sensor_msgs::ImageConstPtr& msg)
-{
-    try
-    {
-        image_from_ros[1] = cv_bridge::toCvCopy(msg, "bgr8")->image;
-        new_image[1] = true;
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
-    }
-}
 
-// -----------------------------------------------------------------------------
-void ARCore::ImageLeftCallback(const sensor_msgs::ImageConstPtr& msg)
-{
-    try
-    {
-        image_from_ros[0] = cv_bridge::toCvCopy(msg, "bgr8")->image;
-        new_image[0] = true;
-
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
-    }
-}
-
-// -----------------------------------------------------------------------------
-void ARCore::LeftCamPoseCallback(
-        const geometry_msgs::PoseStampedConstPtr & msg)
-{
-    new_cam_pose[0] = true;
-    tf::poseMsgToKDL(msg->pose, pose_cam[0]);
-    conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec_curr[0], cam_tvec_curr[0]);
-
-}
-
-void ARCore::RightCamPoseCallback(
-        const geometry_msgs::PoseStampedConstPtr & msg)
-{
-    new_cam_pose[1] = true;
-    tf::poseMsgToKDL(msg->pose, pose_cam[1]);
-    conversions::KDLFrameToRvectvec(pose_cam[1], cam_rvec_curr[1], cam_tvec_curr[1]);
-}
 
 // Reading the pose of the slaves and take them to task space
 // -----------------------------------------------------------------------------
