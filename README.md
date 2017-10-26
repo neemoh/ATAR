@@ -1,7 +1,5 @@
 # Assisted Teleoperation with Augmented Reality
 
-JUST STARTED WRITING THE README. LOTS TO BE WRITTEN SOON!
-
 This repository contains the source code for the ATAR package. This ROS package can be used to design interactive augmented reality (or virtual reality) tasks using a stereo camera and display, master and slave manipulators. I have developed and tested this on a da Vinci Research Kit (DVRK) that comprises 5 manipulators (2 masters, 2 slaves and a camera arm), a stereo endoscope and stereo vision console. Tha package includes the code for the calibrations involved (Camera intrinsics, extrinsics, and arm to world) and a qt graphical user interface. THe simulated world includes rigid and soft dynamics simulation based on the Bullet Physics library and graphics are generated using the Visualization toolkit (VTK) and OpenGL.
 
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme.png)
@@ -107,3 +105,16 @@ dimensions are as small as a few millimiters:
 * Go to File-> Export and select Wavefront(.obj). In the options set the scale
  as 0.01 and save.
 
+
+## Augmented Reality
+Things to explain: camera. Calibrations (intrinsic, extrinsic, arm to world)
+
+### AR Camera
+
+* "/"+cam_name+ "/image_raw"
+* intrinsic calibration file
+* "/calibrations/world_frame_to_"+cam_name+"_frame"
+* "/"+cam_name+ "/world_to_camera_transform"
+
+Place the intrinsic calibration file of each camera in ~/.ros/camera_info/ 
+named as <cam_name>_intrinsics.yaml
