@@ -7,8 +7,6 @@
     <!--<arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>-->
     <!--<arg name= "left_cam_name" value= "ecml" />-->
     <!--<arg name= "right_cam_name" value= "ecmr" />-->
-    <arg name="left_camera_img_topic" value="/image_raw"/>
-    <arg name="right_camera_img_topic" value="/image_raw"/>
     <arg name= "left_cam_name" value= "asus_webcam" />
     <arg name= "right_cam_name" value= "asus_webcam" />
     <arg name= "haptic_referesh_rate" value= "500" /> -->
@@ -27,21 +25,17 @@
         <param name="camera_name" type="string" value="$(arg left_cam_name)" />
     </node>
 
-    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
-    <!--name="extrinsic_charuco_left" output="screen" >-->
-    <!--<param name="camera_name" value="$(arg left_cam_name)"/>-->
-    <!--<param name="camera_img_topic"-->
-    <!--value="$(arg left_camera_img_topic)"/>-->
-    <!--<param name="show_image" value="false"/>-->
-    <!--</node>-->
+    <node pkg="atar" type="extrinsic_calib_charuco"
+          name="extrinsic_left" output="screen" >
+        <param name="camera_name" value="$(arg left_cam_name)"/>
+        <param name="show_image" value="false"/>
+    </node>
 
-    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
-    <!--name="extrinsic_charuco_right" output="screen" >-->
-    <!--<param name="camera_name" value="$(arg right_cam_name)"/>-->
-    <!--<param name="camera_img_topic"-->
-    <!--value="$(arg right_camera_img_topic)"/>-->
-    <!--<param name="show_image" value="false"/>-->
-    <!--</node>-->
+    <node pkg="atar" type="extrinsic_calib_charuco"
+          name="extrinsic_right" output="screen" >
+        <param name="camera_name" value="$(arg right_cam_name)"/>
+        <param name="show_image" value="false"/>
+    </node>
 
     <!-- Node recording the data-->
     <node pkg="atar" type="gui" name="gui" output="screen">
@@ -61,10 +55,6 @@
              file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml -->
         <param name= "left_cam_name" value= "$(arg left_cam_name)" />
         <param name= "right_cam_name" value= "$(arg right_cam_name)" />
-
-        <param name= "left_image_topic_name" value= "$(arg left_camera_img_topic)" />
-        <param name= "right_image_topic_name" value=
-                "$(arg right_camera_img_topic)"/>
 
         <!-- About number_of_arms:
        // number of arms we wish to use in the node. If set as 1, only slave_1_name will be used.

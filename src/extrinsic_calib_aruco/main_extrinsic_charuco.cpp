@@ -25,7 +25,7 @@ using namespace cv;
 cv::Mat image_msg;
 bool new_image = false;
 
-void CameraImageCallback(const sensor_msgs::ImageConstPtr &msg);
+void ImgCallback(const sensor_msgs::ImageConstPtr &msg);
 
 cv::Mat &Image(ros::Duration timeout);
 
@@ -37,8 +37,6 @@ bool DetectCharucoBoardPose(cv::Mat &image,
                             Ptr<aruco::Dictionary> dictionary,
                             const Mat &camMatrix, const Mat &distCoeffs,
                             Vec3d &rvec, Vec3d &tvec);
-
-std::string GetCameraTopicName(ros::NodeHandle &n);
 
 bool EstimatePoseCharucoBoard(InputArray _charucoCorners,
                               InputArray _charucoIds,
@@ -68,7 +66,7 @@ int main(int argc, char *argv[]) {
     std::stringstream cam_intrinsics_path;
     std::string cam_name;
     n.param<std::string>("camera_name", cam_name, "camera");
-    cam_intrinsics_path << std::string(home_dir) << std::string("/.ros/camera_info/")
+    cam_intrinsics_path << std::string(home_dir) << "/.ros/camera_info/"
                         << cam_name << "_intrinsics.yaml";
     Mat cam_matrix, dist_coeffs;
     if(!readCameraParameters(cam_intrinsics_path.str(), cam_matrix, dist_coeffs))
@@ -76,7 +74,6 @@ int main(int argc, char *argv[]) {
                 "Did not find the intrinsic calibration data in ") <<
                         cam_intrinsics_path.str() <<
                         " Press C to perform intrinsic calibration.";
-    //-----------
 
     //----------- Read boardparameters
     // board_params comprises:
@@ -87,8 +84,8 @@ int main(int argc, char *argv[]) {
     {
         if(!n.getParam("/calibrations/board_params", board_params))
             ROS_ERROR("Ros parameter board_param is required. board_param="
-                          "[dictionary_id, board_w, board_h, "
-                          "square_length_in_meters, marker_length_in_meters]");
+                              "[dictionary_id, board_w, board_h, "
+                              "square_length_in_meters, marker_length_in_meters]");
     }
 
 
@@ -109,18 +106,23 @@ int main(int argc, char *argv[]) {
     // advertise publishers
     std::stringstream pose_topic_name;
     pose_topic_name << std::string("/")
-                                 << cam_name << "/world_to_camera_transform";
+                    << cam_name << "/world_to_camera_transform";
 
     ros::Publisher publisher_pose =n.advertise<geometry_msgs::PoseStamped>
             (pose_topic_name.str(), 1, 0);
     ROS_INFO("Publishing board to camera pose on '%s'",
              pose_topic_name.str().c_str());
 
-    std::string image_transport_namespace = GetCameraTopicName(n);
+    std::string img_topic = "/"+cam_name+ "/image_raw";;
+
+    // if the topic name is found, check if something is being published on it
+    if (!ros::topic::waitForMessage<sensor_msgs::Image>(
+            img_topic, ros::Duration(5)))
+        ROS_WARN("Topic '%s' is not publishing.", img_topic.c_str());
     image_transport::ImageTransport it = image_transport::ImageTransport(n);
     // register image transport subscriber
     image_transport::Subscriber sub = it.subscribe(
-            image_transport_namespace, 1, &CameraImageCallback);
+            img_topic, 1, &ImgCallback);
     //-----------
 
     bool show_image;
@@ -171,13 +173,12 @@ int main(int argc, char *argv[]) {
 
                 // get home directory
 
-                IC_ptr = new IntrinsicCalibrationCharuco(
-                        image_transport_namespace, board_params);
+                IC_ptr = new IntrinsicCalibrationCharuco(img_topic, board_params);
                 double intrinsic_calib_err;
                 if(IC_ptr->DoCalibration(cam_intrinsics_path.str(),
-                                 intrinsic_calib_err,
-                                 cam_matrix,
-                                 dist_coeffs))
+                                         intrinsic_calib_err,
+                                         cam_matrix,
+                                         dist_coeffs))
                     instruction_msg.str("");
                 else
                     instruction_msg.str("Intrinsic Calibration failed. Please"
@@ -195,7 +196,7 @@ int main(int argc, char *argv[]) {
 
 
 //------------------------------------------------------------------------------
-void CameraImageCallback(const sensor_msgs::ImageConstPtr &msg) {
+void ImgCallback(const sensor_msgs::ImageConstPtr &msg) {
     try
     {
         image_msg = cv_bridge::toCvCopy(msg, "bgr8")->image;
@@ -226,15 +227,23 @@ cv::Mat &Image(ros::Duration timeout) {
 }
 
 //------------------------------------------------------------------------------
-static bool readCameraParameters(string filename,
-                                 Mat &camMatrix, Mat &distCoeffs) {
-    FileStorage fs(filename, FileStorage::READ);
+static bool readCameraParameters(string file_path,
+                                 Mat &camera_matrix, Mat &camera_distortion) {
+    FileStorage fs(file_path, FileStorage::READ);
     if(!fs.isOpened())
         return false;
-    fs["camera_matrix"] >> camMatrix;
-    fs["distortion_coefficients"] >> distCoeffs;
-    if(camMatrix.empty() || distCoeffs.empty())
+    fs["camera_matrix"] >> camera_matrix;
+    fs["distortion_coefficients"] >> camera_distortion;
+    // check if we got something
+    if(camera_matrix.empty()){
+        ROS_WARN("distortion_coefficients not found in '%s' ", file_path.c_str());
         return false;
+
+    }
+    if(camera_distortion.empty()){
+        ROS_WARN("camera_matrix not found in '%s' ", file_path.c_str());
+        return false;
+    }
     return true;
 }
 
@@ -321,29 +330,6 @@ bool DetectCharucoBoardPose(cv::Mat &image,
 
 }
 
-//------------------------------------------------------------------------------
-std::string GetCameraTopicName(ros::NodeHandle &n){
-
-    std::string camera_img_topic;
-
-    if (n.getParam("camera_img_topic", camera_img_topic)) {
-        // if the topic name is found, check if something is being published on it
-        if (!ros::topic::waitForMessage<sensor_msgs::Image>(
-                camera_img_topic, ros::Duration(5))) {
-            ROS_ERROR("Topic '%s' is not publishing.",
-                      camera_img_topic.c_str());
-        }
-        else
-            ROS_INFO("[SUBSCRIBERS] Images will be read from topic %s",
-                     camera_img_topic.c_str());
-    } else {
-        ROS_ERROR("%s Parameter '%s' is required.",
-                  ros::this_node::getName().c_str(),
-                  n.resolveName("camera_img_topic").c_str());
-    }
-    return  camera_img_topic;
-
-}
 
 //------------------------------------------------------------------------------
 bool EstimatePoseCharucoBoard(InputArray _charucoCorners, InputArray _charucoIds,
