@@ -11,16 +11,16 @@ void AddLightActors(vtkRenderer *r);
 
 
 Rendering::Rendering(ros::NodeHandlePtr n)
-:
-it(NULL)
+        :
+        it(NULL)
 {
 
     n->param<bool>("AR_mode", ar_mode_, false);
     ROS_INFO("AR mode: %s", ar_mode_ ? "true" : "false");
 
-    n->param<int>("one_window_mode", num_render_windows_, false);
+    n->param<int>("one_window_mode", n_windows_, false);
     ROS_INFO("Rendered Images will be shown in %i window(s): ",
-             num_render_windows_);
+             n_windows_);
 
     n->param<bool>("with_shadows", with_shadows_, false);
     ROS_INFO("Shadows Generation: %s", with_shadows_ ? "true" : "false");
@@ -29,10 +29,14 @@ it(NULL)
     n->param<bool>("offScreen_rendering", offScreen_rendering, false);
     ROS_INFO("offScreen_rendering: %s", offScreen_rendering ? "true" : "false");
 
+    bool publish_overlayed_images;
+    n->param<bool>("publish_overlayed_images", publish_overlayed_images, false);
+    ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
+             publish_overlayed_images ? "true" : "false");
 
     // make sure the number of windows are alright
-    if(num_render_windows_ <1) num_render_windows_ =1;
-    else if(num_render_windows_ >2) num_render_windows_ = 2;
+    if(n_windows_ <1) n_windows_ =1;
+    else if(n_windows_ >2) n_windows_ = 2;
 
     if(ar_mode_)
         it = new image_transport::ImageTransport(*n);
@@ -63,31 +67,34 @@ it(NULL)
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
     render_window_[0]->BordersOff();
 
-    std::vector<int> window_position(4, 0);
-    n->getParam("window_position", window_position);
-    if(num_render_windows_==1)
-        render_window_[0]->SetPosition(window_position[0], window_position[1]);
-    else if(num_render_windows_==2) {
+    std::vector<int> window_positions(6, 0);
+    n->getParam("window_positions", window_positions);
+
+
+    render_window_[0]->SetPosition(window_positions[0], window_positions[1]);
+    if(n_windows_==2) {
         render_window_[1] = vtkSmartPointer<vtkRenderWindow>::New();
-        render_window_[1]->SetPosition(window_position[2], window_position[3]);
+        render_window_[1]->SetPosition(window_positions[2], window_positions[3]);
         render_window_[1]->BordersOff();
     }
 
     SetupLights();
 
-    double view_port[3][4] = {{0.333, 0.0, 0.666, 1.0}
-            , {0.666, 0.0, 1.0, 1.0}
-            ,{0.0, 0.0, 0.333, 1.0}};
+    double view_port[3][4] = {
+              {1./3., 0., 2./3., 1.0},
+              {2./3., 0., 1.,    1.0},
+              {0.000, 0., 1./3., 1.0}};
 
-    bool publish_overlayed_images;
-    n->param<bool>("publish_overlayed_images", publish_overlayed_images, false);
-    ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
-             publish_overlayed_images ? "true" : "false");
+    std::vector<int> view_resolution(2, 640);
+    view_resolution[1] = 480;
+    n->getParam("view_resolution", view_resolution);
 
     for (int i = 0; i < 3; ++i) {
 
-
         scene_renderer_[i] = vtkSmartPointer<vtkOpenGLRenderer>::New();
+        // in AR we do not need interactive windows or dual layer render
+        scene_renderer_[i]->InteractiveOff();
+        scene_renderer_[i]->SetLayer((int)ar_mode_);
 
         // In AR the background renderer shows the real camera images from
         // the world
@@ -96,17 +103,9 @@ it(NULL)
             background_renderer_[i]->InteractiveOff();
             background_renderer_[i]->SetLayer(0);
             background_renderer_[i]->SetActiveCamera(cameras[i]->camera_real);
-
         }
 
-
-        // in AR we do not need interactive windows or dual layer render
-        scene_renderer_[i]->InteractiveOff();
-        scene_renderer_[i]->SetLayer((int)ar_mode_);
-//        scene_renderer_[i]->SetLayer(0);
-
-
-        if(num_render_windows_==1){
+        if(n_windows_==1){
             if(ar_mode_)
                 background_renderer_[i]->SetViewport(view_port[i]);
             scene_renderer_[i]->SetViewport(view_port[i]);
@@ -115,15 +114,13 @@ it(NULL)
         scene_renderer_[i]->AddLight(lights[0]);
         scene_renderer_[i]->AddLight(lights[1]);
 
-        //scene_renderer_[i]->ResetCamera();
-//        cameras[i]->camera_virtual= scene_renderer_[i]->GetActiveCamera();
         scene_renderer_[i]->SetActiveCamera(cameras[i]->camera_virtual);
 
         if(with_shadows_)
             AddShadowPass(scene_renderer_[i]);
 
         int j=0;
-        if(num_render_windows_==2)
+        if(n_windows_==2)
             j=i;
 
         render_window_[j]->SetNumberOfLayers(2);
@@ -148,14 +145,9 @@ it(NULL)
         //AddLightActors(scene_renderer_[j]);
     }
 
-    //-------------------------------------------------
-    // I added the third renderer to have a way of showing what is happening
-    // to the other people who are not behind the console. this should be
-    // integrated in the loop above later...
-
     //------------------------------------------------
 
-    if(num_render_windows_==1) {
+    if(n_windows_==1) {
         render_window_[0]->SetWindowName("Augmented Stereo");
         if(offScreen_rendering)
             render_window_[0]->SetOffScreenRendering(1);
@@ -171,8 +163,9 @@ it(NULL)
     }
 
     // Set render window size if one window the width is double
-    for (int j = 0; j < num_render_windows_; ++j) {
-        render_window_[j]->SetSize((4-num_render_windows_) * 640, 480);
+    for (int j = 0; j < n_windows_; ++j) {
+        render_window_[j]->SetSize((4-n_windows_) * view_resolution[0],
+                                   view_resolution[1]);
     }
 
 
@@ -187,7 +180,7 @@ it(NULL)
 Rendering::~Rendering()
 {
 
-    for (int j = 0; j < num_render_windows_; ++j) {
+    for (int j = 0; j < n_windows_; ++j) {
         if(ar_mode_)
             render_window_[j]->RemoveRenderer(background_renderer_[j]);
         render_window_[j]->RemoveRenderer(scene_renderer_[j]);
@@ -208,7 +201,7 @@ Rendering::~Rendering()
 //------------------------------------------------------------------------------
 void Rendering::SetEnableBackgroundImage(bool isEnabled)
 {
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 3; ++i) {
         if (isEnabled)
         {
             if(background_renderer_[i]->GetActors()->GetNumberOfItems() == 0)
@@ -219,16 +212,6 @@ void Rendering::SetEnableBackgroundImage(bool isEnabled)
             if(background_renderer_[i]->GetActors()->GetNumberOfItems() > 0)
                 background_renderer_[i]->RemoveActor(cameras[i]->image_actor_);
         }
-    }
-    if (isEnabled)
-    {
-        if(background_renderer_[2]->GetActors()->GetNumberOfItems() == 0)
-            background_renderer_[2]->AddActor(cameras[2]->image_actor_);
-    }
-    else
-    {
-        if(background_renderer_[2]->GetActors()->GetNumberOfItems() > 0)
-            background_renderer_[2]->RemoveActor(cameras[2]->image_actor_);
     }
 }
 
@@ -242,12 +225,12 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
     for (int i = 0; i <3; ++i) {
 
         int k = 0;
-        if(num_render_windows_==2)
+        if(n_windows_==2)
             k=i;
         int *window_size = render_window_[k]->GetActualSize();
 
         int single_win_size[2]
-                = {window_size[0] / (4-num_render_windows_), window_size[1]};
+                = {window_size[0] / (4-n_windows_), window_size[1]};
 
         // update each windows view
         cameras[i]->UpdateVirtualView(single_win_size[0],
@@ -291,7 +274,7 @@ void Rendering::Render() {
     // update  view angle (in case window changes size)
     if(ar_mode_)
         UpdateCameraViewForActualWindowSize();
-    for (int i = 0; i < num_render_windows_; ++i) {
+    for (int i = 0; i < n_windows_; ++i) {
         render_window_[i]->Render();
     }
 
@@ -303,7 +286,7 @@ void Rendering::GetRenderedImage(cv::Mat *images) {
 
     // TODO: REWRITE FOR 2-WINDOW CASE (writes on the same image for now)
 
-    for (int i = 0; i < num_render_windows_; ++i) {
+    for (int i = 0; i < n_windows_; ++i) {
 
         window_to_image_filter_[i]->Modified();
         vtkImageData *image = window_to_image_filter_[i]->GetOutput();
@@ -393,7 +376,7 @@ void Rendering::AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer> renderer) {
 
 void Rendering::ToggleFullScreen() {
 
-    for (int k = 0; k < num_render_windows_; ++k) {
+    for (int k = 0; k < n_windows_; ++k) {
         if(render_window_[k]->GetFullScreen()==1)
             render_window_[k]->SetFullScreen(0);
         else

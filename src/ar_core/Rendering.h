@@ -82,7 +82,7 @@ private:
     void SetupLights();
 
 private:
-    int num_render_windows_;
+    int n_windows_;
     bool with_shadows_;
     bool ar_mode_;
 

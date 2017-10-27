@@ -72,7 +72,7 @@
         AR_mode: Augmented reality mode uses the cameras and their poses.
         False mean VR mode
          -->
-        <param name= "AR_mode" value= "false" />
+        <param name= "AR_mode" value= "true" />
         <!-- show_reference_frames:
             Use for debug. it reduces frame rate
         -->
@@ -121,8 +121,11 @@
          off screen and not shown in opengl windows.-->
         <param name= "offScreen_rendering" value= "false" />
 
+        <!--The resolution of each view-->
+        <rosparam param="view_resolution"> [1280, 960]</rosparam>
+
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_position"> [1200, 100, 0, 0]</rosparam>
+        <rosparam param="window_positions"> [800, 0, 0, 0]</rosparam>
 
         <!-- <param name="image_transport" value="compressed"/> --> <!--
          Remove if image is not received over network -->
