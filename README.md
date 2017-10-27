@@ -78,12 +78,12 @@ task 8. Wait for the compound convex mesh to be generated and the task should
 
 ## ARCore
 Details will be updated.
-![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_ATAR_Arch.png.png)
+![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_ATAR_Arch.png)
 
-## Creating tasks
+### Creating tasks
 Details will be updated.
 
-## Creating simulated objects
+### Creating simulated objects
 You can define objects using the SimObject class which has a graphic actor 
 (actor_) and physics body (rigid_body_). A simObject can be dynamic (i.e. 
 its pose will be update by physics simulation), static (i.e constant pose), 
