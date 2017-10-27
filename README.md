@@ -7,7 +7,7 @@ This repository contains the source code for the ATAR package. This ROS package 
 ## Prerequisites
 Apart from ROS (Tested with Kinetic), this package needs the following libraries:
 * [VTK](http://www.vtk.org/download/) - For the graphics
-* [Bullet](http://bulletphysics.org/wordpress/) - For the dynamics
+* [Bullet](http://bulletphysics.org/wordpress/) - For the physics
 
 and the following packages from my github page:
 * custom_conversions
@@ -75,6 +75,10 @@ task 8. Wait for the compound convex mesh to be generated and the task should
  In case you have an nvidia card and its driver has benn installed, you can 
  have faster graphics and also shadows. To test the shadows set the 
  with_shadows flag to true in the vr_test.lanuch file.
+
+## ARCore
+Details will be updated.
+![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_ATAR_Arch.png.png)
 
 ## Creating tasks
 Details will be updated.
