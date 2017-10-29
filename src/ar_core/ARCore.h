@@ -107,28 +107,20 @@ private:
     bool publish_overlayed_images       = false;
     bool one_window_mode                = false;
     bool new_task_event                 = false;
-    bool show_reference_frames          = false;
 
     bool with_guidance;
 
-    cv::Mat camera_matrix[2];
-    cv::Mat camera_distortion[2];
     KDL::Frame pose_cam[2];
     KDL::Frame slave_frame_to_world_frame[2];
     KDL::Frame left_cam_to_right_cam_tr;
-
-    //// estimate left to right cam trans
-    //uint left_cam_to_right_cam_tr_loop_count = 0;
-    //KDL::Vector left_cam_to_right_cam_tr_sum_pos;
 
     cv::Vec3d cam_rvec_curr[2];
     cv::Vec3d cam_tvec_curr[2];
     cv::Vec3d cam_rvec_avg[2];
     cv::Vec3d cam_tvec_avg[2];
-    bool new_image[2] = {false, false};
+
     bool new_cam_pose[2] = {false, false};;
 
-    cv::Mat image_from_ros[2];
     uint running_task_id;
     std::string cv_window_names[2];
     int8_t control_event;
@@ -137,9 +129,6 @@ private:
     ros::Subscriber sub_cam_pose_right;
     ros::Subscriber subscriber_control_events;
 
-    ros::Subscriber * subtool_current_pose;
-    ros::Subscriber * subtool_current_gripper;
-    ros::Publisher * publisher_tool_pose_desired;
     ros::Publisher publisher_task_state;
 
     //overlay image publishers

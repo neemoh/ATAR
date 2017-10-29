@@ -32,35 +32,9 @@
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="atar" type="ar_core" name="ar_core" output="screen">
 
-        <!-- About left/right_cam_name: expecting to find Place the intrinsic calibration
-             file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml -->
-        <!--<param name= "left_cam_name" value= "$(arg left_cam_name)" />-->
-        <!--<param name= "right_cam_name" value= "$(arg right_cam_name)" />-->
-
-        <param name= "left_image_topic_name" value= "$(arg left_camera_img_topic)" />
-        <param name= "right_image_topic_name" value=
-                "$(arg right_camera_img_topic)"/>
-
-        <!-- About number_of_arms:
-       // number of arms we wish to use in the node. If set as 1, only slave_1_name will be used.
-       // (for the moment the code generates active constraints for 1 arm only. this will be changed
-       // to support the second arm soon.)
-        -->
-        <param name="number_of_arms" value="2"/>
-
-        <param name="slave_1_name" value="$(arg slave_1_name)"/>
-        <param name="master_1_name" value="$(arg master_1_name)"/>
-        <param name="slave_2_name" value="$(arg slave_2_name)"/>
-        <param name="master_2_name" value="$(arg master_2_name)"/>
-
         <!-- AR_mode:
-
          -->
         <param name= "AR_mode" value= "false" />
-        <!-- show_reference_frames:
-            Use for debug. it reduces frame rate
-        -->
-        <param name= "show_reference_frames" value= "true" />
         <!-- About stl_files_dir:
         The directory of the stl files -->
         <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
@@ -103,10 +77,10 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--The resolution of each view-->
-        <rosparam param="view_resolution"> [1280, 720]</rosparam>
+        <rosparam param="view_resolution"> [960, 720]</rosparam>
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_positions"> [800, 0, 0, 0]</rosparam>
+        <rosparam param="window_positions"> [960, 0, 0, 0]</rosparam>
 
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>

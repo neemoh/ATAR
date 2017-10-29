@@ -146,7 +146,7 @@ private:
 
     SHTaskState task_state;
     std::string slave_names[2];
-    KDL::Frame *slave_frame_to_world_frame_tr;
+    KDL::Frame slave_frame_to_world_frame_tr;
     Colors colors;
     KDL::Frame pose_tube;
     //KDL::Vector idle_point;

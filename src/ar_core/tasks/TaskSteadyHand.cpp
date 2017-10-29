@@ -973,7 +973,7 @@ void TaskSteadyHand::HapticsThread() {
             geometry_msgs::PoseStamped pose_msg;
             KDL::Frame tool_desired_pose_in_slave_frame;
             tool_desired_pose_in_slave_frame =
-                    slave_frame_to_world_frame_tr->Inverse()*
+                    slave_frame_to_world_frame_tr.Inverse()*
                     tool_desired_pose[n_arm];
 
             tf::poseKDLToMsg(tool_desired_pose_in_slave_frame, pose_msg.pose);
