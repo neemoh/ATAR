@@ -72,9 +72,7 @@ enum class SHTaskState: uint8_t {Idle, OnGoing, Finished};
 class TaskSteadyHand : public SimTask{
 public:
 
-    TaskSteadyHand(ros::NodeHandlePtr n, const double haptic_loop_rate,
-                       const std::string slave_names[],
-                       KDL::Frame *slave_to_world_tr);
+    TaskSteadyHand(ros::NodeHandlePtr n);
 
     ~TaskSteadyHand();
 

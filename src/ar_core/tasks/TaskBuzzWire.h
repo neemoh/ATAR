@@ -68,15 +68,10 @@ enum class TaskState: uint8_t {Idle, ToEndPoint, ToStartPoint,
 class TaskBuzzWire : public SimTask{
 public:
 
-    TaskBuzzWire(
-            const std::string stl_files_dir,
-            const bool show_ref_frames,
-            const bool num_tools,
-            const bool with_guidance,
-            const double haptic_loop_rate,
-            const std::string slave_names[],
-            KDL::Frame *slave_to_world_tr
-        );
+    TaskBuzzWire(const std::string stl_files_dir, const bool num_tools,
+                     const bool with_guidance, const double haptic_loop_rate,
+                     const std::string slave_names[],
+                     KDL::Frame *slave_to_world_tr);
 
     ~TaskBuzzWire();
     // returns all the task graphics_actors to be sent to the rendering part

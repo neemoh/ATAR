@@ -10,15 +10,10 @@
 #include "src/ar_core/VTKConversions.h"
 #include <vtkCubeSource.h>
 
-TaskBuzzWire::TaskBuzzWire(
-        const std::string stl_file_dir,
-        const bool show_ref_frames,
-        const bool biman,
-        const bool with_guidance,
-        const double haptic_loop_rate,
-        const std::string slave_names_in[],
-        KDL::Frame *slave_to_world_tr
-    )
+TaskBuzzWire::TaskBuzzWire(const std::string stl_file_dir, const bool biman,
+                           const bool with_guidance, const double haptic_loop_rate,
+                           const std::string slave_names_in[],
+                           KDL::Frame *slave_to_world_tr)
     :
     SimTask(NULL, haptic_loop_rate),
     stl_files_dir(stl_file_dir),
@@ -385,6 +380,7 @@ TaskBuzzWire::TaskBuzzWire(
 
     // -------------------------------------------------------------------------
     // Add all graphics_actors to a vector
+    bool show_ref_frames =0;
     if (show_ref_frames) {
         graphics_actors.push_back(task_coordinate_axes);
 

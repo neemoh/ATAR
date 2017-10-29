@@ -45,8 +45,7 @@
 class TaskBulletTest : public SimTask{
 public:
 
-    TaskBulletTest(const bool show_ref_frames, const bool num_tools,
-                       const bool with_guidance);
+    TaskBulletTest();
 
     ~TaskBulletTest();
 

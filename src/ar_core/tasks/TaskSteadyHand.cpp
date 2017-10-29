@@ -9,12 +9,9 @@
 #include "TaskSteadyHand.h"
 
 
-TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n, const double haptic_loop_rate,
-                               const std::string slave_names_in[],
-                               KDL::Frame *slave_to_world_tr)
+TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         :
-        SimTask(n, haptic_loop_rate),
-        slave_frame_to_world_frame_tr(slave_to_world_tr),
+        SimTask(n, 500),
         destination_ring_counter(0),
         ac_params_changed(true),
         task_state(SHTaskState::Idle),
@@ -31,8 +28,8 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n, const double haptic_loop_ra
                                 "/gripper_position_current");
     InitBullet();
 
-    slave_names[0] = slave_names_in[0];
-    slave_names[1] = slave_names_in[1];
+    slave_names[0] = "/dvrk/PSM1";
+    slave_names[1] = "/dvrk/PSM2";
 
     // prevent tools from hitting things at the initialization
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);

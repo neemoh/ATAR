@@ -10,8 +10,7 @@
 
 
 
-TaskBulletTest::TaskBulletTest(const bool show_ref_frames, const bool biman,
-                               const bool with_guidance)
+TaskBulletTest::TaskBulletTest()
         :
         SimTask(NULL,500) ,
         time_last(ros::Time::now())
