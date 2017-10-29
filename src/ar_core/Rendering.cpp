@@ -172,7 +172,7 @@ Rendering::Rendering(ros::NodeHandlePtr n)
     if(ar_mode_)
         SetEnableBackgroundImage(true);
 
-
+    Render();
 }
 
 

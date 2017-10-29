@@ -14,6 +14,7 @@
 #include <custom_msgs/TaskState.h>
 #include <kdl/frames.hpp>
 #include <btBulletDynamicsCommon.h>
+#include "Rendering.h"
 
 
 //note about vtkSmartPointer:
@@ -62,6 +63,9 @@ public:
 protected:
 
     ros::NodeHandlePtr                      nh;
+
+    Rendering *                             graphics;
+
     double                                  haptic_loop_rate;
     std::vector<vtkSmartPointer<vtkProp>>   graphics_actors;
     btDiscreteDynamicsWorld*                dynamics_world;

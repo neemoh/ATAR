@@ -7,6 +7,7 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
+#include <src/ar_core/Rendering.h>
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 
@@ -55,7 +56,8 @@ private:
 
 
 private:
-    // task template members
+
+        // task template members
     Colors colors;
     ros::Time time_last;
 

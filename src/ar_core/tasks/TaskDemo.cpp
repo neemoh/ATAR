@@ -13,18 +13,10 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n, const KDL::Frame *cam_pose)
         time_last(ros::Time::now())
 {
 
-    // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle",
-                                   cam_pose);
-    //    master = new Manipulator(nh, "/dvrk/MTML",
-    //                                   "/position_cartesian_current",
-    //                                   "/gripper_position_current",
-    //                                   cam_pose);
-
     // Initialize Bullet Physics
     InitBullet();
 
-    // DEFINE THE OBJECTS
+    // DEFINE OBJECTS
     // -------------------------------------------------------------------------
     // static floor
     // always add a floor under the workspace of your task to prevent objects
@@ -138,10 +130,28 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n, const KDL::Frame *cam_pose)
         forceps->AddToActorsVector(graphics_actors);
 
     }
+
+
+    graphics = new Rendering(n);
+
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle",
+                             cam_pose);
+    //    master = new Manipulator(nh, "/dvrk/MTML",
+    //                                   "/position_cartesian_current",
+    //                                   "/gripper_position_current",
+    //                                   cam_pose);
+    graphics = new Rendering(n);
+
+    graphics->AddActorsToScene(GetActors());
+
 };
 
 //------------------------------------------------------------------------------
 void TaskDemo::StepWorld() {
+
+
+    graphics->Render();
 
     //--------------------------------
     //use the tool pose for moving the virtual tools ...
@@ -303,6 +313,9 @@ TaskDemo::~TaskDemo() {
     delete collisionConfiguration;
 
     delete master;
+
+    delete graphics;
+
 
 }
 

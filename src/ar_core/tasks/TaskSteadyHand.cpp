@@ -18,6 +18,8 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         time_last(ros::Time::now())
 {
 
+    graphics = new Rendering(n);
+
     // Define a master manipulator
     master[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
                                 "/position_cartesian_current",
@@ -424,9 +426,14 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         graphics_actors.push_back(score_sphere_actors[j]);
     }
 
+    graphics->AddActorsToScene(GetActors());
+
+
 };
 //------------------------------------------------------------------------------
 void TaskSteadyHand::StepWorld() {
+
+    graphics->Render();
 
     // check if any of the forceps have grasped the ring in action
     for (int i = 0; i < 2; ++i) {
@@ -1226,6 +1233,27 @@ TaskSteadyHand::~TaskSteadyHand() {
         dynamics_world->removeCollisionObject(obj);
         delete obj;
     }
+
+    //delete dynamics world
+    delete dynamics_world;
+
+    //delete solver
+    delete solver;
+
+    //delete broadphase
+    delete overlappingPairCache;
+
+    //delete dispatcher
+    delete dispatcher;
+
+    delete collisionConfiguration;
+
+    delete master[0];
+
+    delete master[1];
+
+    delete graphics;
+
 
 }
 

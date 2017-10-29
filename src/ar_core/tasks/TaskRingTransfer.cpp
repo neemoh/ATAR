@@ -12,9 +12,6 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
         SimTask(n, 100),
         time_last(ros::Time::now()) {
 
-    // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
-
     InitBullet();
 
     SimObject *board;
@@ -222,11 +219,24 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
 
+
+    graphics = new Rendering(n);
+
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+    //    master = new Manipulator(nh, "/dvrk/MTML",
+    //                                   "/position_cartesian_current",
+    //                                   "/gripper_position_current",
+    //                                   cam_pose);
+    graphics = new Rendering(n);
+
+    graphics->AddActorsToScene(GetActors());
 };
 
 //------------------------------------------------------------------------------
 void TaskRingTransfer::StepWorld() {
 
+    graphics->Render();
 
     //-------------------------------- UPDATE RIGHT GRIPPER
     KDL::Frame grpr_right_pose;
@@ -403,6 +413,11 @@ TaskRingTransfer::~TaskRingTransfer() {
     delete dispatcher;
 
     delete collisionConfiguration;
+
+    delete master;
+
+    delete graphics;
+
 
 
 }

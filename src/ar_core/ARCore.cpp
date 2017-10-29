@@ -230,9 +230,7 @@ void ARCore::SetupGraphics() {
         }
     }
 
-    graphics = new Rendering(n);
 
-    graphics->Render();
 
 }
 // -----------------------------------------------------------------------------
@@ -249,7 +247,7 @@ bool ARCore::UpdateWorld() {
 
     // -------------------------------------------------------------------------
     if (control_event == CE_EXIT) {// Esc
-        graphics->RemoveAllActorsFromScene();
+//        graphics->RemoveAllActorsFromScene();
         Cleanup();
         return false;
     }
@@ -257,7 +255,7 @@ bool ARCore::UpdateWorld() {
     if(new_task_event)
         HandleTaskEvent();
 
-    if(graphics->AreImagesNew() || !ar_mode) {
+    if(!ar_mode) {
 
         // Time performance debug
         //        ros::Time start =ros::Time::now();
@@ -267,7 +265,6 @@ bool ARCore::UpdateWorld() {
             task_ptr->StepWorld();
 
         // Render!
-        graphics->Render();
 
         // arm calibration
         if(control_event== CE_CALIB_ARM1)
@@ -304,15 +301,11 @@ void ARCore::HandleTaskEvent() {
 
         //close tasks if it was already running
         if(task_ptr) {
-            graphics->RemoveAllActorsFromScene();
+//            graphics->RemoveAllActorsFromScene();
             DeleteTask();
         }
 
         StartTask(running_task_id);
-
-        if(task_ptr)
-            // If task initialized, add the task graphics_actors to the graphics
-            graphics->AddActorsToScene(task_ptr->GetActors());
 
         new_task_event = false;
     }
@@ -349,33 +342,32 @@ void ARCore::StartTask(const uint task_id) {
         task_ptr   = new TaskNeedle(n);
     }
     else if(task_id ==4){
-        ROS_DEBUG("Starting new TaskBulletTest. ");
-        task_ptr   = new TaskBulletTest();
-    }
-    else if(task_id ==5){
         ROS_DEBUG("Starting new TaskDeformable . ");
         task_ptr   = new TaskDeformable(n);
+    }
+    else if(task_id ==5){
+        ROS_DEBUG("Starting new TaskRingTransfer. ");
+        task_ptr   = new TaskRingTransfer(n);
 
     }
     else if(task_id ==6) {
-        ROS_DEBUG("Starting new TaskRingTransfer. ");
-        task_ptr   = new TaskRingTransfer(n);
+
     }
     else if(task_id ==7) {
-        ROS_DEBUG("Starting new BuzzWireTask task. ");
-        // getting the names of the slaves
-        std::string slave_names[n_arms];
-        for (int n_arm = 0; n_arm < n_arms; n_arm++) {
-
-            //getting the name of the arms
-            std::stringstream param_name;
-            param_name << std::string("slave_") << n_arm + 1 << "_name";
-            n->getParam(param_name.str(), slave_names[n_arm]);
-        }
-        // starting the task
-        task_ptr = new TaskBuzzWire(MESH_DIRECTORY, (bool) (n_arms - 1),
-                                    with_guidance, haptic_loop_rate,
-                                    slave_names, slave_frame_to_world_frame);
+//        ROS_DEBUG("Starting new BuzzWireTask task. ");
+//        // getting the names of the slaves
+//        std::string slave_names[n_arms];
+//        for (int n_arm = 0; n_arm < n_arms; n_arm++) {
+//
+//            //getting the name of the arms
+//            std::stringstream param_name;
+//            param_name << std::string("slave_") << n_arm + 1 << "_name";
+//            n->getParam(param_name.str(), slave_names[n_arm]);
+//        }
+//        // starting the task
+//        task_ptr = new TaskBuzzWire(MESH_DIRECTORY, (bool) (n_arms - 1),
+//                                    with_guidance, haptic_loop_rate,
+//                                    slave_names, slave_frame_to_world_frame);
     }
     else if(task_id == 8) {
 //        ROS_DEBUG("Starting new TestTask task. ");
@@ -541,57 +533,57 @@ void ARCore::DoArmToWorldFrameCalibration(const uint arm_id) {
 // -----------------------------------------------------------------------------
 void ARCore::Cleanup() {
     DeleteTask();
-    delete graphics;
+//    delete graphics;
 }
 
 // -----------------------------------------------------------------------------
 void ARCore::StartArmToWorldFrameCalibration(const uint arm_id) {
 
-    ROS_INFO("Starting Arm 1 to world calibration->");
-    if(running_task_id>0) {
-        // if a task is running first stop it
-        graphics->RemoveAllActorsFromScene();
-        DeleteTask();
-        // then do the calibration
-        DoArmToWorldFrameCalibration(arm_id);
-        // run the task again
-        StartTask((uint)running_task_id);
-        graphics->AddActorsToScene(task_ptr->GetActors());
-    }
-    else // if no task is running just do the calibration
-        DoArmToWorldFrameCalibration(arm_id);
-
-    control_event = (int8_t)running_task_id;
+//    ROS_INFO("Starting Arm 1 to world calibration->");
+//    if(running_task_id>0) {
+//        // if a task is running first stop it
+//        graphics->RemoveAllActorsFromScene();
+//        DeleteTask();
+//        // then do the calibration
+//        DoArmToWorldFrameCalibration(arm_id);
+//        // run the task again
+//        StartTask((uint)running_task_id);
+//        graphics->AddActorsToScene(task_ptr->GetActors());
+//    }
+//    else // if no task is running just do the calibration
+//        DoArmToWorldFrameCalibration(arm_id);
+//
+//    control_event = (int8_t)running_task_id;
 }
 
 // -----------------------------------------------------------------------------
 void ARCore::PublishRenderedImages() {
 
-    cv::Mat augmented_images[2];
-
-    char key = (char)cv::waitKey(1);
-    if (key == 27) // Esc
-        ros::shutdown();
-    else if (key == 'f')  //full screen
-        SwitchFullScreenCV(cv_window_names[0]);
-
-    graphics->GetRenderedImage(augmented_images);
-    if(one_window_mode){
-        cv::imshow(cv_window_names[0], augmented_images[0]);
-        publisher_stereo_overlayed.publish(
-                cv_bridge::CvImage(std_msgs::Header(),
-                                   "bgr8", augmented_images[0]).toImageMsg());
-    }
-    else{
-        for (int i = 0; i < 2; ++i) {
-            cv::imshow(cv_window_names[i], augmented_images[i]);
-            publisher_overlayed[i].publish(
-                    cv_bridge::CvImage(std_msgs::Header(), "bgr8",
-                                       augmented_images[i]).toImageMsg());
-        }
-        if (key == 'f')  //full screen
-            SwitchFullScreenCV(cv_window_names[1]);
-    }
+//    cv::Mat augmented_images[2];
+//
+//    char key = (char)cv::waitKey(1);
+//    if (key == 27) // Esc
+//        ros::shutdown();
+//    else if (key == 'f')  //full screen
+//        SwitchFullScreenCV(cv_window_names[0]);
+//
+//    graphics->GetRenderedImage(augmented_images);
+//    if(one_window_mode){
+//        cv::imshow(cv_window_names[0], augmented_images[0]);
+//        publisher_stereo_overlayed.publish(
+//                cv_bridge::CvImage(std_msgs::Header(),
+//                                   "bgr8", augmented_images[0]).toImageMsg());
+//    }
+//    else{
+//        for (int i = 0; i < 2; ++i) {
+//            cv::imshow(cv_window_names[i], augmented_images[i]);
+//            publisher_overlayed[i].publish(
+//                    cv_bridge::CvImage(std_msgs::Header(), "bgr8",
+//                                       augmented_images[i]).toImageMsg());
+//        }
+//        if (key == 'f')  //full screen
+//            SwitchFullScreenCV(cv_window_names[1]);
+//    }
 
 }
 
@@ -647,7 +639,6 @@ void ARCore::ControlEventsCallback(const std_msgs::Int8ConstPtr
             break;
 
         case CE_TOGGLE_FULLSCREEN:
-            graphics->ToggleFullScreen();
             break;
 
         case CE_START_TASK1:

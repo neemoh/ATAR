@@ -11,33 +11,24 @@
 
 
 
-TaskNeedle::TaskNeedle(ros::NodeHandlePtr nh)
+TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
         :
-        SimTask(nh, 100),
+        SimTask(n, 100),
         time_last(ros::Time::now()) {
 
-    // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
     InitBullet();
 
 
     // -----------------------
     // -------------------------------------------------------------------------
     // Create a cube for the board
-
-    //board_dimensions[0]  = 0.18;
-    //board_dimensions[1]  = 0.14;
-    //board_dimensions[2]  = 0.1;
-
     board_dimensions[0] = 0.14;
     board_dimensions[1] = 0.12;
     board_dimensions[2] = 0.01;
-    //double stiffnes = 1000;
-    //double damping = 20;
     {
         double friction = 0.5;
 
-        KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
+        KDL::Frame pose(KDL::Rotation::Quaternion(0., 0, 0.0, 1),
                         KDL::Vector(board_dimensions[0] / 2.45,
                                     board_dimensions[1] / 2.78,
                                     -board_dimensions[2] / 2));
@@ -46,14 +37,14 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr nh)
         };
         board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose,
                               0.0, friction);
-//    board->GetActor()->GetProperty()->SetOpacity(0.05);
+        //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.5, 0.3, 0.1);
 
         dynamics_world->addRigidBody(board->GetBody());
         graphics_actors.push_back(board->GetActor());
-//        board->GetBody()->
-//                setCollisionFlags(board->GetBody()->getCollisionFlags() |
-//                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+        //        board->GetBody()->
+        //                setCollisionFlags(board->GetBody()->getCollisionFlags() |
+        //                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 
         board->GetBody()->setUserPointer(board);
     }
@@ -67,95 +58,7 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr nh)
                                      KDL::Frame(), 0.0);
     dynamics_world->addRigidBody(floor->GetBody());
 
-    //// -------------------------------------------------------------------------
-    //// Create cylinders
-    //{
-    //    uint cols = 4;
-    //    uint rows = 3;
-    //    float density = 50000; // kg/m3
-    //    float friction = 2.2;
-    //    SimObject *cylinders[cols * rows];
-    //    for (int i = 0; i < rows; ++i) {
-    //
-    //        for (int j = 0; j < cols; ++j) {
-    //
-    //            std::vector<double> dim = {0.003, 0.03};
-    //
-    //            double q3 = 0;
-    //            double q4 = 1;
-    //            if (j < cols / 2) {
-    //                q3 = 0.70711;
-    //                q4 = 0.70711;
-    //            }
-    //            double pose[7]{
-    //                (double) i * 4 * dim[0] + (double) j * dim[0] / 2, 0.06, 0.1
-    //                    + dim[1] * 1.5 * (double) j, 0, 0, q3, q4
-    //            };
-    //
-    //            cylinders[i * rows + j] =
-    //                new SimObject(
-    //                    ObjectShape::CYLINDER, ObjectType::DYNAMIC, dim, pose,
-    //                    density                );
-    //            double ratio = (double) i / 4.0;
-    //            cylinders[i * rows + j]->GetActor()->GetProperty()->SetColor(
-    //                0.6 - 0.2 * ratio, 0.6 - 0.3 * ratio, 0.7 + 0.3 * ratio
-    //            );
-    //            cylinders[i * rows + j]->GetActor()->GetProperty()->SetSpecular(
-    //                0.8
-    //            );
-    //            cylinders[i * rows
-    //                + j]->GetActor()->GetProperty()->SetSpecularPower(50);
-    //
-    //            dynamics_world->addRigidBody(
-    //                cylinders[i * rows + j]->GetBody());
-    //            graphics_actors.push_back(cylinders[i * rows + j]->GetActor());
-    //
-    //        }
-    //    }
-    //}
-    //// -------------------------------------------------------------------------
-    //// Create cubes
-    //{
-    //    uint rows = 3;
-    //    uint cols = 2;
-    //    int layers = 3;
-    //    SimObject *cubes[layers * rows * cols];
-    //
-    //    double sides = 0.006;
-    //    float density = 50000; // kg/m3
-    //    float friction = 12;
-    //
-    //    for (int k = 0; k < layers; ++k) {
-    //        for (int i = 0; i < rows; ++i) {
-    //            for (int j = 0; j < cols; ++j) {
-    //
-    //                double pose[7]{
-    //                    (double) i * 2.2 * sides + 0.1, (double) j * 2.2 * sides
-    //                        + 0.05, (double) k * 4 * sides + 0.05, 0, 0, 0, 1
-    //                };
-    //
-    //                std::vector<double> dim = {sides, sides, sides};
-    //                cubes[i * rows + j] = new SimObject(
-    //                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose,
-    //                    density,
-    //                    NULL, friction
-    //                );
-    //                double ratio = (double) i / 4.0;
-    //                cubes[i * rows + j]->GetActor()->GetProperty()->SetColor(
-    //                    0.6 + 0.1 * ratio, 0.3 - 0.3 * ratio, 0.7 - 0.3 * ratio
-    //                );
-    //
-    //                dynamics_world->addRigidBody(
-    //                    cubes[i * rows + j]->GetBody());
-    //                graphics_actors.push_back(cubes[i * rows + j]->GetActor());
-    //
-    //            }
-    //        }
-    //    }
-    //}
-
-
-    // -------------------------------------------------------------------------
+     // -------------------------------------------------------------------------
     //// Create needle mesh
     {
         KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
@@ -312,10 +215,23 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr nh)
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
 
+    graphics = new Rendering(nh);
+
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+    //    master = new Manipulator(nh, "/dvrk/MTML",
+    //                                   "/position_cartesian_current",
+    //                                   "/gripper_position_current",
+    //                                   cam_pose);
+    graphics = new Rendering(nh);
+
+    graphics->AddActorsToScene(GetActors());
 };
 
 //------------------------------------------------------------------------------
 void TaskNeedle::StepWorld() {
+
+    graphics->Render();
 //    MyContactResultCallback result;
 //    dynamics_world->contactPairTest(needle_mesh->GetBody(),
 //                                    board->GetBody(),
@@ -464,20 +380,6 @@ TaskNeedle::~TaskNeedle() {
         delete obj;
     }
 
-//    for (int j = 0; j < NUM_BULLET_SPHERES; ++j) {
-//        SimObject* sphere = spheres[j];
-//        spheres[j] = 0;
-//        delete sphere;
-//    }
-//    //delete collision shapes
-////    for (int j = 0; j < collisionShapes.size(); j++)
-//    for (int j = 0; j < 2; j++) // because we use the same collision shape
-//        // for all spheres
-//    {
-//        btCollisionShape* shape = collisionShapes[j];
-//        collisionShapes[j] = 0;
-//        delete shape;
-//    }
 
     //delete dynamics world
     delete dynamics_world;
@@ -493,8 +395,10 @@ TaskNeedle::~TaskNeedle() {
 
     delete collisionConfiguration;
 
-    //next line is optional: it will be cleared by the destructor when the array goes out of scope
-//    collisionShapes.clear();
+    delete master;
+
+    delete graphics;
+
 }
 
 void TaskNeedle::UpdateGripperLinksPose(const KDL::Frame pose,

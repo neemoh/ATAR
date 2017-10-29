@@ -150,78 +150,6 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
         }
     }
 
-//    // -------------------------------------------------------------------------
-//    // Create cubes
-//    rows = 3;
-//    cols = 2;
-//    int layers = 3;
-//    SimObject* cubes[layers *rows *cols];
-//
-//    double sides = 0.01;
-//    density = 7000; // kg/m3
-//    stiffnes = 1000;
-//    damping = 5.1;
-////    friction = 0.1;
-//
-//    for (int k = 0; k < layers; ++k) {
-//        for (int i = 0; i < rows; ++i) {
-//            for (int j = 0; j < cols; ++j) {
-//
-//                pose = new double[7] {(double)i * 2.2*sides + 0.1,
-//                    (double)j * 2.2*sides  + 0.05,
-//                    (double)k * 4*sides  + 0.01,
-//                    0, 0, 0, 1};
-//
-//                std::vector<double> dim = {sides, sides, 2*sides};
-//                cubes[i*rows+j] = new SimObject(
-//                    ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose, density,
-//                    friction                );
-//                delete [] pose;
-//
-//                double ratio = (double)i/4.0;
-//                cubes[i*rows+j]->GetActor()->GetProperty()->SetColor(
-//                    0.6 + 0.1*ratio, 0.3 - 0.3*ratio, 0.7 - 0.3*ratio);
-//
-////                cubes[i*rows+j]->GetBody()->setContactStiffnessAndDamping(
-////                        (float) stiffnes, (float) damping);
-////                dynamics_world->addRigidBody(cubes[i*rows+j]->GetBody());
-////                actors.push_back(cubes[i*rows+j]->GetActor());
-//
-//            }
-//        }
-//    }
-
-    {
-//        std::vector<double> dim = {sides, sides, sides};
-//        cubes[i*rows+j] = new SimObject(ObjectShape::BOX,
-//                                              ObjectType::DYNAMIC, dim,
-//                                              pose, 0.2), stiffnes, damping;
-
-    }
-
-    // -------------------------------------------------------------------------
-    // Create mesh
-//    stiffnes = 1000;
-//    damping= 1;
-////    friction = 1;
-//
-//    pose = new double[7] {0.06, 0.06, 0.1, 0.7, 0, 0.7, 0};
-//    std::vector<double> _dim = {0.002};
-//    SimObject *mesh;
-//    std::stringstream input_file_dir;
-//    input_file_dir << MESH_DIRECTORY << std::string("monkey.obj");
-//    std::string mesh_file_dir_str = input_file_dir.str();
-//
-//    mesh = new
-//        SimObject(
-//        ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose, 6000,
-//        &mesh_file_dir_str, friction
-//    );
-//
-////    dynamics_world->addRigidBody(mesh->GetBody());
-////    actors.push_back(mesh->GetActor());
-//    mesh->GetActor()->GetProperty()->SetColor(0., 0.9, 0.1);
-
     // -------------------------------------------------------------------------
     // Create kinematic box
 
@@ -270,11 +198,23 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
 
 
 
+    graphics = new Rendering(n);
+
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+    //    master = new Manipulator(nh, "/dvrk/MTML",
+    //                                   "/position_cartesian_current",
+    //                                   "/gripper_position_current",
+    //                                   cam_pose);
+    graphics = new Rendering(n);
+
+    graphics->AddActorsToScene(GetActors());
 };
 
 //------------------------------------------------------------------------------
 void TaskDeformable::StepWorld() {
 
+    graphics->Render();
     soft_o0->RenderSoftbody();
     soft_o1->RenderSoftbody();
     soft_o2->RenderSoftbody();
@@ -467,6 +407,9 @@ TaskDeformable::~TaskDeformable() {
 
     delete collisionConfiguration;
 
+    delete master;
+
+    delete graphics;
 
     //next line is optional: it will be cleared by the destructor when the array goes out of scope
 //    collisionShapes.clear();

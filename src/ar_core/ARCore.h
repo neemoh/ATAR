@@ -92,8 +92,6 @@ private:
 
     SimTask *task_ptr;
 
-    Rendering * graphics;
-
     boost::thread haptics_thread;
 
     // IN ALL CODE 0 is Left Cam, 1 is Right cam
