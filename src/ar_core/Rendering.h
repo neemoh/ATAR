@@ -71,6 +71,8 @@ public:
 
     bool AreImagesNew();
 
+    ARCamera* GetPtrToMainCamera(){return cameras[0];};
+
     void GetRenderedImage(cv::Mat *images);
 
     void ToggleFullScreen();
@@ -81,13 +83,16 @@ private:
 
     void SetupLights();
 
+    void PublishRenderedImages();
+
 private:
     int n_windows_;
     bool with_shadows_;
     bool ar_mode_;
+    bool publish_overlayed_images_;
 
     //cameras
-    ARCamera *                              cameras [3];
+    ARCamera *                              cameras [2];
     image_transport::ImageTransport *       it;
 
     vtkSmartPointer<vtkLight>               lights[2];
@@ -102,6 +107,9 @@ private:
     // reading images back
     vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter_[2] ;
 
+
+    //overlay image publishers (SLOW)
+    image_transport::Publisher              publisher_stereo_overlayed;
 };
 
 

@@ -223,7 +223,8 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     graphics = new Rendering(n);
 
     // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle",
+                             graphics->GetPtrToMainCamera());
     //    master = new Manipulator(nh, "/dvrk/MTML",
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",

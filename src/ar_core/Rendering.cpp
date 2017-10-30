@@ -29,10 +29,9 @@ Rendering::Rendering(ros::NodeHandlePtr n)
     n->param<bool>("offScreen_rendering", offScreen_rendering, false);
     ROS_INFO("offScreen_rendering: %s", offScreen_rendering ? "true" : "false");
 
-    bool publish_overlayed_images;
-    n->param<bool>("publish_overlayed_images", publish_overlayed_images, false);
+    n->param<bool>("publish_overlayed_images", publish_overlayed_images_, false);
     ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
-             publish_overlayed_images ? "true" : "false");
+             publish_overlayed_images_ ? "true" : "false");
 
     // make sure the number of windows are alright
     if(n_windows_ <1) n_windows_ =1;
@@ -48,7 +47,7 @@ Rendering::Rendering(ros::NodeHandlePtr n)
         cameras[0] = new ARCamera(n);
         std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
                                         0.87903000839, -0.472201765689, 0.0599719016889};
-        cameras[0]->SetWorldToCamTf(conversions::VectorToKDLFrame(temp_vec));
+        cameras[0]->SetWorldToCamTf(conversions::PoseVectorToKDLFrame(temp_vec));
     }
     std::string right_cam_name;
     if (n->getParam("right_cam_name", right_cam_name)) {
@@ -60,8 +59,8 @@ Rendering::Rendering(ros::NodeHandlePtr n)
         cameras[2] = new ARCamera(n);
         std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
                                         0.87903000839, -0.472201765689, 0.0599719016889};
-        cameras[1]->SetWorldToCamTf(conversions::VectorToKDLFrame(temp_vec));
-        cameras[2]->SetWorldToCamTf(conversions::VectorToKDLFrame(temp_vec));
+        cameras[1]->SetWorldToCamTf(conversions::PoseVectorToKDLFrame(temp_vec));
+        cameras[2]->SetWorldToCamTf(conversions::PoseVectorToKDLFrame(temp_vec));
     }
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
@@ -129,7 +128,7 @@ Rendering::Rendering(ros::NodeHandlePtr n)
 
         render_window_[j]->AddRenderer(scene_renderer_[i]);
 
-        if(publish_overlayed_images) {
+        if(publish_overlayed_images_) {
             window_to_image_filter_[j] =
                     vtkSmartPointer<vtkWindowToImageFilter>::New();
             window_to_image_filter_[j]->SetInput(render_window_[j]);
@@ -138,6 +137,9 @@ Rendering::Rendering(ros::NodeHandlePtr n)
             window_to_image_filter_[j]->ReadFrontBufferOff(); // read from
             // the back buffer important for getting high update rate (If
             // needed, images can be shown with opencv)
+            cvNamedWindow("Augmented Stereo", CV_WINDOW_NORMAL);
+            publisher_stereo_overlayed = it->advertise("stereo/image_color", 1);
+
         }
 
         render_window_[j]->Render();
@@ -173,6 +175,7 @@ Rendering::Rendering(ros::NodeHandlePtr n)
         SetEnableBackgroundImage(true);
 
     Render();
+
 }
 
 
@@ -278,6 +281,9 @@ void Rendering::Render() {
         render_window_[i]->Render();
     }
 
+    // Copy the rendered image to memory, show it and/or publish it.
+    if(publish_overlayed_images_)
+        PublishRenderedImages();
 }
 
 
@@ -420,6 +426,37 @@ void Rendering::SetupLights() {
     lights[1]->SetSwitch(1);
 }
 
+// -----------------------------------------------------------------------------
+void Rendering::PublishRenderedImages() {
+
+    // todo: Update the implementation of this
+    cv::Mat augmented_images[2];
+
+    char key = (char)cv::waitKey(1);
+    if (key == 27) // Esc
+        ros::shutdown();
+    else if (key == 'f')  //full screen
+//        SwitchFullScreenCV(cv_window_names[0]);
+
+    GetRenderedImage(augmented_images);
+//    if(one_window_mode){
+        cv::imshow("Augmented Stereo", augmented_images[0]);
+        publisher_stereo_overlayed.publish(
+                cv_bridge::CvImage(std_msgs::Header(),
+                                   "bgr8", augmented_images[0]).toImageMsg());
+//    }
+//    else{
+//        for (int i = 0; i < 2; ++i) {
+//            cv::imshow(cv_window_names[i], augmented_images[i]);
+//            publisher_overlayed[i].publish(
+//                    cv_bridge::CvImage(std_msgs::Header(), "bgr8",
+//                                       augmented_images[i]).toImageMsg());
+//        }
+//        if (key == 'f')  //full screen
+//            SwitchFullScreenCV(cv_window_names[1]);
+//    }
+
+}
 
 // For each spotlight, add a light frustum wireframe representation and a cone
 // wireframe representation, colored with the light color.

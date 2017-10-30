@@ -23,11 +23,13 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     // Define a master manipulator
     master[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
                                 "/position_cartesian_current",
-                                "/gripper_position_current");
+                                "/gripper_position_current",
+                                graphics->GetPtrToMainCamera());
 
     master[1] = new Manipulator(nh, "/dvrk/PSM2_DUMMY",
                                 "/position_cartesian_current",
-                                "/gripper_position_current");
+                                "/gripper_position_current",
+                                graphics->GetPtrToMainCamera());
     InitBullet();
 
     slave_names[0] = "/dvrk/PSM1";

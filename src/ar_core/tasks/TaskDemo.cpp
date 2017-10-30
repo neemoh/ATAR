@@ -7,7 +7,7 @@
 #include <custom_conversions/Conversions.h>
 #include <boost/thread/thread.hpp>
 
-TaskDemo::TaskDemo(ros::NodeHandlePtr n, const KDL::Frame *cam_pose)
+TaskDemo::TaskDemo(ros::NodeHandlePtr n)
         :
         SimTask(n, 500) ,
         time_last(ros::Time::now())
@@ -136,13 +136,11 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n, const KDL::Frame *cam_pose)
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle",
-                             cam_pose);
+                             graphics->GetPtrToMainCamera());
     //    master = new Manipulator(nh, "/dvrk/MTML",
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",
     //                                   cam_pose);
-    graphics = new Rendering(n);
-
     graphics->AddActorsToScene(GetActors());
 
 };
@@ -280,6 +278,26 @@ void TaskDemo::StepPhysics() {
 
 }
 
+// -----------------------------------------------------------------------------
+void TaskDemo::StartManipulatorToWorldFrameCalibration(const uint arm_id) {
+
+    // TODO : Update the implementation of this
+//    ROS_INFO("Starting Arm 1 to world calibration->");
+//    if(running_task_id>0) {
+//        // if a task is running first stop it
+//        graphics->RemoveAllActorsFromScene();
+//        DeleteTask();
+//        // then do the calibration
+//        DoArmToWorldFrameCalibration(arm_id);
+//        // run the task again
+//        StartTask((uint)running_task_id);
+//        graphics->AddActorsToScene(task_ptr->GetActors());
+//    }
+//    else // if no task is running just do the calibration
+//        DoArmToWorldFrameCalibration(arm_id);
+//
+//    control_event = (int8_t)running_task_id;
+}
 
 TaskDemo::~TaskDemo() {
 

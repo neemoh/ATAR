@@ -20,8 +20,6 @@ Task3D::Task3D()
         time_last(ros::Time::now())
 {
 
-    // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
 
     InitBullet();
 
@@ -139,6 +137,11 @@ Task3D::Task3D()
     dynamicsWorld->addRigidBody(kine_p->GetBody());
     kine_p->GetActor()->GetProperty()->SetColor(0.6314, 0.0, 0.0);
     graphics_actors.push_back(kine_p->GetActor());
+
+
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle",
+                             graphics->GetPtrToMainCamera());
 };
 
 //------------------------------------------------------------------------------

@@ -67,7 +67,7 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
         // poses if new messages are arrived on the topics
         std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
         if (n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame", temp_vec))
-            conversions::VectorToKDLFrame(temp_vec, world_to_cam_pose);
+            conversions::PoseVectorToKDLFrame(temp_vec, world_to_cam_pose);
 
         SetCameraPose();
 

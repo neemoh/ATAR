@@ -60,6 +60,9 @@ public:
     // full reset ;
     virtual void ResetTask() {};
 
+    virtual void StartManipulatorToWorldFrameCalibration(const uint arm_id){};
+
+
 protected:
 
     ros::NodeHandlePtr                      nh;

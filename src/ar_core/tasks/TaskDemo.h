@@ -20,7 +20,7 @@
 class TaskDemo : public SimTask{
 public:
 
-    TaskDemo(ros::NodeHandlePtr n, const KDL::Frame *cam_pose);
+    TaskDemo(ros::NodeHandlePtr n);
 
     ~TaskDemo();
 
@@ -43,9 +43,11 @@ public:
     // resets the number of repetitions and task state;
     void ResetTask();
 
+private:
 
     void InitBullet();
 
+    void StartManipulatorToWorldFrameCalibration(const uint arm_id);
 
 private:
     // task specific members

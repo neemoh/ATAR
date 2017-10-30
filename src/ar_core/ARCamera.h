@@ -54,6 +54,7 @@ public:
 
     bool IsImageNew();
 
+    KDL::Frame GetWorldToCamTr(){return world_to_cam_pose;};
 
     void ImageCallback(const sensor_msgs::ImageConstPtr &msg);
 
