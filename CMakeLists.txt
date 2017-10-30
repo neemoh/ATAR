@@ -213,8 +213,8 @@ add_executable(
         src/ar_core/ARCamera.h
         src/ar_core/Rendering.cpp
         src/ar_core/Rendering.h
-        src/ar_core/ARCore.cpp
-        src/ar_core/ARCore.h
+        src/ar_core/TaskHandler.cpp
+        src/ar_core/TaskHandler.h
         src/arm_to_world_calibration/ArmToWorldCalibration.cpp
         src/arm_to_world_calibration/ArmToWorldCalibration.h
         src/ar_core/ControlEvents.h

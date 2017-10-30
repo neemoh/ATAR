@@ -2,7 +2,7 @@
 // Created by charm on 4/17/17.
 //
 
-#include "ARCore.h"
+#include "TaskHandler.h"
 #include <custom_conversions/Conversions.h>
 #include "ControlEvents.h"
 // tasks
@@ -16,7 +16,7 @@
 std::string MESH_DIRECTORY;
 
 // -----------------------------------------------------------------------------
-ARCore::ARCore(std::string node_name)
+TaskHandler::TaskHandler(std::string node_name)
         :
         running_task_id(0), task_ptr(NULL)
 {
@@ -34,7 +34,7 @@ ARCore::ARCore(std::string node_name)
                   n->resolveName("MESH_DIRECTORY").c_str());
 
     subscriber_control_events = n->subscribe(
-            "/atar/control_events", 1, &ARCore::ControlEventsCallback, this);}
+            "/atar/control_events", 1, &TaskHandler::ControlEventsCallback, this);}
 
 //    // -------------------------------- CAM POSES ------------------------------
 //    // We need to know the pose of the cameras with respect to the world frame
@@ -70,10 +70,8 @@ ARCore::ARCore(std::string node_name)
 //        new_cam_pose[1] = true;
 //    }
 
-
-
 // -----------------------------------------------------------------------------
-bool ARCore::UpdateWorld() {
+bool TaskHandler::UpdateWorld() {
 
     if (control_event == CE_EXIT) {// Esc
         Cleanup();
@@ -107,7 +105,7 @@ bool ARCore::UpdateWorld() {
 }
 
 // -----------------------------------------------------------------------------
-void ARCore::HandleTaskEvent() {
+void TaskHandler::HandleTaskEvent() {
 
     if (new_task_event){
 
@@ -125,7 +123,7 @@ void ARCore::HandleTaskEvent() {
 
 
 // -----------------------------------------------------------------------------
-void ARCore::StartTask(const uint task_id) {
+void TaskHandler::StartTask(const uint task_id) {
 
     // create the task
     if(task_id ==1){
@@ -173,7 +171,7 @@ void ARCore::StartTask(const uint task_id) {
 }
 
 // -----------------------------------------------------------------------------
-void ARCore::DeleteTask() {
+void TaskHandler::DeleteTask() {
 
     ROS_DEBUG("Interrupting haptics thread");
     haptics_thread.interrupt();
@@ -184,13 +182,13 @@ void ARCore::DeleteTask() {
 }
 
 // -----------------------------------------------------------------------------
-void ARCore::Cleanup() {
+void TaskHandler::Cleanup() {
     DeleteTask();
 //    delete graphics;
 }
 
 // -----------------------------------------------------------------------------
-void ARCore::ControlEventsCallback(const std_msgs::Int8ConstPtr
+void TaskHandler::ControlEventsCallback(const std_msgs::Int8ConstPtr
                                    &msg) {
 
     control_event = msg->data;
@@ -264,7 +262,7 @@ void ARCore::ControlEventsCallback(const std_msgs::Int8ConstPtr
 
 
 // -----------------------------------------------------------------------------
-//bool ARCore::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
+//bool TaskHandler::GetNewCameraPoses(cv::Vec3d cam_rvec_out[2],
 //                               cv::Vec3d cam_tvec_out[2]) {
 //
 //    // if one of the poses is not available estimate the other one through

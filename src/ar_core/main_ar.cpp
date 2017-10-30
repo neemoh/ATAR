@@ -2,14 +2,14 @@
 // Created by nima on 4/13/17.
 //
 #include "ros/ros.h"
-#include "ARCore.h"
+#include "TaskHandler.h"
 
 
 int main(int argc, char **argv)
 {
 
     ros::init(argc, argv, "ar_core");
-    ARCore acore (ros::this_node::getName());
+    TaskHandler acore (ros::this_node::getName());
 
     ros::Rate loop_rate(30);
 

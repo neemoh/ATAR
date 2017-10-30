@@ -76,7 +76,7 @@ task 8. Wait for the compound convex mesh to be generated and the task should
  have faster graphics and also shadows. To test the shadows set the 
  with_shadows flag to true in the vr_test.lanuch file.
 
-## ARCore
+## TaskHandler
 Details will be updated.
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_ATAR_Arch.png)
 
