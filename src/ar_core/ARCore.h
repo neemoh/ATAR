@@ -62,11 +62,6 @@ private:
     // locking call in this method.
     bool GetNewCameraPoses(cv::Vec3d cam_rvec[2], cv::Vec3d cam_tvec[2]);
 
-    // publishes the active constraint parameters
-    void PublishTaskState(custom_msgs::TaskState msg){
-        publisher_task_state.publish(msg);
-    };
-
     void DoArmToWorldFrameCalibration(const uint arm_id);
 
     void StartArmToWorldFrameCalibration(const uint arm_id);
@@ -127,7 +122,6 @@ private:
     ros::Subscriber sub_cam_pose_right;
     ros::Subscriber subscriber_control_events;
 
-    ros::Publisher publisher_task_state;
 
     //overlay image publishers
     image_transport::Publisher publisher_overlayed[2];

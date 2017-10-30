@@ -10,7 +10,6 @@
 // tasks
 #include "src/ar_core/tasks/TaskBuzzWire.h"
 #include "src/ar_core/tasks/TaskDeformable.h"
-#include "src/ar_core/tasks/TaskBulletTest.h"
 #include "src/ar_core/tasks/TaskNeedle.h"
 #include "src/ar_core/tasks/TaskRingTransfer.h"
 #include "src/ar_core/tasks/TaskSteadyHand.h"
@@ -20,10 +19,12 @@ std::string MESH_DIRECTORY;
 
 // -----------------------------------------------------------------------------
 ARCore::ARCore(std::string node_name)
-        : running_task_id(0), task_ptr(NULL)
+        :
+        running_task_id(0), task_ptr(NULL)
 {
 
     n = ros::NodeHandlePtr(new ros::NodeHandle(node_name));
+
     SetupROSandGetParameters();
 
     SetupGraphics();
@@ -195,11 +196,6 @@ void ARCore::SetupROSandGetParameters() {
 
     }
 
-    // Publisher for the task state
-    std::string task_state_topic_name = "/atar/task_state";
-    publisher_task_state = n->advertise<custom_msgs::TaskState>(
-            task_state_topic_name.c_str(), 1);
-
     subscriber_control_events = n->subscribe(
             "/atar/control_events", 1, &ARCore::ControlEventsCallback, this);
 
@@ -236,18 +232,8 @@ void ARCore::SetupGraphics() {
 // -----------------------------------------------------------------------------
 bool ARCore::UpdateWorld() {
 
-//    // -------------------------------------------------------------------------
-//    // Update cam poses if needed
-//    cv::Vec3d cam_rvec[2];    cv::Vec3d cam_tvec[2];
-//
-//    // in AR mode we would like to change the virtual cam poses as the real
-//    // camera moves. In VR mode this returns the fixed cam poses only once.
-//    if(GetNewCameraPoses(cam_rvec, cam_tvec))
-//        graphics->SetWorldToCameraTransform(cam_rvec, cam_tvec);
-
     // -------------------------------------------------------------------------
     if (control_event == CE_EXIT) {// Esc
-//        graphics->RemoveAllActorsFromScene();
         Cleanup();
         return false;
     }
@@ -264,8 +250,6 @@ bool ARCore::UpdateWorld() {
         if(task_ptr)
             task_ptr->StepWorld();
 
-        // Render!
-
         // arm calibration
         if(control_event== CE_CALIB_ARM1)
             StartArmToWorldFrameCalibration(0);
@@ -274,11 +258,6 @@ bool ARCore::UpdateWorld() {
         if(publish_overlayed_images)
             PublishRenderedImages();
 
-        if(task_ptr) {
-            // publish the task state
-            PublishTaskState(task_ptr->GetTaskStateMsg());
-
-        }
         // check time performance
         //        std::cout <<  "it took: " <<
         //        (ros::Time::now() - start).toNSec() /1000000 << std::endl;
@@ -300,10 +279,8 @@ void ARCore::HandleTaskEvent() {
         ROS_INFO("Task %d Selected", running_task_id);
 
         //close tasks if it was already running
-        if(task_ptr) {
-//            graphics->RemoveAllActorsFromScene();
+        if(task_ptr)
             DeleteTask();
-        }
 
         StartTask(running_task_id);
 

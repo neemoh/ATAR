@@ -428,7 +428,10 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
 
     graphics->AddActorsToScene(GetActors());
 
-
+    // Publisher for the task state
+    std::string task_state_topic_name = "/atar/task_state";
+    publisher_task_state = n->advertise<custom_msgs::TaskState>(
+            task_state_topic_name.c_str(), 1);
 };
 //------------------------------------------------------------------------------
 void TaskSteadyHand::StepWorld() {
@@ -635,6 +638,8 @@ void TaskSteadyHand::StepWorld() {
     //--------------------------------
     // step the world
     StepPhysics();
+
+    publisher_task_state.publish(task_state_msg);
 
 }
 

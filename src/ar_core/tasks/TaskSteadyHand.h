@@ -154,6 +154,8 @@ private:
     KDL::Vector end_point;
     custom_msgs::TaskState task_state_msg;
     ros::Time start_time;
+    ros::Publisher publisher_task_state;
+
     double posit_error_sum;
     double orient_error_sum;
 
