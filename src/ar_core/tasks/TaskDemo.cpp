@@ -131,12 +131,14 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 
     }
 
-
     graphics = new Rendering(n);
 
     // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle",
-                             graphics->GetPtrToMainCamera());
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+
+    // for correct calibration, the master needs the pose of the camera
+    graphics->SetManipulatorInterestedInCamPose(master);
+
     //    master = new Manipulator(nh, "/dvrk/MTML",
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",
@@ -148,6 +150,10 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 //------------------------------------------------------------------------------
 void TaskDemo::StepWorld() {
 
+
+    KDL::Frame cam_p = graphics->GetMainCameraPose();
+    cam_p.M.DoRotZ(-0.005);
+    graphics->SetMainCameraPose(cam_p);
 
     graphics->Render();
 
@@ -281,6 +287,7 @@ void TaskDemo::StepPhysics() {
 // -----------------------------------------------------------------------------
 void TaskDemo::StartManipulatorToWorldFrameCalibration(const uint arm_id) {
 
+    master->DoArmToWorldFrameCalibration();
     // TODO : Update the implementation of this
 //    ROS_INFO("Starting Arm 1 to world calibration->");
 //    if(running_task_id>0) {
@@ -301,7 +308,7 @@ void TaskDemo::StartManipulatorToWorldFrameCalibration(const uint arm_id) {
 
 TaskDemo::~TaskDemo() {
 
-    ROS_INFO("Destructing Demo task objects: %d",
+    ROS_INFO("Destructing task. Num bullet objects: %d",
              dynamics_world->getNumCollisionObjects());
     //remove the rigidbodies from the dynamics world and delete them
     for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)

@@ -11,7 +11,6 @@
 #include <kdl/frames.hpp>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/TwistStamped.h>
-#include "ARCamera.h"
 
 class Manipulator {
 
@@ -20,7 +19,6 @@ public:
                 const std::string topic_ns,
                 const std::string pose_topic,
                 const std::string gripper_topic,
-                ARCamera *cam_ptr,
                 const std::string twist_topic = "");
 
     void PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
@@ -41,18 +39,21 @@ public:
 
     void DoArmToWorldFrameCalibration();
 
+    void SetCameraToWorldFrame(const KDL::Frame& in);  // needed for AR
+
 private:
+    ros::NodeHandlePtr n; // made it a member just for the calibration method
 
     KDL::Frame pose_local;
     KDL::Frame pose_world;
     KDL::Frame local_to_world_frame_tr;
-    KDL::Rotation local_to_image_frame_tr;
+    KDL::Frame camera_to_world_frame_tr;  //i.e. camera to world
+    KDL::Rotation local_to_image_frame_rot;
 
     KDL::Twist twist_local;
     KDL::Twist twist_world;
     double gripper_angle;
 
-    ARCamera * cam_ptr;
     ros::Subscriber sub_pose;
     ros::Subscriber sub_gripper;
     ros::Subscriber sub_twist;

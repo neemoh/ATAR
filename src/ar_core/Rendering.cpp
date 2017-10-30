@@ -3,7 +3,6 @@
 //
 #include <custom_conversions/Conversions.h>
 #include "Rendering.h"
-#include "VTKConversions.h"
 
 
 // helper function for debugging light related issues
@@ -45,9 +44,6 @@ Rendering::Rendering(ros::NodeHandlePtr n)
         cameras[0] = new ARCamera(n, it, left_cam_name);
     else {
         cameras[0] = new ARCamera(n);
-        std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
-                                        0.87903000839, -0.472201765689, 0.0599719016889};
-        cameras[0]->SetWorldToCamTf(conversions::PoseVectorToKDLFrame(temp_vec));
     }
     std::string right_cam_name;
     if (n->getParam("right_cam_name", right_cam_name)) {
@@ -57,10 +53,6 @@ Rendering::Rendering(ros::NodeHandlePtr n)
     else {
         cameras[1] = new ARCamera(n);
         cameras[2] = new ARCamera(n);
-        std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
-                                        0.87903000839, -0.472201765689, 0.0599719016889};
-        cameras[1]->SetWorldToCamTf(conversions::PoseVectorToKDLFrame(temp_vec));
-        cameras[2]->SetWorldToCamTf(conversions::PoseVectorToKDLFrame(temp_vec));
     }
 
     render_window_[0] = vtkSmartPointer<vtkRenderWindow>::New();
@@ -80,9 +72,9 @@ Rendering::Rendering(ros::NodeHandlePtr n)
     SetupLights();
 
     double view_port[3][4] = {
-              {1./3., 0., 2./3., 1.0},
-              {2./3., 0., 1.,    1.0},
-              {0.000, 0., 1./3., 1.0}};
+            {1./3., 0., 2./3., 1.0},
+            {2./3., 0., 1.,    1.0},
+            {0.000, 0., 1./3., 1.0}};
 
     std::vector<int> view_resolution(2, 640);
     view_resolution[1] = 480;
@@ -193,7 +185,7 @@ Rendering::~Rendering()
     delete cameras[1];
     delete cameras[2];
 
-    if(ar_mode_)
+    if(it)
         delete it;
 
 }
@@ -438,12 +430,12 @@ void Rendering::PublishRenderedImages() {
     else if (key == 'f')  //full screen
 //        SwitchFullScreenCV(cv_window_names[0]);
 
-    GetRenderedImage(augmented_images);
+        GetRenderedImage(augmented_images);
 //    if(one_window_mode){
-        cv::imshow("Augmented Stereo", augmented_images[0]);
-        publisher_stereo_overlayed.publish(
-                cv_bridge::CvImage(std_msgs::Header(),
-                                   "bgr8", augmented_images[0]).toImageMsg());
+    cv::imshow("Augmented Stereo", augmented_images[0]);
+    publisher_stereo_overlayed.publish(
+            cv_bridge::CvImage(std_msgs::Header(),
+                               "bgr8", augmented_images[0]).toImageMsg());
 //    }
 //    else{
 //        for (int i = 0; i < 2; ++i) {
@@ -456,6 +448,16 @@ void Rendering::PublishRenderedImages() {
 //            SwitchFullScreenCV(cv_window_names[1]);
 //    }
 
+}
+
+void Rendering::SetManipulatorInterestedInCamPose(Manipulator * in) {
+    cameras[0]->SetPtrManipulatorInterestedInCamPose(in);
+}
+
+void Rendering::SetMainCameraPose(const KDL::Frame &pose) {
+    cameras[0]->SetWorldToCamTf(pose);
+    cameras[1]->SetWorldToCamTf(pose);
+    cameras[2]->SetWorldToCamTf(pose);
 }
 
 // For each spotlight, add a light frustum wireframe representation and a cone

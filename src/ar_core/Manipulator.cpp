@@ -7,27 +7,26 @@
 #include "Manipulator.h"
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
 
-Manipulator::Manipulator(ros::NodeHandlePtr n,
+Manipulator::Manipulator(ros::NodeHandlePtr nh,
                          const std::string arm_ns,
                          const std::string pose_topic,
                          const std::string gripper_topic,
-                         ARCamera *cam_ptr,
                          const std::string twist_topic)
         :
-        cam_ptr(cam_ptr)
+        n(nh)
 {
 
     //--------------------------------------------------------------------------
     // Define subscribers
     sub_pose = n->subscribe(arm_ns+pose_topic, 1,
-                           &Manipulator::PoseCallback, this);
+                            &Manipulator::PoseCallback, this);
 
     sub_gripper = n->subscribe(arm_ns+gripper_topic, 1,
-                        &Manipulator::GripperCallback, this);
+                               &Manipulator::GripperCallback, this);
 
     if(twist_topic!="")
         sub_twist = n->subscribe(arm_ns+twist_topic, 1,
-                                  &Manipulator::TwistCallback, this);
+                                 &Manipulator::TwistCallback, this);
 
     //--------------------------------------------------------------------------
     // Get the transformation to the display and calculate the tr to the
@@ -36,9 +35,7 @@ Manipulator::Manipulator(ros::NodeHandlePtr n,
     std::vector<double> vect_temp = std::vector<double>(4, 0.0);
 
     if (n->getParam(param, vect_temp)){
-        conversions::QuatVectorToKDLRot(vect_temp, local_to_image_frame_tr);
-
-
+        conversions::QuatVectorToKDLRot(vect_temp, local_to_image_frame_rot);
     }
     else
         ROS_WARN("Parameter %s was not found.", param.c_str());
@@ -46,11 +43,6 @@ Manipulator::Manipulator(ros::NodeHandlePtr n,
 
 void
 Manipulator::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
-
-    // is this safe? doesn't seem so...
-    if(cam_ptr!=NULL)
-        local_to_world_frame_tr.M = cam_ptr->GetWorldToCamTr().M *
-                                    local_to_image_frame_tr;
 
     tf::poseMsgToKDL(msg->pose, pose_local);
     pose_world =  local_to_world_frame_tr * pose_local;
@@ -63,21 +55,27 @@ void Manipulator::GripperCallback(const std_msgs::Float64ConstPtr &msg) {
 
 void
 Manipulator::TwistCallback(const geometry_msgs::TwistStampedConstPtr
-                                 &msg) {
+                           &msg) {
 
     tf::twistMsgToKDL(msg->twist, twist_local);
     twist_world = local_to_world_frame_tr * twist_local;
+}
+
+void Manipulator::SetCameraToWorldFrame(const KDL::Frame& in) {
+    camera_to_world_frame_tr = in;
+    local_to_world_frame_tr.M = in.M * local_to_image_frame_rot;
 }
 
 // -----------------------------------------------------------------------------
 void Manipulator::DoArmToWorldFrameCalibration() {
 
     // TODO: OLD IMPLEMENTATION. NEEDS TO BE FIXED
-    //// REMOVE THIS LINES
-    ros::NodeHandlePtr n;
+    //// REMOVE THIS LINE
     int arm_id = 0;
     /////
 
+    std::string cam_name;
+    n->getParam("left_cam_name", cam_name);
 
     cv::Mat camera_matrix[2];
     cv::Mat camera_distortion[2];
@@ -111,7 +109,6 @@ void Manipulator::DoArmToWorldFrameCalibration() {
     if(!n->getParam("calib_points_distance", calib_points_distance)){
         if(n->getParam("/calibrations/board_params", board_params))
             calib_points_distance = board_params[3];
-
     };
 
     int num_calib_points;
@@ -144,3 +141,4 @@ void Manipulator::DoArmToWorldFrameCalibration() {
     }
 
 }
+

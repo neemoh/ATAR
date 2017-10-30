@@ -140,8 +140,7 @@ Task3D::Task3D()
 
 
     // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle",
-                             graphics->GetPtrToMainCamera());
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
 };
 
 //------------------------------------------------------------------------------

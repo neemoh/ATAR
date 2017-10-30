@@ -40,11 +40,6 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
         path << std::string(home_dir) << std::string("/.ros/camera_info/")
              << cam_name << "_intrinsics.yaml";
         ReadCameraParameters(path.str());
-    }else{
-        // NOT AR. TODO:  SET THE INTRINSICS
-    }
-
-    if(is_ar) {
 
         image_importer_ = vtkSmartPointer<vtkImageImport>::New();
         image_actor_ = vtkSmartPointer<vtkImageActor>::New();
@@ -67,9 +62,7 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
         // poses if new messages are arrived on the topics
         std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
         if (n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame", temp_vec))
-            conversions::PoseVectorToKDLFrame(temp_vec, world_to_cam_pose);
-
-        SetCameraPose();
+            SetCameraPose(conversions::PoseVectorToKDLFrame(temp_vec));
 
         // now we set up the subscribers
         sub_pose = n->subscribe("/"+cam_name+ "/world_to_camera_transform",
@@ -77,26 +70,20 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
 
     }
 
+    // set a default cam pose
+        std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
+                                        0.87903000839, -0.472201765689, 0.0599719016889};
+    KDL::Frame temp = conversions::PoseVectorToKDLFrame(temp_vec);
+    double x,y,z;
+    temp.M.GetEulerZYZ(x,y,z);
+
+    SetCameraPose(KDL::Frame(KDL::Rotation::EulerZYZ(-85*M_PI/180 ,
+                                                      110*M_PI/180,
+                                                     -75*M_PI/180),
+                             KDL::Vector(0.05, -0.0, 0.35)));
     is_initialized = true;
 
 }
-
-
-
-////----------------------------------------------------------------------------
-//void ARCamera::SetIntrinsicParameters(const double& fx, const double& fy,
-//                                              const double& cx, const double& cy)
-//{
-//    fx_ = fx;
-//    fy_ = fy;
-//    cx_ = cx;
-//    cy_ = cy;
-//
-//    ROS_DEBUG_STREAM( std::string("Camera Matrix: fx= ") <<  fx_ << ", fy= " <<  fy_
-//              << ", cx= " <<  cx_ << ", cy= " <<  cy_ );
-//}
-
-
 
 
 void ARCamera::UpdateVirtualView(const double &window_width,
@@ -203,14 +190,14 @@ void ARCamera::ReadCameraParameters(const std::string file_path) {
     cv::Mat camera_matrix;
     fs["camera_matrix"] >> camera_matrix;
 
-    //    cv::Mat camera_distortion;
-    //    fs["distortion_coefficients"] >> camera_distortion;
-
     // check if we got something
     if(camera_matrix.empty()){
         ROS_ERROR("camera_matrix not found in '%s' ", file_path.c_str());
         throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
     }
+
+    //    cv::Mat camera_distortion;
+    //    fs["distortion_coefficients"] >> camera_distortion;
     //    if(camera_distortion.empty()){
     //        ROS_ERROR("distortion_coefficients  not found in '%s' ", file_path.c_str());
     //        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
@@ -248,13 +235,18 @@ void ARCamera::PoseCallback(
 
 
 //------------------------------------------------------------------------------
-void ARCamera::SetCameraPose() {
+void ARCamera::SetCameraPose(const KDL::Frame & in) {
+
+    world_to_cam_pose = in;
+
+    // update the manipulators who are following the camera's pose
+    UpdateCamPoseFollowers();
 
     KDL::Frame cam_to_world_pose = world_to_cam_pose.Inverse();
 
-    KDL::Vector origin = cam_to_world_pose.p;
-    KDL::Vector focal_point = cam_to_world_pose * KDL::Vector(0, 0, 1);
-    KDL::Vector view_up = cam_to_world_pose.M * KDL::Vector(0, -1, 0);
+    KDL::Vector origin =        cam_to_world_pose.p;
+    KDL::Vector focal_point =   cam_to_world_pose * KDL::Vector(0, 0, 1);
+    KDL::Vector view_up =       cam_to_world_pose.M * KDL::Vector(0, -1, 0);
 
     camera_virtual->SetPosition(origin[0], origin[1], origin[2]);
     camera_virtual->SetFocalPoint(focal_point[0], focal_point[1], focal_point[2]);
@@ -264,8 +256,6 @@ void ARCamera::SetCameraPose() {
 }
 
 void ARCamera::UpdateBackgroundImage(const int *window_size) {
-
-    SetCameraPose();
 
     if(is_initialized && !image_from_ros.empty()) {
         image_from_ros.copyTo(img);
@@ -285,6 +275,13 @@ void ARCamera::UpdateBackgroundImage(const int *window_size) {
 
         SetCemraToFaceImage(window_size, imageSize, spacing, origin);
     }
+
+    // safer than putting it in the callback
+    if(new_cam_pose) {
+        SetCameraPose(world_to_cam_pose);
+        new_cam_pose=false;
+    }
+
 }
 
 void ARCamera::ConfigureBackgroundImage(cv::Mat img) {
@@ -337,11 +334,23 @@ bool ARCamera::IsImageNew() {
     return false;
 }
 
-void
-ARCamera::SetWorldToCamTf(const KDL::Frame & frame) {
-    world_to_cam_pose = frame;
-    SetCameraPose();
+
+void ARCamera::UpdateCamPoseFollowers() {
+
+    for (int i = 0; i < interested_manipulators.size(); ++i) {
+        interested_manipulators[i]->SetCameraToWorldFrame(world_to_cam_pose);
+    }
+
 }
+
+void ARCamera::SetPtrManipulatorInterestedInCamPose(Manipulator *in) {
+
+    interested_manipulators.push_back(in);
+
+    //update once already
+    UpdateCamPoseFollowers();
+}
+
 
 //ARCamera::ARCamera(const ARCamera &) {
 //

@@ -71,11 +71,15 @@ public:
 
     bool AreImagesNew();
 
-    ARCamera* GetPtrToMainCamera(){return cameras[0];};
-
     void GetRenderedImage(cv::Mat *images);
 
     void ToggleFullScreen();
+
+    void SetManipulatorInterestedInCamPose(Manipulator*);
+
+    void SetMainCameraPose(const KDL::Frame& pose);
+
+    KDL::Frame GetMainCameraPose() {return cameras[0]->GetWorldToCamTr();};
 
 private:
 
