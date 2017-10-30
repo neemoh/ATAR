@@ -69,14 +69,14 @@ void ARCore::SetupROSandGetParameters() {
     // yourself and put it here:
     std::vector<double> l_r_cams = {-0.00538475, 0.000299458, -0.000948875,
                                     0.0016753, -0.00112252, -0.00358978, 0.999992};
-    conversions::VectorToKDLFrame(l_r_cams, left_cam_to_right_cam_tr);
+    conversions::PoseVectorToKDLFrame(l_r_cams, left_cam_to_right_cam_tr);
 
     // we first try to read the poses as parameters and later update the
     // poses if new messages are arrived on the topics
     std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
     // left cam pose as parameter
     if (n->getParam("/calibrations/world_frame_to_left_cam_frame", temp_vec)) {
-        conversions::VectorToKDLFrame(temp_vec, pose_cam[0]);
+        conversions::PoseVectorToKDLFrame(temp_vec, pose_cam[0]);
         conversions::KDLFrameToRvectvec(pose_cam[0], cam_rvec_curr[0], cam_tvec_curr[0]);
         cam_tvec_avg[0] = cam_tvec_curr[0];
         cam_rvec_avg[0] = cam_rvec_curr[0];
@@ -157,7 +157,7 @@ void ARCore::SetupROSandGetParameters() {
                        slave_names[n_arm] << "_frame";
             std::vector<double> vect_temp = std::vector<double>(7, 0.0);
             if (n->getParam(param_name.str(), vect_temp)) {
-                conversions::VectorToKDLFrame(vect_temp,
+                conversions::PoseVectorToKDLFrame(vect_temp,
                                               slave_frame_to_world_frame[n_arm]);
                 // param is from task to RCM, we want the inverse
                 slave_frame_to_world_frame[n_arm] =
@@ -179,7 +179,7 @@ void ARCore::SetupROSandGetParameters() {
             std::vector<double> vect_temp = std::vector<double>(7, 0.0);
             if (n->getParam(param_name.str(), vect_temp)) {
                 KDL::Frame mtm_to_image;
-                conversions::VectorToKDLFrame(vect_temp, mtm_to_image);
+                conversions::PoseVectorToKDLFrame(vect_temp, mtm_to_image);
 
                 // param is from task to RCM, we want the inverse
                 slave_frame_to_world_frame[n_arm] = mtm_to_image *
