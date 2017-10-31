@@ -53,30 +53,10 @@
 
         <!-- About left/right_cam_name: expecting to find Place the intrinsic calibration
              file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml -->
-        <param name= "left_cam_name" value= "$(arg left_cam_name)" />
-        <param name= "right_cam_name" value= "$(arg right_cam_name)" />
+        <param name= "cam_0_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_1_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_2_name" value= "$(arg right_cam_name)" />
 
-        <!-- About number_of_arms:
-       // number of arms we wish to use in the node. If set as 1, only slave_1_name will be used.
-       // (for the moment the code generates active constraints for 1 arm only. this will be changed
-       // to support the second arm soon.)
-        -->
-        <param name="number_of_arms" value="2"/>
-
-        <param name="slave_1_name" value="$(arg slave_1_name)"/>
-        <param name="master_1_name" value="$(arg master_1_name)"/>
-        <param name="slave_2_name" value="$(arg slave_2_name)"/>
-        <param name="master_2_name" value="$(arg master_2_name)"/>
-
-        <!--
-        AR_mode: Augmented reality mode uses the cameras and their poses.
-        False mean VR mode
-         -->
-        <param name= "AR_mode" value= "true" />
-        <!-- show_reference_frames:
-            Use for debug. it reduces frame rate
-        -->
-        <param name= "show_reference_frames" value= "false" />
         <!-- About stl_files_dir:
         The directory of the stl files -->
         <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
@@ -104,13 +84,7 @@
         <param name= "cam_pose_averaging_factor" value= "0.5" />
 
         <!--Activate or deactivate haptic guidance -->
-        <param name= "enable_guidance" value= "true" />
-
-        <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />
-
-        <!--Combine left and right images in one window -->
-        <param name= "num_windows" value= "1" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
         <param name= "with_shadows" value= "false" />
@@ -122,10 +96,10 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--The resolution of each view-->
-        <rosparam param="view_resolution"> [1280, 960]</rosparam>
+        <rosparam param="view_resolution"> [640, 480]</rosparam>
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_positions"> [800, 0, 0, 0]</rosparam>
+        <rosparam param="window_positions"> [800, 50, 0, 0]</rosparam>
 
         <!-- <param name="image_transport" value="compressed"/> --> <!--
          Remove if image is not received over network -->

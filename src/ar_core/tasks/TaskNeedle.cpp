@@ -215,7 +215,7 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
 
-    graphics = new Rendering(nh);
+    graphics = new Rendering(nh, false, 3);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
@@ -223,7 +223,6 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",
     //                                   cam_pose);
-    graphics = new Rendering(nh);
 
     graphics->AddActorsToScene(GetActors());
 };

@@ -18,7 +18,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         time_last(ros::Time::now())
 {
 
-    graphics = new Rendering(n);
+    graphics = new Rendering(n, false, 1);
 
     // Define a master manipulator
     master[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",

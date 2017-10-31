@@ -55,7 +55,8 @@
 class Rendering {
 public:
 
-    Rendering(ros::NodeHandlePtr n);
+    Rendering(ros::NodeHandlePtr n,const bool ar_mode, const int num_views,
+              const bool one_window_per_view=0);
 
     ~Rendering();
 
@@ -83,20 +84,25 @@ public:
 
 private:
 
+    void GetCameraNames(ros::NodeHandlePtr n, const int num_views,
+                                   std::string cam_names[]);
+
     void AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer>);
 
     void SetupLights();
 
     void PublishRenderedImages();
 
+
 private:
-    int n_windows_;
+    int num_windows;
+    int num_views;
     bool with_shadows_;
     bool ar_mode_;
     bool publish_overlayed_images_;
 
     //cameras
-    ARCamera *                              cameras [2];
+    ARCamera *                              cameras [3];
     image_transport::ImageTransport *       it;
 
     vtkSmartPointer<vtkLight>               lights[2];
@@ -109,8 +115,7 @@ private:
     vtkSmartPointer<vtkRenderWindow>        render_window_[3];
 
     // reading images back
-    vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter_[2] ;
-
+    vtkSmartPointer<vtkWindowToImageFilter> window_to_image_filter_[3] ;
 
     //overlay image publishers (SLOW)
     image_transport::Publisher              publisher_stereo_overlayed;

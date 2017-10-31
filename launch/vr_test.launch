@@ -5,8 +5,8 @@
     <arg name="master_2_name" value="MTML"/>
     <arg name="left_camera_img_topic" value="/image_raw"/>
     <arg name="right_camera_img_topic" value="/image_raw"/>
-    <arg name= "left_cam_name" value= "default" />
-    <arg name= "right_cam_name" value= "default" />
+    <arg name= "left_cam_name" value= "asus_webcam" />
+    <arg name= "right_cam_name" value= "asus_webcam" />
     <arg name= "haptic_referesh_rate" value= "500" />-->
 
 
@@ -32,9 +32,10 @@
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="atar" type="ar_core" name="ar_core" output="screen">
 
-        <!-- AR_mode:
-         -->
-        <param name= "AR_mode" value= "false" />
+        <param name= "cam_0_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_1_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_2_name" value= "$(arg right_cam_name)" />
+
         <!-- About stl_files_dir:
         The directory of the stl files -->
         <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
@@ -59,13 +60,7 @@
         <param name= "cam_pose_averaging_factor" value= "0.5" />
 
         <!--Activate or deactivate haptic guidance -->
-        <param name= "enable_guidance" value= "true" />
-
-        <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />
-
-        <!--Combine left and right images in one window -->
-        <param name= "num_windows" value= "1" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
         <param name= "with_shadows" value= "false" />
@@ -77,10 +72,11 @@
         <param name= "offScreen_rendering" value= "false" />
 
         <!--The resolution of each view-->
-        <rosparam param="view_resolution"> [960, 720]</rosparam>
+        <!--<rosparam param="view_resolution"> [960, 720]</rosparam>-->
+        <rosparam param="view_resolution"> [640, 480]</rosparam>
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_positions"> [960, 0, 0, 0]</rosparam>
+        <rosparam param="window_positions"> [200, 200, 0, 0]</rosparam>
 
         <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>

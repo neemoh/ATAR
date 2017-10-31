@@ -30,7 +30,6 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
 
     camera_virtual = vtkSmartPointer<vtkCamera>::New();
 
-    //--------------- SET INTRINSICS
     if(is_ar) {
 
         // AR camera
@@ -71,12 +70,6 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
     }
 
     // set a default cam pose
-        std::vector<double> temp_vec = {0.057, -0.022, 0.290, 0.0271128721729,
-                                        0.87903000839, -0.472201765689, 0.0599719016889};
-    KDL::Frame temp = conversions::PoseVectorToKDLFrame(temp_vec);
-    double x,y,z;
-    temp.M.GetEulerZYZ(x,y,z);
-
     SetCameraPose(KDL::Frame(KDL::Rotation::EulerZYZ(-85*M_PI/180 ,
                                                       110*M_PI/180,
                                                      -75*M_PI/180),
@@ -86,8 +79,132 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
 }
 
 
-void ARCamera::UpdateVirtualView(const double &window_width,
-                                 const double &window_height) {
+//------------------------------------------------------------------------------
+bool ARCamera::IsImageNew() {
+    if(new_image){
+        new_image = false;
+        return true;
+    }
+    return false;
+}
+
+
+//------------------------------------------------------------------------------
+void ARCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
+    try
+    {
+        image_from_ros = cv_bridge::toCvCopy(msg, "rgb8")->image;
+        new_image= true;
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
+    }
+}
+
+
+//------------------------------------------------------------------------------
+void ARCamera::PoseCallback(
+        const geometry_msgs::PoseStampedConstPtr & msg)
+{
+    new_cam_pose = true;
+    tf::poseMsgToKDL(msg->pose, world_to_cam_pose);
+
+}
+
+
+//------------------------------------------------------------------------------
+void ARCamera::SetPtrManipulatorInterestedInCamPose(Manipulator *in) {
+
+    interested_manipulators.push_back(in);
+
+    //update once already
+    UpdateCamPoseFollowers();
+}
+
+
+void ARCamera::RefreshCamera(const int *window_size){
+
+    // update each windows view
+    UpdateVirtualView(window_size);
+
+    // update the background image for each camera
+    UpdateBackgroundImage(window_size);
+
+    // safer than putting it in the callback
+    if(new_cam_pose) {
+        SetCameraPose(world_to_cam_pose);
+        new_cam_pose=false;
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+void ARCamera::ReadCameraParameters(const std::string file_path) {
+    cv::FileStorage fs(file_path, cv::FileStorage::READ);
+
+    ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
+
+    if (!fs.isOpened())
+        throw std::runtime_error("Unable to read the camera parameters file.");
+    cv::Mat camera_matrix;
+    fs["camera_matrix"] >> camera_matrix;
+
+    // check if we got something
+    if(camera_matrix.empty()){
+        ROS_ERROR("camera_matrix not found in '%s' ", file_path.c_str());
+        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
+    }
+
+    //    cv::Mat camera_distortion;
+    //    fs["distortion_coefficients"] >> camera_distortion;
+    //    if(camera_distortion.empty()){
+    //        ROS_ERROR("distortion_coefficients  not found in '%s' ", file_path.c_str());
+    //        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
+    //    }
+
+    fx_ = camera_matrix.at<double>(0, 0);
+    fy_ = camera_matrix.at<double>(1, 1);
+    cx_ = camera_matrix.at<double>(0, 2);
+    cy_ = camera_matrix.at<double>(1, 2);
+
+    ROS_DEBUG_STREAM(std::string("Camera Matrix: fx= ")
+                             <<  fx_ << ", fy= " <<  fy_ << ", cx= "<<  cx_
+                             << ", cy= " <<  cy_ );
+}
+
+
+//------------------------------------------------------------------------------
+void ARCamera::ConfigureBackgroundImage(cv::Mat img) {
+
+    assert( img.data != NULL );
+
+    image_width_ = img.size().width;
+    image_height_ =  img.size().height;
+
+    if (camera_image_) {
+        image_importer_->SetOutput(camera_image_);
+    }
+    image_importer_->SetDataSpacing(1, 1, 1);
+    image_importer_->SetDataOrigin(0, 0, 0);
+    image_importer_->SetWholeExtent(0, (int)image_width_ - 1, 0,
+                                    (int)image_height_ - 1, 0, 0);
+    image_importer_->SetDataExtentToWholeExtent();
+    image_importer_->SetDataScalarTypeToUnsignedChar();
+    image_importer_->SetNumberOfScalarComponents(img.channels());
+    image_importer_->SetImportVoidPointer(img.data);
+    image_importer_->Update();
+
+    image_actor_->SetInputData(camera_image_);
+
+}
+
+
+//------------------------------------------------------------------------------
+void ARCamera::UpdateVirtualView(const int *window_size) {
+
+    double  window_width = window_size[0];
+    double window_height = window_size[1];
 
     //When window aspect ratio is different than that of the image we need to
     // take that into account
@@ -115,10 +232,36 @@ void ARCamera::UpdateVirtualView(const double &window_width,
     camera_virtual->Modified();
 }
 
-void ARCamera::SetCemraToFaceImage(const int *window_size,
-                                   const int imageSize[], const double spacing[],
-                                   const double origin[]) {
 
+//------------------------------------------------------------------------------
+void ARCamera::UpdateBackgroundImage(const int *window_size) {
+
+    if(is_initialized && !image_from_ros.empty()) {
+        image_from_ros.copyTo(img);
+        //    cv::flip(src, _src, 0);
+        image_importer_->SetImportVoidPointer(img.data);
+        image_importer_->Modified();
+        image_importer_->Update();
+
+        int imageSize[3];
+        image_importer_->GetOutput()->GetDimensions(imageSize);
+
+        double spacing[3];
+        image_importer_->GetOutput()->GetSpacing(spacing);
+
+        double origin[3];
+        image_importer_->GetOutput()->GetOrigin(origin);
+
+        SetCameraToFaceImage(window_size, imageSize, spacing, origin);
+    }
+
+}
+
+
+//------------------------------------------------------------------------------
+void ARCamera::SetCameraToFaceImage(const int *window_size,
+                                    const int *imageSize, const double *spacing,
+                                    const double *origin) {
 
     double clippingRange[2];
     clippingRange[0] = 1;
@@ -174,63 +317,25 @@ void ARCamera::SetCemraToFaceImage(const int *window_size,
     camera_real->SetParallelProjection(true);
     camera_real->SetParallelScale(scale);
     camera_real->SetClippingRange(clippingRange);
-
 }
 
 
-// -----------------------------------------------------------------------------
-void ARCamera::ReadCameraParameters(const std::string file_path) {
-    cv::FileStorage fs(file_path, cv::FileStorage::READ);
+//------------------------------------------------------------------------------
+void ARCamera::LockAndGetImage(cv::Mat &images, std::string img_topic) {
 
+    ros::Rate loop_rate(2);
+    ros::Time timeout_time = ros::Time::now() + ros::Duration(1);
 
-    ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
-
-    if (!fs.isOpened())
-        throw std::runtime_error("Unable to read the camera parameters file.");
-    cv::Mat camera_matrix;
-    fs["camera_matrix"] >> camera_matrix;
-
-    // check if we got something
-    if(camera_matrix.empty()){
-        ROS_ERROR("camera_matrix not found in '%s' ", file_path.c_str());
-        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
+    while(ros::ok() && image_from_ros.empty()) {
+        ros::spinOnce();
+        loop_rate.sleep();
+        if (ros::Time::now() > timeout_time)
+            ROS_WARN_STREAM(("Timeout: No Image on."+img_topic+
+                             " Trying again...").c_str());
     }
+    image_from_ros.copyTo(images);
 
-    //    cv::Mat camera_distortion;
-    //    fs["distortion_coefficients"] >> camera_distortion;
-    //    if(camera_distortion.empty()){
-    //        ROS_ERROR("distortion_coefficients  not found in '%s' ", file_path.c_str());
-    //        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
-    //    }
-
-    fx_ = camera_matrix.at<double>(0, 0);
-    fy_ = camera_matrix.at<double>(1, 1);
-    cx_ = camera_matrix.at<double>(0, 2);
-    cy_ = camera_matrix.at<double>(1, 2);
-
-    ROS_DEBUG_STREAM(std::string("Camera Matrix: fx= ")
-                             <<  fx_ << ", fy= " <<  fy_ << ", cx= "<<  cx_
-                             << ", cy= " <<  cy_ );
-}
-
-void ARCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
-    try
-    {
-        image_from_ros = cv_bridge::toCvCopy(msg, "rgb8")->image;
-        new_image= true;
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
-    }
-}
-
-void ARCamera::PoseCallback(
-        const geometry_msgs::PoseStampedConstPtr & msg)
-{
-    new_cam_pose = true;
-    tf::poseMsgToKDL(msg->pose, world_to_cam_pose);
-
+    new_image = false;
 }
 
 
@@ -255,103 +360,12 @@ void ARCamera::SetCameraPose(const KDL::Frame & in) {
     camera_virtual->Modified();
 }
 
-void ARCamera::UpdateBackgroundImage(const int *window_size) {
 
-    if(is_initialized && !image_from_ros.empty()) {
-        image_from_ros.copyTo(img);
-        //    cv::flip(src, _src, 0);
-        image_importer_->SetImportVoidPointer(img.data);
-        image_importer_->Modified();
-        image_importer_->Update();
-
-        int imageSize[3];
-        image_importer_->GetOutput()->GetDimensions(imageSize);
-
-        double spacing[3];
-        image_importer_->GetOutput()->GetSpacing(spacing);
-
-        double origin[3];
-        image_importer_->GetOutput()->GetOrigin(origin);
-
-        SetCemraToFaceImage(window_size, imageSize, spacing, origin);
-    }
-
-    // safer than putting it in the callback
-    if(new_cam_pose) {
-        SetCameraPose(world_to_cam_pose);
-        new_cam_pose=false;
-    }
-
-}
-
-void ARCamera::ConfigureBackgroundImage(cv::Mat img) {
-
-    assert( img.data != NULL );
-
-    image_width_ = img.size().width;
-    image_height_ =  img.size().height;
-
-    if (camera_image_) {
-        image_importer_->SetOutput(camera_image_);
-    }
-    image_importer_->SetDataSpacing(1, 1, 1);
-    image_importer_->SetDataOrigin(0, 0, 0);
-    image_importer_->SetWholeExtent(0, (int)image_width_ - 1, 0,
-                                    (int)image_height_ - 1, 0, 0);
-    image_importer_->SetDataExtentToWholeExtent();
-    image_importer_->SetDataScalarTypeToUnsignedChar();
-    image_importer_->SetNumberOfScalarComponents(img.channels());
-    image_importer_->SetImportVoidPointer(img.data);
-    image_importer_->Update();
-
-    image_actor_->SetInputData(camera_image_);
-
-}
-
-void
-ARCamera::LockAndGetImage(cv::Mat &images, std::string img_topic) {
-
-    ros::Rate loop_rate(2);
-    ros::Time timeout_time = ros::Time::now() + ros::Duration(1);
-
-    while(ros::ok() && image_from_ros.empty()) {
-        ros::spinOnce();
-        loop_rate.sleep();
-        if (ros::Time::now() > timeout_time)
-            ROS_WARN_STREAM(("Timeout: No Image on."+img_topic+
-                             " Trying again...").c_str());
-    }
-    image_from_ros.copyTo(images);
-
-    new_image = false;
-}
-
-bool ARCamera::IsImageNew() {
-    if(new_image){
-        new_image = false;
-        return true;
-    }
-    return false;
-}
-
-
+//------------------------------------------------------------------------------
 void ARCamera::UpdateCamPoseFollowers() {
-
     for (int i = 0; i < interested_manipulators.size(); ++i) {
         interested_manipulators[i]->SetCameraToWorldFrame(world_to_cam_pose);
     }
-
-}
-
-void ARCamera::SetPtrManipulatorInterestedInCamPose(Manipulator *in) {
-
-    interested_manipulators.push_back(in);
-
-    //update once already
-    UpdateCamPoseFollowers();
 }
 
 
-//ARCamera::ARCamera(const ARCamera &) {
-//
-//}

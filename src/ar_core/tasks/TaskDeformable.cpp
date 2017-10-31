@@ -195,10 +195,7 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
     graphics_actors.push_back(task_coordinate_axes);
 
-
-
-
-    graphics = new Rendering(n);
+    graphics = new Rendering(n, false, 1);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
@@ -206,8 +203,6 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",
     //                                   cam_pose);
-    graphics = new Rendering(n);
-
     graphics->AddActorsToScene(GetActors());
 
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");

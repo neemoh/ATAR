@@ -131,7 +131,7 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 
     }
 
-    graphics = new Rendering(n);
+    graphics = new Rendering(n, false, 2);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");

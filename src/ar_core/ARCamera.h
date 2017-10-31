@@ -35,51 +35,50 @@ class ARCamera
 {
 public:
 
-    ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it=NULL ,
-             const
-    std::string cam_name="");
+    ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it=NULL,
+             const std::string cam_name="");
 
-//    ARCamera(const ARCamera&);
+    //    ARCamera(const ARCamera&);
 
     ~ARCamera() {}
 
-    /**
-    * \brief Update the view angle of the virtual Camera according to window size
-     * Note that the windows is the opengl window here,
-    */
-    void UpdateVirtualView(const double &width, const double &height);
-
-    // Set up the background scene_camera to fill the renderer with the image
-
-    void UpdateBackgroundImage(const int *window_size);
-
     bool IsImageNew();
-
-    KDL::Frame GetWorldToCamTr(){return world_to_cam_pose;};
 
     void ImageCallback(const sensor_msgs::ImageConstPtr &msg);
 
     void PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
-    void ConfigureBackgroundImage(cv::Mat img);
+    KDL::Frame GetWorldToCamTr(){return world_to_cam_pose;};
 
     void SetWorldToCamTf(const KDL::Frame & frame){SetCameraPose(frame);};
 
     void SetPtrManipulatorInterestedInCamPose(Manipulator* in);
 
+    void RefreshCamera(const int *window_size);
+
 private:
 
     ARCamera(const ARCamera&);  // Purposefully not implemented.
+
     void operator=(const ARCamera&);  // Purposefully not implemented.
 
-    /**
-     * \brief FaceImage
-     */
-    void SetCemraToFaceImage(const int *window_siz,
-                             const int imageSize[], const double spacing[],
-                             const double origin[]);
-
     void ReadCameraParameters(const std::string file_path);
+
+    void ConfigureBackgroundImage(cv::Mat img);
+
+    /**
+    * \brief Update the view angle of the virtual Camera according to window size
+     * Note that the windows is the opengl window here,
+    */
+    void UpdateVirtualView(const int *window_size);
+
+    // Set up the background scene_camera to fill the renderer with the image
+
+    void UpdateBackgroundImage(const int *window_size);
+
+    void SetCameraToFaceImage(const int *window_siz,
+                              const int *imageSize, const double *spacing,
+                              const double *origin);
 
     void LockAndGetImage(cv::Mat &image, std::string cam_name);
 
