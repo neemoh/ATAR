@@ -43,7 +43,7 @@
         <rosparam param="view_resolution"> [640, 480]</rosparam>
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_positions"> [0, 0, 640, 0, 1280, 0]</rosparam>
+        <rosparam param="window_positions"> [1280,0, 0, 0, 0, 0]</rosparam>
 
     </node>
 
@@ -53,7 +53,7 @@
         <param name="master_1_name" value="$(arg master_1_name)"/>
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_2_name" value="$(arg master_2_name)"/>
-        <param name="scaling" value="0.2"/>
+        <param name="scaling" value="0.5"/>
 
     </node>
 
