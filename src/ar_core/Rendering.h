@@ -56,7 +56,7 @@ class Rendering {
 public:
 
     Rendering(ros::NodeHandlePtr n,const bool ar_mode, const int num_views,
-              const bool one_window_per_view=0);
+              const bool one_window_per_view=0,const bool borders_off=false);
 
     ~Rendering();
 
@@ -95,8 +95,8 @@ private:
 
 
 private:
-    int num_windows;
-    int num_views;
+    int n_windows;
+    int n_views;
     bool with_shadows_;
     bool ar_mode_;
     bool publish_overlayed_images_;

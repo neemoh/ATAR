@@ -82,7 +82,6 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
             // to the graphics_actors vector
             dynamics_world->addRigidBody(sphere[i]->GetBody());
             graphics_actors.push_back(sphere[i]->GetActor());
-
         }
 
     }
@@ -131,7 +130,7 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 
     }
 
-    graphics = new Rendering(n, false, 2);
+    graphics = new Rendering(n, false, 2, true);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
