@@ -203,9 +203,10 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",
     //                                   cam_pose);
+    graphics->SetManipulatorInterestedInCamPose(master);
+
     graphics->AddActorsToScene(GetActors());
 
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
 };
 
 //------------------------------------------------------------------------------

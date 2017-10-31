@@ -223,6 +223,7 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",
     //                                   cam_pose);
+    graphics->SetManipulatorInterestedInCamPose(master);
 
     graphics->AddActorsToScene(GetActors());
 };
