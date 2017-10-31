@@ -54,7 +54,7 @@ include_directories(
 
 SUBDIRS( src/ar_core/LoadObjGL/VHACD)
 
-        ##########################################################################
+##########################################################################
 #                    Build Client and Service Nodes
 ##########################################################################
 
@@ -144,7 +144,7 @@ set(executables
         stereo_image_split
         stereo_usb_cam_publisher
         teleop_dummy_dvrk
-#        teleop_dummy_sigma
+        #        teleop_dummy_sigma
         )
 
 foreach (_ex ${executables})
@@ -237,7 +237,6 @@ add_executable(
         src/ar_core/Manipulator.h
 )
 
-
 target_link_libraries(
         ar_core
         ${OpenCV_LIBRARIES}
@@ -250,9 +249,8 @@ target_link_libraries(
         BulletSoftBody
         pthread)
 
-
 ##########################################################################
-#                           Reporter node
+#                           GUI node
 ##########################################################################
 
 find_package(Qt5Widgets)
@@ -263,25 +261,28 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(PROJECT_INCLUDE_DIR src/gui/include)
 
-set (MyProjectLib_hdr
+set (gui_hdr
         ${PROJECT_INCLUDE_DIR}/mainwindow.hpp
         ${PROJECT_INCLUDE_DIR}/cvimagewidget.h)
-set (MyProjectLib_src
+set (gui_src
         src/gui/mainwindow.cpp
-        src/gui/rosclass.cpp src/gui/PerformanceEvaluators.h src/gui/PerformanceEvaluators.cpp)
-qt5_wrap_cpp(MyProjectLib_hdr_moc ${MyProjectLib_hdr})
-qt5_wrap_ui (MyProjectLib_ui_moc src/gui/mainwindow.ui)
+        src/gui/rosclass.cpp
+        src/gui/PerformanceEvaluators.h
+        src/gui/PerformanceEvaluators.cpp)
+
+qt5_wrap_cpp(gui_hdr_moc ${gui_hdr})
+qt5_wrap_ui (gui_ui_moc src/gui/mainwindow.ui)
 
 include_directories (${PROJECT_SOURCE_DIR})
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_INCLUDE_DIR})
 
-add_library (gui_utils SHARED
-        ${MyProjectLib_src}
-        ${MyProjectLib_hdr_moc}
-        ${MyProjectLib_ui_moc})
+add_library (gui_libs SHARED
+        ${gui_src}
+        ${gui_hdr_moc}
+        ${gui_ui_moc})
 
-target_link_libraries (gui_utils
+target_link_libraries (gui_libs
         Qt5::Widgets
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
@@ -289,7 +290,7 @@ target_link_libraries (gui_utils
 add_executable(gui src/gui/ui_node.cpp)
 target_link_libraries (gui
         ${catkin_LIBRARIES}
-        gui_utils)
+        gui_libs)
 
 
 ##########################################################################
