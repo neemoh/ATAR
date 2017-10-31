@@ -3,23 +3,13 @@
     <arg name="slave_2_name" value="PSM2_DUMMY"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
-    <arg name="left_camera_img_topic" value="/image_raw"/>
-    <arg name="right_camera_img_topic" value="/image_raw"/>
-    <arg name= "left_cam_name" value= "asus_webcam" />
-    <arg name= "right_cam_name" value= "asus_webcam" />
-    <arg name= "haptic_referesh_rate" value= "500" />-->
-
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
-        <!--<rosparam command="load"-->
-                  <!--file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />-->
-        <rosparam command="load"
-                  file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
     </group>
 
-    <!-- Node recording the data-->
+    <!-- Node GUI and recording the data-->
     <node pkg="atar" type="gui" name="gui" output="screen">
         <!--records data at the frequency of task_state topic-->
         <param name="number_of_arms" value="2"/>
@@ -32,32 +22,9 @@
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="atar" type="ar_core" name="ar_core" output="screen">
 
-        <param name= "cam_0_name" value= "$(arg left_cam_name)" />
-        <param name= "cam_1_name" value= "$(arg left_cam_name)" />
-        <param name= "cam_2_name" value= "$(arg right_cam_name)" />
-
         <!-- About stl_files_dir:
         The directory of the stl files -->
         <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
-
-        <!-- About desired_pose_update_frequency:
-            //The overlayed images will be published only when new images are received.
-            // The desired pose according to the active constraint geometry on the other
-            // hand needs to be update faster (even if the ac geometry may be updated at the
-            // rate of the received images if it is generated based on the image).
-        -->
-        <param name= "/desired_pose_update_frequency" value= "$(arg haptic_referesh_rate)" />
-
-        <!-- num_calib_points: Number of points used for arm to world
-        calibration -->
-        <param name= "number_of_calibration_points" value= "6" />
-
-
-        <!--[0-1] weigthed average of the estimated cam pose. lower number
-        results in smoother estimation but adds delay. Set 1.0 if you don't
-        want averaging.
-         -->
-        <param name= "cam_pose_averaging_factor" value= "0.5" />
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />
@@ -76,9 +43,8 @@
         <rosparam param="view_resolution"> [640, 480]</rosparam>
 
         <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_positions"> [200, 200, 0, 0]</rosparam>
+        <rosparam param="window_positions"> [0, 0, 640, 0, 1280, 0]</rosparam>
 
-        <!--                <param name="image_transport" value="compressed"/> --> <!-- Remove if image is not received over network -->
     </node>
 
     <node pkg="atar" type="teleop_dummy_dvrk" name="teleop_dummy_dvrk"
@@ -91,25 +57,6 @@
 
     </node>
 
-    <!-- The dvrk_active_constraint_enforcement node generates wrench based on the received desired pose and
-        current pose of each master/slave couple.
-	The node generates wrench when receives desired pose, so the loop rate depends on the frequency of the
-	desired pose topic. The sampling_frequency param is for filtering.
-    -->
-    <!--<node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">-->
-        <!--<param name="number_of_arms" value="1"/>-->
-        <!--<param name="slave_1_name" value="$(arg slave_1_name)"/>-->
-        <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
-        <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
-        <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
-        <!--<param name="max_force" value="3"/>-->
-        <!--<param name="max_torque" value="0.03"/>&lt;!&ndash; 0.03 &ndash;&gt;-->
-        <!--<param name="linear_elastic_coeff" value="1000"/>-->
-        <!--<param name="linear_damping_coeff" value="10"/>-->
-        <!--<param name="angular_elastic_coeff" value="0.04"/>-->
-        <!--<param name="angular_damping_coeff" value="0.002"/>-->
-        <!--<param name="sampling_frequency" value="$(arg haptic_referesh_rate)"/>-->
-    <!--</node>-->
 
 
 </launch>
