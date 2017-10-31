@@ -18,7 +18,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         time_last(ros::Time::now())
 {
 
-    graphics = new Rendering(n, false, 1);
+    graphics = new Rendering(n, false, 3, false, true);
 
     // Define a master manipulator
     master[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
@@ -28,6 +28,10 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     master[1] = new Manipulator(nh, "/dvrk/PSM2_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current");
+    graphics->SetManipulatorInterestedInCamPose(master[0]);
+    
+    graphics->SetManipulatorInterestedInCamPose(master[1]);
+    
     InitBullet();
 
     slave_names[0] = "/dvrk/PSM1";
