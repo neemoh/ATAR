@@ -50,7 +50,7 @@ public:
 
     KDL::Frame GetWorldToCamTr(){return world_to_cam_pose;};
 
-    void SetWorldToCamTf(const KDL::Frame & frame){SetCameraPose(frame);};
+    void SetWorldToCamTf(const KDL::Frame & frame);
 
     void SetPtrManipulatorInterestedInCamPose(Manipulator* in);
 
@@ -82,10 +82,7 @@ private:
 
     void LockAndGetImage(cv::Mat &image, std::string cam_name);
 
-    /**
-     * \brief Sets the pose of the camera with respect to world (task frame)
-     */
-    void SetCameraPose(const KDL::Frame &);
+
 
     void UpdateCamPoseFollowers();
 

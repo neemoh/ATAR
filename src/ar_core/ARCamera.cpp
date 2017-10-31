@@ -30,6 +30,11 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
 
     camera_virtual = vtkSmartPointer<vtkCamera>::New();
 
+    // set a default cam pose
+    SetWorldToCamTf(KDL::Frame(KDL::Rotation::EulerZYZ(-85*M_PI/180 ,
+                                                       110*M_PI/180,
+                                                       -75*M_PI/180),
+                               KDL::Vector(0.05, -0.0, 0.35)));
     if(is_ar) {
 
         // AR camera
@@ -61,7 +66,7 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
         // poses if new messages are arrived on the topics
         std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
         if (n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame", temp_vec))
-            SetCameraPose(conversions::PoseVectorToKDLFrame(temp_vec));
+            SetWorldToCamTf(conversions::PoseVectorToKDLFrame(temp_vec));
 
         // now we set up the subscribers
         sub_pose = n->subscribe("/"+cam_name+ "/world_to_camera_transform",
@@ -69,11 +74,6 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
 
     }
 
-    // set a default cam pose
-    SetCameraPose(KDL::Frame(KDL::Rotation::EulerZYZ(-85*M_PI/180 ,
-                                                      110*M_PI/180,
-                                                     -75*M_PI/180),
-                             KDL::Vector(0.05, -0.0, 0.35)));
     is_initialized = true;
 
 }
@@ -133,7 +133,7 @@ void ARCamera::RefreshCamera(const int *window_size){
 
     // safer than putting it in the callback
     if(new_cam_pose) {
-        SetCameraPose(world_to_cam_pose);
+        SetWorldToCamTf(world_to_cam_pose);
         new_cam_pose=false;
     }
 }
@@ -340,7 +340,7 @@ void ARCamera::LockAndGetImage(cv::Mat &images, std::string img_topic) {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::SetCameraPose(const KDL::Frame & in) {
+void ARCamera::SetWorldToCamTf(const KDL::Frame & in) {
 
     world_to_cam_pose = in;
 
@@ -364,7 +364,7 @@ void ARCamera::SetCameraPose(const KDL::Frame & in) {
 //------------------------------------------------------------------------------
 void ARCamera::UpdateCamPoseFollowers() {
     for (int i = 0; i < interested_manipulators.size(); ++i) {
-        interested_manipulators[i]->SetCameraToWorldFrame(world_to_cam_pose);
+        interested_manipulators[i]->SetWorldToCamTr(world_to_cam_pose);
     }
 }
 

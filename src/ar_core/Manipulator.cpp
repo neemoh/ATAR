@@ -39,32 +39,39 @@ Manipulator::Manipulator(ros::NodeHandlePtr nh,
     }
     else
         ROS_WARN("Parameter %s was not found.", param.c_str());
+
 }
 
-void
-Manipulator::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
+// -----------------------------------------------------------------------------
+void Manipulator::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
 
     tf::poseMsgToKDL(msg->pose, pose_local);
     pose_world =  local_to_world_frame_tr * pose_local;
 
 }
 
+// -----------------------------------------------------------------------------
 void Manipulator::GripperCallback(const std_msgs::Float64ConstPtr &msg) {
     gripper_angle = msg->data;
 }
 
-void
-Manipulator::TwistCallback(const geometry_msgs::TwistStampedConstPtr
-                           &msg) {
+
+// -----------------------------------------------------------------------------
+void Manipulator::TwistCallback(const geometry_msgs::TwistStampedConstPtr
+                                &msg) {
 
     tf::twistMsgToKDL(msg->twist, twist_local);
     twist_world = local_to_world_frame_tr * twist_local;
 }
 
-void Manipulator::SetCameraToWorldFrame(const KDL::Frame& in) {
-    camera_to_world_frame_tr = in;
-    local_to_world_frame_tr.M = in.M * local_to_image_frame_rot;
+// -----------------------------------------------------------------------------
+void Manipulator::SetWorldToCamTr(const KDL::Frame &in) {
+
+    camera_to_world_frame_tr = in.Inverse();
+    local_to_world_frame_tr.M = camera_to_world_frame_tr.M *
+            local_to_image_frame_rot;
 }
+
 
 // -----------------------------------------------------------------------------
 void Manipulator::DoArmToWorldFrameCalibration() {

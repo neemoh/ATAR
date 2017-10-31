@@ -39,7 +39,7 @@ public:
 
     void DoArmToWorldFrameCalibration();
 
-    void SetCameraToWorldFrame(const KDL::Frame& in);  // needed for AR
+    void SetWorldToCamTr(const KDL::Frame &in);  // needed for AR
 
 private:
     ros::NodeHandlePtr n; // made it a member just for the calibration method
