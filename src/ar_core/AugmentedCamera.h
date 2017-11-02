@@ -34,7 +34,7 @@ public:
 
     bool IsImageNew();
 
-    cv::Mat GetImage(){return image_from_ros;};
+    cv::Mat GetImage();
 
 private:
 

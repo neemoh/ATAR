@@ -120,3 +120,12 @@ bool AugmentedCamera::IsImageNew() {
     }
     return false;
 }
+
+cv::Mat AugmentedCamera::GetImage() {
+    // it is important to copy the image to prevent seg fault due to
+    // subscriber thread and vtk rendering thread accessing the image at the
+    // same time
+    cv::Mat out;
+    image_from_ros.copyTo(out);
+    return out;
+}

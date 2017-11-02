@@ -148,7 +148,9 @@ void RenderingCamera::UpdateVirtualView(const int *window_size) {
 //------------------------------------------------------------------------------
 void RenderingCamera::UpdateBackgroundImage(const int *window_size) {
 
-    cv::Mat img = ar_camera->GetImage();
+    cv::Mat img;
+    if(ar_camera->IsImageNew())
+        img = ar_camera->GetImage();
     if(is_initialized && !img.empty()) {
         //    cv::flip(src, _src, 0);
         image_importer_->SetImportVoidPointer(img.data);

@@ -369,9 +369,10 @@ void Rendering::GetCameraNames(ros::NodeHandlePtr n, const int num_views,
     std::stringstream param_name;
     int name_count = 0;
     for (int k = 0; k < num_views; ++k) {
+        param_name.str("");// empty the stream
         param_name << "cam_" << k << "_name";
         if (n->getParam(param_name.str(), cam_names[k]))
-            name_count+=1;
+            name_count++;
     }
     if(name_count!=num_views) {
         ROS_ERROR("Found %i cam_names although %i views are to be shown.",
