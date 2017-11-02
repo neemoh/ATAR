@@ -2,18 +2,11 @@
 // Created by nima on 4/12/17.
 //
 
-#ifndef bardCalibratedCamera_h
-#define bardCalibratedCamera_h
+#ifndef RENDERINGCAMERA_h
+#define RENDERINGCAMERA_h
 
 #include "src/ar_core/Manipulator.h"
-
-#include <ros/ros.h>
-#include <kdl/frames.hpp>
-#include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
-#include "opencv2/highgui/highgui.hpp"
-#include <image_transport/image_transport.h>
-#include <geometry_msgs/PoseStamped.h>
+#include "src/ar_core/AugmentedCamera.h"
 
 #include <vtkImageImport.h>
 #include <vtkImageActor.h>
@@ -24,7 +17,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkSetGet.h>
 /**
- * \class CalibratedCamera
+ * \class RenderingCamera
  * \brief This is a Subclass of vtkCamera augmented with intrinsic and extrinsic
  * camera information.
  * Changing the size of the rendering window is taken into consideration to get
@@ -41,15 +34,9 @@ public:
 
     //    RenderingCamera(const RenderingCamera&);
 
-    ~RenderingCamera() {}
+    ~RenderingCamera() {delete ar_camera;};
 
-    bool IsImageNew();
-
-    void ImageCallback(const sensor_msgs::ImageConstPtr &msg);
-
-    void PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
-
-    KDL::Frame GetWorldToCamTr(){return world_to_cam_pose;};
+    KDL::Frame GetWorldToCamTr(){return ar_camera->GetWorldToCamTr();};
 
     void SetWorldToCamTf(const KDL::Frame & frame);
 
@@ -63,7 +50,6 @@ private:
 
     void operator=(const RenderingCamera&);  // Purposefully not implemented.
 
-    void ReadCameraParameters(const std::string file_path);
 
     void ConfigureBackgroundImage(cv::Mat img);
 
@@ -81,10 +67,6 @@ private:
                               const int *imageSize, const double *spacing,
                               const double *origin);
 
-    void LockAndGetImage(cv::Mat &image, std::string cam_name);
-
-
-
     void UpdateCamPoseFollowers();
 
 public:
@@ -95,17 +77,9 @@ public:
 
 private:
 
-    cv::Mat                     image_from_ros;
-    bool                        new_image = false;
-    bool                        new_cam_pose = false;
+    AugmentedCamera*                   ar_camera;
     bool                        is_initialized = false;
     std::vector<Manipulator*>   interested_manipulators;
-
-    KDL::Frame                  world_to_cam_pose;
-    cv::Mat                     img;
-
-    image_transport::Subscriber sub_image;
-    ros::Subscriber             sub_pose;
 
     vtkSmartPointer<vtkImageImport>         image_importer_;
     vtkSmartPointer<vtkImageData>           camera_image_;
@@ -122,4 +96,4 @@ private:
 };
 
 
-#endif
+#endif //RENDERINGCAMERA

@@ -3,7 +3,6 @@
 //
 
 #include "RenderingCamera.h"
-#include <pwd.h>
 #include <custom_conversions/Conversions.h>
 
 
@@ -38,81 +37,25 @@ RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
                                KDL::Vector(0.05, -0.0, 0.35)));
     if(is_ar) {
 
-        // AR camera
-        struct passwd *pw = getpwuid(getuid());
-        const char *home_dir = pw->pw_dir;
-        std::stringstream path;
-        path << std::string(home_dir) << std::string("/.ros/camera_info/")
-             << cam_name << "_intrinsics.yaml";
-        ReadCameraParameters(path.str());
-
         image_importer_ = vtkSmartPointer<vtkImageImport>::New();
         image_actor_ = vtkSmartPointer<vtkImageActor>::New();
         camera_image_ = vtkSmartPointer<vtkImageData>::New();
         camera_real = vtkSmartPointer<vtkCamera>::New();
 
-        // --------------------Images
-        // image subscriber
-        std::string img_topic = "/"+cam_name+ "/image_raw";
-        if(ns!="")
-            img_topic = "/"+ns+"/"+cam_name+ "/image_raw";;
+        ar_camera = new AugmentedCamera(n, it, cam_name, ns);
 
-        sub_image = it->subscribe(img_topic, 1, &RenderingCamera::ImageCallback, this);
+        SetWorldToCamTf(ar_camera->GetWorldToCamTr());
+        ar_camera->GetIntrinsicParams(fx_, fy_, cx_, cy_);
 
         // in AR mode we read real camera images and show them as the background
         // of our rendering
         cv::Mat cam_image;
-        LockAndGetImage(cam_image, img_topic);
+        ar_camera->LockAndGetImage(cam_image);
         ConfigureBackgroundImage(cam_image);
-
-        // ------------------ CAM POSE
-        // we first try to read the poses as parameters and later update the
-        // poses if new messages are arrived on the topics
-        std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
-        if (n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame", temp_vec))
-            SetWorldToCamTf(conversions::PoseVectorToKDLFrame(temp_vec));
-
-        // now we set up the subscribers
-        sub_pose = n->subscribe("/"+cam_name+ "/world_to_camera_transform",
-                                1, &RenderingCamera::PoseCallback, this);
 
     }
 
     is_initialized = true;
-
-}
-
-
-//------------------------------------------------------------------------------
-bool RenderingCamera::IsImageNew() {
-    if(new_image){
-        new_image = false;
-        return true;
-    }
-    return false;
-}
-
-
-//------------------------------------------------------------------------------
-void RenderingCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
-    try
-    {
-        image_from_ros = cv_bridge::toCvCopy(msg, "rgb8")->image;
-        new_image= true;
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
-    }
-}
-
-
-//------------------------------------------------------------------------------
-void RenderingCamera::PoseCallback(
-        const geometry_msgs::PoseStampedConstPtr & msg)
-{
-    new_cam_pose = true;
-    tf::poseMsgToKDL(msg->pose, world_to_cam_pose);
 
 }
 
@@ -136,46 +79,11 @@ void RenderingCamera::RefreshCamera(const int *window_size){
     UpdateBackgroundImage(window_size);
 
     // safer than putting it in the callback
-    if(new_cam_pose) {
-        SetWorldToCamTf(world_to_cam_pose);
-        new_cam_pose=false;
-    }
+    if(ar_camera->IsPoseNew())
+        SetWorldToCamTf(ar_camera->GetWorldToCamTr());
+
 }
 
-
-// -----------------------------------------------------------------------------
-void RenderingCamera::ReadCameraParameters(const std::string file_path) {
-    cv::FileStorage fs(file_path, cv::FileStorage::READ);
-
-    ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
-
-    if (!fs.isOpened())
-        throw std::runtime_error("Unable to read the camera parameters file.");
-    cv::Mat camera_matrix;
-    fs["camera_matrix"] >> camera_matrix;
-
-    // check if we got something
-    if(camera_matrix.empty()){
-        ROS_ERROR("camera_matrix not found in '%s' ", file_path.c_str());
-        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
-    }
-
-    //    cv::Mat camera_distortion;
-    //    fs["distortion_coefficients"] >> camera_distortion;
-    //    if(camera_distortion.empty()){
-    //        ROS_ERROR("distortion_coefficients  not found in '%s' ", file_path.c_str());
-    //        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
-    //    }
-
-    fx_ = camera_matrix.at<double>(0, 0);
-    fy_ = camera_matrix.at<double>(1, 1);
-    cx_ = camera_matrix.at<double>(0, 2);
-    cy_ = camera_matrix.at<double>(1, 2);
-
-    ROS_DEBUG_STREAM(std::string("Camera Matrix: fx= ")
-                             <<  fx_ << ", fy= " <<  fy_ << ", cx= "<<  cx_
-                             << ", cy= " <<  cy_ );
-}
 
 
 //------------------------------------------------------------------------------
@@ -240,8 +148,8 @@ void RenderingCamera::UpdateVirtualView(const int *window_size) {
 //------------------------------------------------------------------------------
 void RenderingCamera::UpdateBackgroundImage(const int *window_size) {
 
-    if(is_initialized && !image_from_ros.empty()) {
-        image_from_ros.copyTo(img);
+    cv::Mat img = ar_camera->GetImage();
+    if(is_initialized && !img.empty()) {
         //    cv::flip(src, _src, 0);
         image_importer_->SetImportVoidPointer(img.data);
         image_importer_->Modified();
@@ -324,34 +232,14 @@ void RenderingCamera::SetCameraToFaceImage(const int *window_size,
 }
 
 
-//------------------------------------------------------------------------------
-void RenderingCamera::LockAndGetImage(cv::Mat &images, std::string img_topic) {
-
-    ros::Rate loop_rate(2);
-    ros::Time timeout_time = ros::Time::now() + ros::Duration(1);
-
-    while(ros::ok() && image_from_ros.empty()) {
-        ros::spinOnce();
-        loop_rate.sleep();
-        if (ros::Time::now() > timeout_time)
-            ROS_WARN_STREAM(("Timeout: No Image on."+img_topic+
-                             " Trying again...").c_str());
-    }
-    image_from_ros.copyTo(images);
-
-    new_image = false;
-}
-
 
 //------------------------------------------------------------------------------
 void RenderingCamera::SetWorldToCamTf(const KDL::Frame & in) {
 
-    world_to_cam_pose = in;
-
     // update the manipulators who are following the camera's pose
     UpdateCamPoseFollowers();
 
-    KDL::Frame cam_to_world_pose = world_to_cam_pose.Inverse();
+    KDL::Frame cam_to_world_pose = in.Inverse();
 
     KDL::Vector origin =        cam_to_world_pose.p;
     KDL::Vector focal_point =   cam_to_world_pose * KDL::Vector(0, 0, 1);
@@ -368,7 +256,7 @@ void RenderingCamera::SetWorldToCamTf(const KDL::Frame & in) {
 //------------------------------------------------------------------------------
 void RenderingCamera::UpdateCamPoseFollowers() {
     for (int i = 0; i < interested_manipulators.size(); ++i) {
-        interested_manipulators[i]->SetWorldToCamTr(world_to_cam_pose);
+        interested_manipulators[i]->SetWorldToCamTr(ar_camera->GetWorldToCamTr());
     }
 }
 

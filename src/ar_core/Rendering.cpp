@@ -325,7 +325,7 @@ void Rendering::ToggleFullScreen() {
 
 bool Rendering::AreImagesNew() {
 
-    return (cameras[0]->IsImageNew() && cameras[1]->IsImageNew());
+//    return (cameras[0]->IsImageNew() && cameras[1]->IsImageNew());
 
 }
 
