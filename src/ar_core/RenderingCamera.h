@@ -31,17 +31,17 @@
  * a correct rendering view (still need to add).
  */
 
-class ARCamera
+class RenderingCamera
 {
 public:
 
-    ARCamera(ros::NodeHandlePtr n,
+    RenderingCamera(ros::NodeHandlePtr n,
                  image_transport::ImageTransport *it=NULL,
                  const std::string cam_name="", const std::string ns="");
 
-    //    ARCamera(const ARCamera&);
+    //    RenderingCamera(const RenderingCamera&);
 
-    ~ARCamera() {}
+    ~RenderingCamera() {}
 
     bool IsImageNew();
 
@@ -59,9 +59,9 @@ public:
 
 private:
 
-    ARCamera(const ARCamera&);  // Purposefully not implemented.
+    RenderingCamera(const RenderingCamera&);  // Purposefully not implemented.
 
-    void operator=(const ARCamera&);  // Purposefully not implemented.
+    void operator=(const RenderingCamera&);  // Purposefully not implemented.
 
     void ReadCameraParameters(const std::string file_path);
 

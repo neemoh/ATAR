@@ -2,13 +2,13 @@
 // Created by nima on 4/12/17.
 //
 
-#include "ARCamera.h"
+#include "RenderingCamera.h"
 #include <pwd.h>
 #include <custom_conversions/Conversions.h>
 
 
 //----------------------------------------------------------------------------
-ARCamera::ARCamera(ros::NodeHandlePtr n,
+RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
                    image_transport::ImageTransport *it,
                    const std::string cam_name, const std::string ns)
         :
@@ -57,7 +57,7 @@ ARCamera::ARCamera(ros::NodeHandlePtr n,
         if(ns!="")
             img_topic = "/"+ns+"/"+cam_name+ "/image_raw";;
 
-        sub_image = it->subscribe(img_topic, 1, &ARCamera::ImageCallback, this);
+        sub_image = it->subscribe(img_topic, 1, &RenderingCamera::ImageCallback, this);
 
         // in AR mode we read real camera images and show them as the background
         // of our rendering
@@ -74,7 +74,7 @@ ARCamera::ARCamera(ros::NodeHandlePtr n,
 
         // now we set up the subscribers
         sub_pose = n->subscribe("/"+cam_name+ "/world_to_camera_transform",
-                                1, &ARCamera::PoseCallback, this);
+                                1, &RenderingCamera::PoseCallback, this);
 
     }
 
@@ -84,7 +84,7 @@ ARCamera::ARCamera(ros::NodeHandlePtr n,
 
 
 //------------------------------------------------------------------------------
-bool ARCamera::IsImageNew() {
+bool RenderingCamera::IsImageNew() {
     if(new_image){
         new_image = false;
         return true;
@@ -94,7 +94,7 @@ bool ARCamera::IsImageNew() {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
+void RenderingCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try
     {
         image_from_ros = cv_bridge::toCvCopy(msg, "rgb8")->image;
@@ -108,7 +108,7 @@ void ARCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::PoseCallback(
+void RenderingCamera::PoseCallback(
         const geometry_msgs::PoseStampedConstPtr & msg)
 {
     new_cam_pose = true;
@@ -118,7 +118,7 @@ void ARCamera::PoseCallback(
 
 
 //------------------------------------------------------------------------------
-void ARCamera::SetPtrManipulatorInterestedInCamPose(Manipulator *in) {
+void RenderingCamera::SetPtrManipulatorInterestedInCamPose(Manipulator *in) {
 
     interested_manipulators.push_back(in);
 
@@ -127,7 +127,7 @@ void ARCamera::SetPtrManipulatorInterestedInCamPose(Manipulator *in) {
 }
 
 
-void ARCamera::RefreshCamera(const int *window_size){
+void RenderingCamera::RefreshCamera(const int *window_size){
 
     // update each windows view
     UpdateVirtualView(window_size);
@@ -144,7 +144,7 @@ void ARCamera::RefreshCamera(const int *window_size){
 
 
 // -----------------------------------------------------------------------------
-void ARCamera::ReadCameraParameters(const std::string file_path) {
+void RenderingCamera::ReadCameraParameters(const std::string file_path) {
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
 
     ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
@@ -179,7 +179,7 @@ void ARCamera::ReadCameraParameters(const std::string file_path) {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::ConfigureBackgroundImage(cv::Mat img) {
+void RenderingCamera::ConfigureBackgroundImage(cv::Mat img) {
 
     assert( img.data != NULL );
 
@@ -205,7 +205,7 @@ void ARCamera::ConfigureBackgroundImage(cv::Mat img) {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::UpdateVirtualView(const int *window_size) {
+void RenderingCamera::UpdateVirtualView(const int *window_size) {
 
     double  window_width = window_size[0];
     double window_height = window_size[1];
@@ -238,7 +238,7 @@ void ARCamera::UpdateVirtualView(const int *window_size) {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::UpdateBackgroundImage(const int *window_size) {
+void RenderingCamera::UpdateBackgroundImage(const int *window_size) {
 
     if(is_initialized && !image_from_ros.empty()) {
         image_from_ros.copyTo(img);
@@ -263,7 +263,7 @@ void ARCamera::UpdateBackgroundImage(const int *window_size) {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::SetCameraToFaceImage(const int *window_size,
+void RenderingCamera::SetCameraToFaceImage(const int *window_size,
                                     const int *imageSize, const double *spacing,
                                     const double *origin) {
 
@@ -325,7 +325,7 @@ void ARCamera::SetCameraToFaceImage(const int *window_size,
 
 
 //------------------------------------------------------------------------------
-void ARCamera::LockAndGetImage(cv::Mat &images, std::string img_topic) {
+void RenderingCamera::LockAndGetImage(cv::Mat &images, std::string img_topic) {
 
     ros::Rate loop_rate(2);
     ros::Time timeout_time = ros::Time::now() + ros::Duration(1);
@@ -344,7 +344,7 @@ void ARCamera::LockAndGetImage(cv::Mat &images, std::string img_topic) {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::SetWorldToCamTf(const KDL::Frame & in) {
+void RenderingCamera::SetWorldToCamTf(const KDL::Frame & in) {
 
     world_to_cam_pose = in;
 
@@ -366,7 +366,7 @@ void ARCamera::SetWorldToCamTf(const KDL::Frame & in) {
 
 
 //------------------------------------------------------------------------------
-void ARCamera::UpdateCamPoseFollowers() {
+void RenderingCamera::UpdateCamPoseFollowers() {
     for (int i = 0; i < interested_manipulators.size(); ++i) {
         interested_manipulators[i]->SetWorldToCamTr(world_to_cam_pose);
     }

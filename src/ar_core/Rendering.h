@@ -7,7 +7,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
-#include "ARCamera.h"
+#include "RenderingCamera.h"
 #include <kdl/frames.hpp>
 
 #include <vtkImageImport.h>
@@ -102,7 +102,7 @@ private:
     bool publish_overlayed_images_;
 
     //cameras
-    ARCamera *                              cameras [3];
+    RenderingCamera *                              cameras [3];
     image_transport::ImageTransport *       it;
 
     vtkSmartPointer<vtkLight>               lights[2];

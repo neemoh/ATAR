@@ -28,9 +28,9 @@ Rendering::Rendering(ros::NodeHandlePtr n, const bool ar_mode,
 
     for (int k = 0; k < n_views; ++k) {
         if(ar_mode_)
-            cameras[k] = new ARCamera(n, it, cam_names[k], cams_namespace);
+            cameras[k] = new RenderingCamera(n, it, cam_names[k], cams_namespace);
         else
-            cameras[k] = new ARCamera(n);
+            cameras[k] = new RenderingCamera(n);
     }
 
     n->param<bool>("with_shadows", with_shadows_, false);
