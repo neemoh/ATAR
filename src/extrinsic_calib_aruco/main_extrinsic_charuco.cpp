@@ -104,18 +104,18 @@ int main(int argc, char *argv[]) {
 
     //----------- ROS pub and sub
     // advertise publishers
-    std::stringstream pose_topic_name;
-    pose_topic_name << std::string("/")
-                    << cam_name << "/world_to_camera_transform";
 
-    ros::Publisher publisher_pose =n.advertise<geometry_msgs::PoseStamped>
-            (pose_topic_name.str(), 1, 0);
-    ROS_INFO("Publishing board to camera pose on '%s'",
-             pose_topic_name.str().c_str());
-
-    std::string img_topic = "/"+cam_name+ "/image_raw";
+    std::string pose_topic_name = "/" + cam_name +"/world_to_camera_transform";
     std::string cams_ns;
     if(n.getParam("cams_namespace", cams_ns) && cams_ns!="")
+        pose_topic_name = "/"+cams_ns+"/"+cam_name+ "/world_to_camera_transform";
+
+    ros::Publisher publisher_pose =n.advertise<geometry_msgs::PoseStamped>
+            (pose_topic_name, 1, 0);
+    ROS_INFO("Publishing board to camera pose on '%s'",pose_topic_name.c_str());
+
+    std::string img_topic = "/"+cam_name+ "/image_raw";
+    if(cams_ns!="")
         img_topic = "/"+cams_ns+"/"+cam_name+ "/image_raw";
 
 

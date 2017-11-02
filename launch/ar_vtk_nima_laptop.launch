@@ -21,19 +21,19 @@
         <param name="camera_name" type="string" value="$(arg left_cam_name)" />
     </node>
 
-    <node pkg="atar" type="extrinsic_calib_charuco"
-          name="extrinsic_left" output="screen" >
-        <param name="camera_name" value="$(arg left_cam_name)"/>
-        <param name= "cams_namespace" value= "$(arg cams_namespace)" />
-        <param name="show_image" value="false"/>
-    </node>
+    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
+          <!--name="extrinsic_left" output="screen" >-->
+        <!--<param name="camera_name" value="$(arg left_cam_name)"/>-->
+        <!--<param name= "cams_namespace" value= "$(arg cams_namespace)" />-->
+        <!--<param name="show_image" value="false"/>-->
+    <!--</node>-->
 
-    <node pkg="atar" type="extrinsic_calib_charuco"
-          name="extrinsic_right" output="screen" >
-        <param name="camera_name" value="$(arg right_cam_name)"/>
-        <param name= "cams_namespace" value= "$(arg cams_namespace)" />
-        <param name="show_image" value="false"/>
-    </node>
+    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
+          <!--name="extrinsic_right" output="screen" >-->
+        <!--<param name="camera_name" value="$(arg right_cam_name)"/>-->
+        <!--<param name= "cams_namespace" value= "$(arg cams_namespace)" />-->
+        <!--<param name="show_image" value="false"/>-->
+    <!--</node>-->
 
     <!-- Node recording the data-->
     <node pkg="atar" type="gui" name="gui" output="screen">

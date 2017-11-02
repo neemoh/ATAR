@@ -7,7 +7,7 @@
 #include <custom_conversions/Conversions.h>
 
 AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
-                   const std::string cam_name, const std::string ns) {
+                                 const std::string cam_name, const std::string ns) {
 
     // AR camera
     struct passwd *pw = getpwuid(getuid());
@@ -21,20 +21,62 @@ AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTra
     // image subscriber
     img_topic = "/"+cam_name+ "/image_raw";
     if(ns!="")
-        img_topic = "/"+ns+"/"+cam_name+ "/image_raw";;
+        img_topic = "/"+ns+"/"+cam_name+ "/image_raw";
 
     sub_image = it->subscribe(img_topic, 1, &AugmentedCamera::ImageCallback, this);
 
 
-    // ------------------ CAM POSE
+    // ------------------------------------------- CAM POSE
     // we first try to read the poses as parameters and later update the
     // poses if new messages are arrived on the topics
+
+    // --------------- 1- it can be set as a parameter
     std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
     n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame", temp_vec);
 
-    // now we set up the subscribers
-    sub_pose = n->subscribe("/"+cam_name+ "/world_to_camera_transform",
-                            1, &AugmentedCamera::PoseCallback, this);
+    // --------------- 2- it can be read from a topic
+
+    std::string pose_topic_name = "/"+cam_name+ "/world_to_camera_transform";
+    if(ns!="")
+        pose_topic_name = "/"+ns+"/"+cam_name+ "/world_to_camera_transform";
+
+    // is something being published?
+    if (ros::topic::waitForMessage<geometry_msgs::PoseStamped>
+            (pose_topic_name, ros::Duration(1))){
+        // now we set up the subscribers
+        sub_pose = n->subscribe(pose_topic_name, 1,
+                                &AugmentedCamera::PoseCallback, this);
+    }
+    else{
+        is_pose_from_subscriber = false;
+
+        // --------------- 3- it can be estimated directly
+        ROS_INFO("Camera pose is not published on topic '%s'. Pose will be "
+                         "estimated.", pose_topic_name.c_str());
+
+        // Read boardparameters
+        // board_params comprises:
+        // [dictionary_id, board_w, board_h,
+        // square_length_in_meters, marker_length_in_meters]
+        std::vector<float> board_params = std::vector<float>(5, 0.0);
+        if(!n->getParam("board_params", board_params))
+        {
+            if(!n->getParam("/calibrations/board_params", board_params))
+                ROS_ERROR("Ros parameter board_param is required. board_param="
+                                  "[dictionary_id, board_w, board_h, "
+                                  "square_length_in_meters, marker_length_in_meters]");
+        }
+
+        dictionary =
+                cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME
+                                                           (board_params[0]));
+        // create charuco board object
+        charuco_board = cv::aruco::CharucoBoard::create((int)board_params[1],
+                                                        (int)board_params[2],
+                                                        board_params[3],
+                                                        board_params[4],
+                                                        dictionary);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -52,7 +94,7 @@ void AugmentedCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
 //------------------------------------------------------------------------------
 void AugmentedCamera::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
-    new_cam_pose = true;
+    new_pose_from_sub = true;
     tf::poseMsgToKDL(msg->pose, world_to_cam_pose);
 }
 
@@ -64,14 +106,7 @@ AugmentedCamera::GetIntrinsicParams(double &fx, double &fy, double &cx, double &
     cx = camera_matrix.at<double>(0, 2);
     cy = camera_matrix.at<double>(1, 2);
 }
-//------------------------------------------------------------------------------
-bool AugmentedCamera::IsPoseNew() {
-    if(new_cam_pose) {
-        new_cam_pose = false;
-        return true;
-    }
-    return false;
-}
+
 //------------------------------------------------------------------------------
 void AugmentedCamera::ReadCameraParameters(const std::string file_path) {
 
@@ -129,3 +164,83 @@ cv::Mat AugmentedCamera::GetImage() {
     image_from_ros.copyTo(out);
     return out;
 }
+
+bool AugmentedCamera::GetNewWorldToCamTr(KDL::Frame &pose) {
+
+    // if pose comes from the subscriber
+    if(new_pose_from_sub){
+        pose = world_to_cam_pose;
+        new_pose_from_sub = false;
+        return true;
+    }
+    else if(!is_pose_from_subscriber && !image_from_ros.empty() ){
+        cv::Mat img;
+        image_from_ros.copyTo(img);
+        if(DetectCharucoBoardPose(world_to_cam_pose, img)) {
+            pose = world_to_cam_pose;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool AugmentedCamera::DetectCharucoBoardPose(KDL::Frame &pose, cv::Mat image) {
+
+    std::vector<int> marker_ids, charuco_ids;
+    std::vector<std::vector<cv::Point2f> > marker_corners, rejected_markers;
+    std::vector<cv::Point2f> charuco_corners;
+
+
+    cv::Ptr<cv::aruco::DetectorParameters> detector_params =
+            cv::aruco::DetectorParameters::create();
+    detector_params->doCornerRefinement = true;
+
+    // detect markers
+    cv::aruco::detectMarkers(image, dictionary, marker_corners,
+                             marker_ids, detector_params, rejected_markers);
+
+    //    // refind strategy to detect more markers
+    //    if (refindStrategy)
+    //        aruco::refineDetectedMarkers(image, board, markerCorners,
+    //                                     marker_ids, rejectedMarkers,
+    //                                     camMatrix, distCoeffs);
+
+    // interpolate charuco corners
+    int interpolatedCorners = 0;
+    if (marker_ids.size() > 0)
+        interpolatedCorners =
+                cv::aruco::interpolateCornersCharuco(marker_corners,
+                                                     marker_ids, image,
+                                                     charuco_board,
+                                                     charuco_corners,
+                                                     charuco_ids, camera_matrix,
+                                                     camera_distortion);
+
+    // estimate charuco board pose
+    CV_Assert((charuco_corners.size() ==charuco_ids.size()));
+
+    // need, at least, 4 corners
+    if(charuco_ids.size() < 4)
+        return false;
+
+    std::vector< cv::Point3f > objPoints;
+    objPoints.reserve(charuco_ids.size());
+
+    for(unsigned int i = 0; i < charuco_ids.size(); i++) {
+        int currId = charuco_ids[i];
+        CV_Assert(currId >= 0
+                  && currId < (int)charuco_board->chessboardCorners.size());
+        objPoints.push_back(charuco_board->chessboardCorners[currId]);
+    }
+
+    // points need to be in different lines, check if detected points are enough
+    cv::Vec3d rvec, tvec;
+    solvePnP(objPoints, charuco_corners, camera_matrix, camera_distortion,
+             rvec, tvec);
+
+    conversions::RvecTvecToKDLFrame(rvec, tvec, pose);
+    return true;
+}
+
+

@@ -32,11 +32,9 @@ public:
                  image_transport::ImageTransport *it=NULL,
                  const std::string cam_name="", const std::string ns="");
 
-    //    RenderingCamera(const RenderingCamera&);
+    ~RenderingCamera() {if(ar_camera!=NULL) delete ar_camera;};
 
-    ~RenderingCamera() {delete ar_camera;};
-
-    KDL::Frame GetWorldToCamTr(){return ar_camera->GetWorldToCamTr();};
+    KDL::Frame GetWorldToCamTr(){ return world_to_cam_tr;};
 
     void SetWorldToCamTf(const KDL::Frame & frame);
 
@@ -67,7 +65,7 @@ private:
                               const int *imageSize, const double *spacing,
                               const double *origin);
 
-    void UpdateCamPoseFollowers();
+    void UpdateCamPoseFollowers(const KDL::Frame &pose);
 
 public:
 
@@ -77,13 +75,13 @@ public:
 
 private:
 
-    AugmentedCamera*                   ar_camera;
-    bool                        is_initialized = false;
-    std::vector<Manipulator*>   interested_manipulators;
-
-    vtkSmartPointer<vtkImageImport>         image_importer_;
-    vtkSmartPointer<vtkImageData>           camera_image_;
-    vtkSmartPointer<vtkMatrix4x4>           intrinsic_matrix;
+    AugmentedCamera*                    ar_camera=NULL;
+    bool                                is_initialized = false;
+    std::vector<Manipulator*>           interested_manipulators;
+    KDL::Frame                          world_to_cam_tr;
+    vtkSmartPointer<vtkImageImport>     image_importer_;
+    vtkSmartPointer<vtkImageData>       camera_image_;
+    vtkSmartPointer<vtkMatrix4x4>       intrinsic_matrix;
 
     double image_width_;
     double image_height_;

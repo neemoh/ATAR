@@ -44,7 +44,6 @@ RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
 
         ar_camera = new AugmentedCamera(n, it, cam_name, ns);
 
-        SetWorldToCamTf(ar_camera->GetWorldToCamTr());
         ar_camera->GetIntrinsicParams(fx_, fy_, cx_, cy_);
 
         // in AR mode we read real camera images and show them as the background
@@ -65,8 +64,9 @@ void RenderingCamera::SetPtrManipulatorInterestedInCamPose(Manipulator *in) {
 
     interested_manipulators.push_back(in);
 
-    //update once already
-    UpdateCamPoseFollowers();
+    //we need to update once already, because the pose may have been already
+    // set and stay constant
+    UpdateCamPoseFollowers(world_to_cam_tr);
 }
 
 
@@ -79,8 +79,9 @@ void RenderingCamera::RefreshCamera(const int *window_size){
     UpdateBackgroundImage(window_size);
 
     // safer than putting it in the callback
-    if(ar_camera->IsPoseNew())
-        SetWorldToCamTf(ar_camera->GetWorldToCamTr());
+    if(ar_camera!=NULL)
+        if(ar_camera->GetNewWorldToCamTr(world_to_cam_tr))
+            SetWorldToCamTf(world_to_cam_tr);
 
 }
 
@@ -238,10 +239,12 @@ void RenderingCamera::SetCameraToFaceImage(const int *window_size,
 //------------------------------------------------------------------------------
 void RenderingCamera::SetWorldToCamTf(const KDL::Frame & in) {
 
-    // update the manipulators who are following the camera's pose
-    UpdateCamPoseFollowers();
+    world_to_cam_tr = in;
 
-    KDL::Frame cam_to_world_pose = in.Inverse();
+    // update the manipulators who are following the camera's pose
+    UpdateCamPoseFollowers(world_to_cam_tr);
+
+    KDL::Frame cam_to_world_pose = world_to_cam_tr.Inverse();
 
     KDL::Vector origin =        cam_to_world_pose.p;
     KDL::Vector focal_point =   cam_to_world_pose * KDL::Vector(0, 0, 1);
@@ -256,10 +259,11 @@ void RenderingCamera::SetWorldToCamTf(const KDL::Frame & in) {
 
 
 //------------------------------------------------------------------------------
-void RenderingCamera::UpdateCamPoseFollowers() {
+void RenderingCamera::UpdateCamPoseFollowers(const KDL::Frame &pose) {
     for (int i = 0; i < interested_manipulators.size(); ++i) {
-        interested_manipulators[i]->SetWorldToCamTr(ar_camera->GetWorldToCamTr());
+        interested_manipulators[i]->SetWorldToCamTr(pose);
     }
 }
+
 
 
