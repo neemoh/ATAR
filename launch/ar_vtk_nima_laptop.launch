@@ -3,13 +3,9 @@
     <arg name="slave_2_name" value="PSM2_DUMMY"/>
     <arg name="master_1_name" value="MTMR"/>
     <arg name="master_2_name" value="MTML"/>
-    <!--<arg name="left_camera_img_topic" value="/endoscope/left/image_color"/>-->
-    <!--<arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>-->
-    <!--<arg name= "left_cam_name" value= "ecml" />-->
-    <!--<arg name= "right_cam_name" value= "ecmr" />-->
+    <arg name="cams_namespace" value=""/>
     <arg name= "left_cam_name" value= "asus_webcam" />
     <arg name= "right_cam_name" value= "asus_webcam" />
-    <arg name= "haptic_referesh_rate" value= "500" /> -->
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
@@ -28,12 +24,14 @@
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_left" output="screen" >
         <param name="camera_name" value="$(arg left_cam_name)"/>
+        <param name= "cams_namespace" value= "$(arg cams_namespace)" />
         <param name="show_image" value="false"/>
     </node>
 
     <node pkg="atar" type="extrinsic_calib_charuco"
           name="extrinsic_right" output="screen" >
         <param name="camera_name" value="$(arg right_cam_name)"/>
+        <param name= "cams_namespace" value= "$(arg cams_namespace)" />
         <param name="show_image" value="false"/>
     </node>
 
@@ -51,8 +49,15 @@
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="atar" type="ar_core" name="ar_core" output="screen">
 
-        <!-- About left/right_cam_name: expecting to find Place the intrinsic calibration
-             file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml -->
+        <!-- About cam_name and namespace:
+        1- Expecting to find the intrinsic calibration file of each camera in
+         ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml
+        2- Expecting to read the camera images from the topic:
+        /cams_namespace/cam_<cam_number>_name/image_raw
+        You can neglect and not set the cams_namespace if you don't have one.
+        -->
+        <param name= "cams_namespace" value= "$(arg cams_namespace)" />
+
         <param name= "cam_0_name" value= "$(arg left_cam_name)" />
         <param name= "cam_1_name" value= "$(arg left_cam_name)" />
         <param name= "cam_2_name" value= "$(arg right_cam_name)" />
@@ -69,7 +74,7 @@
         geometry may be updated at the rate of the received images if it is
         generated based on the image).
         -->
-        <param name= "/desired_pose_update_frequency" value= "$(arg haptic_referesh_rate)" />
+        <!--<param name= "/desired_pose_update_frequency" value= "$(arg haptic_referesh_rate)" />-->
 
         <!--
         num_calib_points: Number of points used for arm to world calibration.

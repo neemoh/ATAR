@@ -7,11 +7,6 @@
     <arg name="right_camera_img_topic" value="/endoscope/right/image_color"/>
     <arg name= "left_cam_name" value= "ecml" />
     <arg name= "right_cam_name" value= "ecmr" />
-    <!--<arg name="left_camera_img_topic" value="/image_raw"/>-->
-    <!--<arg name="right_camera_img_topic" value="/image_raw"/>-->
-    <!--<arg name= "left_cam_name" value= "asus_webcam" />-->
-    <!--<arg name= "right_cam_name" value= "asus_webcam" />-->
-    <arg name= "haptic_referesh_rate" value= "500" />-->
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
@@ -54,14 +49,18 @@
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="atar" type="ac_overlay_vtk" name="ac_overlay" output="screen">
 
-        <!-- About left/right_cam_name: expecting to find Place the intrinsic calibration
-             file of each camera in ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml -->
-        <param name= "left_cam_name" value= "$(arg left_cam_name)" />
-        <param name= "right_cam_name" value= "$(arg right_cam_name)" />
+        <!-- About cam_name and namespace:
+        1- Expecting to find the intrinsic calibration file of each camera in
+         ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml
+        2- Expecting to read the camera images from the topic:
+        /cams_namespace/cam_<cam_number>_name/image_raw
+        You can neglect and not set the cams_namespace if you don't have one.
+        -->
+        <param name= "cams_namespace" value= "endoscope" />
 
-        <param name= "left_image_topic_name" value= "$(arg left_camera_img_topic)" />
-        <param name= "right_image_topic_name" value=
-                "$(arg right_camera_img_topic)"/>
+        <param name= "cam_0_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_1_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_2_name" value= "$(arg right_cam_name)" />
 
         <!-- About number_of_arms:
        // number of arms we wish to use in the node. If set as 1, only slave_1_name will be used.

@@ -19,18 +19,18 @@ Rendering::Rendering(ros::NodeHandlePtr n, const bool ar_mode,
     n_windows = int(one_window_per_view)*n_views + int(!one_window_per_view);
 
     std::string cam_names[n_views];
+    std::string cams_namespace;
 
     if(ar_mode_){
-        GetCameraNames( n, n_views, cam_names);
+        GetCameraNames(n, n_views, cam_names, cams_namespace);
         it = new image_transport::ImageTransport(*n);
     }
 
     for (int k = 0; k < n_views; ++k) {
         if(ar_mode_)
-            cameras[k] = new ARCamera(n, it, cam_names[k]);
-        else {
+            cameras[k] = new ARCamera(n, it, cam_names[k], cams_namespace);
+        else
             cameras[k] = new ARCamera(n);
-        }
     }
 
     n->param<bool>("with_shadows", with_shadows_, false);
@@ -119,13 +119,10 @@ Rendering::Rendering(ros::NodeHandlePtr n, const bool ar_mode,
             publisher_stereo_overlayed = it->advertise("stereo/image_color", 1);
         }
 
-
-
         render_window_[j]->Render();
 
         //AddLightActors(scene_renderer_[j]);
     }
-
 
     if(ar_mode_)
         SetEnableBackgroundImage(true);
@@ -364,20 +361,23 @@ void Rendering::SetupLights() {
 
 
 void Rendering::GetCameraNames(ros::NodeHandlePtr n, const int num_views,
-                               std::string cam_names[]) {
+                               std::string cam_names[], std::string
+                               &c_namespace) {
+
+    n->getParam("cams_namespace", c_namespace);
 
     std::stringstream param_name;
     int name_count = 0;
     for (int k = 0; k < num_views; ++k) {
-        param_name << "cam_" << k << "_name" << std::endl;
-        std::cout << "aaaaaaaaaaaaaaa " << param_name.str()<< std::endl;
-        std::string yep;
-        if (n->getParam("cam_0_name", cam_names[k]))
+        param_name << "cam_" << k << "_name";
+        if (n->getParam(param_name.str(), cam_names[k]))
             name_count+=1;
     }
-
-    if(name_count!=num_views)
+    if(name_count!=num_views) {
+        ROS_ERROR("Found %i cam_names although %i views are to be shown.",
+                  name_count, num_views);
         throw std::runtime_error("Not enough cam names provided.");
+    }
 }
 
 // -----------------------------------------------------------------------------

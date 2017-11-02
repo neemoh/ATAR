@@ -8,8 +8,9 @@
 
 
 //----------------------------------------------------------------------------
-ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
-                   const std::string cam_name)
+ARCamera::ARCamera(ros::NodeHandlePtr n,
+                   image_transport::ImageTransport *it,
+                   const std::string cam_name, const std::string ns)
         :
         intrinsic_matrix(NULL)
         , image_width_(640)
@@ -52,7 +53,10 @@ ARCamera::ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
 
         // --------------------Images
         // image subscriber
-        std::string img_topic = "/"+cam_name+ "/image_raw";;
+        std::string img_topic = "/"+cam_name+ "/image_raw";
+        if(ns!="")
+            img_topic = "/"+ns+"/"+cam_name+ "/image_raw";;
+
         sub_image = it->subscribe(img_topic, 1, &ARCamera::ImageCallback, this);
 
         // in AR mode we read real camera images and show them as the background

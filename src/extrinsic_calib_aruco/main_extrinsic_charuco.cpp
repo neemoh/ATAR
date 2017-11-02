@@ -113,7 +113,11 @@ int main(int argc, char *argv[]) {
     ROS_INFO("Publishing board to camera pose on '%s'",
              pose_topic_name.str().c_str());
 
-    std::string img_topic = "/"+cam_name+ "/image_raw";;
+    std::string img_topic = "/"+cam_name+ "/image_raw";
+    std::string cams_ns;
+    if(n.getParam("cams_namespace", cams_ns) && cams_ns!="")
+        img_topic = "/"+cams_ns+"/"+cam_name+ "/image_raw";
+
 
     // if the topic name is found, check if something is being published on it
     if (!ros::topic::waitForMessage<sensor_msgs::Image>(

@@ -35,8 +35,9 @@ class ARCamera
 {
 public:
 
-    ARCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it=NULL,
-             const std::string cam_name="");
+    ARCamera(ros::NodeHandlePtr n,
+                 image_transport::ImageTransport *it=NULL,
+                 const std::string cam_name="", const std::string ns="");
 
     //    ARCamera(const ARCamera&);
 

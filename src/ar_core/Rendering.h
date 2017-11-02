@@ -85,7 +85,7 @@ public:
 private:
 
     void GetCameraNames(ros::NodeHandlePtr n, const int num_views,
-                                   std::string cam_names[]);
+                            std::string cam_names[], std::string &ns);
 
     void AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer>);
 
