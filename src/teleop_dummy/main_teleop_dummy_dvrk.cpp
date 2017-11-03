@@ -11,6 +11,7 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Int8.h>
 #include <src/ar_core/ControlEvents.h>
+#include <std_msgs/Float32.h>
 
 // This node simulates the slaves of the dvrk in a teleop mode and controls the
 // behavior of the master console to mock that of the dvrk teleoperation mode.
@@ -30,7 +31,9 @@ bool new_clutch_msg;
 bool new_master_pose[2];
 KDL::Frame master_pose[2];
 std::string master_state[2];
-bool home_masters = true;
+int8_t control_event;
+std_msgs::Float32 gripper_angle[2];
+
 // ------------------------------------- callback functions ---------------------------
 void ClutchCallback(const sensor_msgs::JoyConstPtr & msg){
     clutch_pressed = (bool)msg->buttons[0];
@@ -70,20 +73,19 @@ void Master2StateCallback(
 
 }
 
+void Master1GripperCallback(const std_msgs::Float32ConstPtr &msg) {
+    gripper_angle[0].data = msg->data;
+}
+
+void Master2GripperCallback(const std_msgs::Float32ConstPtr &msg) {
+    gripper_angle[1].data = msg->data;
+}
+
 void ControlEventsCallback(const std_msgs::Int8ConstPtr
                                              &msg) {
-
-    int8_t control_event = msg->data;
+    
+    control_event = msg->data;
     ROS_DEBUG("Received control event %d", control_event);
-
-    switch(control_event){
-    case CE_HOME_MASTERS:
-        home_masters = true;
-        break;
-
-    default:
-        break;
-    }
 
 }
 
@@ -135,7 +137,18 @@ int main(int argc, char * argv[]) {
     ros::Subscriber sub_master_2_current_pose =  n.subscribe(param_name.str(),
                                                              1, Master2PoseCurrentCallback);
 
-    // ------------ MATERS GET STATE
+    // ------------ MASTERS GET GRIPPER
+    param_name.str("");
+    param_name << std::string("/dvrk/") << master_names[0]
+               << "/gripper_position_current";
+    ros::Subscriber sub_master_1_gripper = n.subscribe(param_name.str(), 1, Master1GripperCallback);
+    
+    param_name.str("");
+    param_name << std::string("/dvrk/") << master_names[1]
+               << "/gripper_position_current";
+    ros::Subscriber sub_master_2_gripper = n.subscribe(param_name.str(), 1, Master2GripperCallback);
+    
+    // ------------ MASTERS GET STATE
     param_name.str("");
     param_name << std::string("/dvrk/") << master_names[0]
                << "/robot_state";
@@ -169,7 +182,18 @@ int main(int argc, char * argv[]) {
     param_name << std::string("/dvrk/") << slave_names[1]
                << "/position_cartesian_current";
     ros::Publisher pub_slave_2_pose = n.advertise<geometry_msgs::PoseStamped>(param_name.str(), 2);
-
+    
+    // ------------ SLAVE PUBLISH Gripper
+    param_name.str("");
+    param_name << std::string("/dvrk/") << slave_names[0]
+               << "/gripper_position_current";
+    ros::Publisher pub_slave_1_gripper = n.advertise<std_msgs::Float32>(param_name.str(), 1);
+    
+    param_name.str("");
+    param_name << std::string("/dvrk/") << slave_names[1]
+               << "/gripper_position_current";
+    ros::Publisher pub_slave_2_gripper = n.advertise<std_msgs::Float32>(param_name.str(), 1);
+    
     // ------------ subscribe to control events that come from the GUI
     ros::Subscriber sub_control_events = n.subscribe("/atar/control_events", 1,
                                                      ControlEventsCallback);
@@ -223,8 +247,8 @@ int main(int argc, char * argv[]) {
 
     while(ros::ok()){
 
-        if(home_masters){
-            home_masters = false;
+        if(control_event==CE_HOME_MASTERS){
+            control_event = -1;
             std_msgs::String string_msg;
             string_msg.data = "Home";
 
@@ -242,8 +266,12 @@ int main(int argc, char * argv[]) {
                     ROS_INFO( "%s is alreade Homed.", master_names[1].c_str());
             }
         }
+    
+        if(control_event==CE_EXIT)
+            ros::shutdown();
 
-        if(new_coag_msg || new_clutch_msg){
+            
+            if(new_coag_msg || new_clutch_msg){
             new_coag_msg = false;
 
             if(coag_pressed && !clutch_pressed){
@@ -313,6 +341,9 @@ int main(int argc, char * argv[]) {
             }
         }
 
+        // publish the gripper positions
+        pub_slave_1_gripper.publish(gripper_angle[0]);
+        pub_slave_2_gripper.publish(gripper_angle[1]);
 
         ros::spinOnce();
         loop_rate.sleep();
