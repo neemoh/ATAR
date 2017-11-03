@@ -133,7 +133,7 @@ add_executable(stereo_usb_cam_publisher
 
 add_executable(
         teleop_dummy_dvrk
-        src/teleop_dummy/main_teleop_dummy.cpp)
+        src/teleop_dummy/main_teleop_dummy_dvrk.cpp)
 
 #add_executable(
 #        teleop_dummy_sigma
