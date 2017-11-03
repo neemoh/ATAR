@@ -23,23 +23,24 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     bool one_window_per_view = false;
     bool borders_off  = true;
     std::vector<int> view_resolution = {640, 480};
+    std::vector<int> window_positions={1280, 0};
 
     graphics = new Rendering(n, view_resolution, ar_mode, n_views,
-                             one_window_per_view, borders_off);
+                             one_window_per_view, borders_off,window_positions);
 
     // Define two tools
-    master[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
+    slaves[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current");
 
-    master[1] = new Manipulator(nh, "/dvrk/PSM2_DUMMY",
+    slaves[1] = new Manipulator(nh, "/dvrk/PSM2_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current");
 
     // set the manipulators to follow cam pose for correct kinematics
     // calibration. Cam pose here is cam_0.
-    graphics->SetManipulatorInterestedInCamPose(master[0]);
-    graphics->SetManipulatorInterestedInCamPose(master[1]);
+    graphics->SetManipulatorInterestedInCamPose(slaves[0]);
+    graphics->SetManipulatorInterestedInCamPose(slaves[1]);
 
     // Initialize the physics
     InitBullet();
@@ -859,8 +860,7 @@ void TaskSteadyHand::HapticsThread() {
     ros::Publisher pub_wrench_abs[2];
 
     //getting the name of the arms
-    std::string param_name = "/atar/PSM1/tool_pose_desired";
-
+    std::string param_name = "/atar/PSM1_DUMMY/tool_pose_desired";
     pub_slave_desired[0] = node->advertise<geometry_msgs::PoseStamped>
             (param_name, 1);
     ROS_INFO("Will publish on %s", param_name.c_str());
@@ -875,7 +875,7 @@ void TaskSteadyHand::HapticsThread() {
     ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
 
     //getting the name of the arms
-    param_name = "/atar/PSM2/tool_pose_desired";
+    param_name = "/atar/PSM2_DUMMY/tool_pose_desired";
     pub_slave_desired[1] = node->advertise<geometry_msgs::PoseStamped>
             (param_name, 1);
     ROS_INFO("Will publish on %s", param_name.c_str());
@@ -905,14 +905,19 @@ void TaskSteadyHand::HapticsThread() {
     ROS_INFO("Will publish on %s", ring_topic.c_str());
     int lower_freq_pub_counter = 0;
 
+    // todo: what if this changes during the task executionn...
+    KDL::Frame world_to_slave_tr[2];
+    world_to_slave_tr[0] = slaves[0]->GetWorldToLocalTr();
+    world_to_slave_tr[1] = slaves[1]->GetWorldToLocalTr();
+    
     //---------------------------------------------
     // loop
     while (ros::ok())
     {
-        master[0]->GetPoseWorld(tool_current_pose[0]);
-        master[0]->GetGripper(gripper_angle[0]);
-        master[1]->GetPoseWorld(tool_current_pose[1]);
-        master[1]->GetGripper(gripper_angle[1]);
+        slaves[0]->GetPoseWorld(tool_current_pose[0]);
+        slaves[0]->GetGripper(gripper_angle[0]);
+        slaves[1]->GetPoseWorld(tool_current_pose[1]);
+        slaves[1]->GetGripper(gripper_angle[1]);
 
         KDL::Frame ring_pose_loc;
 
@@ -937,7 +942,6 @@ void TaskSteadyHand::HapticsThread() {
             estimated_ring_pose_loc = tool_current_pose[1]* tool_to_ring_tr[1];
         else
             estimated_ring_pose_loc = ring_pose_loc;
-
 
         // save in global for use in the other thread
         estimated_ring_pose = estimated_ring_pose_loc;
@@ -988,8 +992,7 @@ void TaskSteadyHand::HapticsThread() {
             geometry_msgs::PoseStamped pose_msg;
             KDL::Frame tool_desired_pose_in_slave_frame;
             tool_desired_pose_in_slave_frame =
-                    slave_frame_to_world_frame_tr.Inverse()*
-                    tool_desired_pose[n_arm];
+                world_to_slave_tr[n_arm]*tool_desired_pose[n_arm];
 
             tf::poseKDLToMsg(tool_desired_pose_in_slave_frame, pose_msg.pose);
             // fill the header
@@ -1254,9 +1257,9 @@ TaskSteadyHand::~TaskSteadyHand() {
 
     delete collisionConfiguration;
 
-    delete master[0];
+    delete slaves[0];
 
-    delete master[1];
+    delete slaves[1];
 
     delete graphics;
 

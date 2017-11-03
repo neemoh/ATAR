@@ -50,6 +50,25 @@
 
     </node>
 
-
+    <!-- The dvrk_active_constraint_enforcement node generates wrench based on the received desired pose and
+        current pose of each master/slave couple.
+	The node generates wrench when receives desired pose, so the loop rate depends on the frequency of the
+	desired pose topic. The sampling_frequency param is for filtering.
+    -->
+    <node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">
+        <param name="number_of_arms" value="2"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
+        <!--the ac params will be overwritten if new message arrives-->
+        <param name="max_force" value="3"/>
+        <param name="max_torque" value="0.03"/><!-- 0.03 -->
+        <param name="linear_elastic_coeff" value="1000"/>
+        <param name="linear_damping_coeff" value="10"/>
+        <param name="angular_elastic_coeff" value="0.04"/>
+        <param name="angular_damping_coeff" value="0.002"/>
+        <param name="sampling_frequency" value="500"/>
+    </node>
 
 </launch>

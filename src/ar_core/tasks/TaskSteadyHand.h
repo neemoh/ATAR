@@ -145,7 +145,6 @@ private:
     // task logic
 
     SHTaskState task_state;
-    KDL::Frame slave_frame_to_world_frame_tr;
     Colors colors;
     KDL::Frame pose_tube;
     //KDL::Vector idle_point;
@@ -183,7 +182,7 @@ private:
     double orientation_error_norm;
     bool ac_params_changed;
 
-    Manipulator *master[2];
+    Manipulator *slaves[2];
 
     KDL::Frame tool_desired_pose[2];
     KDL::Frame tool_current_pose[2];
