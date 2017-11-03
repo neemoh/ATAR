@@ -123,9 +123,12 @@ method (check the DemoTask). After doing that the camera pose will be
 communicated to the manipulator every time it changes. Now about the rest of 
 the kinematics chain:
 
-* VR: The manipulator is interfacing with a master device. Here the 
+##### VR: 
+The manipulator is interfacing with a master device. Here the 
 local_to_world_frame_tr is calculated as:
+
 local_to_world_frame_tr.M = camera_to_world_frame_tr.M *local_to_image_frame_rot;
+
 where local_to_image_frame_rot is the tr from the base of the master
 device to the image frame (i.e. the image you see in the display, i.e. the
 camera!). THe image frame is opencv style: X axis is left to right, y is
@@ -135,7 +138,8 @@ is set by setting a parameter "/calibrations"+arm_ns+"_frame_to_image_frame"
 with 4 elements representing the quaternion rotation. Check the
 params_ar_calibrations_polimi.yaml file to see examples of this.
 
-* AR: In the augmented reality case we are interfacing with a slave arm
+##### AR: 
+In the augmented reality case we are interfacing with a slave arm
 that is seen in the camera images. Here we need to find the transformation
 from the slave to the world frame by performing a calibration procedure. 
 TO BE COMPLETED
