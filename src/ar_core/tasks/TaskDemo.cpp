@@ -13,6 +13,23 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
         time_last(ros::Time::now())
 {
 
+    bool ar_mode = false;
+    int n_views = 2;
+    bool one_window_per_view = true;
+    bool borders_off  = false;
+    std::vector<int> view_resolution = {640, 480};
+    std::vector<int> window_positions={100,50, 800, 50};
+    // the only needed argument to construct a Renderer if the nodehandle ptr
+    // The rest have default values.
+    graphics = new Rendering(n, view_resolution, ar_mode, n_views,
+                             one_window_per_view, borders_off,window_positions);
+
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+
+    // for correct calibration, the master needs the pose of the camera
+    graphics->SetManipulatorInterestedInCamPose(master);
+
     // Initialize Bullet Physics
     InitBullet();
 
@@ -129,14 +146,6 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
         forceps->AddToActorsVector(graphics_actors);
 
     }
-
-    graphics = new Rendering(n, false, 2, true);
-
-    // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
-
-    // for correct calibration, the master needs the pose of the camera
-    graphics->SetManipulatorInterestedInCamPose(master);
 
     //    master = new Manipulator(nh, "/dvrk/MTML",
     //                                   "/position_cartesian_current",

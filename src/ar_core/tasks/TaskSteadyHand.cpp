@@ -22,8 +22,10 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     int n_views = 3;
     bool one_window_per_view = false;
     bool borders_off  = true;
+    std::vector<int> view_resolution = {640, 480};
 
-    graphics = new Rendering(n, ar_mode, n_views, one_window_per_view, borders_off);
+    graphics = new Rendering(n, view_resolution, ar_mode, n_views,
+                             one_window_per_view, borders_off);
 
     // Define two tools
     master[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",

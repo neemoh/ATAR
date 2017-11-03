@@ -38,13 +38,6 @@
          off screen and not shown in opengl windows.-->
         <param name= "offScreen_rendering" value= "false" />
 
-        <!--The resolution of each view-->
-        <!--<rosparam param="view_resolution"> [960, 720]</rosparam>-->
-        <rosparam param="view_resolution"> [640, 480]</rosparam>
-
-        <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_positions"> [1280,0, 0, 0, 0, 0]</rosparam>
-
     </node>
 
     <node pkg="atar" type="teleop_dummy_dvrk" name="teleop_dummy_dvrk"

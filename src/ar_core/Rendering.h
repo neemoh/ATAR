@@ -55,8 +55,13 @@
 class Rendering {
 public:
 
-    Rendering(ros::NodeHandlePtr n,const bool ar_mode, const int num_views,
-              const bool one_window_per_view=0,const bool borders_off=false);
+    Rendering(ros::NodeHandlePtr n,
+              const std::vector<int> view_resolution={640,480},
+              const bool ar_mode=false,
+              const int num_views =1,
+              const bool one_window_per_view=false,
+              bool borders_off=false,
+              std::vector<int> window_positions={100,50,740,50,1380,50});
 
     ~Rendering();
 

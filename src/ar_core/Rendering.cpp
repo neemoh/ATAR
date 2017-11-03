@@ -9,15 +9,34 @@
 void AddLightActors(vtkRenderer *r);
 
 
-Rendering::Rendering(ros::NodeHandlePtr n, const bool ar_mode,
-                     const int n_views, const bool one_window_per_view,
-                     const bool borders_off)
+Rendering::Rendering(ros::NodeHandlePtr n,
+                     const std::vector<int> view_resolution,
+                     const bool ar_mode,
+                     const int n_views,
+                     const bool one_window_per_view,
+                     bool borders_off,
+                     std::vector<int> window_positions
+)
         :
         ar_mode_(ar_mode), n_views(n_views), it(NULL)
 {
+    //--------------------------------------------------------------------------
+    // check the passed arguments
+    if(n_views >3)
+        throw std::runtime_error("Maximum number of views supported is 3.");
 
     n_windows = int(one_window_per_view)*n_views + int(!one_window_per_view);
 
+    if(window_positions.size()/2 < n_windows){
+        ROS_WARN("Not enough window positions provided. Putting them in some "
+                         "default position and turning the borders on...");
+        for (int i = 0; i < (n_windows - window_positions.size() / 2); ++i) {
+            window_positions.push_back(100*i + 100);
+            window_positions.push_back(50*i + 50);
+        }
+        borders_off= false;
+    }
+    //--------------------------------------------------------------------------
     std::string cam_names[n_views];
     std::string cams_namespace;
 
@@ -28,9 +47,10 @@ Rendering::Rendering(ros::NodeHandlePtr n, const bool ar_mode,
 
     for (int k = 0; k < n_views; ++k) {
         if(ar_mode_)
-            cameras[k] = new RenderingCamera(n, it, cam_names[k], cams_namespace);
+            cameras[k] = new RenderingCamera(n, view_resolution, it,
+                                             cam_names[k], cams_namespace);
         else
-            cameras[k] = new RenderingCamera(n);
+            cameras[k] = new RenderingCamera(n, view_resolution);
     }
 
     n->param<bool>("with_shadows", with_shadows_, false);
@@ -43,12 +63,6 @@ Rendering::Rendering(ros::NodeHandlePtr n, const bool ar_mode,
     ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
              publish_overlayed_images_ ? "true" : "false");
 
-    std::vector<int> window_positions(6, 0);
-    n->getParam("window_positions", window_positions);
-
-    std::vector<int> view_resolution(2, 640);
-    view_resolution[1] = 480;
-    n->getParam("view_resolution", view_resolution);
 
     SetupLights();
 
@@ -177,9 +191,10 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
             k=i;
         int *window_size = render_window_[k]->GetActualSize();
 
-        int view_size[2] = {window_size[0] / n_views, window_size[1]};
+        int view_size_in_current_window[2] = {window_size[0] / n_views,
+                                       window_size[1]};
 
-        cameras[i]->RefreshCamera(view_size);
+        cameras[i]->RefreshCamera(view_size_in_current_window);
     }
 }
 
@@ -207,8 +222,8 @@ Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
 void Rendering::Render() {
 
     // update  view angle (in case window changes size)
-    if(ar_mode_)
-        UpdateCameraViewForActualWindowSize();
+    UpdateCameraViewForActualWindowSize();
+
     for (int i = 0; i < n_windows; ++i) {
         render_window_[i]->Render();
     }

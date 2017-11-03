@@ -219,8 +219,9 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
 
+    std::vector<int> view_resolution={1280,960};
 
-    graphics = new Rendering(n,true, 1);
+    graphics = new Rendering(n,view_resolution);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");

@@ -8,27 +8,25 @@
 
 //----------------------------------------------------------------------------
 RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
-                   image_transport::ImageTransport *it,
-                   const std::string cam_name, const std::string ns)
+                                 const std::vector<int> view_resolution,
+                                 image_transport::ImageTransport *it,
+                                 const std::string cam_name, const std::string ns)
         :
-        intrinsic_matrix(NULL)
-        , image_width_(640)
-        , image_height_(480)
-        , fx_(240)
-        , fy_(320)
-        , cx_(0)
-        , cy_(0)
+        intrinsic_matrix(vtkMatrix4x4::New())
+        ,camera_virtual(vtkSmartPointer<vtkCamera>::New())
+        , image_width_(view_resolution[0])
+        , image_height_(view_resolution[1])
+        , fx_(1000)
+        , fy_(1000)
+        , cx_(view_resolution[0]/2)
+        , cy_(view_resolution[1]/2)
 {
     // if there is no name and image transport we assume the camera is not
     // augmented reality type
-    bool is_ar = true;
-    if(cam_name=="" || it==NULL)
-        is_ar = false;
+    if(cam_name!="" && it!=NULL)
+        is_ar = true;
 
-    intrinsic_matrix = vtkMatrix4x4::New();
     intrinsic_matrix->Identity();
-
-    camera_virtual = vtkSmartPointer<vtkCamera>::New();
 
     // set a default cam pose
     SetWorldToCamTf(KDL::Frame(KDL::Rotation::EulerZYZ(-85*M_PI/180 ,
@@ -36,7 +34,6 @@ RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
                                                        -75*M_PI/180),
                                KDL::Vector(0.05, -0.0, 0.35)));
     if(is_ar) {
-
         image_importer_ = vtkSmartPointer<vtkImageImport>::New();
         image_actor_ = vtkSmartPointer<vtkImageActor>::New();
         camera_image_ = vtkSmartPointer<vtkImageData>::New();
@@ -51,9 +48,10 @@ RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
         cv::Mat cam_image;
         ar_camera->LockAndGetImage(cam_image);
         ConfigureBackgroundImage(cam_image);
-
     }
 
+    // this flag is to make sure nothing goes wrong if some refreshes the
+    // camera from outside before it is initialized
     is_initialized = true;
 
 }
@@ -70,15 +68,15 @@ void RenderingCamera::SetPtrManipulatorInterestedInCamPose(Manipulator *in) {
 }
 
 
-void RenderingCamera::RefreshCamera(const int *window_size){
+void RenderingCamera::RefreshCamera(const int *view_size_in_window){
 
-    // update each windows view
-    UpdateVirtualView(window_size);
+    // update the virtual view according to window size
+    UpdateVirtualView(view_size_in_window);
 
-    // update the background image for each camera
-    UpdateBackgroundImage(window_size);
+    if(is_ar)// update the background image according to view size
+        UpdateBackgroundImage(view_size_in_window);
 
-    // safer than putting it in the callback
+    // update the pose if needed
     if(ar_camera!=NULL)
         if(ar_camera->GetNewWorldToCamTr(world_to_cam_tr))
             SetWorldToCamTf(world_to_cam_tr);
@@ -175,8 +173,8 @@ void RenderingCamera::UpdateBackgroundImage(const int *window_size) {
 
 //------------------------------------------------------------------------------
 void RenderingCamera::SetCameraToFaceImage(const int *window_size,
-                                    const int *imageSize, const double *spacing,
-                                    const double *origin) {
+                                           const int *imageSize, const double *spacing,
+                                           const double *origin) {
 
     double clippingRange[2];
     clippingRange[0] = 1;

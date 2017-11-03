@@ -29,8 +29,9 @@ class RenderingCamera
 public:
 
     RenderingCamera(ros::NodeHandlePtr n,
-                 image_transport::ImageTransport *it=NULL,
-                 const std::string cam_name="", const std::string ns="");
+                    const std::vector<int> view_resolution={640, 480},
+                    image_transport::ImageTransport *it=NULL,
+                    const std::string cam_name="", const std::string ns="");
 
     ~RenderingCamera() {if(ar_camera!=NULL) delete ar_camera;};
 
@@ -40,7 +41,7 @@ public:
 
     void SetPtrManipulatorInterestedInCamPose(Manipulator* in);
 
-    void RefreshCamera(const int *window_size);
+    void RefreshCamera(const int *view_size_in_current_window);
 
 private:
 
@@ -76,6 +77,7 @@ public:
 private:
 
     AugmentedCamera*                    ar_camera=NULL;
+    bool                                is_ar = false;
     bool                                is_initialized = false;
     std::vector<Manipulator*>           interested_manipulators;
     KDL::Frame                          world_to_cam_tr;

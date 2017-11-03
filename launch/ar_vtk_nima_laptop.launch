@@ -81,13 +81,6 @@
         -->
         <param name= "number_of_calibration_points" value= "6" />
 
-        <!--
-        cam_pose_averaging_factor: [0-1] weigthed average of the estimated cam
-         pose. lower number results in smoother estimation but adds delay.
-         Set 1.0 if you don't want averaging.
-         -->
-        <param name= "cam_pose_averaging_factor" value= "0.5" />
-
         <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />
 
@@ -99,12 +92,6 @@
         images from the gpu, activate this flag so that the rendering is done
          off screen and not shown in opengl windows.-->
         <param name= "offScreen_rendering" value= "false" />
-
-        <!--The resolution of each view-->
-        <rosparam param="view_resolution"> [640, 480]</rosparam>
-
-        <!--<param name="windows_position" value="[500, 40, 300, 0]" />-->
-        <rosparam param="window_positions"> [800, 50, 0, 0]</rosparam>
 
         <!-- <param name="image_transport" value="compressed"/> --> <!--
          Remove if image is not received over network -->

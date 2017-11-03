@@ -215,7 +215,8 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
 
-    graphics = new Rendering(nh, false, 3);
+    std::vector<int> view_resolution={640,480};
+    graphics = new Rendering(nh, view_resolution, true, 3);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
