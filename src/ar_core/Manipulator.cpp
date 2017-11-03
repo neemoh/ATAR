@@ -51,7 +51,7 @@ void Manipulator::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
 }
 
 // -----------------------------------------------------------------------------
-void Manipulator::GripperCallback(const std_msgs::Float64ConstPtr &msg) {
+void Manipulator::GripperCallback(const std_msgs::Float32ConstPtr &msg) {
     gripper_angle = msg->data;
 }
 

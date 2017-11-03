@@ -36,7 +36,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <kdl/frames.hpp>
-#include <std_msgs/Float64.h>
+#include <std_msgs/Float32.h>
 #include <geometry_msgs/TwistStamped.h>
 
 class Manipulator {
@@ -50,7 +50,7 @@ public:
 
     void PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
-    void GripperCallback(const std_msgs::Float64ConstPtr &msg);
+    void GripperCallback(const std_msgs::Float32ConstPtr &msg);
 
     void TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg);
 
@@ -68,6 +68,7 @@ public:
 
     void SetWorldToCamTr(const KDL::Frame &in);  // needed for AR
 
+    KDL::Frame GetWorldToLocalTr(){return local_to_world_frame_tr.Inverse();};
 private:
     ros::NodeHandlePtr n; // made it a member just for the calibration method
 
