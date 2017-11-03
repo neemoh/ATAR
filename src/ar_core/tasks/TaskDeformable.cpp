@@ -195,7 +195,7 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
     graphics_actors.push_back(task_coordinate_axes);
 
-    graphics = new Rendering(n, false, 1);
+    graphics = new Rendering(n, true, 3);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");

@@ -145,7 +145,6 @@ private:
     // task logic
 
     SHTaskState task_state;
-    std::string slave_names[2];
     KDL::Frame slave_frame_to_world_frame_tr;
     Colors colors;
     KDL::Frame pose_tube;

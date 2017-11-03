@@ -18,9 +18,14 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         time_last(ros::Time::now())
 {
 
-    graphics = new Rendering(n, false, 3, false, true);
+    bool ar_mode = false;
+    int n_views = 3;
+    bool one_window_per_view = false;
+    bool borders_off  = true;
 
-    // Define a master manipulator
+    graphics = new Rendering(n, ar_mode, n_views, one_window_per_view, borders_off);
+
+    // Define two tools
     master[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current");
@@ -28,29 +33,25 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     master[1] = new Manipulator(nh, "/dvrk/PSM2_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current");
-    graphics->SetManipulatorInterestedInCamPose(master[0]);
-    
-    graphics->SetManipulatorInterestedInCamPose(master[1]);
-    
-    InitBullet();
 
-    slave_names[0] = "/dvrk/PSM1";
-    slave_names[1] = "/dvrk/PSM2";
+    // set the manipulators to follow cam pose for correct kinematics
+    // calibration. Cam pose here is cam_0.
+    graphics->SetManipulatorInterestedInCamPose(master[0]);
+    graphics->SetManipulatorInterestedInCamPose(master[1]);
+
+    // Initialize the physics
+    InitBullet();
 
     // prevent tools from hitting things at the initialization
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);
     tool_current_pose[1].p = KDL::Vector(0.1, 0.2, 0.1);
+
     // -------------------------------------------------------------------------
     //  INITIALIZING GRAPHICS ACTORS
-    // -------------------------------------------------------------------------
-
     tool_current_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
     tool_desired_frame_axes[0] = vtkSmartPointer<vtkAxesActor>::New();
-
-    //if (bimanual) {
-    //    tool_current_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
-    //    tool_desired_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
-    //}
+    tool_current_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
+    tool_desired_frame_axes[1] = vtkSmartPointer<vtkAxesActor>::New();
 
     destination_ring_actor = vtkSmartPointer<vtkActor>::New();
 
@@ -68,7 +69,6 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     // static floor
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
-
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
     SimObject *floor = new SimObject(ObjectShape::STATICPLANE,
                                      ObjectType::DYNAMIC, floor_dims);
@@ -136,7 +136,6 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     //task_coordinate_axes->SetShaftType(vtkAxesActor::LINE_SHAFT);
     //task_coordinate_axes->SetTipType(vtkAxesActor::SPHERE_TIP);
 
-    //for (int k = 0; k < 1 + (int) bimanual; ++k) {
     for (int k = 0; k < 1 ; ++k) {
         tool_current_frame_axes[k]->SetXAxisLabelText("");
         tool_current_frame_axes[k]->SetYAxisLabelText("");
@@ -852,17 +851,17 @@ void TaskSteadyHand::HapticsThread() {
     //----------------------------------------------
     // setting  up haptics
 
+    ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
+
     ros::Publisher pub_slave_desired[2];
     ros::Publisher pub_wrench_abs[2];
 
     //getting the name of the arms
-    std::stringstream param_name;
-    param_name << std::string("/atar/") << slave_names[0] <<
-               "/tool_pose_desired";
-    ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
+    std::string param_name = "/atar/PSM1/tool_pose_desired";
+
     pub_slave_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-            (param_name.str(), 1);
-    ROS_INFO("Will publish on %s", param_name.str().c_str());
+            (param_name, 1);
+    ROS_INFO("Will publish on %s", param_name.c_str());
 
     // make sure the masters are in wrench absolute orientation
     // assuming MTMR is always used
@@ -873,14 +872,11 @@ void TaskSteadyHand::HapticsThread() {
     pub_wrench_abs[0].publish(wrench_body_orientation_absolute);
     ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
 
-    //if(bimanual) {
     //getting the name of the arms
-    param_name.str("");
-    param_name << std::string("/atar/") << slave_names[1] <<
-               "/tool_pose_desired";
+    param_name = "/atar/PSM2/tool_pose_desired";
     pub_slave_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-            (param_name.str(), 1);
-    ROS_INFO("Will publish on %s", param_name.str().c_str());
+            (param_name, 1);
+    ROS_INFO("Will publish on %s", param_name.c_str());
 
     // make sure the masters are in wrench absolute orientation
     // assuming MTMR is always used
@@ -888,12 +884,13 @@ void TaskSteadyHand::HapticsThread() {
     pub_wrench_abs[1] = node->advertise<std_msgs::Bool>(master_topic.c_str(), 1);
     pub_wrench_abs[1].publish(wrench_body_orientation_absolute);
     ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
-    //}
+
 
     ros::Rate loop_rate(haptic_loop_rate);
     ROS_INFO("The desired pose will be updated at '%f'",
              haptic_loop_rate);
 
+    // publish ring poses (at a lower rate) for data analysis
     ros::Publisher pub_ring_desired, pub_ring_current;
     std::string ring_topic = "/atar/ring_pose_current";
     pub_ring_current = node->advertise<geometry_msgs::Pose>
@@ -928,7 +925,7 @@ void TaskSteadyHand::HapticsThread() {
         // the ring does not move relative to the forceps when gripped, we
         // can use the pose of the forceps that are updated fast and find the
         // ring_pose. When the ring is not gripped we do not need haptics but
-        // to calculate the errors etc we still nedd to know the pose of the
+        // to calculate the errors etc we still need to know the pose of the
         // ring the desired one.
         //         tool_to_ring_tr[0] = ring_pose * tool_current_pose[0].Inverse();
 
@@ -999,8 +996,6 @@ void TaskSteadyHand::HapticsThread() {
             // publish
             pub_slave_desired[n_arm].publish(pose_msg);
         }
-
-
 
 
         lower_freq_pub_counter++;
