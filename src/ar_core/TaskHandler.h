@@ -8,10 +8,11 @@
 #include "SimTask.h"
 #include "Rendering.h"
 #include <boost/thread/thread.hpp>
-#include <mutex>
 #include <std_msgs/Int8.h>
 #include "ros/ros.h"
 
+// This class loads the tasks. Its UpdateWorld method is called from the
+// main and TaskHandler checks for control commands from the gui node.
 
 class TaskHandler {
 public:
@@ -25,8 +26,6 @@ public:
     void ControlEventsCallback(const std_msgs::Int8ConstPtr &msg);
 
 private:
-    std::mutex m;
-
     // stop the running haptic thread (if any), destruct the previous task
     // (if any) and start a new task and thread.
     void HandleTaskEvent();
@@ -47,7 +46,7 @@ private:
 
     ros::NodeHandlePtr n;
 
-    bool new_task_event                 = false;
+    bool new_task_event = false;
 
     uint running_task_id;
     int8_t control_event;
