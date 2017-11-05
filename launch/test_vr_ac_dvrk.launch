@@ -6,7 +6,7 @@
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
-        <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
+        <rosparam command="load" file="$(find atar)/launch/params_calibrations_test_vr.yaml" />
     </group>
 
     <!-- Node GUI and recording the data-->

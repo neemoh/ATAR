@@ -1,0 +1,21 @@
+
+  ################ VR
+  ################ cam0_frame_to_cam#_frame:
+  # This is used in VR when you have multiple views and there is a constant
+  # transformation from the second and 3rd camera to the first one. Useful
+  # for stereo views.
+  cam0_frame_to_cam1_frame: [0., 0., 0., 0., 0., 0., 1.]
+
+  cam0_frame_to_cam2_frame: [0.05, 0., 0., 0., 0., 0., 1.]
+
+
+  ################ VR
+  ################ <Manipulator name>_frame_to_image_frame:
+  # This is used in VR mode, where the virtual tool follows master's pose
+  # (instead of the slaves in the AR mode). The transform is just a rotation
+  # that takes the master poses to the image frame (opencv style: x is left
+  # to right and y is top to bottom)
+
+  dvrk/PSM1_DUMMY_frame_to_image_frame: [ 0.0, 0.7071, -0.7071, 0.0]
+
+  dvrk/PSM2_DUMMY_frame_to_image_frame: [ 0.0, 0.7071, -0.7071, 0.0]

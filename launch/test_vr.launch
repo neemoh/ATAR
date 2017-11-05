@@ -6,18 +6,9 @@
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
-        <rosparam command="load" file="$(find atar)/launch/params_calibrations_polimi.yaml" />
+        <rosparam command="load" file="$(find atar)/launch/params_calibrations_test_vr.yaml" />
     </group>
 
-    <!-- Node GUI and recording the data-->
-    <node pkg="atar" type="gui" name="gui" output="screen">
-        <!--records data at the frequency of task_state topic-->
-        <param name="number_of_arms" value="2"/>
-        <param name="slave_1_name" value="$(arg slave_1_name)"/>
-        <param name="master_1_name" value="$(arg master_1_name)"/>
-        <param name="slave_2_name" value="$(arg slave_2_name)"/>
-        <param name="master_2_name" value="$(arg master_2_name)"/>
-    </node>
 
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="atar" type="ar_core" name="ar_core" output="screen">
@@ -40,6 +31,16 @@
 
     </node>
 
+    <!-- Node GUI and recording the data-->
+    <node pkg="atar" type="gui" name="gui" output="screen">
+        <!--records data at the frequency of task_state topic-->
+        <param name="number_of_arms" value="2"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
+    </node>
+
     <node pkg="atar" type="teleop_dummy_dvrk" name="teleop_dummy_dvrk"
           output="screen">
         <param name="slave_1_name" value="$(arg slave_1_name)"/>
@@ -47,7 +48,6 @@
         <param name="slave_2_name" value="$(arg slave_2_name)"/>
         <param name="master_2_name" value="$(arg master_2_name)"/>
         <param name="scaling" value="0.5"/>
-
     </node>
 
 
