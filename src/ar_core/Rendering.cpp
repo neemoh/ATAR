@@ -54,15 +54,9 @@ Rendering::Rendering(ros::NodeHandlePtr n,
     }
 
     n->param<bool>("with_shadows", with_shadows_, false);
-    ROS_INFO("Shadows Generation: %s", with_shadows_ ? "true" : "false");
     bool offScreen_rendering;
     n->param<bool>("offScreen_rendering", offScreen_rendering, false);
-    ROS_INFO("offScreen_rendering: %s", offScreen_rendering ? "true" : "false");
-
     n->param<bool>("publish_overlayed_images", publish_overlayed_images_, false);
-    ROS_INFO("Rendered Images will be grabbed from gpu and published: %s",
-             publish_overlayed_images_ ? "true" : "false");
-
 
     SetupLights();
 
