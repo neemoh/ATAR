@@ -30,19 +30,22 @@ AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTra
     // we first try to read the poses as parameters and later update the
     // poses if new messages are arrived on the topics
 
-    // --------------- 1- it can be set as a parameter
-    std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
-    n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame", temp_vec);
-
-    // --------------- 2- it can be read from a topic
-
     std::string pose_topic_name = "/"+cam_name+ "/world_to_camera_transform";
     if(ns!="")
         pose_topic_name = "/"+ns+"/"+cam_name+ "/world_to_camera_transform";
 
+    // --------------- 1- it can be set as a parameter
+    std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
+    if(n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame",
+                   temp_vec)){
+        conversions::PoseVectorToKDLFrame(temp_vec, world_to_cam_tr);
+        ROS_WARN("Using constant pose for augmented camera.");
+    }
+
+    // --------------- 2- it can be read from a topic
     // is something being published?
-    if (ros::topic::waitForMessage<geometry_msgs::PoseStamped>
-            (pose_topic_name, ros::Duration(1))){
+    else if (ros::topic::waitForMessage<geometry_msgs::PoseStamped>
+            (pose_topic_name, ros::Duration(0.1))){
         // now we set up the subscribers
         sub_pose = n->subscribe(pose_topic_name, 1,
                                 &AugmentedCamera::PoseCallback, this);
@@ -51,8 +54,9 @@ AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTra
         is_pose_from_subscriber = false;
 
         // --------------- 3- it can be estimated directly
-        ROS_INFO("Camera pose is not published on topic '%s'. Pose will be "
-                         "estimated.", pose_topic_name.c_str());
+        ROS_INFO("Camera pose is not published on topic '%s'. Will try to "
+                         "estimate pose with charuco board",
+                 pose_topic_name.c_str());
 
         // Read boardparameters
         // board_params comprises:
@@ -83,7 +87,7 @@ AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTra
 void AugmentedCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try
     {
-        image_from_ros = cv_bridge::toCvCopy(msg, "rgb8")->image;
+        image = cv_bridge::toCvCopy(msg, "rgb8")->image;
         new_image= true;
     }
     catch (cv_bridge::Exception& e)
@@ -95,7 +99,7 @@ void AugmentedCamera::ImageCallback(const sensor_msgs::ImageConstPtr &msg) {
 //------------------------------------------------------------------------------
 void AugmentedCamera::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
     new_pose_from_sub = true;
-    tf::poseMsgToKDL(msg->pose, world_to_cam_pose);
+    tf::poseMsgToKDL(msg->pose, world_to_cam_tr);
 }
 
 void
@@ -111,8 +115,6 @@ AugmentedCamera::GetIntrinsicParams(double &fx, double &fy, double &cx, double &
 void AugmentedCamera::ReadCameraParameters(const std::string file_path) {
 
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
-
-    ROS_INFO("Reading camera intrinsic data from: '%s'",file_path.c_str());
 
     if (!fs.isOpened())
         throw std::runtime_error("Unable to read the camera parameters file.");
@@ -132,20 +134,19 @@ void AugmentedCamera::ReadCameraParameters(const std::string file_path) {
 }
 
 //------------------------------------------------------------------------------
-void AugmentedCamera::LockAndGetImage(cv::Mat &image) {
+cv::Mat AugmentedCamera::LockAndGetImage() {
     ros::Rate loop_rate(2);
     ros::Time timeout_time = ros::Time::now() + ros::Duration(1);
 
-    while(ros::ok() && image_from_ros.empty()) {
+    while(ros::ok() && image.empty()) {
         ros::spinOnce();
         loop_rate.sleep();
         if (ros::Time::now() > timeout_time)
             ROS_WARN_STREAM(("Timeout: No Image on."+img_topic+
                              " Trying again...").c_str());
     }
-    image_from_ros.copyTo(image);
-
     new_image = false;
+    return image;
 }
 
 bool AugmentedCamera::IsImageNew() {
@@ -156,28 +157,20 @@ bool AugmentedCamera::IsImageNew() {
     return false;
 }
 
-cv::Mat AugmentedCamera::GetImage() {
-    // it is important to copy the image to prevent seg fault due to
-    // subscriber thread and vtk rendering thread accessing the image at the
-    // same time
-    cv::Mat out;
-    image_from_ros.copyTo(out);
-    return out;
-}
 
 bool AugmentedCamera::GetNewWorldToCamTr(KDL::Frame &pose) {
 
     // if pose comes from the subscriber
     if(new_pose_from_sub){
-        pose = world_to_cam_pose;
+        pose = world_to_cam_tr;
         new_pose_from_sub = false;
         return true;
     }
-    else if(!is_pose_from_subscriber && !image_from_ros.empty() ){
+    else if(!is_pose_from_subscriber && !image.empty() ){
         cv::Mat img;
-        image_from_ros.copyTo(img);
-        if(DetectCharucoBoardPose(world_to_cam_pose, img)) {
-            pose = world_to_cam_pose;
+        image.copyTo(img);
+        if(DetectCharucoBoardPose(world_to_cam_tr, img)) {
+            pose = world_to_cam_tr;
             return true;
         }
     }

@@ -31,14 +31,17 @@ public:
     bool GetNewWorldToCamTr(KDL::Frame &pose);
 
     // this returns the pose of the cam regardless of it being new or not
-    KDL::Frame GetWorldToCamTr(){return world_to_cam_pose;};
-
-
-    void LockAndGetImage(cv::Mat &image);
+    KDL::Frame GetWorldToCamTr(){return world_to_cam_tr;};
 
     bool IsImageNew();
 
-    cv::Mat GetImage();
+    // Tt is important to copy the image to prevent seg fault due to
+    // subscriber thread and vtk rendering thread accessing the image at the
+    // same time
+
+    cv::Mat LockAndGetImage();
+
+    cv::Mat GetImage(){return image;};
 
 private:
 
@@ -48,13 +51,12 @@ private:
 
 private:
     std::string                 img_topic;
-    cv::Mat                     image_from_ros;
+    cv::Mat                     image;
     bool                        new_image = false;
     bool                        new_pose_from_sub = false;
-    KDL::Frame                  world_to_cam_pose;
+    KDL::Frame                  world_to_cam_tr;
     bool                        is_pose_from_subscriber =true;
 
-    cv::Mat                     img;
     cv::Mat                     camera_matrix;
     cv::Mat                     camera_distortion;
 

@@ -106,8 +106,13 @@ private:
     bool ar_mode_;
     bool publish_overlayed_images_;
 
+    // transfroms between cameras used if cam 1 or both cam 1 and cam2 exist
+    // and when the SetMainCameraPose method is called externally
+    KDL::Frame                              cam0_to_cam1_tr;
+    KDL::Frame                              cam0_to_cam2_tr;
+
     //cameras
-    RenderingCamera *                              cameras [3];
+    RenderingCamera *                       cameras [3];
     image_transport::ImageTransport *       it;
 
     vtkSmartPointer<vtkLight>               lights[2];

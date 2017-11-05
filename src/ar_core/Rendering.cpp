@@ -110,7 +110,9 @@ Rendering::Rendering(ros::NodeHandlePtr n,
             render_window_[j]->SetPosition(window_positions[2 * j],
                                            window_positions[2 * j + 1]);
             render_window_[j]->SetNumberOfLayers(2);
-            render_window_[j]->SetWindowName("Augmented Stereo");
+            std::stringstream win_name;
+            win_name << "Camera " << i;
+            render_window_[j]->SetWindowName(win_name.str().c_str());
             if(offScreen_rendering)
                 render_window_[j]->SetOffScreenRendering(1);
             render_window_[j]->SetSize((n_views-n_windows + 1)
@@ -140,6 +142,14 @@ Rendering::Rendering(ros::NodeHandlePtr n,
 
     if(ar_mode_)
         SetEnableBackgroundImage(true);
+
+    // set the cam trs
+    std::vector<double> vect_temp = std::vector<double>(7, 0.0);
+    if (n->getParam("/calibrations/cam0_frame_to_cam1_frame", vect_temp))
+        conversions::PoseVectorToKDLFrame(vect_temp, cam0_to_cam1_tr);
+    vect_temp = std::vector<double>(7, 0.0);
+    if (n->getParam("/calibrations/cam0_frame_to_cam2_frame", vect_temp))
+        conversions::PoseVectorToKDLFrame(vect_temp, cam0_to_cam2_tr);
 
     Render();
 
@@ -192,7 +202,7 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
         int *window_size = render_window_[k]->GetActualSize();
 
         int view_size_in_current_window[2] = {window_size[0] / n_views,
-                                       window_size[1]};
+                                              window_size[1]};
 
         cameras[i]->RefreshCamera(view_size_in_current_window);
     }
@@ -433,9 +443,13 @@ void Rendering::SetManipulatorInterestedInCamPose(Manipulator * in) {
 }
 
 void Rendering::SetMainCameraPose(const KDL::Frame &pose) {
-    for (int i = 0; i < n_views; ++i) {
-        cameras[i]->SetWorldToCamTf(pose);
-    }
+
+    cameras[0]->SetWorldToCamTf(pose);
+    if(n_views>1)
+        cameras[1]->SetWorldToCamTf(pose*cam0_to_cam1_tr);
+    if(n_views>2)
+        cameras[2]->SetWorldToCamTf(pose*cam0_to_cam2_tr);
+
 }
 
 // For each spotlight, add a light frustum wireframe representation and a cone

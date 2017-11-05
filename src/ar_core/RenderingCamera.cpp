@@ -45,9 +45,7 @@ RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
 
         // in AR mode we read real camera images and show them as the background
         // of our rendering
-        cv::Mat cam_image;
-        ar_camera->LockAndGetImage(cam_image);
-        ConfigureBackgroundImage(cam_image);
+        ConfigureBackgroundImage(ar_camera->LockAndGetImage());
     }
 
     // this flag is to make sure nothing goes wrong if some refreshes the
