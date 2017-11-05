@@ -10,7 +10,7 @@
 
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
-        <rosparam command="load" file="$(find atar)/launch/params_ar_calibrations_polimi.yaml" />
+        <rosparam command="load" file="$(find atar)/launch/params_calibrations_polimi.yaml" />
         <!--<rosparam command="load"-->
                   <!--file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />-->
         <rosparam command="load"

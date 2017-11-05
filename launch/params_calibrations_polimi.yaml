@@ -1,0 +1,48 @@
+  ################
+  ################  world_frame_to_<manipulator name>_frame:
+  # Always needed when the slave is used and it is constant as long as the
+  # world or base frames of the arm are not moved.
+
+  world_frame_to_PSM1_frame: [0.06141741621604557, -0.17984621739888426,
+  -0.13080632073042162, -0.04750117023002374, -0.07554588580155144, 0
+  .0010713328942994333, 0.9960096938338839]
+
+  world_frame_to_PSM2_frame: [-0.22828661988738014, -0.16970579270235275,
+  -0.10694326872425357, 0.005708214995440446, 0.03405966733575918, -0
+  .015576925008257256, 0.9992820996844836]
+
+
+  ################
+  ################  world_frame_to_<cam name>_frame:
+  # In AR mode if for some reason you want to have a constant pose of the
+  #  camera this is the parameter to set.
+
+  world_frame_to_minuro_frame: [0.057, -0.022, 0.290, 0.0271128721729,
+  0.87903000839, -0.472201765689, 0.0599719016889 ]
+  #  world_frame_to_asus_webcam_frame: [0.057, -0.022, 0.290, 0.0271128721729,
+  #0.87903000839, -0.472201765689, 0.0599719016889 ]
+
+
+  ################
+  ################ cam0_frame_to_cam#_frame:
+  # This is used in VR when you have multiple views and there is a constant
+  # transformation from the second and 3rd camera to the first one. Useful
+  # for stereo views.
+  cam0_frame_to_cam1_frame: [0., 0., 0., 0., 0., 0., 1.]
+
+  cam0_frame_to_cam2_frame: [0.05, 0., 0., 0., 0., 0., 1.]
+
+
+  ################
+  ################ <Manipulator name>_frame_to_image_frame:
+  #
+  # This is used in VR mode, where the virtual tool follows master's pose
+  # (instead of the slaves in the AR mode). The transform is just a rotation
+  # that takes the master poses to the image frame (opencv style: x is left
+  # to right and y is top to bottom)
+
+  dvrk/PSM1_DUMMY_frame_to_image_frame: [ 0.0, 0.7071, -0.7071, 0.0]
+
+  dvrk/PSM2_DUMMY_frame_to_image_frame: [ 0.0, 0.7071, -0.7071, 0.0]
+
+  sigma7/sigma0_frame_to_image_frame: [ 0.5, 0.5, -0.5, 0.5]
