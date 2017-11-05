@@ -45,7 +45,7 @@ AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTra
     // --------------- 2- it can be read from a topic
     // is something being published?
     else if (ros::topic::waitForMessage<geometry_msgs::PoseStamped>
-            (pose_topic_name, ros::Duration(0.1))){
+            (pose_topic_name, ros::Duration(0.5))){
         // now we set up the subscribers
         sub_pose = n->subscribe(pose_topic_name, 1,
                                 &AugmentedCamera::PoseCallback, this);
