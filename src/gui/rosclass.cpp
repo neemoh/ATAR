@@ -91,11 +91,11 @@ void RosBridge::GetROSParameterValues() {
     // spinning frequency. THe recording happens at the freq of task_state
     ros_rate = new ros::Rate(100);
 
-    n.param<int>("number_of_arms", n_arms, 1);
+    n.param<int>("number_of_arms", n_arms, 0);
     ROS_INFO("Expecting '%d' arm(s)", n_arms);
 
     if (n_arms < 1)
-        ROS_ERROR("Number of arms must be at least 1.");
+        ROS_WARN("No arm specified. Can't perform data recording");
 
     subscriber_slave_pose_current = new ros::Subscriber[n_arms];
     subscriber_master_pose_current = new ros::Subscriber[n_arms];
