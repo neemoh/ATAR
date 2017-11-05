@@ -42,17 +42,11 @@ public:
     // The main loop. Updates physics, graphics and task logic
     virtual void StepWorld() {};
 
-    // steps the physics simulation
-    virtual void StepPhysics() {};
-
     // This is the function that is handled by the haptics thread.
     virtual void HapticsThread() = 0;
 
-    // returns all the task graphics_actors to be sent to the rendering part
-    virtual std::vector< vtkSmartPointer <vtkProp> >GetActors() {return graphics_actors;};;;
-
     // returns the status of the task
-    virtual custom_msgs::TaskState GetTaskStateMsg() = 0;;
+    virtual custom_msgs::TaskState GetTaskStateMsg() = 0;
 
     // minor reset
     virtual void ResetCurrentAcquisition(){};
@@ -62,6 +56,10 @@ public:
 
     virtual void StartManipulatorToWorldFrameCalibration(const uint arm_id){};
 
+private:
+
+    // steps the physics simulation
+    virtual void StepPhysics() {};
 
 protected:
 
