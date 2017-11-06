@@ -137,14 +137,17 @@ Rendering::Rendering(ros::NodeHandlePtr n,
     if(ar_mode_)
         SetEnableBackgroundImage(true);
 
-    // set the cam trs
+    // set the cam trs if there is more than 1 view
     std::vector<double> vect_temp = std::vector<double>(7, 0.0);
     if (n->getParam("/calibrations/cam0_frame_to_cam1_frame", vect_temp))
         conversions::PoseVectorToKDLFrame(vect_temp, cam0_to_cam1_tr);
     vect_temp = std::vector<double>(7, 0.0);
     if (n->getParam("/calibrations/cam0_frame_to_cam2_frame", vect_temp))
         conversions::PoseVectorToKDLFrame(vect_temp, cam0_to_cam2_tr);
-
+    
+    // calling SetMainCameraPose once to apply the cam_to_cam transforms
+    SetMainCameraPose(cameras[0]->GetWorldToCamTr());
+    
     Render();
 
 }
