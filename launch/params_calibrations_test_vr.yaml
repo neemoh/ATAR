@@ -6,7 +6,7 @@
   # for stereo views.
   cam0_frame_to_cam1_frame: [0., 0., 0., 0., 0., 0., 1.]
 
-  cam0_frame_to_cam2_frame: [0.05, 0., 0., 0., 0., 0., 1.]
+  cam0_frame_to_cam2_frame: [0.017, 0., 0., 0., 0., 0., 1.]
 
 
   ################ VR
