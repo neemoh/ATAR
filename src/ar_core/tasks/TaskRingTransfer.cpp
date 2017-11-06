@@ -219,17 +219,23 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
 
-    std::vector<int> view_resolution={1280,960};
-
-    graphics = new Rendering(n,view_resolution);
-
+    int n_views = 3;
+    bool one_window_per_view = false;
+    bool borders_off  = true;
+    std::vector<int> view_resolution = {640, 480};
+    std::vector<int> window_positions={1280, 0};
+    // the only needed argument to construct a Renderer if the nodehandle ptr
+    // The rest have default values.
+    graphics = new Rendering(n, view_resolution, false, n_views,
+        one_window_per_view, borders_off,window_positions);
+    
     // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
-    //    master = new Manipulator(nh, "/dvrk/MTML",
-    //                                   "/position_cartesian_current",
-    //                                   "/gripper_position_current",
-    //                                   cam_pose);
-
+    //    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+    master = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
+        "/position_cartesian_current",
+        "/gripper_position_current");
+    
+    
     graphics->AddActorsToScene(GetActors());
 };
 

@@ -14,11 +14,11 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 {
 
     bool ar_mode = false;
-    int n_views = 3;
+    int n_views = 2;
     bool one_window_per_view = true;
     bool borders_off  = false;
     std::vector<int> view_resolution = {640, 480};
-    std::vector<int> window_positions={100, 50, 740, 50, 1380, 50};
+    std::vector<int> window_positions={100,50, 800, 50};
     // the only needed argument to construct a Renderer if the nodehandle ptr
     // The rest have default values.
     graphics = new Rendering(n, view_resolution, ar_mode, n_views,
