@@ -6,7 +6,9 @@
 #include "src/ar_core/VTKConversions.h"
 #include <vtkCubeSource.h>
 #include <boost/thread/thread.hpp>
+#include <vtkParametricTorus.h>
 #include "TaskSteadyHand.h"
+#include <vtkSphereSource.h>
 
 
 TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
@@ -41,9 +43,6 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     // calibration. Cam pose here is cam_0.
     graphics->SetManipulatorInterestedInCamPose(slaves[0]);
     graphics->SetManipulatorInterestedInCamPose(slaves[1]);
-
-    // Initialize the physics
-    InitBullet();
 
     // prevent tools from hitting things at the initialization
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);
@@ -1121,44 +1120,6 @@ void TaskSteadyHand::ResetScoreHistory() {
         score_sphere_actors[i]->GetProperty()->SetColor(colors.Gray);
 
     }
-
-}
-
-
-
-
-void TaskSteadyHand::InitBullet() {
-
-    ///-----initialization_start-----
-
-    ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-    collisionConfiguration = new btDefaultCollisionConfiguration();
-
-    ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-    dispatcher = new btCollisionDispatcher(collisionConfiguration);
-
-    ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-    overlappingPairCache = new btDbvtBroadphase();
-
-    ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
-    solver = new btSequentialImpulseConstraintSolver;
-
-
-    dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
-                                                 overlappingPairCache, solver,
-                                                 collisionConfiguration);
-
-    dynamics_world->setGravity(btVector3(0, 0, -10));
-
-
-    btContactSolverInfo& info = dynamics_world->getSolverInfo();
-    //optionally set the m_splitImpulsePenetrationThreshold (only used when m_splitImpulse  is enabled)
-    //only enable split impulse position correction when the penetration is
-    // deeper than this m_splitImpulsePenetrationThreshold, otherwise use the
-    // regular velocity/position constraint coupling (Baumgarte).
-    info.m_splitImpulsePenetrationThreshold = -0.02f;
-    info.m_numIterations = 15;
-    info.m_solverMode = SOLVER_USE_2_FRICTION_DIRECTIONS;
 
 }
 

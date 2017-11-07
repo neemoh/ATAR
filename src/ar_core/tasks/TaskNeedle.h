@@ -78,8 +78,6 @@ public:
   *  **/
     void HapticsThread();
 
-    void InitBullet();
-
     void StepPhysics();
 
     void UpdateGripperLinksPose(const KDL::Frame pose,

@@ -45,8 +45,6 @@ public:
 
 private:
 
-    void InitBullet();
-
     void StartManipulatorToWorldFrameCalibration(const uint arm_id);
 
 private:

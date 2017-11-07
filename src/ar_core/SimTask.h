@@ -32,10 +32,7 @@ extern std::string                      MESH_DIRECTORY;
 
 class SimTask{
 public:
-    SimTask(ros::NodeHandlePtr n, const double haptic_loop_rate)
-            :
-            nh(n),
-            haptic_loop_rate(haptic_loop_rate){};
+    SimTask(ros::NodeHandlePtr n, const double haptic_loop_rate);
 
     virtual ~SimTask() {};
 
@@ -47,7 +44,7 @@ public:
 
     // returns the status of the task
     virtual custom_msgs::TaskState GetTaskStateMsg() = 0;
-
+ 
     // minor reset
     virtual void ResetCurrentAcquisition(){};
 
@@ -57,6 +54,7 @@ public:
     virtual void StartManipulatorToWorldFrameCalibration(const uint arm_id){};
 
 private:
+    void InitBullet();
 
     // steps the physics simulation
     virtual void StepPhysics() {};

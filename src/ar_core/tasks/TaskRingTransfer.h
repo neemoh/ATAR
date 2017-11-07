@@ -7,40 +7,15 @@
 
 
 #include "src/ar_core/SimTask.h"
-
-#include <vtkPolyDataMapper.h>
-#include <vtkRenderWindow.h>
-#include <vtkPolyData.h>
-#include <vtkSphereSource.h>
-#include <vtkLineSource.h>
-#include <vtkImageActor.h>
-#include <vtkOrientationMarkerWidget.h>
-#include <vtkAxesActor.h>
-#include <vtkTransform.h>
-#include <vtkSTLReader.h>
-#include <vtkProperty.h>
-#include <vtkParametricTorus.h>
-#include <vtkParametricFunctionSource.h>
-#include <vtkCellLocator.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkCellData.h>
-#include <vtkDoubleArray.h>
-#include <vtkFloatArray.h>
-#include <vtkPolyDataNormals.h>
-#include <vtkCornerAnnotation.h>
-
+#include "src/ar_core/SimObject.h"
+#include "src/ar_core/FiveLinkGripper.h"
+#include <src/ar_core/Manipulator.h>
 #include "src/ar_core/Rendering.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 #include "src/ar_core/BulletVTKMotionState.h"
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
-
-#include <btBulletDynamicsCommon.h>
-#include "src/ar_core/SimObject.h"
-#include "src/ar_core/FiveLinkGripper.h"
-#include <vtkMinimalStandardRandomSequence.h>
-#include <src/ar_core/Manipulator.h>
 
 
 class TaskRingTransfer : public SimTask{
@@ -75,8 +50,6 @@ public:
      * desired pose from the mesh.
   *  **/
     void HapticsThread();
-
-    void InitBullet();
 
     void StepPhysics();
 

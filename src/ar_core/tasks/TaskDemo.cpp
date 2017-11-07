@@ -3,7 +3,6 @@
 //
 
 #include "TaskDemo.h"
-
 #include <custom_conversions/Conversions.h>
 #include <boost/thread/thread.hpp>
 
@@ -14,10 +13,10 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 {
 
     bool ar_mode = false;
-    int n_views = 2;
-    bool one_window_per_view = true;
+    int n_views = 1;
+    bool one_window_per_view = false;
     bool borders_off  = false;
-    std::vector<int> view_resolution = {640, 480};
+    std::vector<int> view_resolution = {920, 640};
     std::vector<int> window_positions={100,50, 800, 50};
     // the only needed argument to construct a Renderer if the nodehandle ptr
     // The rest have default values.
@@ -30,8 +29,7 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
     // for correct calibration, the master needs the pose of the camera
     graphics->SetManipulatorInterestedInCamPose(master);
 
-    // Initialize Bullet Physics
-    InitBullet();
+   
 
     // DEFINE OBJECTS
     // -------------------------------------------------------------------------
@@ -165,6 +163,7 @@ void TaskDemo::StepWorld() {
 
     graphics->Render();
 
+    
     //--------------------------------
     //use the tool pose for moving the virtual tools ...
     //    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
@@ -177,8 +176,6 @@ void TaskDemo::StepWorld() {
     // you can access the pose of the objects:
     //    ROS_INFO("Sphere0 z: %f",sphere[0]->GetPose().p[2]);
 
-    //--------------------------------
-    // Task logics
 }
 
 
@@ -243,45 +240,6 @@ void TaskDemo::HapticsThread() {
     }
 }
 
-
-
-
-
-void TaskDemo::InitBullet() {
-
-    ///-----initialization_start-----
-
-    ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-    collisionConfiguration = new btDefaultCollisionConfiguration();
-
-    ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-    dispatcher = new btCollisionDispatcher(collisionConfiguration);
-
-    ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-    overlappingPairCache = new btDbvtBroadphase();
-
-    ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
-    solver = new btSequentialImpulseConstraintSolver;
-
-
-    dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
-                                                 overlappingPairCache, solver,
-                                                 collisionConfiguration);
-
-    dynamics_world->setGravity(btVector3(0, 0, -10));
-
-
-    btContactSolverInfo& info = dynamics_world->getSolverInfo();
-    //optionally set the m_splitImpulsePenetrationThreshold (only used when m_splitImpulse  is enabled)
-    //only enable split impulse position correction when the penetration is
-    // deeper than this m_splitImpulsePenetrationThreshold, otherwise use the
-    // regular velocity/position constraint coupling (Baumgarte).
-    info.m_splitImpulsePenetrationThreshold = -0.02f;
-    info.m_numIterations = 15;
-    info.m_solverMode = SOLVER_USE_2_FRICTION_DIRECTIONS;
-
-
-}
 
 void TaskDemo::StepPhysics() {
 

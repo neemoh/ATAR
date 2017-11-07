@@ -1,0 +1,87 @@
+<launch>
+    <arg name="cams_namespace" value=""/>
+    <arg name= "left_cam_name" value= "asus_webcam" />
+    <arg name= "right_cam_name" value= "asus_webcam" />
+
+    <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
+    <group ns="calibrations">
+        <rosparam command="load" file="$(find atar)/launch/params_calibrations_ar.yaml" />
+        <rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
+    </group>
+
+    <node pkg="uvc_camera" type="uvc_camera_node" name="asus_webcam">
+        <param name="device" type="string" value="/dev/video0" />
+        <param name="camera_name" type="string" value="$(arg left_cam_name)" />
+    </node>
+
+    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
+          <!--name="extrinsic_left" output="screen" >-->
+        <!--<param name="camera_name" value="$(arg left_cam_name)"/>-->
+        <!--<param name= "cams_namespace" value= "$(arg cams_namespace)" />-->
+        <!--<param name="show_image" value="false"/>-->
+    <!--</node>-->
+
+    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
+          <!--name="extrinsic_right" output="screen" >-->
+        <!--<param name="camera_name" value="$(arg right_cam_name)"/>-->
+        <!--<param name= "cams_namespace" value= "$(arg cams_namespace)" />-->
+        <!--<param name="show_image" value="false"/>-->
+    <!--</node>-->
+
+    <!-- Node recording the data-->
+    <node pkg="atar" type="gui" name="gui" output="screen">
+    </node>
+
+    <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
+    <node pkg="atar" type="ar_core" name="ar_core" output="screen">
+
+        <!-- About cam_name and namespace:
+        1- Expecting to find the intrinsic calibration file of each camera in
+         ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml
+        2- Expecting to read the camera images from the topic:
+        /cams_namespace/cam_<cam_number>_name/image_raw
+        You can neglect and not set the cams_namespace if you don't have one.
+        -->
+        <param name= "cams_namespace" value= "$(arg cams_namespace)" />
+
+        <param name= "cam_0_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_1_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_2_name" value= "$(arg right_cam_name)" />
+
+        <!-- About stl_files_dir:
+        The directory of the stl files -->
+        <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
+
+        <!--
+        About desired_pose_update_frequency:
+        The overlayed images will be published only when new images are
+        received. The desired pose according to the active constraint
+        geometry on the other hand needs to be update faster (even if the ac
+        geometry may be updated at the rate of the received images if it is
+        generated based on the image).
+        -->
+        <!--<param name= "/desired_pose_update_frequency" value= "$(arg haptic_referesh_rate)" />-->
+
+        <!--
+        num_calib_points: Number of points used for arm to world calibration.
+        -->
+        <param name= "number_of_calibration_points" value= "6" />
+
+        <!--Activate or deactivate haptic guidance -->
+        <param name= "publish_overlayed_images" value= "false" />
+
+        <!--add shadows to the graphics. Works on dedicated GPUs -->
+        <!--NOTE: SHADOWS DON'T WORK IF THERE ARE MORE THAN ONE WINDOW.MULTIPLE VIEWS IN ONE WINDOW IS FINE-->
+        <param name= "with_shadows" value= "false" />
+
+        <!--If the generated images are to be published on
+        ros, to help alleviate the considerable bottleneck of grabbing the
+        images from the gpu, activate this flag so that the rendering is done
+         off screen and not shown in opengl windows.-->
+        <param name= "offScreen_rendering" value= "false" />
+
+        <!-- <param name="image_transport" value="compressed"/> --> <!--
+         Remove if image is not received over network -->
+    </node>
+
+</launch>

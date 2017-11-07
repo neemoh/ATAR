@@ -5,19 +5,19 @@
 #ifndef TELEOP_VISION_TASKSTEADYHAND_H
 #define TELEOP_VISION_TASKSTEADYHAND_H
 #include "src/ar_core/SimTask.h"
+#include "src/ar_core/SimObject.h"
+#include "src/ar_core/Forceps.h"
+#include "src/ar_core/Colors.hpp"
 
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
 #include <vtkPolyData.h>
-#include <vtkSphereSource.h>
 #include <vtkLineSource.h>
 #include <vtkImageActor.h>
 #include <vtkOrientationMarkerWidget.h>
 #include <vtkAxesActor.h>
 #include <vtkTransform.h>
-#include <vtkSTLReader.h>
 #include <vtkProperty.h>
-#include <vtkParametricTorus.h>
 #include <vtkParametricFunctionSource.h>
 #include <vtkCellLocator.h>
 #include <vtkTransformPolyDataFilter.h>
@@ -26,11 +26,7 @@
 #include <vtkFloatArray.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkCornerAnnotation.h>
-
 #include "src/ar_core/Rendering.h"
-
-#include <mutex>
-
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Bool.h>
@@ -38,9 +34,7 @@
 #include "custom_msgs/ActiveConstraintParameters.h"
 #include "custom_msgs/TaskState.h"
 
-#include "src/ar_core/SimObject.h"
-#include "src/ar_core/Forceps.h"
-#include "src/ar_core/Colors.hpp"
+
 
 /**
  * \class TaskSteadyHand
@@ -126,9 +120,6 @@ private:
 
     // Calculates the closest points of the wire mesh to three points of
     // interest on the ring used for calculating the desired pose of the ring
-
-    void InitBullet();
-
     void StepPhysics();
 
     void UpdateCurrentAndDesiredReferenceFrames(

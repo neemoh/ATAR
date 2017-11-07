@@ -142,7 +142,7 @@ void TaskHandler::DeleteTask() {
     ros::Rate sleep(50);
     sleep.sleep();
     delete task_ptr;
-    task_ptr = 0;
+    task_ptr = nullptr;
 }
 
 // -----------------------------------------------------------------------------

@@ -16,8 +16,6 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
         SimTask(n, 100),
         time_last(ros::Time::now()) {
 
-    InitBullet();
-
 
     // -----------------------
     // -------------------------------------------------------------------------
@@ -40,8 +38,8 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
         //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.5, 0.3, 0.1);
 
-        dynamics_world->addRigidBody(board->GetBody());
-        graphics_actors.push_back(board->GetActor());
+//        dynamics_world->addRigidBody(board->GetBody());
+//        graphics_actors.push_back(board->GetActor());
         //        board->GetBody()->
         //                setCollisionFlags(board->GetBody()->getCollisionFlags() |
         //                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
@@ -214,9 +212,16 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
     bool show_ref_frames = 1;
     if(show_ref_frames)
         graphics_actors.push_back(task_coordinate_axes);
-
-    std::vector<int> view_resolution={640,480};
-    graphics = new Rendering(nh, view_resolution, true, 3);
+    
+    bool ar_mode = true;
+    int n_views = 3;
+    bool one_window_per_view = false;
+    bool borders_off  = true;
+    std::vector<int> view_resolution = {640, 480};
+    std::vector<int> window_positions={1280, 0};
+    
+    graphics = new Rendering(n, view_resolution, ar_mode, n_views,
+        one_window_per_view, borders_off,window_positions);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
@@ -312,45 +317,6 @@ void TaskNeedle::HapticsThread() {
         loop_rate.sleep();
         boost::this_thread::interruption_point();
     }
-}
-
-
-
-
-
-void TaskNeedle::InitBullet() {
-
-    ///-----initialization_start-----
-
-    ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-    collisionConfiguration = new btDefaultCollisionConfiguration();
-
-    ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-    dispatcher = new btCollisionDispatcher(collisionConfiguration);
-
-    ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-    overlappingPairCache = new btDbvtBroadphase();
-
-    ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
-    solver = new btSequentialImpulseConstraintSolver;
-
-
-    dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
-                                                 overlappingPairCache, solver,
-                                                 collisionConfiguration);
-
-    dynamics_world->setGravity(btVector3(0, 0, -10));
-
-
-    btContactSolverInfo& info = dynamics_world->getSolverInfo();
-    //optionally set the m_splitImpulsePenetrationThreshold (only used when m_splitImpulse  is enabled)
-    //only enable split impulse position correction when the penetration is
-    // deeper than this m_splitImpulsePenetrationThreshold, otherwise use the
-    // regular velocity/position constraint coupling (Baumgarte).
-    info.m_splitImpulsePenetrationThreshold = -0.02f;
-    info.m_numIterations = 15;
-    info.m_solverMode = SOLVER_USE_2_FRICTION_DIRECTIONS;
-
 }
 
 
