@@ -30,6 +30,7 @@
         <param name= "publish_overlayed_images" value= "false" />
 
         <!--add shadows to the graphics. Works on dedicated GPUs -->
+        <!--NOTE: SHADOWS DON'T WORK IF THERE ARE MORE THAN ONE WINDOW.MULTIPLE VIEWS IN ONE WINDOW IS FINE-->
         <param name= "with_shadows" value= "true" />
 
         <!--If the generated images are to be published on
