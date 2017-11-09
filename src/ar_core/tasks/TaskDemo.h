@@ -20,49 +20,27 @@
 class TaskDemo : public SimTask{
 public:
 
-    TaskDemo(ros::NodeHandlePtr n);
+    explicit TaskDemo(ros::NodeHandlePtr n);
 
-    ~TaskDemo();
+    ~TaskDemo() override;
 
     // updates the task logic and the graphics_actors
-    void StepWorld();
+    void TaskLoop() override;
 
-    void StepPhysics();
-
-    void HapticsThread();
-
-    // returns all the task graphics_actors to be sent to the rendering part
-    std::vector< vtkSmartPointer <vtkProp> > GetActors() {
-        return graphics_actors;
-    }
-
-    custom_msgs::TaskState GetTaskStateMsg();
-
-    void ResetCurrentAcquisition();
-
-    // resets the number of repetitions and task state;
-    void ResetTask();
+    // a sparate thread that you can use for high refresh rate things like
+    // providing haptic feedback
+    void HapticsThread() override;
 
 private:
 
-    void StartManipulatorToWorldFrameCalibration(const uint arm_id);
+    void StartManipulatorToWorldFrameCalibration(const uint arm_id) override;
 
 private:
-    // task specific members
+
     SimObject *sphere[6];
     Forceps * forceps;
-    KDL::Frame tool_pose;
-    double grip_angle;
 
-
-private:
-
-        // task template members
     Colors colors;
-    ros::Time time_last;
-
-    custom_msgs::ActiveConstraintParameters ac_parameters;
-
     Manipulator *master;
 
 };

@@ -439,9 +439,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
             task_state_topic_name.c_str(), 1);
 };
 //------------------------------------------------------------------------------
-void TaskSteadyHand::StepWorld() {
-
-    graphics->Render();
+void TaskSteadyHand::TaskLoop() {
 
     // check if any of the forceps have grasped the ring in action
     for (int i = 0; i < 2; ++i) {

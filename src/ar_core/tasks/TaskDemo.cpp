@@ -8,8 +8,8 @@
 
 TaskDemo::TaskDemo(ros::NodeHandlePtr n)
         :
-        SimTask(n, 500) ,
-        time_last(ros::Time::now())
+        SimTask(n, 500)
+
 {
 
     bool ar_mode = false;
@@ -149,91 +149,37 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
     //                                   "/position_cartesian_current",
     //                                   "/gripper_position_current",
     //                                   cam_pose);
-    graphics->AddActorsToScene(GetActors());
+    graphics->AddActorsToScene(graphics_actors);
 
 };
 
 //------------------------------------------------------------------------------
-void TaskDemo::StepWorld() {
+void TaskDemo::TaskLoop() {
 
 
+    // Read the pose and gripper angle of the master and assign it to our
+    // virtual forceps
+    forceps->SetPoseAndJawAngle(master->GetPoseWorld(),  master->GetGripper());
+
+    // let's get the pose of the camera and incrementally rotate it for fun!
     KDL::Frame cam_p = graphics->GetMainCameraPose();
     cam_p.M.DoRotZ(-0.005);
     graphics->SetMainCameraPose(cam_p);
 
-    graphics->Render();
 
-    
-    //--------------------------------
-    //use the tool pose for moving the virtual tools ...
-    //    KDL::Frame tool_pose = (*tool_current_pose_kdl[0]);
-    forceps->SetPoseAndJawAngle(tool_pose, grip_angle);
-
-    //--------------------------------
-    // step the world
-    StepPhysics();
-
-    // you can access the pose of the objects:
+    // FYI you can access the pose of the objects:
     //    ROS_INFO("Sphere0 z: %f",sphere[0]->GetPose().p[2]);
 
 }
 
 
-custom_msgs::TaskState TaskDemo::GetTaskStateMsg() {
-    custom_msgs::TaskState task_state_msg;
-    return task_state_msg;
-}
-
-void TaskDemo::ResetTask() {
-
-    // save the measurements and the metrics and reset the initial conditions
-    // to start a new repetition of the task
-    ROS_INFO("Repetition completed. Resetting the task.");
-
-    // save metrics
-
-
-}
-
-void TaskDemo::ResetCurrentAcquisition() {
-    ROS_INFO("Resetting current acquisition.");
-}
-
 
 void TaskDemo::HapticsThread() {
-
-    ros::Publisher pub_desired[2];
-
-    ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
-    pub_desired[0] = node->advertise<geometry_msgs::PoseStamped>
-            ("PSM1/tool_pose_desired", 10);
-//    if(bimanual)
-//        pub_desired[1] = node->advertise<geometry_msgs::PoseStamped>
-//                ("/PSM2/tool_pose_desired", 10);
 
     ros::Rate loop_rate(200);
 
     while (ros::ok())
     {
-        // read the master pose and gripper angle
-        master->GetPoseWorld(tool_pose);
-        master->GetGripper(grip_angle);
-
-        //        CalculatedDesiredToolPose();
-
-//        // publish desired poses
-//        for (int n_arm = 0; n_arm < 1+ int(bimanual); ++n_arm) {
-//
-//            // convert to pose message
-//            geometry_msgs::PoseStamped pose_msg;
-//            tf::poseKDLToMsg(tool_desired_pose_kdl[n_arm], pose_msg.pose);
-//            // fill the header
-//            pose_msg.header.frame_id = "/task_space";
-//            pose_msg.header.stamp = ros::Time::now();
-//            // publish
-//            pub_desired[n_arm].publish(pose_msg);
-//        }
-
         ros::spinOnce();
         loop_rate.sleep();
         boost::this_thread::interruption_point();
@@ -241,14 +187,6 @@ void TaskDemo::HapticsThread() {
 }
 
 
-void TaskDemo::StepPhysics() {
-
-    double time_step = (ros::Time::now() - time_last).toSec();
-    //std::cout << "time_step: " << time_step << std::endl;
-    dynamics_world->stepSimulation(btScalar(time_step), 100, 1.f/128.f);
-    time_last = ros::Time::now();
-
-}
 
 // -----------------------------------------------------------------------------
 void TaskDemo::StartManipulatorToWorldFrameCalibration(const uint arm_id) {

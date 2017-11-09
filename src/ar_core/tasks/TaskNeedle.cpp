@@ -235,9 +235,8 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
 };
 
 //------------------------------------------------------------------------------
-void TaskNeedle::StepWorld() {
+void TaskNeedle::TaskLoop() {
 
-    graphics->Render();
 //    MyContactResultCallback result;
 //    dynamics_world->contactPairTest(needle_mesh->GetBody(),
 //                                    board->GetBody(),

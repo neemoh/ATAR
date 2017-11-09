@@ -31,7 +31,7 @@ public:
     }
 
     // updates the task logic and the graphics_actors
-    void StepWorld();
+    void TaskLoop();
 
     custom_msgs::TaskState GetTaskStateMsg();
 
@@ -50,8 +50,6 @@ public:
      * desired pose from the mesh.
   *  **/
     void HapticsThread();
-
-    void StepPhysics();
 
 private:
 

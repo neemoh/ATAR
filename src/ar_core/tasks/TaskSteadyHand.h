@@ -71,7 +71,7 @@ public:
     ~TaskSteadyHand();
 
     // updates the task logic and the graphics_actors
-    void StepWorld();
+    void TaskLoop();
 
     /**
     * \brief This is the function that is handled by the haptics thread.

@@ -211,9 +211,8 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
 };
 
 //------------------------------------------------------------------------------
-void TaskDeformable::StepWorld() {
+void TaskDeformable::TaskLoop() {
 
-    graphics->Render();
     soft_o0->RenderSoftbody();
     soft_o1->RenderSoftbody();
     soft_o2->RenderSoftbody();

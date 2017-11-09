@@ -240,9 +240,8 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
 };
 
 //------------------------------------------------------------------------------
-void TaskRingTransfer::StepWorld() {
+void TaskRingTransfer::TaskLoop() {
 
-    graphics->Render();
 
     //-------------------------------- UPDATE RIGHT GRIPPER
     KDL::Frame grpr_right_pose;
@@ -280,10 +279,6 @@ void TaskRingTransfer::StepWorld() {
     }
 
 
-
-    //--------------------------------
-    // step the world
-    StepPhysics();
 
 }
 
@@ -339,16 +334,6 @@ void TaskRingTransfer::HapticsThread() {
         loop_rate.sleep();
         boost::this_thread::interruption_point();
     }
-}
-
-
-void TaskRingTransfer::StepPhysics() {
-    ///-----stepsimulation_start-----
-    double time_step = (ros::Time::now() - time_last).toSec();
-    // check http://bulletphysics.org/mediawiki-1.5.8/index.php/Stepping_The_World
-    // simulation seems more realistic when time_step is halved right now!
-    dynamics_world->stepSimulation(btScalar(time_step), 60, 1/240.f);
-    time_last = ros::Time::now();
 }
 
 

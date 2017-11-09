@@ -11,7 +11,6 @@
 #include <vtkActor.h>
 #include <vtkPolyDataMapper.h>
 #include <vector>
-#include <custom_msgs/TaskState.h>
 #include <kdl/frames.hpp>
 #include <btBulletDynamicsCommon.h>
 #include "Rendering.h"
@@ -37,14 +36,14 @@ public:
     virtual ~SimTask() {};
 
     // The main loop. Updates physics, graphics and task logic
-    virtual void StepWorld() {};
+    virtual void StepWorld();
+
+    // The main loop. Updates physics, graphics and task logic
+    virtual void TaskLoop() =0;
 
     // This is the function that is handled by the haptics thread.
     virtual void HapticsThread() = 0;
 
-    // returns the status of the task
-    virtual custom_msgs::TaskState GetTaskStateMsg() = 0;
- 
     // minor reset
     virtual void ResetCurrentAcquisition(){};
 
@@ -57,11 +56,12 @@ private:
     void InitBullet();
 
     // steps the physics simulation
-    virtual void StepPhysics() {};
+    virtual void StepPhysics();
 
 protected:
 
     ros::NodeHandlePtr                      nh;
+    ros::Time                               time_last;
 
     Rendering *                             graphics;
 
