@@ -26,7 +26,7 @@
 // only interested in the rotation from the master base to the image. This tr
 // is set by setting a parameter "/calibrations"+arm_ns+"_frame_to_image_frame"
 // with 4 elements representing the quaternion rotation. Check the
-// params_calibrations_polimi.yaml file to see examples of this.
+// params_calibrations_ar.yaml file to see examples of this.
 //
 // - AR: In the augmented reality case we are interfacing with a slave arm
 // that is seen in the camera images. Here we need to find the transformation
@@ -58,7 +58,11 @@ public:
 
     void GetPoseWorld(KDL::Frame& pose){pose = pose_world;};
 
+    KDL::Frame GetPoseWorld(){return pose_world;};
+
     void GetGripper(double& gripper){gripper = gripper_angle;};
+
+    double GetGripper(){return gripper_angle;};
 
     void GetTwistLocal(KDL::Twist& twist){twist = twist_local;};
 
