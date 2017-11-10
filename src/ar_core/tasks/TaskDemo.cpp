@@ -212,39 +212,9 @@ void TaskDemo::StartManipulatorToWorldFrameCalibration(const uint arm_id) {
 
 TaskDemo::~TaskDemo() {
 
-    ROS_INFO("Destructing task. Num bullet objects: %d",
-             dynamics_world->getNumCollisionObjects());
-    //remove the rigidbodies from the dynamics world and delete them
-    for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
-    {
-        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];
-        btRigidBody* body = btRigidBody::upcast(obj);
-        if (body && body->getMotionState())
-        {
-            delete body->getMotionState();
-        }
-        dynamics_world->removeCollisionObject(obj);
-        delete obj;
-    }
-
-    //delete dynamics world
-    delete dynamics_world;
-
-    //delete solver
-    delete solver;
-
-    //delete broadphase
-    delete overlappingPairCache;
-
-    //delete dispatcher
-    delete dispatcher;
-
-    delete collisionConfiguration;
+    ROS_INFO("Destructing TaskDemo.");
 
     delete master;
-
-    delete graphics;
-
 
 }
 

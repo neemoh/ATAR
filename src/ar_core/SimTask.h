@@ -33,7 +33,7 @@ class SimTask{
 public:
     SimTask(ros::NodeHandlePtr n, const double haptic_loop_rate);
 
-    virtual ~SimTask() {};
+    virtual ~SimTask();
 
     // The main loop. Updates physics, graphics and task logic
     virtual void StepWorld();
@@ -67,13 +67,13 @@ protected:
 
     double                                  haptic_loop_rate;
     std::vector<vtkSmartPointer<vtkProp>>   graphics_actors;
-    btDiscreteDynamicsWorld*                dynamics_world;
+    btDiscreteDynamicsWorld *               dynamics_world;
 
     //make sure to re-use collision shapes among rigid bodies whenever possible!
     btSequentialImpulseConstraintSolver*    solver;
-    btBroadphaseInterface*                  overlappingPairCache;
-    btCollisionDispatcher*                  dispatcher;
-    btDefaultCollisionConfiguration*        collisionConfiguration;
+    btBroadphaseInterface *                 overlappingPairCache;
+    btCollisionDispatcher *                 dispatcher;
+    btDefaultCollisionConfiguration *       collisionConfiguration;
 };
 
 
