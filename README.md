@@ -1,6 +1,23 @@
 # Assisted Teleoperation with Augmented Reality
 
-This repository contains the source code for the ATAR package. This ROS package can be used to design interactive augmented reality (or virtual reality) tasks using a stereo camera and display, master and slave manipulators. I have developed and tested this on a da Vinci Research Kit (DVRK) that comprises 5 manipulators (2 masters, 2 slaves and a camera arm), a stereo endoscope and stereo vision console. Tha package includes the code for the calibrations involved (Camera intrinsics, extrinsics, and arm to world) and a qt graphical user interface. THe simulated world includes rigid and soft dynamics simulation based on the Bullet Physics library and graphics are generated using the Visualization toolkit (VTK) and OpenGL.
+This repository contains the source code for the ATAR package. This ROS 
+package can be used to design interactive augmented reality or virtual 
+reality tasks using a stereo camera and display, master and slave 
+manipulators. I have developed and tested this on a da Vinci Research Kit 
+(DVRK) that comprises 5 manipulators (2 masters, 2 slaves and a camera arm), 
+a stereo endoscope and stereo vision console. I also have tested it with a 
+single display and a Sigma master device interacting with a VR task. I have 
+tried to make tha package as modular and generic as possible, so that it can be 
+used for different purposes such as creating a VR or AR interactive simulation 
+with embedded physics or simply overlaying 3D graphics on top of a single 
+camera images. The camera images and the manipulator cartesian 
+measurements are read through ros topics, so if you want to create a 
+simulation that includes one of these you should have a node that publishes 
+them. The package includes the code for the calibrations involved (Camera 
+intrinsics,  extrinsics using charuco boards and manipulator base to camera 
+base) and a qt graphical user interface. Bullet Physics library is used for the 
+rigid and soft body dynamics simulation and graphics are generated using the 
+Visualization toolkit (VTK).
 
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme.png)
 
@@ -77,15 +94,45 @@ task 8. Wait for the compound convex mesh to be generated and the task should
  with_shadows flag to true in the vr_test.lanuch file.
 
 ## TaskHandler
-Details will be updated.
+This is the class that subscribes to a control events topics (published by the 
+GUI) and loads and unloads tasks. When you want to add a new task, you can 
+make a copy of the TaskTemplate class giving it a name that starts with 
+Task<something> (because all the files starting with Task will be 
+automatically added to the CMakeLists) and include your task's header in the 
+TaskHandler and add its allocation to the StartTask method.
+ 
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_ATAR_Arch.png)
 
-### Creating tasks
-Details will be updated.
-
-### Creating simulated objects
+## Creating tasks
+In my first version of the code the Task class used to have only the 
+simulated objects in it. Later I decided to take everything (i.e. rendering 
+and communication with the manipulators etc) into the task class so that we 
+can have tasks with different rendering configs (ar or vr, different number 
+of rendering windows, resolutions...) and different manipulators. This of 
+course adds some overhead cost (and some memory leak that I will hopefully 
+fix soon!).
+The block diagram above shows the main elements of a task class. You can have
+a look at the TaskDemo.h/.cpp files for a minimal example. The main elements 
+are the Rendering object, manipulators and SimObjects that are explained in 
+the following. There are two methods of the Task class that are called 
+periodically:
+* TaskLoop: This is called from the main thread at a refresh rate of about 30
+ Hz which makes it the choice for updating graphics and task related logic.
+ * HapticsThread: This method is called from a separate thread and you can 
+ set its refresh rate directly in the method (creating a loop and so on). 
+ This thread exists for haptics related matters where a high refresh rate is 
+ needed to provide a stable feedback. Have a look at the TaskSteadyHand 
+ (haptics thread running at 500Hz or 1KHz) for an example of how to use this 
+ thread.   
+ 
+### Rendering Class
+As its name suggests this is where the graphics are produced. I have moved 
+the explanations regarding the augmented reality case to the bottom to 
+simplify the description here.  
+ 
+### SimObjects
 You can define objects using the SimObject class which has a graphic actor 
-(actor_) and physics body (rigid_body_). A simObject can be dynamic (i.e. 
+(actor_) and physics body (rigid_body_). A SimObject can be dynamic (i.e. 
 its pose will be update by physics simulation), static (i.e constant pose), 
 kinematic (i.e. pose is assigned externally, e.g. from a mster device). There
  are some primitive shapes available (Cube, sphere, cylinder, cone and plane)
@@ -136,7 +183,7 @@ top to bottom and so z is perpendicular into the image. Note that we are
 only interested in the rotation from the master base to the image. This tr
 is set by setting a parameter "/calibrations"+arm_ns+"_frame_to_image_frame"
 with 4 elements representing the quaternion rotation. Check the
-params_ar_calibrations_polimi.yaml file to see examples of this.
+params_calibrations_test_vr.yaml file to see examples of this.
 
 ##### AR: 
 In the augmented reality case we are interfacing with a slave arm
