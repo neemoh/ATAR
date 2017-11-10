@@ -7,7 +7,7 @@ manipulators. I have developed and tested this on a da Vinci Research Kit
 (DVRK) that comprises 5 manipulators (2 masters, 2 slaves and a camera arm), 
 a stereo endoscope and stereo vision console. I also have tested it with a 
 single display and a Sigma master device interacting with a VR task. I have 
-tried to make tha package as modular and generic as possible, so that it can be 
+tried to make the package as modular and generic as possible, so that it can be 
 used for different purposes such as creating a VR or AR interactive simulation 
 with embedded physics or simply overlaying 3D graphics on top of a single 
 camera images. The camera images and the manipulator cartesian 
@@ -128,8 +128,27 @@ periodically:
 ### Rendering Class
 As its name suggests this is where the graphics are produced. I have moved 
 the explanations regarding the augmented reality case to the bottom to 
-simplify the description here.  
- 
+simplify the description here. The constructor of the Rendering class let's 
+you specify the configuration of the windows that you want. It is easier to 
+explain this with an example: 
+![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_Render_window.png)
+In our DVRK setup we had two displays in the 
+surgeon console (one for each eye) and we wanted to show what is happening 
+in the console in a third display to viewers. These 3 displays were connected
+ to the same graphics card in a horizontal layout is you can see in the image
+  bellow.
+```
+    bool ar_mode = false;
+    int n_views = 3;
+    bool one_window_per_view = false;
+    bool borders_off  = true;
+    std::vector<int> view_resolution = {640, 480};
+    std::vector<int> window_positions = {1280, 0};
+
+    graphics = new Rendering(n, view_resolution, ar_mode, n_views,
+                             one_window_per_view, borders_off,
+                             window_positions);
+ ```
 ### SimObjects
 You can define objects using the SimObject class which has a graphic actor 
 (actor_) and physics body (rigid_body_). A SimObject can be dynamic (i.e. 
@@ -152,7 +171,7 @@ You can use blender to create mesh objects. When the object is ready, follow
 these steps to make sure you have the correct units even if your mesh's 
 dimensions are as small as a few millimiters: 
 * Convert it to mesh (alt-c)
-* Go to the Scene tab and in the Units section selec Centimeters
+* Go to the Scene tab and in the Units section select Centimeters
 * Go to File-> Export and select Wavefront(.obj). In the options set the scale
  as 0.01 and save.
 
@@ -203,3 +222,7 @@ Things to explain: camera. Calibrations (intrinsic, extrinsic, arm to world)
 
 Place the intrinsic calibration file of each camera in ~/.ros/camera_info/ 
 named as <cam_name>_intrinsics.yaml
+
+## Miscellaneous
+
+* Grasping:  
