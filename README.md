@@ -130,13 +130,15 @@ As its name suggests this is where the graphics are produced. I have moved
 the explanations regarding the augmented reality case to the bottom to 
 simplify the description here. The constructor of the Rendering class let's 
 you specify the configuration of the windows that you want. It is easier to 
-explain this with an example: 
-![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_Render_window.png)
-In our DVRK setup we had two displays in the 
+explain this with an example: In our DVRK setup we had two displays in the 
 surgeon console (one for each eye) and we wanted to show what is happening 
 in the console in a third display to viewers. These 3 displays were connected
- to the same graphics card in a horizontal layout is you can see in the image
-  bellow.
+to the same graphics card in a horizontal layout is you can see in the image
+bellow:
+![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_Render_window.png)
+
+We can have one window with three views in it defined as:
+
 ```
     bool ar_mode = false;
     int n_views = 3;
@@ -145,10 +147,17 @@ in the console in a third display to viewers. These 3 displays were connected
     std::vector<int> view_resolution = {640, 480};
     std::vector<int> window_positions = {1280, 0};
 
-    graphics = new Rendering(n, view_resolution, ar_mode, n_views,
+    graphics = new Rendering(view_resolution, ar_mode, n_views,
                              one_window_per_view, borders_off,
                              window_positions);
  ```
+Having the borders off allows for full screen view in the dvrk displays. 
+You can have multiple windows (up to 3) by setting the one_window_per_view 
+flag as true. However, VTK fails to generate the shadows when there are more
+than one rendering windows. If you have 2 windows, the 
+window_positions must contain 4 elements(x,y,x,y) and 6 elements if you have 
+3 windows.
+ 
 ### SimObjects
 You can define objects using the SimObject class which has a graphic actor 
 (actor_) and physics body (rigid_body_). A SimObject can be dynamic (i.e. 
@@ -210,7 +219,7 @@ that is seen in the camera images. Here we need to find the transformation
 from the slave to the world frame by performing a calibration procedure. 
 TO BE COMPLETED
 
-## Augmented Reality
+## TODO: Augmented Reality 
 Things to explain: camera. Calibrations (intrinsic, extrinsic, arm to world)
 
 ### AR Camera
