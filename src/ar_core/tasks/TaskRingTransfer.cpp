@@ -11,14 +11,27 @@
 TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
         :
         SimTask(n, 100),
-        time_last(ros::Time::now()) {
+        time_last(ros::Time::now())
+{
 
+    int n_views = 3;
+    bool one_window_per_view = false;
+    bool borders_off  = true;
+    std::vector<int> view_resolution = {640, 480};
+    std::vector<int> window_positions={1280, 0};
+    // the only needed argument to construct a Renderer if the nodehandle ptr
+    // The rest have default values.
+    graphics = std::make_unique<Rendering>(n, view_resolution, false, n_views,
+                                           one_window_per_view, borders_off,window_positions);
 
-    SimObject *board;
-    // -----------------------
+    // Define a master manipulator
+    //    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+    master = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
+                             "/position_cartesian_current",
+                             "/gripper_position_current");
     // -------------------------------------------------------------------------
     // Create a cube for the board
-
+    SimObject *board;
     {
         board_dimensions[0] = 0.14;
         board_dimensions[1] = 0.12;
@@ -39,14 +52,12 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
         //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.6, 0.5, 0.5);
 
-        dynamics_world->addRigidBody(board->GetBody());
-        graphics_actors.push_back(board->GetActor());
+        AddSimObjectToTask(board);
     }
     // -------------------------------------------------------------------------
     // static floor
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
-    double dummy_pose[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
     SimObject* floor= new SimObject(ObjectShape::STATICPLANE,
                                     ObjectType::DYNAMIC, floor_dims);
@@ -54,11 +65,12 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
 
     // -------------------------------------------------------------------------
     // Create destination rods
+    int cols = 4;
+    int rows = 1;
+    SimObject *cylinders[cols * rows];
+
     {
-        int cols = 4;
-        int rows = 1;
         float friction = 2.2;
-        SimObject *cylinders[cols * rows];
         for (int i = 0; i < rows; ++i) {
 
             for (int j = 0; j < cols; ++j) {
@@ -82,35 +94,31 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
                         ->SetSpecular(0.8);
                 cylinders[i*rows+j]->GetActor()->GetProperty()
                         ->SetSpecularPower(50);
-
-                dynamics_world->addRigidBody(cylinders[i * rows + j]->GetBody());
-                graphics_actors.push_back(cylinders[i * rows + j]->GetActor());
-
+                AddSimObjectToTask(cylinders[i * rows + j]);
             }
         }
     }
 
     // -------------------------------------------------------------------------
     // ROD
+    SimObject* rod;
     {
         std::vector<double> rod_dim = {0.002, 0.1};
         KDL::Frame pose(KDL::Rotation::Quaternion(0.70711, 0.70711, 0.0, 0.0),
                         KDL::Vector(0.10, 0.03, 0.03));
-        SimObject rod = SimObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC,
+        rod = new SimObject(ObjectShape::CYLINDER, ObjectType::DYNAMIC,
                                   rod_dim, pose);
-
-        dynamics_world->addRigidBody(rod.GetBody());
-        graphics_actors.push_back(rod.GetActor());
-        rod.GetActor()->GetProperty()->SetColor(0.3, 0.3, 0.3);
+        rod->GetActor()->GetProperty()->SetColor(0.3, 0.3, 0.3);
+        AddSimObjectToTask(rod);
 
     }
     // -------------------------------------------------------------------------
 
     // -------------------------------------------------------------------------
     //// Create smallRING meshes
+    size_t n_rings = 4;
+    SimObject *rings[n_rings];
     {
-        size_t n_rings = 4;
-        SimObject *rings[n_rings];
         std::stringstream input_file_dir;
         input_file_dir << MESH_DIRECTORY << std::string("task_Hook_ring_D2cm_D5mm.obj");
         std::string mesh_file_dir_str = input_file_dir.str();
@@ -126,9 +134,8 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
                     SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, dim, pose,
                               density, friction,
                               mesh_file_dir_str, 0);
-            dynamics_world->addRigidBody(rings[l]->GetBody());
-            graphics_actors.push_back(rings[l]->GetActor());
             rings[l]->GetActor()->GetProperty()->SetColor(0., 0.5, 0.6);
+            AddSimObjectToTask(rings[l]);
 
         }
     }
@@ -147,8 +154,6 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     // can't press the object too much. Otherwise the injected energy would
     // be so high that no friction can compensate it.
     {
-
-        double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
         gripper_link_dims =
                 {{0.003, 0.003, 0.005}
                         , {0.004, 0.001, 0.009}
@@ -157,12 +162,7 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
                         , {0.004, 0.001, 0.007}};
 
         grippers[0] = new FiveLinkGripper(gripper_link_dims);
-
-        for (int j = 0; j < 1 ;++j) {
-            grippers[j]->AddToWorld(dynamics_world);
-            grippers[j]->AddToActorsVector(graphics_actors);
-        }
-
+        AddSimMechanismToTask(grippers[0]);
         std::vector<std::vector<double>> gripper_3link_dims =
                 {{0.002, 0.002, 0.005}
                         , {0.004, 0.001, 0.009}
@@ -186,24 +186,9 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
                 SimObject(ObjectShape::MESH, ObjectType::KINEMATIC, dim, pose,
                           density, 0,
                           mesh_file_dir_str, 0);
-        dynamics_world->addRigidBody(hook_mesh->GetBody());
-        graphics_actors.push_back(hook_mesh->GetActor());
         hook_mesh->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
+        AddSimObjectToTask(hook_mesh);
     }
-
-    // -------------------------------------------------------------------------
-    //// Create rod tool
-    //{
-    //    std::vector<double> dim = {0.0015, 0.04};
-    //    double pose[7]{0.0, 0.0, 0.0, 0.7, 0, 0.7, 0};
-    //
-    //    tool_cyl = new SimObject(
-    //        ObjectShape::CYLINDER, ObjectType::KINEMATIC, dim, pose,
-    //       );
-    //    dynamics_world->addRigidBody(tool_cyl->GetBody());
-    //    graphics_actors.push_back(tool_cyl->GetActor());
-    //    tool_cyl->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
-    //}
 
     // -------------------------------------------------------------------------
     // FRAMES
@@ -215,28 +200,12 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     task_coordinate_axes->SetZAxisLabelText("");
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
-    bool show_ref_frames = 0;
+    bool show_ref_frames = 1;
     if(show_ref_frames)
-        graphics_actors.push_back(task_coordinate_axes);
+        graphics->AddActorToScene(task_coordinate_axes);
 
-    int n_views = 3;
-    bool one_window_per_view = false;
-    bool borders_off  = true;
-    std::vector<int> view_resolution = {640, 480};
-    std::vector<int> window_positions={1280, 0};
-    // the only needed argument to construct a Renderer if the nodehandle ptr
-    // The rest have default values.
-    graphics = new Rendering(n, view_resolution, false, n_views,
-        one_window_per_view, borders_off,window_positions);
-    
-    // Define a master manipulator
-    //    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
-    master = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
-        "/position_cartesian_current",
-        "/gripper_position_current");
     
     
-    graphics->AddActorsToScene(GetActors());
 };
 
 //------------------------------------------------------------------------------

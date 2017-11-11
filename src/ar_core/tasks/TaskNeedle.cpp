@@ -16,8 +16,20 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
         SimTask(n, 100),
         time_last(ros::Time::now()) {
 
+    bool ar_mode = true;
+    int n_views = 3;
+    bool one_window_per_view = false;
+    bool borders_off  = true;
+    std::vector<int> view_resolution = {640, 480};
+    std::vector<int> window_positions={1280, 0};
 
-    // -----------------------
+    graphics = std::make_unique<Rendering>(n, view_resolution, ar_mode, n_views,
+                                           one_window_per_view, borders_off,window_positions);
+
+    // Define a master manipulator
+    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+    graphics->SetManipulatorInterestedInCamPose(master);
+
     // -------------------------------------------------------------------------
     // Create a cube for the board
     board_dimensions[0] = 0.14;
@@ -37,14 +49,7 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
                               0.0, friction);
         //    board->GetActor()->GetProperty()->SetOpacity(0.05);
         board->GetActor()->GetProperty()->SetColor(0.5, 0.3, 0.1);
-
-//        dynamics_world->addRigidBody(board->GetBody());
-//        graphics_actors.push_back(board->GetActor());
-        //        board->GetBody()->
-        //                setCollisionFlags(board->GetBody()->getCollisionFlags() |
-        //                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
-
-        board->GetBody()->setUserPointer(board);
+        AddSimObjectToTask(board);
     }
     // -------------------------------------------------------------------------
     // static floor
@@ -56,7 +61,7 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
                                      KDL::Frame(), 0.0);
     dynamics_world->addRigidBody(floor->GetBody());
 
-     // -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     //// Create needle mesh
     {
         KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
@@ -74,21 +79,14 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
                 SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose,
                           density, friction,
                           mesh_file_dir_str, 1);
-
-        dynamics_world->addRigidBody(needle_mesh->GetBody());
-        graphics_actors.push_back(needle_mesh->GetActor());
+        AddSimObjectToTask(needle_mesh);
         needle_mesh->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
-
-//        needle_mesh->GetBody()->
-//                setCollisionFlags(needle_mesh->GetBody()->getCollisionFlags() |
-//                                  btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
-
-        needle_mesh->GetBody()->setUserPointer(needle_mesh);
     }
 
 
     // -------------------------------------------------------------------------
     //// Create suture plane 1 mesh
+    SimObject *suture_plane_1;
     {
         KDL::Frame pose(KDL::Rotation::Quaternion(0.5, 0.5, 0.5, 0.5),
                         KDL::Vector(0.055, 0.07, 0.02));
@@ -96,21 +94,18 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
 
         float friction = 3;
         float density = 0; // kg/m3
-        std::stringstream input_file_dir;
-        input_file_dir << MESH_DIRECTORY << std::string("task_needle_suture_plane.obj");
-        std::string mesh_file_dir_str = input_file_dir.str();
+        suture_plane_1 = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
+                                       pose, density, friction
+                ,MESH_DIRECTORY + "task_needle_suture_plane.obj" , 0);
 
-        SimObject suture_plane_1(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                                 pose, density, friction,
-                                 mesh_file_dir_str, 0);
 
-        dynamics_world->addRigidBody(suture_plane_1.GetBody());
-        graphics_actors.push_back(suture_plane_1.GetActor());
-        suture_plane_1.GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
+        AddSimObjectToTask(suture_plane_1);
+        suture_plane_1->GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
     }
 
     // -------------------------------------------------------------------------
     //// Create suture plane 1 mesh
+    SimObject * suture_plane_2;
     {
         KDL::Frame pose(KDL::Rotation::Quaternion(0.5, 0.5, 0.5, 0.5),
                         KDL::Vector(0.08, 0.07, 0.02));
@@ -118,17 +113,11 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
 
         float friction = 3;
         float density = 0; // kg/m3
-        std::stringstream input_file_dir;
-        input_file_dir << MESH_DIRECTORY << std::string("task_needle_suture_plane.obj");
-        std::string mesh_file_dir_str = input_file_dir.str();
-
-        SimObject suture_plane_2(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                                 pose, density, friction,
-                                 mesh_file_dir_str, 0);
-
-        dynamics_world->addRigidBody(suture_plane_2.GetBody());
-        graphics_actors.push_back(suture_plane_2.GetActor());
-        suture_plane_2.GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
+        suture_plane_2 = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC
+                , _dim, pose, density, friction
+                ,MESH_DIRECTORY + "task_needle_suture_plane.obj" , 0);
+        suture_plane_2->GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
+        AddSimObjectToTask(suture_plane_2);
     }
 
 
@@ -149,54 +138,9 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
                 SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose,
                           density, friction,
                           mesh_file_dir_str, 0);
-
-        dynamics_world->addRigidBody(ring_mesh->GetBody());
-        graphics_actors.push_back(ring_mesh->GetActor());
+        AddSimObjectToTask(ring_mesh);
         ring_mesh->GetActor()->GetProperty()->SetColor(0.4f, 0.3f, 0.3f);
         //ring_mesh->GetBody()->setContactStiffnessAndDamping(5000, 10);
-    }
-
-    // -------------------------------------------------------------------------
-    // Create kinematic jaw (gripper)
-    //
-    // The gripper is a 5 link mechanism, link 0 is a base link, 1st and 2nd
-    // are angular jaws (like a scissor) so their orientation is related to
-    // the gripper angle of the master, 3rd and 4th change position along one
-    // axis according to the gripper angle, like a clamp. These last links
-    // are used to generate enough normal force for a stable grasping, since
-    // the scissor type links push the objects outwards.
-    // make sure tu set a high friction coefficient for the objects you want
-    // to grasp.
-    // In addition, make sure you limit the gripper angle so that the user
-    // can't press the object too much. Otherwise the injected energy would
-    // be so high that no friction can compensate it.
-    {
-        float gripper_density = 0; // kg/m3
-        float gripper_friction = 10;
-        gripper_link_dims =
-                {{0.003, 0.003, 0.005},
-                 {0.004, 0.001, 0.009},
-                 {0.004, 0.001, 0.009},
-                 {0.004, 0.001, 0.007},
-                 {0.004, 0.001, 0.007}};
-
-
-        for (int i = 0; i < 5; ++i) {
-            right_gripper_links[i] =
-                    new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                  gripper_link_dims[i], KDL::Frame(),
-                                  gripper_density, gripper_friction);
-            dynamics_world->addRigidBody(right_gripper_links[i]->GetBody());
-            graphics_actors.push_back(right_gripper_links[i]->GetActor());
-            right_gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,
-                                                                        0.7f,
-                                                                        0.7f);
-            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(
-                    50);
-            right_gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
-        }
-
-
     }
 
     // -------------------------------------------------------------------------
@@ -211,51 +155,19 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
     bool show_ref_frames = 1;
     if(show_ref_frames)
-        graphics_actors.push_back(task_coordinate_axes);
-    
-    bool ar_mode = true;
-    int n_views = 3;
-    bool one_window_per_view = false;
-    bool borders_off  = true;
-    std::vector<int> view_resolution = {640, 480};
-    std::vector<int> window_positions={1280, 0};
-    
-    graphics = new Rendering(n, view_resolution, ar_mode, n_views,
-        one_window_per_view, borders_off,window_positions);
+        graphics->AddActorToScene(task_coordinate_axes);
 
-    // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
-    //    master = new Manipulator(nh, "/dvrk/MTML",
-    //                                   "/position_cartesian_current",
-    //                                   "/gripper_position_current",
-    //                                   cam_pose);
-    graphics->SetManipulatorInterestedInCamPose(master);
 
-    graphics->AddActorsToScene(GetActors());
+
 };
 
 //------------------------------------------------------------------------------
 void TaskNeedle::TaskLoop() {
 
-//    MyContactResultCallback result;
-//    dynamics_world->contactPairTest(needle_mesh->GetBody(),
-//                                    board->GetBody(),
-//                                    result);
-//    std::cout << "in " << result.connected << std::endl;
     KDL::Frame grpr_right_pose;
     master->GetPoseWorld(grpr_right_pose);
     double grip_posit;
     master->GetGripper(grip_posit);
-    //-------------------------------- UPDATE RIGHT GRIPPER
-    // map gripper value to an angle
-    double theta_min=14*M_PI/180;
-    double theta_max=40*M_PI/180;
-    double grip_angle = theta_max*(grip_posit+0.5)/1.55;
-    if(grip_angle<theta_min)
-        grip_angle=theta_min;
-
-    UpdateGripperLinksPose(grpr_right_pose, grip_angle, gripper_link_dims,
-                           right_gripper_links);
 
 
     //--------------------------------

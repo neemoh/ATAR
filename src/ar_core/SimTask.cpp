@@ -23,21 +23,24 @@ void SimTask::InitBullet() {
     ///-----initialization_start-----
 
     ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-    collisionConfiguration = new btDefaultCollisionConfiguration();
+    collisionConfiguration =
+            std::make_unique<btDefaultCollisionConfiguration>();
 
     ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-    dispatcher = new btCollisionDispatcher(collisionConfiguration);
+    dispatcher =
+            std::make_unique<btCollisionDispatcher>(collisionConfiguration.get());
 
     ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-    overlappingPairCache = new btDbvtBroadphase();
+    overlappingPairCache = std::make_unique<btDbvtBroadphase>();
 
     ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
-    solver = new btSequentialImpulseConstraintSolver;
+    solver = std::make_unique<btSequentialImpulseConstraintSolver>();
 
 
-    dynamics_world = new btDiscreteDynamicsWorld(dispatcher,
-                                                 overlappingPairCache, solver,
-                                                 collisionConfiguration);
+    dynamics_world = new btDiscreteDynamicsWorld(dispatcher.get(),
+                                                 overlappingPairCache.get(),
+                                                 solver.get(),
+                                                 collisionConfiguration.get());
 
     dynamics_world->setGravity(btVector3(0, 0, -10));
 
@@ -84,32 +87,35 @@ SimTask::~SimTask() {
              dynamics_world->getNumCollisionObjects());
     //remove the rigidbodies from the dynamics world and delete them
     for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
-    {
-        btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];
-        btRigidBody* body = btRigidBody::upcast(obj);
-        if (body && body->getMotionState())
-        {
-            delete body->getMotionState();
-        }
-        dynamics_world->removeCollisionObject(obj);
-        delete obj;
-    }
+        dynamics_world->removeCollisionObject(dynamics_world->getCollisionObjectArray()[i]);
 
-    //delete dynamics world
+    for (int i = dynamics_world->getNumConstraints() - 1; i >= 0; i--)
+        dynamics_world->removeConstraint(dynamics_world->getConstraint(i));
+
+
+
+        //delete dynamics world
+    for(auto i:sim_objs)
+        delete i;
     delete dynamics_world;
 
-    //delete solver
-    delete solver;
+}
 
-    //delete broadphase
-    delete overlappingPairCache;
+void SimTask::AddSimObjectToTask(SimObject *obj) {
 
-    //delete dispatcher
-    delete dispatcher;
+    sim_objs.emplace_back(obj);
+    graphics->AddActorToScene(obj->GetActor());
+    dynamics_world->addRigidBody(obj->GetBody());
+}
 
-    delete collisionConfiguration;
+void SimTask::AddSimMechanismToTask(SimMechanism *mech) {
 
-    delete graphics;
+    auto sim_objs = mech->GetSimObjects();
+    for(auto i: sim_objs)
+        AddSimObjectToTask(i);
 
+    auto constraints = mech->GetConstraints();
+    for(auto i:constraints)
+        dynamics_world->addConstraint(i);
 
 }

@@ -16,8 +16,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         SimTask(n, 500),
         destination_ring_counter(0),
         ac_params_changed(true),
-        task_state(SHTaskState::Idle),
-        time_last(ros::Time::now())
+        task_state(SHTaskState::Idle)
 {
 
     bool ar_mode = false;
@@ -27,8 +26,8 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     std::vector<int> view_resolution = {640, 480};
     std::vector<int> window_positions={1280, 0};
 
-    graphics = new Rendering(n, view_resolution, ar_mode, n_views,
-                             one_window_per_view, borders_off,window_positions);
+    graphics = std::make_unique<Rendering>(n, view_resolution, ar_mode, n_views,
+                                           one_window_per_view, borders_off,window_positions);
 
     // Define two tools
     slaves[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
@@ -93,8 +92,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         };
         board = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim, pose);
         board->GetActor()->GetProperty()->SetColor(colors.Gray);
-        dynamics_world->addRigidBody(board->GetBody());
-        graphics_actors.push_back(board->GetActor());
+        AddSimObjectToTask(board);
     }
 
     // -------------------------------------------------------------------------
@@ -196,8 +194,8 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
             SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, stand_frame,
                       0.0, friction, mesh_file_dir_str);
 
-    dynamics_world->addRigidBody(stand_mesh->GetBody());
-    graphics_actors.push_back(stand_mesh->GetActor());
+    AddSimObjectToTask(stand_mesh);
+
     stand_mesh->GetActor()->GetProperty()->SetColor(colors.GrayLight);
     //stand_mesh->GetActor()->GetProperty()->SetSpecular(0.8);
     //stand_mesh->GetActor()->GetProperty()->SetSpecularPower(80);
@@ -216,9 +214,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     stand_cube = new
             SimObject(ObjectShape::BOX, ObjectType::DYNAMIC, dim_cube,
                       pose_cube);
-
-    dynamics_world->addRigidBody(stand_cube->GetBody());
-    graphics_actors.push_back(stand_cube->GetActor());
+    AddSimObjectToTask(stand_cube);
     stand_cube->GetActor()->GetProperty()->SetColor(colors.GrayLight);
 
     // -------------------------------------------------------------------------
@@ -235,13 +231,10 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         tube_meshes[m] = new
                 SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, {}, pose_tube,
                           0.0, friction, mesh_file_dir_str);
-
-        dynamics_world->addRigidBody(tube_meshes[m]->GetBody());
-
-        graphics_actors.push_back(tube_meshes[m]->GetActor());
         tube_meshes[m]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(1);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(100);
+        AddSimObjectToTask(tube_meshes[m]);
     }
 
     // -------------------------------------------------------------------------
@@ -298,8 +291,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
                 SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, {}, pose,
                           density, friction, mesh_file_dir_str);
 
-        dynamics_world->addRigidBody(ring_mesh[ring_num - l -1]->GetBody());
-        graphics_actors.push_back(ring_mesh[ring_num - l -1]->GetActor());
+        AddSimObjectToTask(ring_mesh[ring_num - l -1]);
         ring_mesh[ring_num-l-1]->GetActor()->GetProperty()->SetColor(colors.Turquoise);
         ring_mesh[ring_num-l-1]->GetBody()->setContactStiffnessAndDamping
                 (3000, 100);
@@ -319,13 +311,8 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         sep_cylinder[l] = new
                 SimObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC, _dim,
                           pose_cyl);
-
-        dynamics_world->addRigidBody(sep_cylinder[l]->GetBody());
-        graphics_actors.push_back(sep_cylinder[l]->GetActor());
         sep_cylinder[l]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
-
-        ////---------------------------------------------------
-
+        AddSimObjectToTask(sep_cylinder[l]);
     }
 
     start_point  = ring_holder_bar_pose.p + (ring_num + 3) * step *dir;
@@ -333,16 +320,14 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     // -------------------------------------------------------------------------
     // Create Forceps
     {
-        KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
-        forceps_pose.M.DoRotZ(M_PI/2);
-        forceps[0] = new Forceps(MESH_DIRECTORY, forceps_pose);
-        forceps_pose.p.x(0.07);
-        forceps[1] = new Forceps(MESH_DIRECTORY, forceps_pose);
+        KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
+        forceps_init_pose.M.DoRotZ(M_PI/2);
+        forceps[0] = new Forceps(forceps_init_pose);
+        forceps_init_pose.p.x(0.07);
+        forceps[1] = new Forceps(forceps_init_pose);
 
-        for (int j = 0; j < 2; ++j) {
-            forceps[j]->AddToWorld(dynamics_world);
-            forceps[j]->AddToActorsVector(graphics_actors);
-        }
+        AddSimMechanismToTask(forceps[0]);
+        AddSimMechanismToTask(forceps[1]);
     }
 
     // -------------------------------------------------------------------------
@@ -358,30 +343,13 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
 
         for (int i = 0; i < 2; ++i) {
             std::vector<double> arm_dim = { 0.002, rcm[i].Norm()*2};
-            arm[i] = new SimObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC,
+            rods[i] = new SimObject(ObjectShape::CYLINDER, ObjectType::KINEMATIC,
                                    arm_dim, gripper_pose);
-
-            dynamics_world->addRigidBody(arm[i]->GetBody());
-            graphics_actors.push_back(arm[i]->GetActor());
-            arm[i]->GetActor()->GetProperty()->SetColor(colors.GrayDark);
-            //arm[i]->GetActor()->GetProperty()->SetOpacity(0.1);
-            arm[i]->GetBody()->setContactStiffnessAndDamping(2000, 100);
+            rods[i]->GetActor()->GetProperty()->SetColor(colors.GrayDark);
+            rods[i]->GetBody()->setContactStiffnessAndDamping(2000, 100);
+            AddSimObjectToTask(rods[i]);
         }
     }
-
-    // -------------------------------------------------------------------------
-    //// TEXTS
-    //cornerAnnotation =
-    //    vtkSmartPointer<vtkCornerAnnotation>::New();
-    //cornerAnnotation->SetLinearFontScaleFactor( 2 );
-    //cornerAnnotation->SetNonlinearFontScaleFactor( 1 );
-    //cornerAnnotation->SetMaximumFontSize( 30 );
-    ////        cornerAnnotation->SetText( 0, "lower left" );
-    //cornerAnnotation->SetText( 1, "Scores: " );
-    ////        cornerAnnotation->SetText( 2, "upper left" );
-    ////    cornerAnnotation->GetTextProperty()->SetColor( 1, 0, 0 );
-
-
 
     // -------------------------------------------------------------------------
     //// Lines
@@ -423,20 +391,18 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         score_sphere_actors.push_back(actor);
     }
 
-    graphics_actors.push_back(line1_actor);
-    graphics_actors.push_back(line2_actor);
-
-    graphics_actors.push_back(destination_ring_actor);
+    graphics_actors.emplace_back(line1_actor);
+    graphics_actors.emplace_back(line2_actor);
+    graphics_actors.emplace_back(destination_ring_actor);
     for (int j = 0; j < score_sphere_actors.size(); ++j) {
-        graphics_actors.push_back(score_sphere_actors[j]);
+        graphics_actors.emplace_back(score_sphere_actors[j]);
     }
 
     graphics->AddActorsToScene(GetActors());
 
     // Publisher for the task state
-    std::string task_state_topic_name = "/atar/task_state";
     publisher_task_state = n->advertise<custom_msgs::TaskState>(
-            task_state_topic_name.c_str(), 1);
+            "/atar/task_state", 1);
 };
 //------------------------------------------------------------------------------
 void TaskSteadyHand::TaskLoop() {
@@ -590,8 +556,6 @@ void TaskSteadyHand::TaskLoop() {
 
     }
 
-
-
     // show the destination to the user
     double dt = sin(2 * M_PI * double(destination_ring_counter) / 70);
     destination_ring_counter++;
@@ -600,7 +564,6 @@ void TaskSteadyHand::TaskLoop() {
     destination_ring_actor->SetPosition(destination_ring_position[0],
                                         destination_ring_position[1],
                                         destination_ring_position[2]);
-
     // -------------------------------------------------------------------------
     // Performance Metrics
     UpdateRingColor();
@@ -902,7 +865,7 @@ void TaskSteadyHand::HapticsThread() {
     KDL::Frame world_to_slave_tr[2];
     world_to_slave_tr[0] = slaves[0]->GetWorldToLocalTr();
     world_to_slave_tr[1] = slaves[1]->GetWorldToLocalTr();
-    
+
     //---------------------------------------------
     // loop
     while (ros::ok())
@@ -985,7 +948,7 @@ void TaskSteadyHand::HapticsThread() {
             geometry_msgs::PoseStamped pose_msg;
             KDL::Frame tool_desired_pose_in_slave_frame;
             tool_desired_pose_in_slave_frame =
-                world_to_slave_tr[n_arm]*tool_desired_pose[n_arm];
+                    world_to_slave_tr[n_arm]*tool_desired_pose[n_arm];
 
             tf::poseKDLToMsg(tool_desired_pose_in_slave_frame, pose_msg.pose);
             // fill the header
@@ -1118,14 +1081,14 @@ void TaskSteadyHand::ResetScoreHistory() {
 }
 
 
-void TaskSteadyHand::StepPhysics() {
-    ///-----stepsimulation_start-----
-    double time_step = (ros::Time::now() - time_last).toSec();
-    //std::cout << "time_step: " << time_step << std::endl;
-    // simulation seems more realistic when time_step is halved right now!
-    dynamics_world->stepSimulation(btScalar(time_step), 100, 1/256.f);
-    time_last = ros::Time::now();
-}
+//void TaskSteadyHand::StepPhysics() {
+//    ///-----stepsimulation_start-----
+//    double time_step = (ros::Time::now() - time_last).toSec();
+//    //std::cout << "time_step: " << time_step << std::endl;
+//    // simulation seems more realistic when time_step is halved right now!
+//    dynamics_world->stepSimulation(btScalar(time_step), 100, 1/256.f);
+//    time_last = ros::Time::now();
+//}
 
 
 void TaskSteadyHand::UpdateToolRodsPose(
@@ -1160,7 +1123,7 @@ void TaskSteadyHand::UpdateToolRodsPose(
                             orientation.p.y(),
                             orientation.p.z(),
                             x,y,z,w};
-        arm[i]->SetKinematicPose(arm_pose);
+        rods[i]->SetKinematicPose(arm_pose);
 
     } else
     {
@@ -1177,14 +1140,13 @@ void TaskSteadyHand::UpdateToolRodsPose(
                             orientation.p.y(),
                             orientation.p.z(),
                             x,y,z,w};
-        arm[i]->SetKinematicPose(arm_pose);
+        rods[i]->SetKinematicPose(arm_pose);
     }
 }
 
 TaskSteadyHand::~TaskSteadyHand() {
 
-     delete slaves[0];
-
+    delete slaves[0];
     delete slaves[1];
 }
 

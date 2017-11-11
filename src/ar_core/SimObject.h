@@ -92,11 +92,11 @@ public:
     * SimObject constructor.
     * Needs at least 3 arguments.
     */
-    SimObject(const ObjectShape shape, const ObjectType type,
-              const std::vector<double> dimensions,
+    SimObject(ObjectShape shape, const ObjectType type,
+              std::vector<double> dimensions,
               const KDL::Frame &pose=KDL::Frame(),
-              const double density=0.0, const double friction = 0.1,
-              const std::string mesh_address = {}, const int id = 0);
+              double density=0.0, double friction = 0.1,
+              std::string mesh_address = {}, int id = 0);
 
     ~SimObject();
 
@@ -129,10 +129,10 @@ private:
 
     int id_;
     ObjectType object_type_;
-    btRigidBody* rigid_body_;
-    vtkSmartPointer<vtkActor> actor_;
-    BulletVTKMotionState* motion_state_;
-    btCollisionShape* collision_shape_;
+    btRigidBody *                rigid_body_;
+    vtkSmartPointer<vtkActor>    actor_;
+    BulletVTKMotionState  *      motion_state_;
+    btCollisionShape *           collision_shape_;
 
 };
 

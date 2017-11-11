@@ -20,7 +20,7 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
     std::vector<int> window_positions={100,50, 800, 50};
     // the only needed argument to construct a Renderer if the nodehandle ptr
     // The rest have default values.
-    graphics = new Rendering(n, view_resolution, ar_mode, n_views,
+    graphics = std::make_unique<Rendering>(n, view_resolution, ar_mode, n_views,
                              one_window_per_view, borders_off,window_positions);
 
     // Define a master manipulator
@@ -39,8 +39,8 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
     SimObject *floor = new SimObject(ObjectShape::STATICPLANE,
                                      ObjectType::DYNAMIC, floor_dims);
-    dynamics_world->addRigidBody(floor->GetBody());
-
+//    dynamics_world->addRigidBody(floor->GetBody());
+    AddSimObjectToTask(floor);
     // -------------------------------------------------------------------------
     // Create a floor
     SimObject *board;
@@ -64,8 +64,7 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 
         // we need to add the rigid body to the dynamics workd and the actor
         // to the graphics_actors vector
-        dynamics_world->addRigidBody(board->GetBody());
-        graphics_actors.push_back(board->GetActor());
+        AddSimObjectToTask(board);
     }
     // -------------------------------------------------------------------------
     // Create 6 dynamic spheres
@@ -95,15 +94,14 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 
             // we need to add the rigid body to the dynamics workd and the actor
             // to the graphics_actors vector
-            dynamics_world->addRigidBody(sphere[i]->GetBody());
-            graphics_actors.push_back(sphere[i]->GetActor());
+            AddSimObjectToTask(sphere[i]);
         }
 
     }
 
     // -------------------------------------------------------------------------
     // Create 6 dynamic cubes
-    // objects can be defined locally too...
+    SimObject *cube;
     {
         // define object dimensions
         std::vector<double> sphere_dimensions = {0.01, 0.01, 0.005};
@@ -121,35 +119,26 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 
             pose.p = pose.p+ KDL::Vector(0.0001, 0.0, 0.008);
 
-            SimObject cube(ObjectShape::BOX, ObjectType::DYNAMIC,
+            cube = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                            sphere_dimensions, pose, density, friction);
 
             // we can access all the properties of a VTK actor
-            cube.GetActor()->GetProperty()->SetColor(colors.Orange);
+            cube->GetActor()->GetProperty()->SetColor(colors.Orange);
 
             // we need to add the rigid body to the dynamics workd and the actor
             // to the graphics_actors vector
-            dynamics_world->addRigidBody(cube.GetBody());
-            graphics_actors.push_back(cube.GetActor());
+            AddSimObjectToTask(cube);
         }
 
     }
     // -------------------------------------------------------------------------
     // Create Forceps
-    {
-        KDL::Frame forceps_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
-        forceps_pose.M.DoRotZ(M_PI/2);
-        forceps = new Forceps(MESH_DIRECTORY, forceps_pose);
-        forceps->AddToWorld(dynamics_world);
-        forceps->AddToActorsVector(graphics_actors);
 
-    }
+    KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
+    forceps_init_pose.M.DoRotZ(M_PI/2);
+    forceps = new Forceps(forceps_init_pose);
 
-    //    master = new Manipulator(nh, "/dvrk/MTML",
-    //                                   "/position_cartesian_current",
-    //                                   "/gripper_position_current",
-    //                                   cam_pose);
-    graphics->AddActorsToScene(graphics_actors);
+    AddSimMechanismToTask(forceps);
 
 };
 

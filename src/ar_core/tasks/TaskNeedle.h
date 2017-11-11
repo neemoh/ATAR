@@ -92,7 +92,6 @@ private:
 
     double board_dimensions[3];
     std::vector<std::vector<double>> gripper_link_dims;
-    SimObject* right_gripper_links[5];
 
     SimObject *ring_mesh;
     SimObject *needle_mesh;

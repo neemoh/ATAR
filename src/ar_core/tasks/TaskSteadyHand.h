@@ -71,14 +71,14 @@ public:
     ~TaskSteadyHand();
 
     // updates the task logic and the graphics_actors
-    void TaskLoop();
+    void TaskLoop() override;
 
     /**
     * \brief This is the function that is handled by the haptics thread.
     * It first reads the current poses of the tools and then finds the
     * desired pose from the mesh.
     *  **/
-    void HapticsThread();
+    void HapticsThread() override;
 
     // returns all the task graphics_actors to be sent to the rendering part
     std::vector< vtkSmartPointer <vtkProp> > GetActors() {return graphics_actors;}
@@ -87,15 +87,15 @@ public:
 
     // decrements the number of repetitions. Used in case something goes
     // wrong during that repetition.
-    void ResetCurrentAcquisition();
+    void ResetCurrentAcquisition() override;
 
     // resets the number of repetitions and task state;
-    void ResetTask();
+    void ResetTask() override;
 
 
     // calculates the desired tool pose
     void CalculatedDesiredRingPose(
-        const KDL::Frame ring_pose,
+        KDL::Frame ring_pose,
         KDL::Frame &desired_ring_pose
     );
 
@@ -108,7 +108,7 @@ public:
     void CalculateAndSaveError();
 
     // returns the color associated to the score range
-    double* GetScoreColor(const double score);
+    double* GetScoreColor(double score);
 
     void ResetOnGoingEvaluation();
 
@@ -120,7 +120,7 @@ private:
 
     // Calculates the closest points of the wire mesh to three points of
     // interest on the ring used for calculating the desired pose of the ring
-    void StepPhysics();
+//    void StepPhysics();
 
     void UpdateCurrentAndDesiredReferenceFrames(
         const KDL::Frame current_pose[2],
@@ -128,7 +128,7 @@ private:
     );
 
     void UpdateToolRodsPose(
-        const KDL::Frame pose,
+        KDL::Frame pose,
         int gripper_side
     );
 private:
@@ -179,7 +179,6 @@ private:
     KDL::Frame tool_current_pose[2];
     double gripper_angle[2];
     uint destination_ring_counter;
-    custom_msgs::ActiveConstraintParameters ac_parameters[2];
 
     // graphics_actors that are updated during the task
     vtkSmartPointer<vtkActor>                       destination_ring_actor;
@@ -196,8 +195,6 @@ private:
     vtkSmartPointer<vtkActor>                       line1_actor;
     vtkSmartPointer<vtkActor>                       line2_actor;
 
-    ros::Time time_last;
-
     int ring_num = 4;
     SimObject *ring_mesh[6];
     SimObject *sep_cylinder[6];
@@ -208,7 +205,7 @@ private:
     KDL::Vector dir;
 
     Forceps * forceps[2];
-    SimObject* arm[2];
+    SimObject* rods[2];
     KDL::Vector rcm[2];
 
 };

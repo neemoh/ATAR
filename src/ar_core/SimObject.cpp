@@ -363,9 +363,11 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
 //------------------------------------------------------------------------------
 SimObject::~SimObject() {
 // deleting from outside
-//    delete collision_shape_;
-//    delete motion_state_;
-//    delete body_;
+    ROS_INFO("Destructing SimObject");
+
+    delete collision_shape_;
+    delete motion_state_;
+    delete rigid_body_;
 }
 
 

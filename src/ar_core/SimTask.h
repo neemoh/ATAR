@@ -14,17 +14,9 @@
 #include <kdl/frames.hpp>
 #include <btBulletDynamicsCommon.h>
 #include "Rendering.h"
+#include "SimObject.h"
+#include "SimMechanism.h"
 
-
-//note about vtkSmartPointer:
-// One way to create a VTK object is
-//      vtkObject* MyObject = vtkObject::New();
-// This method, however, can (and likely will) lead to memory management
-// issues at some point or another. You must manually delete the object
-//      MyObject->Delete();
-// Instead if vtkSmartPointer is used the memory will be released when the
-//      object having the pointer goes out of scope:
-// vtkSmartPointer<vtkObject> MyObject = vtkSmartPointer<vtkObject>::New();
 
 extern std::string                      MESH_DIRECTORY;
 
@@ -52,6 +44,10 @@ public:
 
     virtual void StartManipulatorToWorldFrameCalibration(const uint arm_id){};
 
+    void AddSimObjectToTask(SimObject* obj);
+
+    void AddSimMechanismToTask(SimMechanism* mech);
+
 private:
     void InitBullet();
 
@@ -63,17 +59,18 @@ protected:
     ros::NodeHandlePtr                      nh;
     ros::Time                               time_last;
 
-    Rendering *                             graphics;
+    std::unique_ptr<Rendering>              graphics;
 
     double                                  haptic_loop_rate;
     std::vector<vtkSmartPointer<vtkProp>>   graphics_actors;
+    std::vector<SimObject*>                 sim_objs;
     btDiscreteDynamicsWorld *               dynamics_world;
 
     //make sure to re-use collision shapes among rigid bodies whenever possible!
-    btSequentialImpulseConstraintSolver*    solver;
-    btBroadphaseInterface *                 overlappingPairCache;
-    btCollisionDispatcher *                 dispatcher;
-    btDefaultCollisionConfiguration *       collisionConfiguration;
+    std::unique_ptr<btSequentialImpulseConstraintSolver>    solver;
+    std::unique_ptr<btBroadphaseInterface>            overlappingPairCache;
+    std::unique_ptr<btCollisionDispatcher>            dispatcher;
+    std::unique_ptr<btDefaultCollisionConfiguration>  collisionConfiguration;
 };
 
 
