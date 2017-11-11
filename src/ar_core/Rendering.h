@@ -71,6 +71,8 @@ public:
 
     void AddActorsToScene(std::vector< vtkSmartPointer<vtkProp> > actors);
 
+    void AddActorToScene(vtkSmartPointer<vtkProp> actor);
+
     void RemoveAllActorsFromScene();
 
     void Render();

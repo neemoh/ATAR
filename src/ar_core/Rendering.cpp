@@ -144,10 +144,10 @@ Rendering::Rendering(ros::NodeHandlePtr n,
     vect_temp = std::vector<double>(7, 0.0);
     if (n->getParam("/calibrations/cam0_frame_to_cam2_frame", vect_temp))
         conversions::PoseVectorToKDLFrame(vect_temp, cam0_to_cam2_tr);
-    
+
     // calling SetMainCameraPose once to apply the cam_to_cam transforms
     SetMainCameraPose(cameras[0]->GetWorldToCamTr());
-    
+
     Render();
 
 }
@@ -205,6 +205,7 @@ void Rendering::UpdateCameraViewForActualWindowSize() {
     }
 }
 
+//------------------------------------------------------------------------------
 void
 Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
 
@@ -219,6 +220,24 @@ Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
                 actors[i]->SetPropertyKeys(key_properties);
             scene_renderer_[j]->AddViewProp(actors[i]);
         }
+        scene_renderer_[j]->Modified();
+    }
+
+}
+//------------------------------------------------------------------------------
+void
+Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
+
+    vtkSmartPointer<vtkInformation> key_properties = vtkSmartPointer<vtkInformation>::New();
+    key_properties->Set(vtkShadowMapBakerPass::OCCLUDER(),0);
+    key_properties->Set(vtkShadowMapBakerPass::RECEIVER(),0);
+
+    for (int j = 0; j < n_views; ++j) {
+
+        if(with_shadows_)
+            actor->SetPropertyKeys(key_properties);
+        scene_renderer_[j]->AddViewProp(actor);
+
         scene_renderer_[j]->Modified();
     }
 
