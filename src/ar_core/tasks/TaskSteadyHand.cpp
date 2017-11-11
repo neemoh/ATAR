@@ -318,13 +318,13 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     start_point  = ring_holder_bar_pose.p + (ring_num + 3) * step *dir;
     end_point = pose_tube * KDL::Vector(-0.012, 0.0, -0.01);
     // -------------------------------------------------------------------------
-    // Create Forceps
+    // Create SimForceps
     {
         KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
         forceps_init_pose.M.DoRotZ(M_PI/2);
-        forceps[0] = new Forceps(forceps_init_pose);
+        forceps[0] = new SimForceps(forceps_init_pose);
         forceps_init_pose.p.x(0.07);
-        forceps[1] = new Forceps(forceps_init_pose);
+        forceps[1] = new SimForceps(forceps_init_pose);
 
         AddSimMechanismToTask(forceps[0]);
         AddSimMechanismToTask(forceps[1]);

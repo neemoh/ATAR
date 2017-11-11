@@ -226,10 +226,10 @@ add_executable(
         ${tasks_h}
         src/ar_core/SimSoftObject.cpp
         src/ar_core/SimSoftObject.h
-        src/ar_core/FiveLinkGripper.cpp
-        src/ar_core/FiveLinkGripper.h
-        src/ar_core/Forceps.cpp
-        src/ar_core/Forceps.h
+        src/ar_core/SimFiveLinkGripper.cpp
+        src/ar_core/SimFiveLinkGripper.h
+        src/ar_core/SimForceps.cpp
+        src/ar_core/SimForceps.h
         src/ar_core/Colors.hpp
         src/ar_core/VTKConversions.h
         src/ar_core/VTKConversions.cpp

@@ -132,11 +132,11 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 
     }
     // -------------------------------------------------------------------------
-    // Create Forceps
+    // Create SimForceps
 
     KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
     forceps_init_pose.M.DoRotZ(M_PI/2);
-    forceps = new Forceps(forceps_init_pose);
+    forceps = new SimForceps(forceps_init_pose);
 
     AddSimMechanismToTask(forceps);
 

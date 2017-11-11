@@ -2,11 +2,11 @@
 // Created by nima on 10/08/17.
 //
 
-#include "Forceps.h"
+#include "SimForceps.h"
 #include <vtkProperty.h>
 extern std::string                      MESH_DIRECTORY;
 
-Forceps::Forceps(const KDL::Frame init_pose)
+SimForceps::SimForceps(const KDL::Frame init_pose)
 {
 
     auto jaws_axis_y_offset = -0.001f;
@@ -77,7 +77,7 @@ Forceps::Forceps(const KDL::Frame init_pose)
     constraints_[1]->setMaxMotorImpulse(200);
 }
 
-void Forceps::SetPoseAndJawAngle(const KDL::Frame pose,
+void SimForceps::SetPoseAndJawAngle(const KDL::Frame pose,
                                  const double grip_angle) {
 
     KDL::Frame grpr_links_pose[5];
@@ -102,7 +102,7 @@ void Forceps::SetPoseAndJawAngle(const KDL::Frame pose,
 }
 
 
-bool Forceps::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
+bool SimForceps::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
                                btCollisionObject *obj) {
 
     MyContactResultCallback result0, result1;

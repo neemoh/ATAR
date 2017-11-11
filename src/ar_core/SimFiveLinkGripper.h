@@ -10,10 +10,10 @@
 #include "SimMechanism.h"
 #include <kdl/frames.hpp>
 
-class FiveLinkGripper: public SimMechanism {
+class SimFiveLinkGripper: public SimMechanism {
 
 public:
-    FiveLinkGripper(const    std::vector<std::vector<double> > gripper_link_dims);
+    SimFiveLinkGripper(const    std::vector<std::vector<double> > gripper_link_dims);
 
     void SetPoseAndJawAngle(const KDL::Frame pose,
                                 const double grip_angle);

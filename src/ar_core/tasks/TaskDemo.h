@@ -14,7 +14,7 @@
 #include "src/ar_core/SimTask.h"
 #include "src/ar_core/SimObject.h"
 #include "src/ar_core/Colors.hpp"
-#include "src/ar_core/Forceps.h"
+#include "src/ar_core/SimForceps.h"
 #include "src/ar_core/Manipulator.h"
 
 class TaskDemo : public SimTask{
@@ -38,7 +38,7 @@ private:
 private:
 
     SimObject *sphere[6];
-    Forceps * forceps;
+    SimForceps * forceps;
 
     Colors colors;
     Manipulator *master;

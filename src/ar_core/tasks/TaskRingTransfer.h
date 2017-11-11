@@ -8,7 +8,7 @@
 
 #include "src/ar_core/SimTask.h"
 #include "src/ar_core/SimObject.h"
-#include "src/ar_core/FiveLinkGripper.h"
+#include "src/ar_core/SimFiveLinkGripper.h"
 #include <src/ar_core/Manipulator.h>
 #include "src/ar_core/Rendering.h"
 #include "custom_msgs/ActiveConstraintParameters.h"
@@ -56,7 +56,7 @@ private:
     double board_dimensions[3];
 
     std::vector<std::vector<double>> gripper_link_dims;
-    FiveLinkGripper * grippers[1];
+    SimFiveLinkGripper * grippers[1];
 
     SimObject *hook_mesh;
 

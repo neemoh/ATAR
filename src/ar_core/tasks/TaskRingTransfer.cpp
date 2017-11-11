@@ -161,7 +161,7 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
                         , {0.004, 0.001, 0.007}
                         , {0.004, 0.001, 0.007}};
 
-        grippers[0] = new FiveLinkGripper(gripper_link_dims);
+        grippers[0] = new SimFiveLinkGripper(gripper_link_dims);
         AddSimMechanismToTask(grippers[0]);
         std::vector<std::vector<double>> gripper_3link_dims =
                 {{0.002, 0.002, 0.005}

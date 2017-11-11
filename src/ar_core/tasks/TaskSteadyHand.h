@@ -6,7 +6,7 @@
 #define TELEOP_VISION_TASKSTEADYHAND_H
 #include "src/ar_core/SimTask.h"
 #include "src/ar_core/SimObject.h"
-#include "src/ar_core/Forceps.h"
+#include "src/ar_core/SimForceps.h"
 #include "src/ar_core/Colors.hpp"
 
 #include <vtkPolyDataMapper.h>
@@ -204,7 +204,7 @@ private:
     SimObject *stand_cube;
     KDL::Vector dir;
 
-    Forceps * forceps[2];
+    SimForceps * forceps[2];
     SimObject* rods[2];
     KDL::Vector rcm[2];
 

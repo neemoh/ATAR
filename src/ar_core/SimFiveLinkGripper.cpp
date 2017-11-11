@@ -2,10 +2,10 @@
 // Created by nima on 09/08/17.
 //
 
-#include "FiveLinkGripper.h"
+#include "SimFiveLinkGripper.h"
 #include <vtkProperty.h>
 
-FiveLinkGripper::FiveLinkGripper(
+SimFiveLinkGripper::SimFiveLinkGripper(
         const std::vector<std::vector<double> > link_dims_)
         : link_dims_(link_dims_)
 {
@@ -28,7 +28,7 @@ FiveLinkGripper::FiveLinkGripper(
     }
 }
 
-void FiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
+void SimFiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
                                        const double grip_angle) {
 
     KDL::Frame grpr_links_pose[5];
@@ -87,7 +87,7 @@ void FiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
     }
 }
 
-bool FiveLinkGripper::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
+bool SimFiveLinkGripper::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
                                      btCollisionObject *obj) {
 
     MyContactResultCallback result0, result1;

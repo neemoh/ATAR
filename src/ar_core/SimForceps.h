@@ -9,10 +9,10 @@
 #include "SimMechanism.h"
 #include <kdl/frames.hpp>
 
-class Forceps : public SimMechanism{
+class SimForceps : public SimMechanism{
 
 public:
-    explicit Forceps(KDL::Frame init_pose=KDL::Frame());
+    explicit SimForceps(KDL::Frame init_pose=KDL::Frame());
 
     void SetPoseAndJawAngle(KDL::Frame pose,
                             double grip_angle);
