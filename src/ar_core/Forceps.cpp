@@ -4,10 +4,9 @@
 
 #include "Forceps.h"
 #include <vtkProperty.h>
-#include <sstream>
+extern std::string                      MESH_DIRECTORY;
 
-Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
-        : num_links_(3)
+Forceps::Forceps(const KDL::Frame init_pose)
 {
 
     auto jaws_axis_y_offset = -0.001f;
@@ -18,56 +17,41 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
     float gripper_friction = 50;
 
     // create the kinematic link
-    {
-        gripper_links[0] =
-                new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                              link_dims_[0], init_pose, 0.0, 0);
-        gripper_links[0]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f,
-                                                              0.7f);
-    }
-
-    std::stringstream input_file_dir;
-    input_file_dir << mesh_dir
-                   << std::string("jaw.obj");
-    std::string mesh_file_dir_str = input_file_dir.str();
-
+    sim_objects_.emplace_back(new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+                                             link_dims_[0], init_pose, 0.0, 0));
+    sim_objects_[0]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f,
+                                                          0.7f);
 
     // create jaw 1
-    {
-        gripper_links[1] =
-                new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
-                              link_dims_[0], init_pose, gripper_density,
-                              gripper_friction,
-                              mesh_file_dir_str, 1);
-        gripper_links[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
-        gripper_links[1]->GetBody()->setContactStiffnessAndDamping(500, 100);
-        gripper_links[1]->GetBody()->setRollingFriction(btScalar(0.1));
-        gripper_links[1]->GetBody()->setSpinningFriction(btScalar(0.1));
-    }
+    sim_objects_.emplace_back(new SimObject(ObjectShape::MESH,
+                                            ObjectType::DYNAMIC,
+                                             link_dims_[0], init_pose,
+                                            gripper_density,
+                                             gripper_friction,
+                                            MESH_DIRECTORY+ "jaw.obj", 1));
+    sim_objects_[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
+    sim_objects_[1]->GetBody()->setContactStiffnessAndDamping(500, 100);
+    sim_objects_[1]->GetBody()->setRollingFriction(btScalar(0.1));
+    sim_objects_[1]->GetBody()->setSpinningFriction(btScalar(0.1));
+
 
     // create jaw 2
-    {
+    auto gripper_pose_position = init_pose*KDL::Vector(0.f, jaws_axis_y_offset,
+                                  -link0_axis_z_offset);
+    KDL::Rotation jaw_2_rot;
+    jaw_2_rot.DoRotZ(M_PI);
+    jaw_2_rot = init_pose.M * jaw_2_rot;
 
-        auto gripper_pose_position =
-                init_pose*KDL::Vector(0.f, jaws_axis_y_offset,
-                                      -link0_axis_z_offset);
-        KDL::Rotation jaw_2_rot;
-        jaw_2_rot.DoRotZ(M_PI);
-        jaw_2_rot = init_pose.M * jaw_2_rot;
-
-        KDL::Frame gripper_pose(jaw_2_rot, gripper_pose_position);
-
-        gripper_links[2] =
-                new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
-                              link_dims_[0], gripper_pose, gripper_density,
-                              gripper_friction,
-                              mesh_file_dir_str, 1);
-        gripper_links[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
-        gripper_links[2]->GetBody()->setContactStiffnessAndDamping(500, 100);
-        gripper_links[2]->GetBody()->setRollingFriction(btScalar(0.1));
-        gripper_links[2]->GetBody()->setSpinningFriction(btScalar(0.1));
-    }
-
+    KDL::Frame gripper_pose(jaw_2_rot, gripper_pose_position);
+    sim_objects_.emplace_back(new SimObject(ObjectShape::MESH,
+                                            ObjectType::DYNAMIC,
+                                            link_dims_[0], gripper_pose,
+                                            gripper_density,
+                                            gripper_friction,
+                                            MESH_DIRECTORY+ "jaw.obj", 1));
+    sim_objects_[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
+    sim_objects_[2]->GetBody()->setContactStiffnessAndDamping(500, 100);
+    sim_objects_[2]->GetBody()->setRollingFriction(btScalar(0.1));
 
     const btVector3 pivot_link0(0.f, 0.f, link0_axis_z_offset  * B_DIM_SCALE);
     const btVector3 pivot_jaw_1(0.f, jaws_axis_y_offset* B_DIM_SCALE, 0.f);
@@ -77,24 +61,24 @@ Forceps::Forceps(const std::string mesh_dir, const KDL::Frame init_pose)
     btVector3 btAxisB( 0.0f, -1.f, 0.f );
     btVector3 btAxisC( 0.0f, 1.f, 0.f );
 
-    hinges[0] = new btHingeConstraint(
-            *gripper_links[0]->GetBody(),
-            *gripper_links[1]->GetBody(),
-            pivot_link0, pivot_jaw_1, btAxisA, btAxisB );
-    hinges[0]->enableMotor(true);
-    hinges[0]->setMaxMotorImpulse(200);
-//    hinges[0]->setLimit(0, M_PI/4);
+    constraints_.emplace_back( new btHingeConstraint(
+            *sim_objects_[0]->GetBody(),
+            *sim_objects_[1]->GetBody(),
+            pivot_link0, pivot_jaw_1, btAxisA, btAxisB ));
+    constraints_[0]->enableMotor(true);
+    constraints_[0]->setMaxMotorImpulse(200);
+    //    constraints_[0]->setLimit(0, M_PI/4);
 
-    hinges[1] = new btHingeConstraint(
-            *gripper_links[0]->GetBody(),
-            *gripper_links[2]->GetBody(),
-            pivot_link0, pivot_jaw_2, btAxisA, btAxisC );
-    hinges[1]->enableMotor(true);
-    hinges[1]->setMaxMotorImpulse(200);
+    constraints_.emplace_back(new btHingeConstraint(
+            *sim_objects_[0]->GetBody(),
+            *sim_objects_[2]->GetBody(),
+            pivot_link0, pivot_jaw_2, btAxisA, btAxisC ));
+    constraints_[1]->enableMotor(true);
+    constraints_[1]->setMaxMotorImpulse(200);
 }
 
 void Forceps::SetPoseAndJawAngle(const KDL::Frame pose,
-                                          const double grip_angle) {
+                                 const double grip_angle) {
 
     KDL::Frame grpr_links_pose[5];
 
@@ -105,50 +89,33 @@ void Forceps::SetPoseAndJawAngle(const KDL::Frame pose,
     double x, y, z, w;
     pose.M.GetQuaternion(x,y,z,w);
     double link0_pose[7] = {grpr_links_pose[0].p.x(),
-                            grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
-    gripper_links[0]->SetKinematicPose(link0_pose);
+                            grpr_links_pose[0].p.y(),
+                            grpr_links_pose[0].p.z(),x,y,z,w};
+    sim_objects_[0]->SetKinematicPose(link0_pose);
 
-    hinges[0]->setMotorTarget(grip_angle, 0.09);
+    constraints_[0]->setMotorTarget((btScalar)grip_angle, 0.09);
 
-    hinges[1]->setMotorTarget(-grip_angle, 0.09);
+    constraints_[1]->setMotorTarget((btScalar)-grip_angle, 0.09);
 
-
-
-}
-
-void Forceps::AddToWorld(btDiscreteDynamicsWorld * bt_world) {
-
-    for (int i = 0; i < num_links_; ++i) {
-        bt_world->addRigidBody(gripper_links[i]->GetBody());
-    }
-
-    for (int j = 0; j < sizeof(hinges)/sizeof(hinges[0]); ++j) {
-        bt_world->addConstraint(hinges[j]);
-    }
 
 
 }
 
-void Forceps::AddToActorsVector(
-        std::vector<vtkSmartPointer<vtkProp>> &actors) {
-    for (int i = 0; i < num_links_; ++i) {
-        actors.push_back(gripper_links[i]->GetActor());
-    }
-}
 
 bool Forceps::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
-                                        btCollisionObject *obj) {
+                               btCollisionObject *obj) {
 
     MyContactResultCallback result0, result1;
-    bt_world->contactPairTest(gripper_links[1]->GetBody(),
+    bt_world->contactPairTest(sim_objects_[1]->GetBody(),
                               obj, result0);
     bool jaw1 = result0.connected;
 
-    bt_world->contactPairTest(gripper_links[2]->GetBody(),
+    bt_world->contactPairTest(sim_objects_[2]->GetBody(),
                               obj, result1);
     bool jaw2 = result1.connected;
 
     return (jaw1 & jaw2);
 
 }
+
 

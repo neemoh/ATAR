@@ -6,34 +6,23 @@
 #define ATAR_FORCEPS_H
 
 #include "SimObject.h"
+#include "SimMechanism.h"
 #include <kdl/frames.hpp>
 
-class Forceps {
+class Forceps : public SimMechanism{
 
 public:
-    Forceps(const std::string mesh_dir, const KDL::Frame init_pose);
+    explicit Forceps(KDL::Frame init_pose=KDL::Frame());
 
-    void SetPoseAndJawAngle(const KDL::Frame pose,
-                            const double grip_angle);
-
-    uint GetNumLinks(){ return num_links_;};
-
-    void AddToWorld(btDiscreteDynamicsWorld* bt_world);
-
-    void AddToActorsVector(std::vector<vtkSmartPointer<vtkProp>> & actors);
+    void SetPoseAndJawAngle(KDL::Frame pose,
+                            double grip_angle);
 
     bool IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
                           btCollisionObject* obj);
 
 private:
-
-    uint num_links_;
-
     std::vector<std::vector<double> > link_dims_;
 
-    SimObject* gripper_links[5];
-
-    btHingeConstraint* hinges[2];
 };
 
 

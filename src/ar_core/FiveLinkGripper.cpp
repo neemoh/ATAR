@@ -7,26 +7,23 @@
 
 FiveLinkGripper::FiveLinkGripper(
         const std::vector<std::vector<double> > link_dims_)
-        : link_dims_(link_dims_),
-          num_links_(5)
+        : link_dims_(link_dims_)
 {
 
 
     float gripper_density = 0; // kg/m3
     float gripper_friction = 50;
-    double gripper_pose[7]{0, 0, 0, 0, 0, 0, 1};
 
     for (int i = 0; i < 5; ++i) {
 
-        gripper_links[i] =
-                new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
+        sim_objects_.emplace_back(new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
                               link_dims_[i], KDL::Frame(), gripper_density,
-                              gripper_friction);
-        gripper_links[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
-        gripper_links[i]->GetActor()->GetProperty()->SetSpecularPower(50);
-        gripper_links[i]->GetActor()->GetProperty()->SetSpecular(0.8);
+                              gripper_friction));
+        sim_objects_[i]->GetActor()->GetProperty()->SetColor(0.65f,0.7f,0.7f);
+        sim_objects_[i]->GetActor()->GetProperty()->SetSpecularPower(50);
+        sim_objects_[i]->GetActor()->GetProperty()->SetSpecular(0.8);
 
-        gripper_links[i]->GetBody()->setContactStiffnessAndDamping
+        sim_objects_[i]->GetBody()->setContactStiffnessAndDamping
                 (2000, 100);
     }
 }
@@ -44,7 +41,7 @@ void FiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
     pose.M.GetQuaternion(x,y,z,w);
     double link0_pose[7] = {grpr_links_pose[0].p.x(),
                             grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
-    gripper_links[0]->SetKinematicPose(link0_pose);
+    sim_objects_[0]->SetKinematicPose(link0_pose);
 
     //-------------------------------- LINK 1
     grpr_links_pose[1] = pose;
@@ -56,7 +53,7 @@ void FiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
     double link2_pose[7] = {grpr_links_pose[1].p.x(),
                             grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
 
-    gripper_links[1]->SetKinematicPose(link2_pose);
+    sim_objects_[1]->SetKinematicPose(link2_pose);
 
     //-------------------------------- LINK 2
     grpr_links_pose[2] = pose;
@@ -68,7 +65,7 @@ void FiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
     double link3_pose[7] = {grpr_links_pose[2].p.x(),
                             grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
 
-    gripper_links[2]->SetKinematicPose(link3_pose);
+    sim_objects_[2]->SetKinematicPose(link3_pose);
 
 
     //-------------------------------- LINKS 3 and 4
@@ -86,22 +83,7 @@ void FiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
         double link_pose[7] = {grpr_links_pose[i].p.x(),
                                grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
 
-        gripper_links[i]->SetKinematicPose(link_pose);
-    }
-}
-
-void FiveLinkGripper::AddToWorld(btDiscreteDynamicsWorld * bt_world) {
-
-    for (int i = 0; i < num_links_; ++i) {
-        bt_world->addRigidBody(gripper_links[i]->GetBody());
-    }
-
-}
-
-void FiveLinkGripper::AddToActorsVector(
-        std::vector<vtkSmartPointer<vtkProp>> &actors) {
-    for (int i = 0; i < num_links_; ++i) {
-        actors.push_back(gripper_links[i]->GetActor());
+        sim_objects_[i]->SetKinematicPose(link_pose);
     }
 }
 
@@ -109,11 +91,11 @@ bool FiveLinkGripper::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
                                      btCollisionObject *obj) {
 
     MyContactResultCallback result0, result1;
-    bt_world->contactPairTest(gripper_links[3]->GetBody(),
+    bt_world->contactPairTest(sim_objects_[3]->GetBody(),
                               obj, result0);
     bool jaw1 = result0.connected;
 
-    bt_world->contactPairTest(gripper_links[4]->GetBody(),
+    bt_world->contactPairTest(sim_objects_[4]->GetBody(),
                               obj, result1);
     bool jaw2 = result1.connected;
 

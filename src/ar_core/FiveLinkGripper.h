@@ -7,9 +7,10 @@
 
 
 #include "SimObject.h"
+#include "SimMechanism.h"
 #include <kdl/frames.hpp>
 
-class FiveLinkGripper {
+class FiveLinkGripper: public SimMechanism {
 
 public:
     FiveLinkGripper(const    std::vector<std::vector<double> > gripper_link_dims);
@@ -17,22 +18,13 @@ public:
     void SetPoseAndJawAngle(const KDL::Frame pose,
                                 const double grip_angle);
 
-    uint GetNumLinks(){ return num_links_;};
-
-    void AddToWorld(btDiscreteDynamicsWorld* bt_world);
-
-    void AddToActorsVector(std::vector<vtkSmartPointer<vtkProp>> & actors);
-
     bool IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
                           btCollisionObject* obj);
 
 private:
 
-    uint num_links_;
 
     std::vector<std::vector<double> > link_dims_;
-
-    SimObject* gripper_links[5];
 
 };
 
