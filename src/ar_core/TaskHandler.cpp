@@ -18,7 +18,7 @@ std::string MESH_DIRECTORY;
 // -----------------------------------------------------------------------------
 TaskHandler::TaskHandler(std::string node_name)
         :
-        task_ptr(NULL)
+        task_ptr(nullptr)
 {
 
     n = ros::NodeHandlePtr(new ros::NodeHandle(node_name));
@@ -148,7 +148,6 @@ void TaskHandler::DeleteTask() {
 // -----------------------------------------------------------------------------
 void TaskHandler::Cleanup() {
     DeleteTask();
-//    delete graphics;
 }
 
 // -----------------------------------------------------------------------------

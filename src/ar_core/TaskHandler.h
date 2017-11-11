@@ -31,7 +31,7 @@ private:
     void HandleTaskEvent();
 
     // start a new task and thread.
-    void StartTask(const uint task_id);
+    void StartTask(uint task_id);
 
     // stop the running haptic thread and destruct the  task object
     void DeleteTask();
