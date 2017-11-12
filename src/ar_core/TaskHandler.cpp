@@ -13,7 +13,7 @@
 #include "src/ar_core/tasks/TaskSteadyHand.h"
 #include "src/ar_core/tasks/TaskDemo.h"
 
-std::string MESH_DIRECTORY;
+std::string RESOURCES_DIRECTORY;
 
 // -----------------------------------------------------------------------------
 TaskHandler::TaskHandler(std::string node_name)
@@ -27,11 +27,11 @@ TaskHandler::TaskHandler(std::string node_name)
                                        ros::console::levels::Info) )
         ros::console::notifyLoggerLevelsChanged();
 
-    if (n->getParam("mesh_directory", MESH_DIRECTORY))
-        ROS_INFO("mesh directory: %s", MESH_DIRECTORY.c_str());
+    if (n->getParam("recources_directory", RESOURCES_DIRECTORY))
+        ROS_INFO("recources directory: %s", RESOURCES_DIRECTORY.c_str());
     else
         ROS_ERROR("Parameter '%s' is required. ",
-                  n->resolveName("MESH_DIRECTORY").c_str());
+                  n->resolveName("recources_directory").c_str());
 
     subscriber_control_events = n->subscribe(
             "/atar/control_events", 1, &TaskHandler::ControlEventsCallback, this);}
