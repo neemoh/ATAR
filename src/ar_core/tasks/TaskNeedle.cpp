@@ -78,7 +78,7 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
         needle_mesh = new
                 SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose,
                           density, friction,
-                          mesh_file_dir_str, 1);
+                          mesh_file_dir_str);
         AddSimObjectToTask(needle_mesh);
         needle_mesh->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
     }

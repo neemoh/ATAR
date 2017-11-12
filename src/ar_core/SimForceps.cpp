@@ -28,7 +28,7 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
                                              link_dims_[0], init_pose,
                                             gripper_density,
                                              gripper_friction,
-                                            MESH_DIRECTORY+ "jaw.obj", 1));
+                                            MESH_DIRECTORY+ "jaw.obj"));
     sim_objects_[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
     sim_objects_[1]->GetBody()->setContactStiffnessAndDamping(500, 100);
     sim_objects_[1]->GetBody()->setRollingFriction(btScalar(0.1));
@@ -48,7 +48,7 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
                                             link_dims_[0], gripper_pose,
                                             gripper_density,
                                             gripper_friction,
-                                            MESH_DIRECTORY+ "jaw.obj", 1));
+                                            MESH_DIRECTORY+ "jaw.obj"));
     sim_objects_[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
     sim_objects_[2]->GetBody()->setContactStiffnessAndDamping(500, 100);
     sim_objects_[2]->GetBody()->setRollingFriction(btScalar(0.1));
