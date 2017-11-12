@@ -31,6 +31,9 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
                      const std::string mesh_address, const int id)
         : object_type_(o_type), id_(id)
 {
+    // for controlling the generated compund mesh set this flag to true
+    bool show_compound_mesh = true;
+
     // -------------------------------------------------------------------------
     // initializations
     vtkSmartPointer<vtkPolyDataMapper> mapper =
@@ -50,8 +53,8 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
         case STATICPLANE : {
             // check if we have all the dimensions
             if (dimensions.size() != 4)
-                throw std::runtime_error("SimObject STATICPLANE "
-                                                 "shape requires a vector of 4 "
+                throw std::runtime_error(
+                        "SimObject STATICPLANE shape requires a vector of 4 "
                                                  "doubles as dimensions.");
 
             collision_shape_ = new btStaticPlaneShape(
@@ -69,7 +72,6 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
         case SPHERE : {
             // -----------------------------------------------------------------
             // SPHERE
-            //
             // check if we have all the dimensions
             if (dimensions.size() != 1)
                 throw std::runtime_error(
@@ -99,7 +101,6 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
         case CYLINDER : {
             // -----------------------------------------------------------------
             // CYLINDER
-            //
             // check if we have all the dimensions
             if (dimensions.size() != 2)
                 throw std::runtime_error("SimObject CYLINDER shape requires "
@@ -133,7 +134,6 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
         case BOX : {
             // -----------------------------------------------------------------
             // BOX
-            //
             // check if we have all dimensions
             if (dimensions.size() != 3)
                 throw std::runtime_error("SimObject BOX shape requires "
@@ -168,7 +168,6 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
         case CONE : {
             // -----------------------------------------------------------------
             // CONE
-            //
             // check if we have all dimensions
             if (dimensions.size() != 2)
                 throw std::runtime_error("SimObject CONE shape requires "
@@ -203,9 +202,8 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
         case MESH : {
             // -----------------------------------------------------------------
             // MESH
-            //
             if(o_type!=NOPHYSICS) {
-                if (!FileExists(mesh_address.c_str())) {
+                if (!FileExists(mesh_address)) {
                     ROS_ERROR("Can't open mesh file: %s", mesh_address.c_str());
                     throw std::runtime_error("Can't open mesh file.");
                 } else
@@ -224,23 +222,20 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
             // reader.
             vtkSmartPointer<vtkOBJReader> reader =
                     vtkSmartPointer<vtkOBJReader>::New();
-            //if(o_type!=NOPHYSICS) {
-            //
-            //    //
-            //    ////            // visualize the compund mesh for debug
-            //    size_t last_dot_position = filepath->find_last_of(".");
-            //
-            //    std::string file_name_no_extension = filepath->substr(
-            //        0,
-            //        last_dot_position
-            //    );
-            //
-            //    std::stringstream out_name;
-            //    out_name << file_name_no_extension << "_hacd.obj";
-            //
-            //    reader->SetFileName(out_name.str().c_str());
-            //} else
-            reader->SetFileName(mesh_address.c_str());
+            // visualize the compound mesh for debug
+            if(show_compound_mesh && o_type!=NOPHYSICS) {
+                size_t last_dot_pos = mesh_address.find_last_of('.');
+
+                std::string file_name_no_extension = mesh_address.substr(
+                        0,last_dot_pos);
+
+                std::stringstream out_name;
+                out_name << file_name_no_extension << "_hacd.obj";
+
+                reader->SetFileName(out_name.str().c_str());
+            }
+            else
+                reader->SetFileName(mesh_address.c_str());
 
             reader->Update();
             mapper->SetInputConnection(reader->GetOutputPort());

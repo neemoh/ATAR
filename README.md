@@ -174,6 +174,11 @@ minutes. So we do this only once and save the compound mesh in a separate
 file that has the same name of the original mesh file with an added _hacd. 
 Next time the application is executed we search for the file with _hacd and 
 if found, it is used and compound mesh generation is not repeated.
+* Note: The generated compound meshes are approximate and sometimes the 
+approximation deviates considerably from the original mesh. To check how the 
+generated compound object looks like, you can either open the generated 
+<filename>_hacd.obj in blender or set the show_compound_mesh boolean to 
+tru in the constructor of SimObject.
 
 ##### Creating mesh objects with Blender:
 You can use blender to create mesh objects. When the object is ready, follow 
