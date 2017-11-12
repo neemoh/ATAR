@@ -18,6 +18,13 @@
 //for debug message
 #include "ros/ros.h"
 #include <sys/stat.h>
+#include <vtkTexturedSphereSource.h>
+#include <vtkImageReader2Factory.h>
+#include <vtkImageReader.h>
+#include <vtkTransformTextureCoords.h>
+#include <vtkPlaneSource.h>
+#include <vtkTextureMapToPlane.h>
+#include <vtkPNGReader.h>
 
 inline bool FileExists (const std::string& name) {
     struct stat buffer;
@@ -28,11 +35,23 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
                      const std::vector<double> dimensions,
                      const KDL::Frame &pose,
                      const double density, const double friction,
-                     const std::string mesh_address, const int id)
+                     const std::string mesh_address,
+                     std::string texture_address,
+                     const int id)
         : object_type_(o_type), id_(id)
 {
     // for controlling the generated compund mesh set this flag to true
-    bool show_compound_mesh = true;
+    bool show_compound_mesh = false;
+
+    bool textured = false;
+
+    //check arguments
+    if(!texture_address.empty()){
+        if (shape!=SPHERE && shape!=PLANE)
+            ROS_WARN("Texture is only supported in SPHERE and PLANE shapes.");
+        else
+            textured=true;
+    }
 
     // -------------------------------------------------------------------------
     // initializations
@@ -46,8 +65,6 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
     // generate vtk actors, collision shapes and calculate volume (used to
     // find the mass for physics) according to the passed shape.
     switch (shape){
-
-        //
         // ---------------------------------------------------------------------
         // Static Plane
         case STATICPLANE : {
@@ -55,7 +72,7 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
             if (dimensions.size() != 4)
                 throw std::runtime_error(
                         "SimObject STATICPLANE shape requires a vector of 4 "
-                                                 "doubles as dimensions.");
+                                "doubles as dimensions.");
 
             collision_shape_ = new btStaticPlaneShape(
                     btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
@@ -65,6 +82,55 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
 
             volume = 0.0;
             shape_string = collision_shape_->getName();
+            object_type_  = NOVISUALS;
+            break;
+        }
+
+
+        // ---------------------------------------------------------------------
+        // Static Plane
+        case PLANE : {
+            // check if we have all the dimensions
+            if (dimensions.size() != 4)
+                throw std::runtime_error(
+                        "SimObject STATICPLANE shape requires a vector of 4 "
+                                "doubles as dimensions.");
+
+            collision_shape_ = new btStaticPlaneShape(
+                    btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
+                              btScalar(B_DIM_SCALE*dimensions[1]),
+                              btScalar(B_DIM_SCALE*dimensions[2])),
+                    btScalar(B_DIM_SCALE*dimensions[3]) );
+
+            volume = 0.0;
+            shape_string = collision_shape_->getName();
+
+            // VTK
+            vtkSmartPointer<vtkPlaneSource> plane =
+                    vtkSmartPointer<vtkPlaneSource>::New();
+            plane->SetNormal(dimensions[0], dimensions[1], dimensions[2]);
+            plane->SetCenter(dimensions[3]*dimensions[0],
+                             dimensions[3]*dimensions[1],
+                             dimensions[3]*dimensions[2]);
+
+            if(textured){
+                vtkSmartPointer<vtkPNGReader> jPEGReader =
+                        vtkSmartPointer<vtkPNGReader>::New();
+                jPEGReader->SetFileName ( texture_address.c_str() );
+                // Apply the texture
+                vtkSmartPointer<vtkTexture> texture =
+                        vtkSmartPointer<vtkTexture>::New();
+                texture->SetInputConnection(jPEGReader->GetOutputPort());
+                vtkSmartPointer<vtkTextureMapToPlane> texturePlane =
+                        vtkSmartPointer<vtkTextureMapToPlane>::New();
+                texturePlane->SetInputConnection(plane->GetOutputPort());
+
+                mapper->SetInputConnection(texturePlane->GetOutputPort());
+                actor_->SetTexture(texture);
+            }
+            else
+                mapper->SetInputConnection(plane->GetOutputPort());
+
 
             break;
         }
@@ -77,14 +143,49 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
                 throw std::runtime_error(
                         "SimObject SPHERE shape requires a vector of 1 double "
                                 "as dimensions.");
-            // VTK actor_
-            vtkSmartPointer<vtkSphereSource> source =
-                    vtkSmartPointer<vtkSphereSource>::New();
+            if(textured){
+                double translate[3];
+                translate[0] = 0.0;
+                translate[1] = 0.0;
+                translate[2] = 0.0;
 
-            source->SetRadius(dimensions[0]);
-            source->SetPhiResolution(30);
-            source->SetThetaResolution(30);
-            mapper->SetInputConnection(source->GetOutputPort());
+                // Create a sphere with texture coordinates
+                vtkSmartPointer<vtkTexturedSphereSource> source =
+                        vtkSmartPointer<vtkTexturedSphereSource>::New();
+                source->SetRadius(dimensions[0]);
+                source->SetPhiResolution(30);
+                source->SetThetaResolution(30);
+                // Read texture file
+                vtkSmartPointer<vtkImageReader2Factory> readerFactory =
+                        vtkSmartPointer<vtkImageReader2Factory>::New();
+                vtkImageReader2 *imageReader =
+                        readerFactory->CreateImageReader2(texture_address.c_str());
+                imageReader->SetFileName(texture_address.c_str());
+
+                // Create texture
+                vtkSmartPointer<vtkTexture> texture =
+                        vtkSmartPointer<vtkTexture>::New();
+                texture->SetInputConnection(imageReader->GetOutputPort());
+
+                vtkSmartPointer<vtkTransformTextureCoords> transformTexture =
+                        vtkSmartPointer<vtkTransformTextureCoords>::New();
+                transformTexture->SetInputConnection(source->GetOutputPort());
+                transformTexture->SetPosition(translate);
+                mapper->SetInputConnection(transformTexture->GetOutputPort());
+                actor_->SetTexture( texture );
+
+            } else {
+                // VTK actor_
+                vtkSmartPointer<vtkSphereSource> source =
+                        vtkSmartPointer<vtkSphereSource>::New();
+
+                source->SetRadius(dimensions[0]);
+                source->SetPhiResolution(30);
+                source->SetThetaResolution(30);
+                mapper->SetInputConnection(source->GetOutputPort());
+            }
+
+
 
             // Bullet Shape
             collision_shape_ = new btSphereShape(btScalar(B_DIM_SCALE*dimensions[0]));
@@ -95,7 +196,10 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
             // set name
             shape_string = collision_shape_->getName();
 
+
+
             break;
+
         }
 
         case CYLINDER : {
@@ -323,15 +427,15 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
             shape == ObjectShape::CYLINDER ||
             shape == ObjectShape::BOX
                 ){
-            rigid_body_->setRollingFriction(btScalar(0.001));
-            rigid_body_->setSpinningFriction(btScalar(0.001));
+            rigid_body_->setRollingFriction(btScalar(0.002));
+            rigid_body_->setSpinningFriction(btScalar(0.002));
             //            body_->setAnisotropicFriction
             //                    (collision_shape_->getAnisotropicRollingFrictionDirection
             //                            (),btCollisionObject::CF_ANISOTROPIC_ROLLING_FRICTION);
         }
         else if(shape == ObjectShape::SPHERE) {
-            rigid_body_->setRollingFriction(btScalar(0.001));
-            rigid_body_->setSpinningFriction(btScalar(0.001));
+            rigid_body_->setRollingFriction(btScalar(0.002));
+            rigid_body_->setSpinningFriction(btScalar(0.002));
         }
 
         rigid_body_->setFriction(btScalar(friction));
@@ -357,8 +461,8 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
 
 //------------------------------------------------------------------------------
 SimObject::~SimObject() {
-// deleting from outside
-    ROS_INFO("Destructing SimObject");
+
+//    ROS_INFO("Destructing SimObject");
 
     delete collision_shape_;
     delete motion_state_;

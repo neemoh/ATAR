@@ -70,13 +70,15 @@
 // -----------------------------------------------------------------------------
 enum ObjectType {
     NOPHYSICS,  // Just graphics
+    NOVISUALS,  // Just graphics
     DYNAMIC,    // If density==0.0 object is STATIC
     KINEMATIC,   // Set the pose of the object externally
 };
 
 // -----------------------------------------------------------------------------
 enum ObjectShape {
-    STATICPLANE,    //dims = [normal_x, normal_y, normal_z]
+    STATICPLANE,    //dims = [normal_x, normal_y, normal_z, constant_distance]
+    PLANE,          //dims =
     SPHERE,         //dims = [radius]
     CYLINDER,       //dims = [radius, height]
     BOX,            //dims = [width, length, height]
@@ -89,14 +91,39 @@ class SimObject {
 
 public:
     /**
-    * SimObject constructor.
-    * Needs at least 3 arguments.
+    * SimObject target constructor. Needs at least 3 arguments.
     */
-    SimObject(ObjectShape shape, const ObjectType type,
+    SimObject(ObjectShape shape,
+              ObjectType type,
               std::vector<double> dimensions,
               const KDL::Frame &pose=KDL::Frame(),
-              double density=0.0, double friction = 0.1,
-              std::string mesh_address = {}, int id = 0);
+              double density=0.0,
+              double friction = 0.1,
+              std::string mesh_address = {},
+              std::string texture_address = {},
+              int id = 0);
+
+    // Delegated constructor for mesh objects doesnt have dimensions
+    SimObject(ObjectShape shape,
+              const ObjectType type,
+              std::string mesh_address,
+              const KDL::Frame &pose,
+              double density,
+              double friction,
+              int id = 0)
+            :
+            SimObject::SimObject(shape, type, std::vector<double>(),
+                                 pose, density, friction,
+                                 std::move(mesh_address), "", id){};
+
+    // Delegated constructor for staticplane
+    SimObject(ObjectShape shape,std::vector<double> dimensions)
+            :
+            SimObject(shape, DYNAMIC, std::move(dimensions)) {
+        if(shape!=STATICPLANE)
+            throw std::runtime_error("SimObject constructor with two argument "
+                                             "is reserved only for STATICPLANE"
+                                             " shape");}
 
     ~SimObject();
 
@@ -125,10 +152,12 @@ public:
     */
     KDL::Frame GetPose();
 
+    ObjectType GetObjectType(){return object_type_;}
+
 private:
 
     int id_;
-    ObjectType object_type_;
+    ObjectType                   object_type_;
     btRigidBody *                rigid_body_;
     vtkSmartPointer<vtkActor>    actor_;
     BulletVTKMotionState  *      motion_state_;
