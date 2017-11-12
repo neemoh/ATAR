@@ -236,7 +236,11 @@ add_executable(
         src/ar_core/VTKConversions.cpp
         src/ar_core/Manipulator.cpp
         src/ar_core/Manipulator.h
-        src/ar_core/AugmentedCamera.cpp src/ar_core/AugmentedCamera.h src/ar_core/SimTask.cpp src/ar_core/SimMechanism.h)
+        src/ar_core/AugmentedCamera.cpp
+        src/ar_core/AugmentedCamera.h
+        src/ar_core/SimTask.cpp
+        src/ar_core/SimMechanism.h)
+
 
 target_link_libraries(
         ar_core
