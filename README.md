@@ -83,12 +83,11 @@ in your catkin workspace and compile it:
 git clone https://github.com/neemoh/ATAR.git
 catkin build
 ```
-To test it, first make a folder named camera_info in the .ros folder in your 
-home directory and copy the default_intrinsics.yaml file from the 
-/ATAR/resources folder in camera_info. Then run the vr_test.launch file and click on 
-task 8. Wait for the compound convex mesh to be generated and the task should
- run after that. You should see some spheres and cubes falling on a floor, 
- which would mean you have successfully built the libs. Congrats! 
+To test it, run the test_vr.launch file and click on task 1. Wait for the 
+compound convex mesh to be generated (you can see the progress in the terminal)
+and the task should run after that. You should see some spheres and mesh 
+objects falling on a floor, while the camera rotates, which would mean you 
+have successfully built the libs. Congrats! 
  In case you have an nvidia card and its driver has benn installed, you can 
  have faster graphics and also shadows. To test the shadows set the 
  with_shadows flag to true in the vr_test.lanuch file.
@@ -96,10 +95,15 @@ task 8. Wait for the compound convex mesh to be generated and the task should
 ## TaskHandler
 This is the class that subscribes to a control events topics (published by the 
 GUI) and loads and unloads tasks. When you want to add a new task, you can 
-make a copy of the TaskTemplate class giving it a name that starts with 
-Task<something> (because all the files starting with Task will be 
-automatically added to the CMakeLists) and include your task's header in the 
-TaskHandler and add its allocation to the StartTask method.
+make a class with a name that starts with Task<something> (because all the 
+files starting with Task will be automatically added to the CMakeLists) and 
+include your task's header in the TaskHandler and add its allocation to the 
+StartTask method. The task class must be a child of SimTask class (Check 
+TaskDemo1). 
+* Note that you need to reload your CMakeLists project for the automatic
+addition of your Task file to the cmake project. If you don't know how to do
+that, just modify a line in the CMakeLists.txt file like add a space or 
+something!
  
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_ATAR_Arch.png)
 
@@ -112,7 +116,7 @@ of rendering windows, resolutions...) and different manipulators. This of
 course adds some overhead cost (and some memory leak that I will hopefully 
 fix soon!).
 The block diagram above shows the main elements of a task class. You can have
-a look at the TaskDemo.h/.cpp files for a minimal example. The main elements 
+a look at the TaskDemo1.h/.cpp files for a minimal example. The main elements 
 are the Rendering object, manipulators and SimObjects that are explained in 
 the following. There are two methods of the Task class that are called 
 periodically:
@@ -162,10 +166,11 @@ window_positions must contain 4 elements(x,y,x,y) and 6 elements if you have
 You can define objects using the SimObject class which has a graphic actor 
 (actor_) and physics body (rigid_body_). A SimObject can be dynamic (i.e. 
 its pose will be update by physics simulation), static (i.e constant pose), 
-kinematic (i.e. pose is assigned externally, e.g. from a mster device). There
+kinematic (i.e. pose is assigned externally, e.g. from a master device). There
  are some primitive shapes available (Cube, sphere, cylinder, cone and plane)
- , but more usefully the shape can be from a .obj mesh file. To learn more 
- about SimObjects refer to SimObjects.h.
+ , but more usefully the shape can be from a .obj mesh file. For Sphere and 
+ Plane shapes you can have a texture image. PNG and JPG formats are supported
+ . To learn more about SimObjects refer to SimObjects.h.
 
 #### Mesh objects
 Meshes are decomposed into approximated compound meshes using the VHACD 
@@ -178,7 +183,7 @@ if found, it is used and compound mesh generation is not repeated.
 approximation deviates considerably from the original mesh. To check how the 
 generated compound object looks like, you can either open the generated 
 <filename>_hacd.obj in blender or set the show_compound_mesh boolean to 
-tru in the constructor of SimObject.
+true in the constructor of SimObject.
 
 ##### Creating mesh objects with Blender:
 You can use blender to create mesh objects. When the object is ready, follow 
@@ -189,17 +194,31 @@ dimensions are as small as a few millimiters:
 * Go to File-> Export and select Wavefront(.obj). In the options set the scale
  as 0.01 and save.
 
-### Manipulator Class
+### Interact with objects using a haptic device
 In order to interact with the virtual environment you would need to have an 
 input device of some sort. The Manipulator class helps you to read the 
 cartesian pose and twist of that device (assuming some other node is 
-publishing them) and transform them to the world reference frame. This
-local to world transformation is found differently in VR and AR cases. The
+publishing them) and transform them to the virtual world reference frame. 
+Check TaskDemo2 for an example of this. You can use the SimMechanism class to
+ make a virtual tool that follows the pose of the real manipulator. I have 
+ already created one called:
+  * SimForceps. It consists of 3 links. first is a small box representing the
+   base. The other two are jaws (mesh objects) that are connected with an 
+   elastic link to the base cube. The angle of the jaws is set with a 
+   bulletConstraint that is actuated. All these complications is because 
+   Kinematic objects interact very aggressively with the dynamic objects, so 
+   if the forceps were 3 kinematics links, it would have been impossible to 
+   grab something with them. That's why the jaws sometimes get distorted! 
+   since are actually dynamic objects and when they hit something their 
+   elastic constraint let's them move too far from the base...
+
+#### Hand-Eye Calibrations
+The local to world transformation is found differently in VR and AR cases. The
 common element in both cases is that we need to know the pose of the
 camera with respect to the world (camera_to_world_frame_tr). This has to
 be set from outside of the class by passing the pointer of this Manipulator 
 object to a Rendering object through the SetManipulatorInterestedInCamPose 
-method (check the DemoTask). After doing that the camera pose will be 
+method (check the Demo2Task). After doing that the camera pose will be 
 communicated to the manipulator every time it changes. Now about the rest of 
 the kinematics chain:
 
@@ -227,6 +246,9 @@ TO BE COMPLETED
 ## TODO: Augmented Reality 
 Things to explain: camera. Calibrations (intrinsic, extrinsic, arm to world)
 
+intrinsic calib files: make a folder named camera_info in the .ros folder in your 
+                       home directory and copy the default_intrinsics.yaml file from the 
+                       /ATAR/resources folder in camera_info.
 ### AR Camera
 
 * "/"+cam_name+ "/image_raw"
