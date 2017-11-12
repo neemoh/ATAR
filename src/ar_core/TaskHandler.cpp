@@ -4,6 +4,7 @@
 
 #include "TaskHandler.h"
 #include <custom_conversions/Conversions.h>
+#include <src/ar_core/tasks/TaskDemo2.h>
 #include "ControlEvents.h"
 // tasks
 #include "src/deprecated/TaskBuzzWire.h"
@@ -11,7 +12,7 @@
 #include "src/ar_core/tasks/TaskNeedle.h"
 #include "src/ar_core/tasks/TaskRingTransfer.h"
 #include "src/ar_core/tasks/TaskSteadyHand.h"
-#include "src/ar_core/tasks/TaskDemo.h"
+#include "src/ar_core/tasks/TaskDemo1.h"
 
 std::string RESOURCES_DIRECTORY;
 
@@ -95,31 +96,32 @@ void TaskHandler::StartTask(const uint task_id) {
     if(task_id ==1){
         // allocate anew dynamic task
         ROS_DEBUG("Starting new TestTask task. ");
-        task_ptr   = new TaskDemo(n);
+        task_ptr   = new TaskDemo1(n);
     }
     else if(task_id ==2){
         ROS_DEBUG("Starting new BuzzWireTask task. ");
-        task_ptr   = new TaskSteadyHand(n);
+        task_ptr   = new TaskDemo2(n);
     }
     else if(task_id ==3){
+        ROS_DEBUG("Starting new BuzzWireTask task. ");
+        task_ptr   = new TaskSteadyHand(n);
+    }
+    else if(task_id ==4){
         ROS_DEBUG("Starting new TaskRingTransfer. ");
         task_ptr   = new TaskRingTransfer(n);
     }
-    else if(task_id ==4){
+    else if(task_id ==5){
         ROS_DEBUG("Starting new TaskDeformable . ");
         task_ptr   = new TaskDeformable(n);
     }
-    else if(task_id ==5){
+    else if(task_id ==6){
         ROS_DEBUG("Starting new TaskNeedle. ");
         task_ptr   = new TaskNeedle(n);
-    }
-    else if(task_id ==6) {
-
     }
     else if(task_id ==7) {
 
     }
-    else if(task_id == 8) {
+    else if(task_id ==8) {
 
     }
     if(task_ptr) {
