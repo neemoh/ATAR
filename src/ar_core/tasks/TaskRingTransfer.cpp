@@ -58,9 +58,8 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     // static floor
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
-    std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    SimObject* floor= new SimObject(ObjectShape::STATICPLANE,
-                                    ObjectType::DYNAMIC, floor_dims);
+    std::vector<double> dims = {0., 0., 1., -0.5};
+    SimObject* floor= new SimObject(ObjectShape::STATICPLANE, dims);
     dynamics_world->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
@@ -119,9 +118,6 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     size_t n_rings = 4;
     SimObject *rings[n_rings];
     {
-        std::stringstream input_file_dir;
-        input_file_dir << MESH_DIRECTORY << std::string("task_Hook_ring_D2cm_D5mm.obj");
-        std::string mesh_file_dir_str = input_file_dir.str();
         float density = 50000;
         float friction = 5;
         for (int l = 0; l < n_rings; ++l) {
@@ -131,9 +127,9 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
             std::vector<double> dim; // not used
 
             rings[l] = new
-                    SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, dim, pose,
-                              density, friction,
-                              mesh_file_dir_str, 0);
+                    SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                              RESOURCES_DIRECTORY+"/mesh/task_Hook_ring_D2cm_D5mm.obj",
+                              pose, density, friction);
             rings[l]->GetActor()->GetProperty()->SetColor(0., 0.5, 0.6);
             AddSimObjectToTask(rings[l]);
 
@@ -176,16 +172,13 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     {
         KDL::Frame pose(KDL::Rotation::Quaternion(0.7, 0, 0.7, 0),
                         KDL::Vector(0.09, 0.07, 0.08));
-        std::stringstream input_file_dir;
-        input_file_dir << MESH_DIRECTORY << std::string("task_hook_hook.obj");
-        std::string mesh_file_dir_str = input_file_dir.str();
         std::vector<double> dim; // not used
         float density = 50000;
 
         hook_mesh = new
-                SimObject(ObjectShape::MESH, ObjectType::KINEMATIC, dim, pose,
-                          density, 0,
-                          mesh_file_dir_str, 0);
+                SimObject(ObjectShape::MESH, ObjectType::KINEMATIC,
+                          RESOURCES_DIRECTORY+"/mesh/task_hook_hook.obj", pose,
+                          density, 0);
         hook_mesh->GetActor()->GetProperty()->SetColor(1., 1.0, 1.0);
         AddSimObjectToTask(hook_mesh);
     }

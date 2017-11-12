@@ -83,9 +83,9 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
     float density = 20000;
     KDL::Frame soft_pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
             , KDL::Vector(attention_center[0], attention_center[1], attention_center[2]) );
-    std::stringstream input_file_dir;
-    input_file_dir << MESH_DIRECTORY << std::string("task_deformable_sphere.obj");
-    std::string mesh_file_dir_str = input_file_dir.str();
+
+    std::string mesh_file_dir_str = RESOURCES_DIRECTORY +
+            "/mesh/task_deformable_sphere.obj";
 
     soft_o0 = new SimSoftObject(*sb_w_info, mesh_file_dir_str, soft_pose,
                                      density);

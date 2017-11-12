@@ -4,7 +4,7 @@
 
 #include "SimForceps.h"
 #include <vtkProperty.h>
-extern std::string                      MESH_DIRECTORY;
+extern std::string                      RESOURCES_DIRECTORY;
 
 SimForceps::SimForceps(const KDL::Frame init_pose)
 {
@@ -25,10 +25,10 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
     // create jaw 1
     sim_objects_.emplace_back(new SimObject(ObjectShape::MESH,
                                             ObjectType::DYNAMIC,
-                                             link_dims_[0], init_pose,
+                                            RESOURCES_DIRECTORY+ "/mesh/jaw.obj",
+                                            init_pose,
                                             gripper_density,
-                                             gripper_friction,
-                                            MESH_DIRECTORY+ "jaw.obj"));
+                                            gripper_friction));
     sim_objects_[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
     sim_objects_[1]->GetBody()->setContactStiffnessAndDamping(500, 100);
     sim_objects_[1]->GetBody()->setRollingFriction(btScalar(0.1));
@@ -45,10 +45,10 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
     KDL::Frame gripper_pose(jaw_2_rot, gripper_pose_position);
     sim_objects_.emplace_back(new SimObject(ObjectShape::MESH,
                                             ObjectType::DYNAMIC,
-                                            link_dims_[0], gripper_pose,
+                                            RESOURCES_DIRECTORY+ "/mesh/jaw.obj",
+                                            gripper_pose,
                                             gripper_density,
-                                            gripper_friction,
-                                            MESH_DIRECTORY+ "jaw.obj"));
+                                            gripper_friction));
     sim_objects_[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
     sim_objects_[2]->GetBody()->setContactStiffnessAndDamping(500, 100);
     sim_objects_[2]->GetBody()->setRollingFriction(btScalar(0.1));

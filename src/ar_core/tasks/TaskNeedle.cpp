@@ -56,9 +56,7 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
     // always add a floor in under the workspace of your workd to prevent
     // objects falling too far and mess things up.
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    SimObject *floor = new SimObject(ObjectShape::STATICPLANE,
-                                     ObjectType::DYNAMIC, floor_dims,
-                                     KDL::Frame(), 0.0);
+    SimObject *floor = new SimObject(ObjectShape::STATICPLANE, floor_dims);
     dynamics_world->addRigidBody(floor->GetBody());
 
     // -------------------------------------------------------------------------
@@ -70,15 +68,11 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
 
         float friction = 20;
         float density = 90000; // kg/m3
-        std::stringstream input_file_dir;
-        input_file_dir << MESH_DIRECTORY << std::string("task_needle_needle_L3cm_d3mm"
-                                                                ".obj");
-        std::string mesh_file_dir_str = input_file_dir.str();
-
         needle_mesh = new
-                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose,
-                          density, friction,
-                          mesh_file_dir_str);
+                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                          RESOURCES_DIRECTORY
+                          +"/mesh/task_needle_needle_L3cm_d3mm.obj", pose,
+                          density, friction);
         AddSimObjectToTask(needle_mesh);
         needle_mesh->GetActor()->GetProperty()->SetColor(0.8f, 0.8f, 0.8f);
     }
@@ -94,9 +88,9 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
 
         float friction = 3;
         float density = 0; // kg/m3
-        suture_plane_1 = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim,
-                                       pose, density, friction
-                ,MESH_DIRECTORY + "task_needle_suture_plane.obj" , 0);
+        suture_plane_1 = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC
+                ,RESOURCES_DIRECTORY + "/mesh/task_needle_suture_plane.obj",
+                                       pose, density, friction);
 
 
         AddSimObjectToTask(suture_plane_1);
@@ -114,8 +108,8 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
         float friction = 3;
         float density = 0; // kg/m3
         suture_plane_2 = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC
-                , _dim, pose, density, friction
-                ,MESH_DIRECTORY + "task_needle_suture_plane.obj" , 0);
+                ,RESOURCES_DIRECTORY + "/mesh/task_needle_suture_plane.obj"
+                , pose, density, friction);
         suture_plane_2->GetActor()->GetProperty()->SetColor(0.8f, 0.2f, 0.2f);
         AddSimObjectToTask(suture_plane_2);
     }
@@ -130,14 +124,10 @@ TaskNeedle::TaskNeedle(ros::NodeHandlePtr n)
 
         float friction = 20;
         float density = 50000; // kg/m3
-        std::stringstream input_file_dir;
-        input_file_dir << MESH_DIRECTORY << std::string("task_needle_ring_D2cm_D5mm.obj");
-        std::string mesh_file_dir_str = input_file_dir.str();
-
         ring_mesh = new
                 SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, pose,
                           density, friction,
-                          mesh_file_dir_str, 0);
+                RESOURCES_DIRECTORY + "/mesh/task_needle_ring_D2cm_D5mm.obj" );
         AddSimObjectToTask(ring_mesh);
         ring_mesh->GetActor()->GetProperty()->SetColor(0.4f, 0.3f, 0.3f);
         //ring_mesh->GetBody()->setContactStiffnessAndDamping(5000, 10);

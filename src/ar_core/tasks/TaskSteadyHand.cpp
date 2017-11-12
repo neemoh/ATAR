@@ -173,13 +173,6 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     // -------------------------------------------------------------------------
     // Stand MESH hq
 
-    std::stringstream input_file_dir;
-    std::string mesh_file_dir_str;
-    input_file_dir.str("");
-    input_file_dir << MESH_DIRECTORY
-                   << std::string("task_steady_hand_stand.obj");
-    mesh_file_dir_str = input_file_dir.str();
-
     // Define the rotation of the tube mesh
 
     pose_tube =   KDL::Frame( KDL::Rotation::RotX(M_PI/2)*
@@ -191,8 +184,9 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     std::vector<double> _dim;
     double friction = 0.001;
     stand_mesh = new
-            SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, _dim, stand_frame,
-                      0.0, friction, mesh_file_dir_str);
+            SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                      RESOURCES_DIRECTORY+"/mesh/task_steady_hand_stand.obj"
+            , stand_frame, 0.0, friction);
 
     AddSimObjectToTask(stand_mesh);
 
@@ -220,17 +214,20 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     // -------------------------------------------------------------------------
     // MESH hq is for rendering and lq is for generating
     // active constraints
-
+    std::stringstream input_file_dir;
+    std::string mesh_file_dir_str;
     for (int m = 0; m <4; ++m) {
 
         input_file_dir.str("");
-        input_file_dir << MESH_DIRECTORY
-                       << std::string("task_steady_hand_tube_quarter_mesh") << m+1 <<".obj";
+        input_file_dir << RESOURCES_DIRECTORY
+                       << std::string
+                               ("/mesh/task_steady_hand_tube_quarter_mesh")
+                       << m+1 <<".obj";
         mesh_file_dir_str = input_file_dir.str();
 
         tube_meshes[m] = new
-                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, {}, pose_tube,
-                          0.0, friction, mesh_file_dir_str);
+                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC
+                , mesh_file_dir_str, pose_tube, 0.0, friction);
         tube_meshes[m]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecular(1);
         tube_meshes[m]->GetActor()->GetProperty()->SetSpecularPower(100);
@@ -239,13 +236,10 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
 
     // -------------------------------------------------------------------------
     // MESH thin
-    input_file_dir.str("");
-    input_file_dir << MESH_DIRECTORY
-                   << std::string("task_steady_hand_tube_whole_thin.obj");
-    mesh_file_dir_str = input_file_dir.str();
     tube_mesh_thin = new
-            SimObject(ObjectShape::MESH, ObjectType::NOPHYSICS, _dim, pose_tube,
-                      0.0, friction, mesh_file_dir_str);
+            SimObject(ObjectShape::MESH, ObjectType::NOPHYSICS
+            ,RESOURCES_DIRECTORY+"/mesh/task_steady_hand_tube_whole_thin.obj",
+                      pose_tube, 0.0 ,friction);
     //graphics_actors.push_back(tube_mesh_thin->GetActor());
 
     //// TODO: Locally transform the mesh so that in the findDesiredPose we
@@ -280,16 +274,10 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
                                ring_holder_bar_pose.p.y() + (l+1) * step * dir.y(),
                                ring_holder_bar_pose.p.z()  + (l+1) * step * dir.z()) );
 
-        input_file_dir.str("");
-        //input_file_dir <<mesh_file_dir << std::string("torus_D10mm_d1.2mm.obj");
-        input_file_dir <<MESH_DIRECTORY << std::string
-                ("task_steady_hand_torus_D10mm_d1.2mm.obj");
-
-        mesh_file_dir_str = input_file_dir.str();
-
         ring_mesh[ring_num - l -1] = new
-                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC, {}, pose,
-                          density, friction, mesh_file_dir_str);
+                SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
+                          RESOURCES_DIRECTORY+"/mesh/task_steady_hand_torus_D10mm_d1.2mm.obj"
+                , pose, density, friction);
 
         AddSimObjectToTask(ring_mesh[ring_num - l -1]);
         ring_mesh[ring_num-l-1]->GetActor()->GetProperty()->SetColor(colors.Turquoise);

@@ -37,9 +37,7 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
     // always add a floor under the workspace of your task to prevent objects
     // from falling too far and mess things up.
     std::vector<double> floor_dims = {0., 0., 1., -0.5};
-    SimObject *floor = new SimObject(ObjectShape::STATICPLANE,
-                                     ObjectType::DYNAMIC, floor_dims);
-//    dynamics_world->addRigidBody(floor->GetBody());
+    SimObject *floor = new SimObject(ObjectShape::STATICPLANE, floor_dims);
     AddSimObjectToTask(floor);
     // -------------------------------------------------------------------------
     // Create a floor
@@ -83,10 +81,13 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
             pose.p = pose.p+ KDL::Vector(0.0001, 0.0, 0.008);
 
             sphere[i] = new SimObject(ObjectShape::SPHERE, ObjectType::DYNAMIC,
-                                      sphere_dimensions, pose, density);
+                                      sphere_dimensions, pose, density, 0.1,
+                                      "",
+                                      RESOURCES_DIRECTORY+"/texture/checker"
+                                              ".png");
 
             // we can access all the properties of a VTK actor
-            sphere[i]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
+//            sphere[i]->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
             // same applies for bullet parameters
             sphere[i]->GetBody()->setFriction(1.5f);
             sphere[i]->GetBody()->setRollingFriction(0.5f);
