@@ -16,6 +16,7 @@
 #include "Rendering.h"
 #include "SimObject.h"
 #include "SimMechanism.h"
+#include "Colors.hpp"
 
 
 extern std::string                      RESOURCES_DIRECTORY;
@@ -23,18 +24,21 @@ extern std::string                      RESOURCES_DIRECTORY;
 
 class SimTask{
 public:
-    SimTask(ros::NodeHandlePtr n, const double haptic_loop_rate);
+
+    explicit SimTask(ros::NodeHandlePtr n);
 
     virtual ~SimTask();
 
-    // The main loop. Updates physics, graphics and task logic
+    // The main loop. Updates physics, graphics and task logic and it is
+    // called from outside
     virtual void StepWorld();
 
-    // The main loop. Updates physics, graphics and task logic
-    virtual void TaskLoop() =0;
-
-    // This is the function that is handled by the haptics thread.
-    virtual void HapticsThread() = 0;
+    // This is the function that is handled by the haptics thread and can be
+    // used for calculations that need to run at a high frequency.
+    // also the ros spinning happens here (since you might have subscribers
+    // in the haptics thread) so when you override it don't forget to include
+    // ros spinning!
+    virtual void HapticsThread();
 
     // minor reset
     virtual void ResetCurrentAcquisition(){};
@@ -49,9 +53,15 @@ public:
     void AddSimMechanismToTask(SimMechanism* mech);
 
 private:
+
+    // This method is called from the StepWorld loop. The idea is to override
+    // this in children tasks.
+    virtual void TaskLoop() =0;
+
+    // initialize the bullet realted things
     void InitBullet();
 
-    // steps the physics simulation
+    // steps the physics simulation. Can be overridden if needed.
     virtual void StepPhysics();
 
 protected:
@@ -60,8 +70,8 @@ protected:
     ros::Time                               time_last;
 
     std::unique_ptr<Rendering>              graphics;
+    Colors                                  colors;
 
-    double                                  haptic_loop_rate;
     std::vector<vtkSmartPointer<vtkProp>>   graphics_actors;
     std::vector<SimObject*>                 sim_objs;
     btDiscreteDynamicsWorld *               dynamics_world;

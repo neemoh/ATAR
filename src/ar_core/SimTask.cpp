@@ -3,13 +3,13 @@
 //
 
 #include <ros/ros.h>
+#include <boost/thread/thread.hpp>
 #include "SimTask.h"
 
 
-SimTask::SimTask(ros::NodeHandlePtr n, const double haptic_loop_rate)
+SimTask::SimTask(ros::NodeHandlePtr n)
         :
         nh(n),
-        haptic_loop_rate(haptic_loop_rate),
         time_last(ros::Time::now()){
 
     // Initialize Bullet Physics
@@ -122,4 +122,16 @@ void SimTask::AddSimMechanismToTask(SimMechanism *mech) {
     for(auto i:constraints)
         dynamics_world->addConstraint(i);
 
+}
+
+void SimTask::HapticsThread() {
+
+    ros::Rate loop_rate(60);
+
+    while (ros::ok())
+    {
+        ros::spinOnce();
+        loop_rate.sleep();
+        boost::this_thread::interruption_point();
+    }
 }
