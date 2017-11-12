@@ -31,7 +31,7 @@
  *      enum definition.
  *
  *      ObjectType: Four cases
- *          1. NOPHYSICS: The physics will not be initialized.
+ *          1. NOPHYSICS: The physics will not be included.
  *          2. KINEMATIC: The pose of the object will be set at each
  *          iteration using the SetKinematicPose. This is useful for things
  *          like tools that their pose is read from a master device.
@@ -45,6 +45,8 @@
  *      pose: The Initial pose of the dynamics objects.
  *      friction: friction!
  *      id: can be used in collision detection
+ *      texture_address: For Sphere and Plane shapes you can have a texture
+ *      image. PNG and JPG formats are supported.
  *
  * \attention MESH:  Meshes are decomposed into approximated compound meshes
  * using the VHACD method. Generating the approximated compound mesh can take
@@ -53,6 +55,11 @@
  * added _hacd. Next time the application is executed we search for the file
  * with _hacd and if found, it is used and compound mesh generation is not
  * repeated.
+ * Note: The generated compound meshes are approximate and
+ * sometimes the approximation deviates considerably from the original mesh.
+ * To check how the generated compound object looks like, you can either open
+ * the generated <filename>_hacd.obj in blender or set the show_compound_mesh
+ * boolean to true in the constructor of SimObject.
  *
  * \attention Dimension scaling: We were interested in objects with
  * dimensions in the order of a few millimiters. It turned out that the bullet
@@ -97,24 +104,24 @@ public:
               ObjectType type,
               std::vector<double> dimensions,
               const KDL::Frame &pose=KDL::Frame(),
-              double density=0.0,
+              double density = 0.0,
               double friction = 0.1,
-              std::string mesh_address = {},
               std::string texture_address = {},
+              std::string mesh_address = {},
               int id = 0);
 
     // Delegated constructor for mesh objects doesnt have dimensions
     SimObject(ObjectShape shape,
               const ObjectType type,
               std::string mesh_address,
-              const KDL::Frame &pose,
-              double density,
-              double friction,
+              const KDL::Frame &pose=KDL::Frame(),
+              double density = 0.0,
+              double friction = 0.1,
               int id = 0)
             :
             SimObject::SimObject(shape, type, std::vector<double>(),
-                                 pose, density, friction,
-                                 std::move(mesh_address), "", id){};
+                                 pose, density, friction, "",
+                                 std::move(mesh_address), id){};
 
     // Delegated constructor for staticplane
     SimObject(ObjectShape shape,std::vector<double> dimensions)

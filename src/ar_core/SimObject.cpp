@@ -25,6 +25,7 @@
 #include <vtkPlaneSource.h>
 #include <vtkTextureMapToPlane.h>
 #include <vtkPNGReader.h>
+#include <vtkJPEGReader.h>
 
 inline bool FileExists (const std::string& name) {
     struct stat buffer;
@@ -35,26 +36,41 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
                      const std::vector<double> dimensions,
                      const KDL::Frame &pose,
                      const double density, const double friction,
-                     const std::string mesh_address,
                      std::string texture_address,
+                     const std::string mesh_address,
                      const int id)
         : object_type_(o_type), id_(id)
 {
-    // for controlling the generated compund mesh set this flag to true
-    bool show_compound_mesh = false;
-
-    bool textured = false;
-
-    //check arguments
-    if(!texture_address.empty()){
-        if (shape!=SPHERE && shape!=PLANE)
-            ROS_WARN("Texture is only supported in SPHERE and PLANE shapes.");
-        else
-            textured=true;
-    }
 
     // -------------------------------------------------------------------------
     // initializations
+
+    // for controlling the generated compund mesh set this flag to true
+    bool show_compound_mesh = false;
+
+    // Texture
+    bool textured = false;
+
+    vtkSmartPointer<vtkImageReader2> texture_reader;
+
+    if(!texture_address.empty()){
+
+        if (shape!=SPHERE && shape!=PLANE)
+            ROS_WARN("Texture is only supported in SPHERE and PLANE shapes.");
+        else {
+            textured = true;
+            std::string extension = texture_address.substr(
+                    texture_address.find_last_of('.'), 4);
+            if (extension == ".jpg")
+                texture_reader = vtkSmartPointer<vtkJPEGReader>::New();
+            else if (extension == ".png")
+                texture_reader = vtkSmartPointer<vtkPNGReader>::New();
+            else
+                ROS_WARN("only PNG and JPG texture formats are supported");
+        }
+    }
+
+    // Mapper
     vtkSmartPointer<vtkPolyDataMapper> mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
     actor_ = vtkSmartPointer<vtkActor>::New();
@@ -87,8 +103,8 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
         }
 
 
-        // ---------------------------------------------------------------------
-        // Static Plane
+            // ---------------------------------------------------------------------
+            // Static Plane
         case PLANE : {
             // check if we have all the dimensions
             if (dimensions.size() != 4)
@@ -114,13 +130,12 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
                              dimensions[3]*dimensions[2]);
 
             if(textured){
-                vtkSmartPointer<vtkPNGReader> jPEGReader =
-                        vtkSmartPointer<vtkPNGReader>::New();
-                jPEGReader->SetFileName ( texture_address.c_str() );
+
+                texture_reader->SetFileName ( texture_address.c_str() );
                 // Apply the texture
                 vtkSmartPointer<vtkTexture> texture =
                         vtkSmartPointer<vtkTexture>::New();
-                texture->SetInputConnection(jPEGReader->GetOutputPort());
+                texture->SetInputConnection(texture_reader->GetOutputPort());
                 vtkSmartPointer<vtkTextureMapToPlane> texturePlane =
                         vtkSmartPointer<vtkTextureMapToPlane>::New();
                 texturePlane->SetInputConnection(plane->GetOutputPort());
@@ -311,13 +326,14 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
                     ROS_ERROR("Can't open mesh file: %s", mesh_address.c_str());
                     throw std::runtime_error("Can't open mesh file.");
                 } else
-                    ROS_DEBUG("Loading mesh file from: %s", mesh_address.c_str());
+                    ROS_DEBUG("Loading mesh file from at: %s", mesh_address
+                            .c_str());
 
                 collision_shape_ =
                         LoadCompoundMeshFromObj(mesh_address, B_DIM_SCALE);
                 shape_string = collision_shape_->getName();;
             } else
-                collision_shape_ = NULL;
+                collision_shape_ = nullptr;
             // set name
 
             // -----------------------------
