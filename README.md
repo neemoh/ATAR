@@ -90,7 +90,7 @@ objects falling on a floor, while the camera rotates, which would mean you
 have successfully built the libs. Congrats! 
  In case you have an nvidia card and its driver has benn installed, you can 
  have faster graphics and also shadows. To test the shadows set the 
- with_shadows flag to true in the vr_test.lanuch file.
+ with_shadows flag to true in the lanuch file.
 
 ## TaskHandler
 This is the class that subscribes to a control events topics (published by the 
@@ -103,7 +103,7 @@ TaskDemo1).
 * Note that you need to reload your CMakeLists project for the automatic
 addition of your Task file to the cmake project. If you don't know how to do
 that, just modify a line in the CMakeLists.txt file like add a space or 
-something!
+something before compiling the project!
  
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme_ATAR_Arch.png)
 
@@ -116,8 +116,8 @@ of rendering windows, resolutions...) and different manipulators. This of
 course adds some overhead cost (and some memory leak that I will hopefully 
 fix soon!).
 The block diagram above shows the main elements of a task class. You can have
-a look at the TaskDemo1.h/.cpp files for a minimal example. The main elements 
-are the Rendering object, manipulators and SimObjects that are explained in 
+a look at the TaskDemo1 and TaskDemo2 for minimal examples. The main 
+elements are the Rendering, SimObjects and manipulators that are explained in 
 the following. There are two methods of the Task class that are called 
 periodically:
 * TaskLoop: This is called from the main thread at a refresh rate of about 30
@@ -129,7 +129,7 @@ periodically:
  (haptics thread running at 500Hz or 1KHz) for an example of how to use this 
  thread.   
  
-### Rendering Class
+### 1. Rendering Class
 As its name suggests this is where the graphics are produced. I have moved 
 the explanations regarding the augmented reality case to the bottom to 
 simplify the description here. The constructor of the Rendering class let's 
@@ -162,7 +162,7 @@ than one rendering windows. If you have 2 windows, the
 window_positions must contain 4 elements(x,y,x,y) and 6 elements if you have 
 3 windows.
  
-### SimObjects
+### 2. SimObjects
 You can define objects using the SimObject class which has a graphic actor 
 (actor_) and physics body (rigid_body_). A SimObject can be dynamic (i.e. 
 its pose will be update by physics simulation), static (i.e constant pose), 
@@ -194,7 +194,7 @@ dimensions are as small as a few millimiters:
 * Go to File-> Export and select Wavefront(.obj). In the options set the scale
  as 0.01 and save.
 
-### Interact with objects using a haptic device
+### 3. Interact with objects using a haptic device
 In order to interact with the virtual environment you would need to have an 
 input device of some sort. The Manipulator class helps you to read the 
 cartesian pose and twist of that device (assuming some other node is 
