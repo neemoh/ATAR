@@ -14,7 +14,7 @@
 
 TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
     :
-    SimTask(n, 100),
+    SimTask(n),
     time_last(ros::Time::now())
 
 {

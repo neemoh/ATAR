@@ -13,7 +13,7 @@
 
 TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         :
-        SimTask(n, 500),
+        SimTask(n),
         destination_ring_counter(0),
         ac_params_changed(true),
         task_state(SHTaskState::Idle)
@@ -160,8 +160,8 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
         //
         //for (int k = 0; k < 1 + (int)bimanual; ++k) {
         for (int k = 0; k < 1 ; ++k) {
-            graphics_actors.push_back(tool_current_frame_axes[k]);
-            graphics_actors.push_back(tool_desired_frame_axes[k]);
+            graphics_actors.emplace_back(tool_current_frame_axes[k]);
+            graphics_actors.emplace_back(tool_desired_frame_axes[k]);
         }
     }
 
@@ -382,8 +382,8 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     graphics_actors.emplace_back(line1_actor);
     graphics_actors.emplace_back(line2_actor);
     graphics_actors.emplace_back(destination_ring_actor);
-    for (int j = 0; j < score_sphere_actors.size(); ++j) {
-        graphics_actors.emplace_back(score_sphere_actors[j]);
+    for (auto &score_sphere_actor : score_sphere_actors) {
+        graphics_actors.emplace_back(score_sphere_actor);
     }
 
     graphics->AddActorsToScene(GetActors());
@@ -491,7 +491,7 @@ void TaskSteadyHand::TaskLoop() {
     if (task_state == SHTaskState::Finished)
         task_state = SHTaskState::Idle;
 
-    // if we are idle and the ring in action is clode to the start point, and
+    // if we are idle and the ring in action is close to the start point, and
     // in the positive x side of it then start the acquisition
     if (task_state == SHTaskState::Idle
         && ((ring_pose.p - start_point).x() > 0.0
@@ -812,7 +812,7 @@ void TaskSteadyHand::HapticsThread() {
     // make sure the masters are in wrench absolute orientation
     // assuming MTMR is always used
     std::string master_topic = "/dvrk/MTMR/set_wrench_body_orientation_absolute";
-    pub_wrench_abs[0] = node->advertise<std_msgs::Bool>(master_topic.c_str(), 1);
+    pub_wrench_abs[0] = node->advertise<std_msgs::Bool>(master_topic, 1);
     std_msgs::Bool wrench_body_orientation_absolute;
     wrench_body_orientation_absolute.data = 1;
     pub_wrench_abs[0].publish(wrench_body_orientation_absolute);
@@ -827,29 +827,26 @@ void TaskSteadyHand::HapticsThread() {
     // make sure the masters are in wrench absolute orientation
     // assuming MTMR is always used
     master_topic = "/dvrk/MTML/set_wrench_body_orientation_absolute";
-    pub_wrench_abs[1] = node->advertise<std_msgs::Bool>(master_topic.c_str(), 1);
+    pub_wrench_abs[1] = node->advertise<std_msgs::Bool>(master_topic, 1);
     pub_wrench_abs[1].publish(wrench_body_orientation_absolute);
     ROS_INFO("Setting wrench_body_orientation_absolute on %s", master_topic.c_str());
 
 
-    ros::Rate loop_rate(haptic_loop_rate);
-    ROS_INFO("The desired pose will be updated at '%f'",
-             haptic_loop_rate);
+    ros::Rate loop_rate(500);
+    ROS_INFO("The desired pose will be updated at 500 Hz");
 
     // publish ring poses (at a lower rate) for data analysis
     ros::Publisher pub_ring_desired, pub_ring_current;
     std::string ring_topic = "/atar/ring_pose_current";
-    pub_ring_current = node->advertise<geometry_msgs::Pose>
-            (ring_topic.c_str(), 10);
+    pub_ring_current = node->advertise<geometry_msgs::Pose>(ring_topic, 10);
     ROS_INFO("Will publish on %s", ring_topic.c_str());
 
     ring_topic = "/atar/ring_pose_desired";
-    pub_ring_desired = node->advertise<geometry_msgs::Pose>
-            (ring_topic.c_str(), 10);
+    pub_ring_desired = node->advertise<geometry_msgs::Pose>(ring_topic, 10);
     ROS_INFO("Will publish on %s", ring_topic.c_str());
     int lower_freq_pub_counter = 0;
 
-    // todo: what if this changes during the task executionn...
+    // todo: what if this changes during the task execution...
     KDL::Frame world_to_slave_tr[2];
     world_to_slave_tr[0] = slaves[0]->GetWorldToLocalTr();
     world_to_slave_tr[1] = slaves[1]->GetWorldToLocalTr();
