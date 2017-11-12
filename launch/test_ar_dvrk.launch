@@ -32,7 +32,7 @@
 
         <!-- About stl_files_dir:
         The directory of the stl files -->
-        <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
+        <param name= "recources_directory" value= "$(find atar)/resources" />
 
         <!--
         About desired_pose_update_frequency:

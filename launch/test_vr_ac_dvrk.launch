@@ -24,7 +24,7 @@
 
         <!-- About stl_files_dir:
         The directory of the stl files -->
-        <param name= "mesh_directory" value= "$(find atar)/resources/mesh/" />
+        <param name= "recources_directory" value= "$(find atar)/resources" />
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />
