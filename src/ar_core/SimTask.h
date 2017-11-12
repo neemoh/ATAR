@@ -18,7 +18,7 @@
 #include "SimMechanism.h"
 
 
-extern std::string                      MESH_DIRECTORY;
+extern std::string                      RESOURCES_DIRECTORY;
 
 
 class SimTask{

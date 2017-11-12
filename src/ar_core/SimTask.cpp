@@ -103,9 +103,13 @@ SimTask::~SimTask() {
 
 void SimTask::AddSimObjectToTask(SimObject *obj) {
 
-    sim_objs.emplace_back(obj);
-    graphics->AddActorToScene(obj->GetActor());
-    dynamics_world->addRigidBody(obj->GetBody());
+    if(obj->GetObjectType()!=NOVISUALS)
+        graphics->AddActorToScene(obj->GetActor());
+
+    if(obj->GetObjectType()!=NOPHYSICS) {
+        sim_objs.emplace_back(obj);
+        dynamics_world->addRigidBody(obj->GetBody());
+    }
 }
 
 void SimTask::AddSimMechanismToTask(SimMechanism *mech) {
