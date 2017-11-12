@@ -14,10 +14,10 @@
 #include "src/ar_core/SimObject.h"
 
 
-class TaskDemo : public SimTask{
+class TaskDemo1 : public SimTask{
 public:
 
-    explicit TaskDemo(ros::NodeHandlePtr n);
+    explicit TaskDemo1(ros::NodeHandlePtr n);
 
     // updates the task logic and the graphics_actors
     void TaskLoop() override;

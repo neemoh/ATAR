@@ -2,10 +2,10 @@
 // Created by nima on 13/06/17.
 //
 
-#include "TaskDemo.h"
+#include "TaskDemo1.h"
 #include <custom_conversions/Conversions.h>
 
-TaskDemo::TaskDemo(ros::NodeHandlePtr n)
+TaskDemo1::TaskDemo1(ros::NodeHandlePtr n)
         :
         SimTask(n)
 {
@@ -143,7 +143,7 @@ TaskDemo::TaskDemo(ros::NodeHandlePtr n)
 };
 
 //------------------------------------------------------------------------------
-void TaskDemo::TaskLoop() {
+void TaskDemo1::TaskLoop() {
 
     // let's get the pose of the camera and incrementally rotate it for fun!
     KDL::Frame cam_p = graphics->GetMainCameraPose();
