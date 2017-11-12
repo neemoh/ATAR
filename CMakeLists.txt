@@ -174,6 +174,7 @@ vtk_module_config(VTK
         vtkCommonDataModel
         vtkFiltersCore
         vtkFiltersModeling
+        vtkFiltersTexture
         vtkIOXML
         vtkInteractionStyle
         vtkRendering${VTK_RENDERING_BACKEND}
