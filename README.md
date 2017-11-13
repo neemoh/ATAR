@@ -242,6 +242,7 @@ In the augmented reality case we are interfacing with a slave arm
 that is seen in the camera images. Here we need to find the transformation
 from the slave to the world frame by performing a calibration procedure. 
 TO BE COMPLETED
+![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_references_frames.png)
 
 ## TODO: Augmented Reality 
 Things to explain: camera. Calibrations (intrinsic, extrinsic, arm to world)
