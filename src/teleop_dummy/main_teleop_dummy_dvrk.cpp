@@ -94,8 +94,7 @@ void ControlEventsCallback(const std_msgs::Int8ConstPtr
 int main(int argc, char * argv[]) {
 
     ros::init(argc, argv, "teleop_dummy");
-    std::string ros_node_name = ros::this_node::getName();
-    ros::NodeHandle n(ros_node_name);
+    ros::NodeHandle n(ros::this_node::getName());
 
     if( ros::console::set_logger_level(
         ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info) )
@@ -205,7 +204,6 @@ int main(int argc, char * argv[]) {
     // spinning freq, publishing freq will be according to the freq of master poses received
     ros::Rate loop_rate(1000);
 
-
     ros::Rate loop_rate_slow(1);
     ros::spinOnce();
 
@@ -236,8 +234,9 @@ int main(int argc, char * argv[]) {
 
     // get initial tool position
     std::vector<double> init_tool_position[2]= {{0., 0., 0.} , {0., 0., 0.}};
-    n.getParam("initial_tool_1_position", init_tool_position[0]);
-    n.getParam("initial_tool_2_position", init_tool_position[1]);
+    n.getParam("initial_slave1_position", init_tool_position[0]);
+    n.getParam("initial_slave2_position", init_tool_position[1]);
+
     slave_pose[0].p = KDL::Vector(init_tool_position[0][0],
                                   init_tool_position[0][1],
                                   init_tool_position[0][2]);
