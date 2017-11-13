@@ -105,7 +105,7 @@ public:
               std::vector<double> dimensions,
               const KDL::Frame &pose=KDL::Frame(),
               double density = 0.0,
-              double friction = 0.1,
+              double friction = 0.25,
               std::string texture_address = {},
               std::string mesh_address = {},
               int id = 0);
@@ -116,7 +116,7 @@ public:
               std::string mesh_address,
               const KDL::Frame &pose=KDL::Frame(),
               double density = 0.0,
-              double friction = 0.1,
+              double friction = 0.25,
               int id = 0)
             :
             SimObject::SimObject(shape, type, std::vector<double>(),
