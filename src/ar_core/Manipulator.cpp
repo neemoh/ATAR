@@ -11,9 +11,11 @@ Manipulator::Manipulator(ros::NodeHandlePtr nh,
                          const std::string arm_ns,
                          const std::string pose_topic,
                          const std::string gripper_topic,
-                         const std::string twist_topic)
+                         const std::string twist_topic,
+                         KDL::Frame initial_pose)
         :
-        n(nh)
+        n(nh),
+        pose_world(initial_pose)
 {
 
     //--------------------------------------------------------------------------
@@ -69,7 +71,7 @@ void Manipulator::SetWorldToCamTr(const KDL::Frame &in) {
 
     camera_to_world_frame_tr = in.Inverse();
     local_to_world_frame_tr.M = camera_to_world_frame_tr.M *
-            local_to_image_frame_rot;
+                                local_to_image_frame_rot;
 }
 
 

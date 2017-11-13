@@ -43,10 +43,11 @@ class Manipulator {
 
 public:
     Manipulator(ros::NodeHandlePtr n,
-                const std::string topic_ns,
-                const std::string pose_topic,
-                const std::string gripper_topic,
-                const std::string twist_topic = "");
+                std::string topic_ns,
+                std::string pose_topic,
+                std::string gripper_topic,
+                std::string twist_topic = "",
+                KDL::Frame initial_pose=KDL::Frame());
 
     void PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
