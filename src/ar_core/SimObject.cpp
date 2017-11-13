@@ -26,6 +26,9 @@
 #include <vtkTextureMapToPlane.h>
 #include <vtkPNGReader.h>
 #include <vtkJPEGReader.h>
+#include <vtkPolygon.h>
+#include <vtkFloatArray.h>
+#include <vtkPointData.h>
 
 inline bool FileExists (const std::string& name) {
     struct stat buffer;
@@ -107,27 +110,66 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
             // Static Plane
         case PLANE : {
             // check if we have all the dimensions
-            if (dimensions.size() != 4)
+            if (dimensions.size() != 2)
                 throw std::runtime_error(
-                        "SimObject STATICPLANE shape requires a vector of 4 "
-                                "doubles as dimensions.");
+                        "SimObject PLANE shape requires a vector of 2 doubles"
+                                " as dimensions.");
 
-            collision_shape_ = new btStaticPlaneShape(
-                    btVector3(btScalar(B_DIM_SCALE*dimensions[0]),
-                              btScalar(B_DIM_SCALE*dimensions[1]),
-                              btScalar(B_DIM_SCALE*dimensions[2])),
-                    btScalar(B_DIM_SCALE*dimensions[3]) );
+            float x = dimensions[0];
+            float y = dimensions[1];
+            collision_shape_ = new btBoxShape(
+                    btVector3(btScalar(B_DIM_SCALE*x/2),
+                              btScalar(B_DIM_SCALE*y/2),
+                              btScalar(B_DIM_SCALE*0.0001)));
 
-            volume = 0.0;
-            shape_string = collision_shape_->getName();
+            // calculate volume??
+            volume = x * y ;
+
+            // set name
+            shape_string = collision_shape_->getName();;
 
             // VTK
-            vtkSmartPointer<vtkPlaneSource> plane =
-                    vtkSmartPointer<vtkPlaneSource>::New();
-            plane->SetNormal(dimensions[0], dimensions[1], dimensions[2]);
-            plane->SetCenter(dimensions[3]*dimensions[0],
-                             dimensions[3]*dimensions[1],
-                             dimensions[3]*dimensions[2]);
+
+            // Create a plane
+            vtkSmartPointer<vtkPoints> points =
+                    vtkSmartPointer<vtkPoints>::New();
+            points->InsertNextPoint(-x/2, -y/2, 0.00);
+            points->InsertNextPoint(x/2, -y/2, 0.00);
+            points->InsertNextPoint(x/2, y/2, 0.00);
+            points->InsertNextPoint(-x/2, y/2, 0.00);
+
+            vtkSmartPointer<vtkCellArray> polygons =
+                    vtkSmartPointer<vtkCellArray>::New();
+            vtkSmartPointer<vtkPolygon> polygon =
+                    vtkSmartPointer<vtkPolygon>::New();
+            polygon->GetPointIds()->SetNumberOfIds(4); //make a quad
+            polygon->GetPointIds()->SetId(0, 0);
+            polygon->GetPointIds()->SetId(1, 1);
+            polygon->GetPointIds()->SetId(2, 2);
+            polygon->GetPointIds()->SetId(3, 3);
+
+            polygons->InsertNextCell(polygon);
+
+            vtkSmartPointer<vtkPolyData> quad =
+                    vtkSmartPointer<vtkPolyData>::New();
+            quad->SetPoints(points);
+            quad->SetPolys(polygons);
+
+            vtkSmartPointer<vtkFloatArray> textureCoordinates =
+                    vtkSmartPointer<vtkFloatArray>::New();
+            textureCoordinates->SetNumberOfComponents(3);
+            textureCoordinates->SetName("TextureCoordinates");
+
+            float tuple[3] = {0.0, 0.0, 0.0};
+            textureCoordinates->InsertNextTuple(tuple);
+            tuple[0] = 1; tuple[1] = 0.0; tuple[2] = 0.0;
+            textureCoordinates->InsertNextTuple(tuple);
+            tuple[0] = 1; tuple[1] = 1; tuple[2] = 0.0;
+            textureCoordinates->InsertNextTuple(tuple);
+            tuple[0] = 0.0; tuple[1] = 1; tuple[2] = 0.0;
+            textureCoordinates->InsertNextTuple(tuple);
+
+            quad->GetPointData()->SetTCoords(textureCoordinates);
 
             if(textured){
 
@@ -136,16 +178,10 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
                 vtkSmartPointer<vtkTexture> texture =
                         vtkSmartPointer<vtkTexture>::New();
                 texture->SetInputConnection(texture_reader->GetOutputPort());
-                vtkSmartPointer<vtkTextureMapToPlane> texturePlane =
-                        vtkSmartPointer<vtkTextureMapToPlane>::New();
-                texturePlane->SetInputConnection(plane->GetOutputPort());
-
-                mapper->SetInputConnection(texturePlane->GetOutputPort());
                 actor_->SetTexture(texture);
             }
-            else
-                mapper->SetInputConnection(plane->GetOutputPort());
 
+            mapper->SetInputData(quad);
 
             break;
         }

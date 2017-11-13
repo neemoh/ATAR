@@ -85,7 +85,7 @@ enum ObjectType {
 // -----------------------------------------------------------------------------
 enum ObjectShape {
     STATICPLANE,    //dims = [normal_x, normal_y, normal_z, constant_distance]
-    PLANE,          //dims =
+    PLANE,          //dims = [width, hieght]
     SPHERE,         //dims = [radius]
     CYLINDER,       //dims = [radius, height]
     BOX,            //dims = [width, length, height]
@@ -124,7 +124,7 @@ public:
                                  std::move(mesh_address), id){};
 
     // Delegated constructor for staticplane
-    SimObject(ObjectShape shape,std::vector<double> dimensions)
+    SimObject(ObjectShape shape, std::vector<double> dimensions)
             :
             SimObject(shape, DYNAMIC, std::move(dimensions)) {
         if(shape!=STATICPLANE)
