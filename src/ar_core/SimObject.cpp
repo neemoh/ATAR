@@ -487,21 +487,15 @@ SimObject::~SimObject() {
 
 
 //------------------------------------------------------------------------------
-void SimObject::SetKinematicPose(double *pose) {
+void SimObject::SetKinematicPose(const KDL::Frame & pose) {
 
-    if(object_type_==KINEMATIC){
+    if(object_type_==KINEMATIC)
+    {
 
-        btTransform transform;
-        transform.setIdentity();
-        transform.setOrigin(btVector3(float(B_DIM_SCALE*pose[0]),
-                                      float(B_DIM_SCALE*pose[1]),
-                                      float(B_DIM_SCALE*pose[2]) ));;
-        transform.setRotation(btQuaternion((float) pose[3], (float) pose[4],
-                                           (float) pose[5], (float) pose[6]));
 
-        motion_state_->setKinematicPos(transform);
-//        body_->setWorldTransform(transform);
-    }
+        motion_state_->setKinematicPos(pose);
+    }    else
+        ROS_WARN("SetKinematicPose is only available for KINEMATIC SimObjects");
 }
 
 KDL::Frame SimObject::GetPose() {

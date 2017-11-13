@@ -34,15 +34,14 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
     sim_objects_[1]->GetBody()->setRollingFriction(btScalar(0.1));
     sim_objects_[1]->GetBody()->setSpinningFriction(btScalar(0.1));
 
-
     // create jaw 2
-    auto gripper_pose_position = init_pose*KDL::Vector(0.f, jaws_axis_y_offset,
-                                  -link0_axis_z_offset);
+
     KDL::Rotation jaw_2_rot;
     jaw_2_rot.DoRotZ(M_PI);
-    jaw_2_rot = init_pose.M * jaw_2_rot;
-
-    KDL::Frame gripper_pose(jaw_2_rot, gripper_pose_position);
+    KDL::Frame gripper_pose;
+    gripper_pose.M = init_pose.M * jaw_2_rot;
+    gripper_pose.p = init_pose*KDL::Vector(0.f, jaws_axis_y_offset,
+                                                  -link0_axis_z_offset);
     sim_objects_.emplace_back(new SimObject(ObjectShape::MESH,
                                             ObjectType::DYNAMIC,
                                             RESOURCES_DIRECTORY+ "/mesh/jaw.obj",
@@ -80,24 +79,14 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
 void SimForceps::SetPoseAndJawAngle(const KDL::Frame pose,
                                  const double grip_angle) {
 
-    KDL::Frame grpr_links_pose[5];
+    KDL::Frame link_pose = pose;
+    link_pose.p  = link_pose * KDL::Vector( 0.0 , 0.0, -link_dims_[0][2]/2);
 
-    //-------------------------------- LINK 0
-    grpr_links_pose[0] = pose;
-    grpr_links_pose[0].p  = grpr_links_pose[0] * KDL::Vector( 0.0 , 0.0,
-                                                              -link_dims_[0][2]/2);
-    double x, y, z, w;
-    pose.M.GetQuaternion(x,y,z,w);
-    double link0_pose[7] = {grpr_links_pose[0].p.x(),
-                            grpr_links_pose[0].p.y(),
-                            grpr_links_pose[0].p.z(),x,y,z,w};
-    sim_objects_[0]->SetKinematicPose(link0_pose);
+    sim_objects_[0]->SetKinematicPose(link_pose);
 
     constraints_[0]->setMotorTarget((btScalar)grip_angle, 0.09);
 
     constraints_[1]->setMotorTarget((btScalar)-grip_angle, 0.09);
-
-
 
 }
 

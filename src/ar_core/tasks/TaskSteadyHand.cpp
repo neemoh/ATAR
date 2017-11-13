@@ -29,23 +29,26 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     graphics = std::make_unique<Rendering>(n, view_resolution, ar_mode, n_views,
                                            one_window_per_view, borders_off,window_positions);
 
+    // prevent tools from hitting things at the initialization
+    tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.05);
+    tool_current_pose[1].p = KDL::Vector(0.1, 0.15, 0.05);
     // Define two tools
     slaves[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
                                 "/position_cartesian_current",
-                                "/gripper_position_current");
+                                "/gripper_position_current",
+                                "", tool_current_pose[0]);
 
     slaves[1] = new Manipulator(nh, "/dvrk/PSM2_DUMMY",
                                 "/position_cartesian_current",
-                                "/gripper_position_current");
+                                "/gripper_position_current",
+                                "", tool_current_pose[1]);
 
     // set the manipulators to follow cam pose for correct kinematics
     // calibration. Cam pose here is cam_0.
     graphics->SetManipulatorInterestedInCamPose(slaves[0]);
     graphics->SetManipulatorInterestedInCamPose(slaves[1]);
 
-    // prevent tools from hitting things at the initialization
-    tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.1);
-    tool_current_pose[1].p = KDL::Vector(0.1, 0.2, 0.1);
+
 
     // -------------------------------------------------------------------------
     //  INITIALIZING GRAPHICS ACTORS
@@ -308,11 +311,8 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     // -------------------------------------------------------------------------
     // Create SimForceps
     {
-        KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
-        forceps_init_pose.M.DoRotZ(M_PI/2);
-        forceps[0] = new SimForceps(forceps_init_pose);
-        forceps_init_pose.p.x(0.07);
-        forceps[1] = new SimForceps(forceps_init_pose);
+        forceps[0] = new SimForceps(tool_current_pose[0]);
+        forceps[1] = new SimForceps(tool_current_pose[1]);
 
         AddSimMechanismToTask(forceps[0]);
         AddSimMechanismToTask(forceps[1]);
@@ -524,10 +524,11 @@ void TaskSteadyHand::TaskLoop() {
 
         KDL::Vector base_position = KDL::Vector(0.11-0.016, 0.08, 0.025+0.035);
 
-        double pose_cube[7] = {
-                base_position[0]+0.02*cos(M_PI/4), base_position[1]-0.02*cos
-                        (M_PI/4), (0.11-0.016-0.025)
-                                  /4,0,0,0,1};
+        KDL::Frame pose_cube;
+        pose_cube.p = KDL::Vector(base_position[0]+0.02*cos(M_PI/4),
+                base_position[1]-0.02*cos(M_PI/4),
+                (0.11-0.016-0.025)/4);
+
         sep_cylinder[ring_num-ring_in_action]->SetKinematicPose(pose_cube);
 
         //dynamics_world->removeRigidBody(sep_cylinder[ring_in_action]->GetBody());
@@ -1104,11 +1105,7 @@ void TaskSteadyHand::UpdateToolRodsPose(
         orientation.M.GetQuaternion(x,y,z,w);
 
         orientation.p= (rcm[i]+displacement*(shift)/shift.Norm());
-        double arm_pose[7]={orientation.p.x(),
-                            orientation.p.y(),
-                            orientation.p.z(),
-                            x,y,z,w};
-        rods[i]->SetKinematicPose(arm_pose);
+        rods[i]->SetKinematicPose(orientation);
 
     } else
     {
@@ -1121,11 +1118,8 @@ void TaskSteadyHand::UpdateToolRodsPose(
         orientation.M.UnitX(orientation.M.UnitY()*orientation.M.UnitZ());
         orientation.M.GetQuaternion(x,y,z,w);
         orientation.p= (rcm[i]-displacement*(shift)/shift.Norm());
-        double arm_pose[7]={orientation.p.x(),
-                            orientation.p.y(),
-                            orientation.p.z(),
-                            x,y,z,w};
-        rods[i]->SetKinematicPose(arm_pose);
+
+        rods[i]->SetKinematicPose(orientation);
     }
 }
 

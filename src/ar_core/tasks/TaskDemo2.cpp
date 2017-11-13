@@ -27,20 +27,37 @@ TaskDemo2::TaskDemo2(ros::NodeHandlePtr n):
                                            window_positions);
 
     // Define a master manipulator
-    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
+    master[0] = new Manipulator(nh,    "/dvrk/PSM1_DUMMY",
+                                "/position_cartesian_current",
+                                "/gripper_position_current");
 
     // for correct calibration, the master needs the pose of the camera
-    graphics->SetManipulatorInterestedInCamPose(master);
+    graphics->SetManipulatorInterestedInCamPose(master[0]);
+
+    // Define a second master manipulator
+    master[1] = new Manipulator(nh,    "/dvrk/PSM2_DUMMY",
+                                "/position_cartesian_current",
+                                "/gripper_position_current");
+    graphics->SetManipulatorInterestedInCamPose(master[1]);
 
     // DEFINE OBJECTS
     // -------------------------------------------------------------------------
-    // Create SimForceps
+    // Create SimForceps to be connected to master[0]
 
     KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
     forceps_init_pose.M.DoRotZ(M_PI/2);
     forceps = new SimForceps(forceps_init_pose);
 
     AddSimMechanismToTask(forceps);
+    // --------------------------------------------------------
+    // -----------------
+    // create a sphere and use it as a tool for master[1]
+    sphere_tool = new SimObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
+                                std::vector<double>(1,0.005));
+    // add to simulation
+    AddSimObjectToTask(sphere_tool);
+
+
     // -------------------------------------------------------------------------
     // Create a board
     SimObject *board;
@@ -90,15 +107,18 @@ TaskDemo2::TaskDemo2(ros::NodeHandlePtr n):
 
 //------------------------------------------------------------------------------
 TaskDemo2::~TaskDemo2() {
-    delete master;
+    delete master[0];
+    delete master[1];
 }
 
 //------------------------------------------------------------------------------
 void TaskDemo2::TaskLoop() {
 
     // update the pose of the virtual forceps from the real manipulator
-    forceps->SetPoseAndJawAngle(master->GetPoseWorld(),  master->GetGripper());
+    forceps->SetPoseAndJawAngle(master[0]->GetPoseWorld(),
+                                master[0]->GetGripper());
 
+    sphere_tool->SetKinematicPose(master[1]->GetPoseWorld());
 }
 
 //------------------------------------------------------------------------------

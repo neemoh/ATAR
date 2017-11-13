@@ -147,7 +147,7 @@ public:
     /**
     * Set the pose if the object is kinematic.
     */
-    void SetKinematicPose(double pose[]);
+    void SetKinematicPose(const KDL::Frame & pose);
 
     /**
     * Can be used in physics collision handling

@@ -233,25 +233,14 @@ void TaskDeformable::TaskLoop() {
     KDL::Vector gripper_pos = KDL::Vector( 0.0, (1+grip_posit)* 0.002, 0.001);
     gripper_pos = tool_pose * gripper_pos;
 
-    double sphere_0_pose[7] = {
-        gripper_pos[0],
-        gripper_pos[1],
-        gripper_pos[2],
-        0,0,0,1};
-    kine_sphere_0->SetKinematicPose(sphere_0_pose);
-
+    kine_sphere_0->SetKinematicPose(KDL::Frame(KDL::Rotation(), gripper_pos));
 
     //--------------------------------
     //sphere 1
     gripper_pos = KDL::Vector( 0.0, -(1+grip_posit)* 0.002, 0.001);
     gripper_pos = tool_pose.p + tool_pose.M * gripper_pos;
 
-    double sphere_1_pose[7] = {
-        gripper_pos[0],
-        gripper_pos[1],
-        gripper_pos[2],
-        0,0,0,1};
-    kine_sphere_1->SetKinematicPose(sphere_1_pose);
+    kine_sphere_1->SetKinematicPose(KDL::Frame(KDL::Rotation(), gripper_pos));
 
 
     //--------------------------------

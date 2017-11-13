@@ -231,12 +231,7 @@ void TaskRingTransfer::TaskLoop() {
         tool_pose = tool_pose * local_tool_transform;
 
         //KDL::Vector box_posit = tool_pose * KDL::Vector(0.0, 0.0, 0);
-
-        double x, y, z, w;
-        tool_pose.M.GetQuaternion(x, y, z, w);
-        double box_pose[7] = {tool_pose.p.x(), tool_pose.p.y(), tool_pose.p.z(),
-                              x, y, z, w};
-        hook_mesh->SetKinematicPose(box_pose);
+        hook_mesh->SetKinematicPose(tool_pose);
 
     }
 

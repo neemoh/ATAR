@@ -24,8 +24,9 @@ public:
 
 private:
 
-    Manipulator * master;
+    Manipulator * master[2];
     SimForceps * forceps;
+    SimObject * sphere_tool;
 
 };
 

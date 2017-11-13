@@ -37,36 +37,21 @@ void SimFiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
     grpr_links_pose[0] = pose;
     grpr_links_pose[0].p  = grpr_links_pose[0] * KDL::Vector( 0.0 , 0.0,
                                                               -link_dims_[0][2]/2);
-    double x, y, z, w;
-    pose.M.GetQuaternion(x,y,z,w);
-    double link0_pose[7] = {grpr_links_pose[0].p.x(),
-                            grpr_links_pose[0].p.y(), grpr_links_pose[0].p.z(),x,y,z,w};
-    sim_objects_[0]->SetKinematicPose(link0_pose);
+    sim_objects_[0]->SetKinematicPose(grpr_links_pose[0]);
 
     //-------------------------------- LINK 1
     grpr_links_pose[1] = pose;
     grpr_links_pose[1].M.DoRotX(-grip_angle);
     grpr_links_pose[1].p =  grpr_links_pose[1] *
                             KDL::Vector( 0.0, 0.0, link_dims_[1][2]/2);
-    grpr_links_pose[1].M.GetQuaternion(x, y, z, w);
-
-    double link2_pose[7] = {grpr_links_pose[1].p.x(),
-                            grpr_links_pose[1].p.y(), grpr_links_pose[1].p.z(), x, y, z, w};
-
-    sim_objects_[1]->SetKinematicPose(link2_pose);
+    sim_objects_[1]->SetKinematicPose(grpr_links_pose[1]);
 
     //-------------------------------- LINK 2
     grpr_links_pose[2] = pose;
     grpr_links_pose[2].M.DoRotX(grip_angle);
     grpr_links_pose[2].p =  grpr_links_pose[2] *
                             KDL::Vector( 0.0, 0.0, link_dims_[2][2]/2);
-    grpr_links_pose[2].M.GetQuaternion(x, y, z, w);
-
-    double link3_pose[7] = {grpr_links_pose[2].p.x(),
-                            grpr_links_pose[2].p.y(), grpr_links_pose[2].p.z(), x, y, z, w};
-
-    sim_objects_[2]->SetKinematicPose(link3_pose);
-
+    sim_objects_[2]->SetKinematicPose(grpr_links_pose[2]);
 
     //-------------------------------- LINKS 3 and 4
     for (int i = 3; i < 5; ++i) {
@@ -78,12 +63,7 @@ void SimFiveLinkGripper::SetPoseAndJawAngle(const KDL::Frame pose,
                 KDL::Vector(0., 0.,link_dims_[i-2][2]/2)
                 + grpr_links_pose[i].M *
                   KDL::Vector(0., 0.,link_dims_[i][2]/2);
-
-        grpr_links_pose[i].M.GetQuaternion(x,y,z,w);
-        double link_pose[7] = {grpr_links_pose[i].p.x(),
-                               grpr_links_pose[i].p.y(), grpr_links_pose[i].p.z(),x, y, z, w};
-
-        sim_objects_[i]->SetKinematicPose(link_pose);
+        sim_objects_[i]->SetKinematicPose(grpr_links_pose[i]);
     }
 }
 
