@@ -62,7 +62,7 @@ TaskDemo2::TaskDemo2(ros::NodeHandlePtr n):
     plane = new SimObject(ObjectShape::PLANE, ObjectType::DYNAMIC,
                           std::vector<double>({0.15,0.10}),
                           KDL::Frame(KDL::Vector(0.075, 0.05, 0.001)), 0, 0.9,
-                          RESOURCES_DIRECTORY+"/texture/wood.jpg");
+                          RESOURCES_DIRECTORY+"/texture/persian_carpet.jpg");
     // add to simulation
     AddSimObjectToTask(plane);
 
@@ -86,7 +86,7 @@ TaskDemo2::TaskDemo2(ros::NodeHandlePtr n):
             // texture image too!
             cube = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                  dimensions, pose, 20000);
-            cube->GetActor()->GetProperty()->SetColor(colors.Green);
+            cube->GetActor()->GetProperty()->SetColor(colors.Coral);
 
             // we need to add the SimObject to the task. Without this step
             // the object is not going to be used
