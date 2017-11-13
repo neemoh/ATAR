@@ -9,7 +9,6 @@
 // tasks
 #include "src/deprecated/TaskBuzzWire.h"
 #include "src/ar_core/tasks/TaskDeformable.h"
-#include "src/ar_core/tasks/TaskNeedle.h"
 #include "src/ar_core/tasks/TaskRingTransfer.h"
 #include "src/ar_core/tasks/TaskSteadyHand.h"
 #include "src/ar_core/tasks/TaskDemo1.h"
@@ -29,13 +28,17 @@ TaskHandler::TaskHandler(std::string node_name)
         ros::console::notifyLoggerLevelsChanged();
 
     if (n->getParam("recources_directory", RESOURCES_DIRECTORY))
-        ROS_INFO("recources directory: %s", RESOURCES_DIRECTORY.c_str());
+        ROS_DEBUG("recources directory: %s", RESOURCES_DIRECTORY.c_str());
     else
         ROS_ERROR("Parameter '%s' is required. ",
                   n->resolveName("recources_directory").c_str());
 
     subscriber_control_events = n->subscribe(
-            "/atar/control_events", 1, &TaskHandler::ControlEventsCallback, this);}
+            "/atar/control_events", 1, &TaskHandler::ControlEventsCallback, this);
+
+    ROS_INFO("Task Handler is ready!");
+
+}
 
 
 // -----------------------------------------------------------------------------
@@ -115,8 +118,7 @@ void TaskHandler::StartTask(const uint task_id) {
         task_ptr   = new TaskDeformable(n);
     }
     else if(task_id ==6){
-        ROS_DEBUG("Starting new TaskNeedle. ");
-        task_ptr   = new TaskNeedle(n);
+
     }
     else if(task_id ==7) {
 
