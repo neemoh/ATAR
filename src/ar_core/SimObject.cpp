@@ -29,6 +29,7 @@
 #include <vtkPolygon.h>
 #include <vtkFloatArray.h>
 #include <vtkPointData.h>
+#include <vtkCellArray.h>
 
 inline bool FileExists (const std::string& name) {
     struct stat buffer;
@@ -107,7 +108,7 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
 
 
             // ---------------------------------------------------------------------
-            // Static Plane
+            // Plane (with texture)
         case PLANE : {
             // check if we have all the dimensions
             if (dimensions.size() != 2)
@@ -118,8 +119,8 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
             float x = dimensions[0];
             float y = dimensions[1];
             collision_shape_ = new btBoxShape(
-                    btVector3(btScalar(B_DIM_SCALE*x/2),
-                              btScalar(B_DIM_SCALE*y/2),
+                    btVector3(B_DIM_SCALE*x/2,
+                              B_DIM_SCALE*y/2,
                               btScalar(B_DIM_SCALE*0.0001)));
 
             // calculate volume??
@@ -129,8 +130,7 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
             shape_string = collision_shape_->getName();;
 
             // VTK
-
-            // Create a plane
+            // Create a quad plane
             vtkSmartPointer<vtkPoints> points =
                     vtkSmartPointer<vtkPoints>::New();
             points->InsertNextPoint(-x/2, -y/2, 0.00);
