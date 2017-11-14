@@ -168,9 +168,15 @@ You can define objects using the SimObject class which has a graphic actor
 its pose will be update by physics simulation), static (i.e constant pose), 
 kinematic (i.e. pose is assigned externally, e.g. from a master device). There
  are some primitive shapes available (Cube, sphere, cylinder, cone and plane)
- , but more usefully the shape can be from a .obj mesh file. For Sphere and 
- Plane shapes you can have a texture image. PNG and JPG formats are supported
- . To learn more about SimObjects refer to SimObjects.h.
+ , but more usefully the shape can be from a .obj mesh file. After 
+ constructing a SimObject call the AddSimObjectToTask method of the Task to 
+ add your object to the simulation.
+ * Note: You can still use all the functionalities of VTK for creating 
+ graphics. When you create a vtk actor, call graphics->AddActorsToScene
+ (my_actor).
+ 
+ For Sphere and Plane shapes you can have a texture image. PNG and JPG 
+ formats are supported. To learn more about SimObjects refer to SimObjects.h.
 
 #### Mesh objects
 Meshes are decomposed into approximated compound meshes using the VHACD 
