@@ -10,7 +10,9 @@
 SimTask::SimTask(ros::NodeHandlePtr n)
         :
         nh(n),
-        time_last(ros::Time::now()){
+        time_last(ros::Time::now()),
+        graphics(nullptr),
+        dynamics_world(nullptr){
 
     // Initialize Bullet Physics
     InitBullet();
@@ -61,7 +63,11 @@ void SimTask::InitBullet() {
 void SimTask::StepWorld() {
 
     // render
-    graphics->Render();
+    if(graphics)
+        graphics->Render();
+    else
+        throw std::runtime_error("Oops! It seems that the graphics was "
+                                         "not constructed.");
 
     // step the world
     StepPhysics();
@@ -75,7 +81,12 @@ void SimTask::StepPhysics() {
 
     double time_step = (ros::Time::now() - time_last).toSec();
     //std::cout << "time_step: " << time_step << std::endl;
-    dynamics_world->stepSimulation(btScalar(time_step), 100, 1.f/128.f);
+
+    if(dynamics_world)
+        dynamics_world->stepSimulation(btScalar(time_step), 100, 1.f/128.f);
+    else
+        throw std::runtime_error("Oops! It seems that the dynamics_world was "
+                                         "not constructed.");
     time_last = ros::Time::now();
 
 }
@@ -83,12 +94,14 @@ void SimTask::StepPhysics() {
 
 // -----------------------------------------------------------------------------
 SimTask::~SimTask() {
-    ROS_INFO("Destructing task. Num bullet objects: %d",
-             dynamics_world->getNumCollisionObjects());
-    //remove the rigidbodies from the dynamics world and delete them
+
+    ROS_DEBUG("Destructing task. Num SimObjects: %lu", sim_objs.size());
+
+    //remove the rigid bodies from the world
     for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
         dynamics_world->removeCollisionObject(dynamics_world->getCollisionObjectArray()[i]);
 
+    // remove the constraints from the world
     for (int i = dynamics_world->getNumConstraints() - 1; i >= 0; i--)
         dynamics_world->removeConstraint(dynamics_world->getConstraint(i));
 
@@ -103,24 +116,33 @@ SimTask::~SimTask() {
 
 void SimTask::AddSimObjectToTask(SimObject *obj) {
 
-    if(obj->GetObjectType()!=NOVISUALS)
-        graphics->AddActorToScene(obj->GetActor());
+    if(obj) {
+        if (obj->GetObjectType() != NOVISUALS) {
+            if (graphics)
+                graphics->AddActorToScene(obj->GetActor());
+            else
+                throw std::runtime_error("Oops! It seems that the graphics was "
+                                                 "not constructed.");
+        }
 
-    if(obj->GetObjectType()!=NOPHYSICS) {
-        sim_objs.emplace_back(obj);
-        dynamics_world->addRigidBody(obj->GetBody());
+        if (obj->GetObjectType() != NOPHYSICS) {
+            sim_objs.emplace_back(obj);
+            dynamics_world->addRigidBody(obj->GetBody());
+        }
     }
 }
 
 void SimTask::AddSimMechanismToTask(SimMechanism *mech) {
 
-    auto sim_objs = mech->GetSimObjects();
-    for(auto i: sim_objs)
-        AddSimObjectToTask(i);
+    if(mech) {
+        auto sim_objs = mech->GetSimObjects();
+        for (auto i: sim_objs)
+            AddSimObjectToTask(i);
 
-    auto constraints = mech->GetConstraints();
-    for(auto i:constraints)
-        dynamics_world->addConstraint(i);
+        auto constraints = mech->GetConstraints();
+        for (auto i:constraints)
+            dynamics_world->addConstraint(i);
+    }
 
 }
 

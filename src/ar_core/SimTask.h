@@ -70,17 +70,17 @@ protected:
     ros::Time                               time_last;
 
     std::unique_ptr<Rendering>              graphics;
-    Colors                                  colors;
-
     std::vector<vtkSmartPointer<vtkProp>>   graphics_actors;
+
     std::vector<SimObject*>                 sim_objs;
     btDiscreteDynamicsWorld *               dynamics_world;
-
     //make sure to re-use collision shapes among rigid bodies whenever possible!
-    std::unique_ptr<btSequentialImpulseConstraintSolver>    solver;
-    std::unique_ptr<btBroadphaseInterface>            overlappingPairCache;
-    std::unique_ptr<btCollisionDispatcher>            dispatcher;
-    std::unique_ptr<btDefaultCollisionConfiguration>  collisionConfiguration;
+    std::unique_ptr<btSequentialImpulseConstraintSolver> solver;
+    std::unique_ptr<btBroadphaseInterface>               overlappingPairCache;
+    std::unique_ptr<btCollisionDispatcher>               dispatcher;
+    std::unique_ptr<btDefaultCollisionConfiguration>     collisionConfiguration;
+
+    Colors colors;
 };
 
 
