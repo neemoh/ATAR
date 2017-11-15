@@ -25,7 +25,7 @@ RenderingCamera::RenderingCamera(const std::vector<int> view_resolution,
 
     // if there is no name and image transport we assume the camera is not
     // augmented reality type
-    if(cam_name!="" && it!=NULL)
+    if(!cam_name.empty() && it!= nullptr)
         is_ar = true;
 
     intrinsic_matrix->Identity();
@@ -77,7 +77,7 @@ void RenderingCamera::RefreshCamera(const int *view_size_in_window){
         UpdateBackgroundImage(view_size_in_window);
 
     // update the pose if needed
-    if(ar_camera!=NULL)
+    if(ar_camera!= nullptr)
         if(ar_camera->GetNewWorldToCamTr(world_to_cam_tr))
             SetWorldToCamTf(world_to_cam_tr);
 
@@ -88,7 +88,7 @@ void RenderingCamera::RefreshCamera(const int *view_size_in_window){
 //------------------------------------------------------------------------------
 void RenderingCamera::ConfigureBackgroundImage(cv::Mat img) {
 
-    assert( img.data != NULL );
+    assert( img.data != nullptr );
 
     image_width_ = img.size().width;
     image_height_ =  img.size().height;
@@ -174,41 +174,23 @@ void RenderingCamera::UpdateBackgroundImage(const int *window_size) {
 //------------------------------------------------------------------------------
 void RenderingCamera::SetCameraToFaceImage(const int *window_size,
                                            const int *imageSize, const double *spacing,
-                                           const double *origin) {
+                                           const double *orig) {
 
-    double clippingRange[2];
-    clippingRange[0] = 1;
-    clippingRange[1] = 100000;
+    KDL::Vector origin(orig[0], orig[1], orig[2]);
 
-    double distanceAlongX = (spacing[0] * (imageSize[0] - 1)) / 2.0;
-    double vectorAlongX[3] = {1, 0, 0};
-    vectorAlongX[0] = distanceAlongX;
+    double distance_along_x = (spacing[0] * (imageSize[0] - 1)) / 2.0;
+    KDL::Vector vector_along_x(distance_along_x, 0, 0);
 
-    double distanceAlongY = (spacing[1] * (imageSize[1] - 1)) / 2.0;
-    double vectorAlongY[3] = {0, 1, 0};
-    vectorAlongY[1] = distanceAlongY;
+    double distance_along_y = (spacing[1] * (imageSize[1] - 1)) / 2.0;
+    KDL::Vector vector_along_y(0, distance_along_y, 0);
 
-    double vectorAlongZ[3] = {0, 0, -1000};
+    auto focal_point = origin + vector_along_x + vector_along_y;
 
-    double viewUpScaleFactor = 1.0e9;
-    if (true) {
-        viewUpScaleFactor *= -1;
-    }
+    KDL::Vector vector_along_z(0, 0, -1000);
+    auto position = focal_point + vector_along_z;
 
-    double focalPoint[3] = {0, 0, 1};
-    for (unsigned int i = 0; i < 3; ++i) {
-        focalPoint[i] = origin[i] + vectorAlongX[i] + vectorAlongY[i];
-    }
-
-    double position[3] = {0, 0, 0};
-    position[0] = focalPoint[0] + vectorAlongZ[0];
-    position[1] = focalPoint[1] + vectorAlongZ[1];
-    position[2] = focalPoint[2] + vectorAlongZ[2];
-
-    double viewUp[3] = {0, 1, 0};
-    viewUp[0] = vectorAlongY[0] * viewUpScaleFactor;
-    viewUp[1] = vectorAlongY[1] * viewUpScaleFactor;
-    viewUp[2] = vectorAlongY[2] * viewUpScaleFactor;
+    double viewup_scale_factor = -1.0e9;
+    auto view_up = viewup_scale_factor*vector_along_y;
 
     double imageWidth = imageSize[0] * spacing[0];
     double imageHeight = imageSize[1] * spacing[1];
@@ -224,12 +206,14 @@ void RenderingCamera::SetCameraToFaceImage(const int *window_size,
         scale = 0.5 * imageHeight;
     }
 
-    camera_real->SetPosition(position);
-    camera_real->SetFocalPoint(focalPoint);
-    camera_real->SetViewUp(viewUp);
+    camera_real->SetPosition(position[0], position[1], position[2]);
+    camera_real->SetFocalPoint(focal_point[0],focal_point[1],focal_point[2]);
+    camera_real->SetViewUp(view_up[0], view_up[1], view_up[2]);
     camera_real->SetParallelProjection(true);
     camera_real->SetParallelScale(scale);
-    camera_real->SetClippingRange(clippingRange);
+
+    double clipping_range[2] = {1, 10000};
+    camera_real->SetClippingRange(clipping_range);
 }
 
 
@@ -258,8 +242,8 @@ void RenderingCamera::SetWorldToCamTf(const KDL::Frame & in) {
 
 //------------------------------------------------------------------------------
 void RenderingCamera::UpdateCamPoseFollowers(const KDL::Frame &pose) {
-    for (int i = 0; i < interested_manipulators.size(); ++i) {
-        interested_manipulators[i]->SetWorldToCamTr(pose);
+    for (auto &im : interested_manipulators) {
+        im->SetWorldToCamTr(pose);
     }
 }
 
