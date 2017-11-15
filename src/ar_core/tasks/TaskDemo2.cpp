@@ -1,11 +1,6 @@
 //
 // Created by nima on 12/11/17.
 //
-/**
- * \class TaskDemo2
- * \brief This demo shows how to use a master device to interact with SimObjects
- *
- * **/
 
 #include "TaskDemo2.h"
 #include <boost/thread/thread.hpp>
@@ -14,8 +9,7 @@
 TaskDemo2::TaskDemo2()
 {
 
-    // the only needed argument to construct a Renderer if the nodehandle ptr
-    // The rest have default values.
+    // create a rendering object with desired parameters
     graphics = std::make_unique<Rendering>(
             /*view_resolution=*/std::vector<int>({920, 640}),
             /*ar_mode=*/false,
@@ -53,7 +47,6 @@ TaskDemo2::TaskDemo2()
                                 std::vector<double>(1,0.005));
     sphere_tool->GetActor()->GetProperty()->SetColor(colors.OrangeRed);
 
-
     // --------------------------------------------------------
     // create a floor
     SimObject* plane;
@@ -63,7 +56,6 @@ TaskDemo2::TaskDemo2()
                           RESOURCES_DIRECTORY+"/texture/persian_carpet.jpg");
     // add to simulation
     AddSimObjectToTask(plane);
-
 
     // -------------------------------------------------------------------------
     // Create 6 dynamic cubes
@@ -107,16 +99,19 @@ void TaskDemo2::TaskLoop() {
     forceps->SetPoseAndJawAngle(master[0]->GetPoseWorld(),
                                 master[0]->GetGripper());
 
+    // update the position of the spherical tool
     sphere_tool->SetKinematicPose(master[1]->GetPoseWorld());
 }
 
 //------------------------------------------------------------------------------
 void TaskDemo2::HapticsThread() {
 
-    ros::Rate loop_rate(200);
+    ros::Rate loop_rate(500);
 
-    // define a publisher for force
-    // calculate the force that you want to send at high freq
+    // for example we can define a publisher for force
+    // calculate the force that you want to send at high freq...
+
+
     while (ros::ok())
     {
         ros::spinOnce();

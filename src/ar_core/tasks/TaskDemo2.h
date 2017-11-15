@@ -1,7 +1,11 @@
 //
 // Created by nima on 12/11/17.
 //
-// This
+/**
+ * \class TaskDemo2
+ * \brief This demo shows how to use a master device to interact with SimObjects
+ *
+ * **/
 
 #ifndef ATAR_TASKDEMO2_H
 #define ATAR_TASKDEMO2_H
@@ -16,17 +20,25 @@ public:
 
     ~TaskDemo2() override;
 
-    // The main loop. Updates physics, graphics and task logic
+    // In this demo we use the loop to read the poses of our real
+    // manipulators and update the poses of our virtual tools
     void TaskLoop() override;
 
-    // The main loop. Updates physics, graphics and task logic
+    // This thread can run faster than the main thread and used for purposes
+    // like sending information for haptic feedback
     void HapticsThread() override;
 
 private:
 
+    // these objects interfacew with the real manipulators through ros
     Manipulator * master[2];
-    SimForceps * forceps;
+
+    // this sphere will represent one of our tools
     SimObject * sphere_tool;
+
+    // this object is a simulated mechanism that will represent one of our
+    // tools.
+    SimForceps * forceps;
 
 };
 
