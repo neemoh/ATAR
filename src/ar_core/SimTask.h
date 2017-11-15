@@ -56,9 +56,9 @@ private:
 
     // This method is called from the StepWorld loop. The idea is to override
     // this in children tasks.
-    virtual void TaskLoop() =0;
+    virtual void TaskLoop(){};
 
-    // initialize the bullet realted things
+    // initialize the bullet related things
     void InitBullet();
 
     // steps the physics simulation. Can be overridden if needed.
