@@ -416,9 +416,11 @@ void Rendering::GetCameraNames(ros::NodeHandlePtr n, const int num_views,
             name_count++;
     }
     if(name_count!=num_views) {
-        ROS_ERROR("Found %i cam_names although %i views are to be shown.",
-                  name_count, num_views);
-        throw std::runtime_error("Not enough cam names provided.");
+        ROS_ERROR("Found %i cam_names although %i views are to be shown in AR"
+                          " mode. Please set the cam_names parameter so that "
+                          "the intrinsic calibration file can be loaded and the "
+                          "images read.", name_count, num_views);
+        throw std::runtime_error("No enough cam names provided.");
     }
 }
 

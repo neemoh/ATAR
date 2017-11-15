@@ -59,10 +59,19 @@ SimObject::SimObject(const ObjectShape shape, const ObjectType o_type,
 
     if(!texture_address.empty()){
 
+        // check if file exists
+        if (!FileExists(texture_address)) {
+            ROS_ERROR("Can't open texture file from: %s",
+                      texture_address.c_str());
+            throw std::runtime_error("Can't open texture file.");
+        }
+
+        // check if texture is asked for the correct shape
         if (shape!=SPHERE && shape!=PLANE)
             ROS_WARN("Texture is only supported in SPHERE and PLANE shapes.");
         else {
             textured = true;
+            // check the format
             std::string extension = texture_address.substr(
                     texture_address.find_last_of('.'), 4);
             if (extension == ".jpg")

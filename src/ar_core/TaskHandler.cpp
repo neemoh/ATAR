@@ -5,6 +5,7 @@
 #include "TaskHandler.h"
 #include <custom_conversions/Conversions.h>
 #include <src/ar_core/tasks/TaskDemo2.h>
+#include <src/ar_core/tasks/TaskDemo3.h>
 #include "ControlEvents.h"
 // tasks
 #include "src/deprecated/TaskBuzzWire.h"
@@ -85,7 +86,13 @@ void TaskHandler::HandleTaskEvent() {
         if(task_ptr)
             DeleteTask();
 
-        StartTask(running_task_id);
+        try {
+            StartTask(running_task_id);
+            ROS_DEBUG("Starting new task . ");
+        } catch(const std::exception& e){
+            ROS_ERROR_STREAM("Did not manage to create task. With: "
+                                     << e.what());
+        }
 
         new_task_event = false;
     }
@@ -106,21 +113,21 @@ void TaskHandler::StartTask(const uint task_id) {
         task_ptr   = new TaskDemo2(n);
     }
     else if(task_id ==3){
+            task_ptr = new TaskDemo3(n);
+    }
+    else if(task_id ==4){
         ROS_DEBUG("Starting new BuzzWireTask task. ");
         task_ptr   = new TaskSteadyHand(n);
     }
-    else if(task_id ==4){
+    else if(task_id ==5){
         ROS_DEBUG("Starting new TaskRingTransfer. ");
         task_ptr   = new TaskRingTransfer(n);
     }
-    else if(task_id ==5){
+    else if(task_id ==6){
         ROS_DEBUG("Starting new TaskDeformable . ");
         task_ptr   = new TaskDeformable(n);
     }
-    else if(task_id ==6){
-
-    }
-    else if(task_id ==7) {
+    else if(task_id ==7){
 
     }
     else if(task_id ==8) {
