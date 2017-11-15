@@ -25,7 +25,7 @@ TaskDemo2::TaskDemo2()
             /*window_positions=*/std::vector<int>({300,50}));
 
     // Define a master manipulator
-    master[0] = new Manipulator(nh,    "/dvrk/PSM1_DUMMY",
+    master[0] = new Manipulator("/dvrk/PSM1_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current");
 
@@ -33,7 +33,7 @@ TaskDemo2::TaskDemo2()
     graphics->SetManipulatorInterestedInCamPose(master[0]);
 
     // Define a second master manipulator
-    master[1] = new Manipulator(nh,    "/dvrk/PSM2_DUMMY",
+    master[1] = new Manipulator("/dvrk/PSM2_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current");
     graphics->SetManipulatorInterestedInCamPose(master[1]);

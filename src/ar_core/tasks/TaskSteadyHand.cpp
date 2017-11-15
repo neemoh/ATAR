@@ -32,12 +32,12 @@ TaskSteadyHand::TaskSteadyHand()
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.05);
     tool_current_pose[1].p = KDL::Vector(0.1, 0.15, 0.05);
     // Define two tools
-    slaves[0] = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
+    slaves[0] = new Manipulator("/dvrk/PSM1_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current",
                                 "", tool_current_pose[0]);
 
-    slaves[1] = new Manipulator(nh, "/dvrk/PSM2_DUMMY",
+    slaves[1] = new Manipulator("/dvrk/PSM2_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current",
                                 "", tool_current_pose[1]);

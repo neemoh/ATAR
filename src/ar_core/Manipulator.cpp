@@ -7,14 +7,14 @@
 #include "Manipulator.h"
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
 
-Manipulator::Manipulator(ros::NodeHandlePtr nh,
+Manipulator::Manipulator(
                          const std::string arm_ns,
                          const std::string pose_topic,
                          const std::string gripper_topic,
                          const std::string twist_topic,
                          KDL::Frame initial_pose)
         :
-        n(nh),
+        n(ros::NodeHandlePtr(new ros::NodeHandle("~"))),
         pose_world(initial_pose)
 {
 

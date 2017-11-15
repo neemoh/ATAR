@@ -42,8 +42,7 @@
 class Manipulator {
 
 public:
-    Manipulator(ros::NodeHandlePtr n,
-                std::string topic_ns,
+    Manipulator(std::string topic_ns,
                 std::string pose_topic,
                 std::string gripper_topic,
                 std::string twist_topic = "",

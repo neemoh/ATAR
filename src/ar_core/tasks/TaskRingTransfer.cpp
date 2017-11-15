@@ -23,7 +23,7 @@ TaskRingTransfer::TaskRingTransfer()
 
     // Define a master manipulator
     //    master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");
-    master = new Manipulator(nh, "/dvrk/PSM1_DUMMY",
+    master = new Manipulator("/dvrk/PSM1_DUMMY",
                              "/position_cartesian_current",
                              "/gripper_position_current");
     // -------------------------------------------------------------------------
