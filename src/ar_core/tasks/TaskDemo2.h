@@ -12,7 +12,7 @@
 class TaskDemo2 : public SimTask {
 public:
 
-    explicit TaskDemo2(ros::NodeHandlePtr n);
+    explicit TaskDemo2();
 
     ~TaskDemo2() override;
 

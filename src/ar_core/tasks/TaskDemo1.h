@@ -17,7 +17,7 @@
 class TaskDemo1 : public SimTask{
 public:
 
-    explicit TaskDemo1(ros::NodeHandlePtr n);
+    explicit TaskDemo1();
 
     // updates the task logic and the graphics_actors
     void TaskLoop() override;

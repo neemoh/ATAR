@@ -11,20 +11,18 @@
 #include <boost/thread/thread.hpp>
 
 //------------------------------------------------------------------------------
-TaskDemo2::TaskDemo2(ros::NodeHandlePtr n):
-        SimTask(n) {
+TaskDemo2::TaskDemo2()
+{
 
-    bool ar_mode = false;
-    int n_views = 1;
-    bool one_window_per_view = false;
-    bool borders_off  = false;
-    std::vector<int> view_resolution = {920, 640};
-    std::vector<int> window_positions={300,50};
     // the only needed argument to construct a Renderer if the nodehandle ptr
     // The rest have default values.
-    graphics = std::make_unique<Rendering>(n, view_resolution, ar_mode, n_views,
-                                           one_window_per_view, borders_off,
-                                           window_positions);
+    graphics = std::make_unique<Rendering>(
+            /*view_resolution=*/std::vector<int>({920, 640}),
+            /*ar_mode=*/false,
+            /*n_views=*/1,
+            /*one_window_per_view=*/false,
+            /*borders_off=*/false,
+            /*window_positions=*/std::vector<int>({300,50}));
 
     // Define a master manipulator
     master[0] = new Manipulator(nh,    "/dvrk/PSM1_DUMMY",

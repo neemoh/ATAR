@@ -44,7 +44,6 @@ private:
 
     boost::thread haptics_thread;
 
-    ros::NodeHandlePtr n;
 
     bool new_task_event = false;
 

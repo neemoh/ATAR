@@ -8,10 +8,7 @@
 #include <vtkAxesActor.h>
 
 
-TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
-        :
-        SimTask(n),
-        time_last(ros::Time::now())
+TaskRingTransfer::TaskRingTransfer()
 {
 
     int n_views = 3;
@@ -21,7 +18,7 @@ TaskRingTransfer::TaskRingTransfer(ros::NodeHandlePtr n)
     std::vector<int> window_positions={1280, 0};
     // the only needed argument to construct a Renderer if the nodehandle ptr
     // The rest have default values.
-    graphics = std::make_unique<Rendering>(n, view_resolution, false, n_views,
+    graphics = std::make_unique<Rendering>(view_resolution, false, n_views,
                                            one_window_per_view, borders_off,window_positions);
 
     // Define a master manipulator

@@ -52,7 +52,7 @@
 class TaskDeformable : public SimTask{
 public:
 
-    explicit TaskDeformable(ros::NodeHandlePtr n);
+    explicit TaskDeformable();
 
     ~TaskDeformable();
 

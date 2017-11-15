@@ -16,8 +16,7 @@
 class AugmentedCamera {
 public:
 
-    AugmentedCamera(ros::NodeHandlePtr n,
-             image_transport::ImageTransport *it=NULL,
+    AugmentedCamera(image_transport::ImageTransport *it=NULL,
              const std::string cam_name="", const std::string ns="");
 
     // callbacks

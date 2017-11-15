@@ -12,9 +12,8 @@
 
 
 
-TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
+TaskDeformable::TaskDeformable()
     :
-    SimTask(n),
     time_last(ros::Time::now())
 
 {
@@ -196,7 +195,7 @@ TaskDeformable::TaskDeformable(ros::NodeHandlePtr n)
     graphics_actors.push_back(task_coordinate_axes);
 
     std::vector<int> view_resolution={640,480};
-    graphics = std::make_unique<Rendering>(n,view_resolution, false, 1);
+    graphics = std::make_unique<Rendering>(view_resolution, false, 1);
 
     // Define a master manipulator
     master = new Manipulator(nh, "/sigma7/sigma0", "/pose", "/gripper_angle");

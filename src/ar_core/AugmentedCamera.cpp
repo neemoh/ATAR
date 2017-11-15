@@ -6,8 +6,11 @@
 #include <pwd.h>
 #include <custom_conversions/Conversions.h>
 
-AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTransport *it,
-                                 const std::string cam_name, const std::string ns) {
+AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
+                                 const std::string cam_name, const std::string ns)
+{
+
+    ros::NodeHandle n("~");
 
     // AR camera
     struct passwd *pw = getpwuid(getuid());
@@ -36,7 +39,7 @@ AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTra
 
     // --------------- 1- it can be set as a parameter
     std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
-    if(n->getParam("/calibrations/world_frame_to_"+cam_name+"_frame",
+    if(n.getParam("/calibrations/world_frame_to_"+cam_name+"_frame",
                    temp_vec)){
         conversions::PoseVectorToKDLFrame(temp_vec, world_to_cam_tr);
         ROS_WARN("Using constant pose for augmented camera.");
@@ -47,7 +50,7 @@ AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTra
     else if (ros::topic::waitForMessage<geometry_msgs::PoseStamped>
             (pose_topic_name, ros::Duration(0.5))){
         // now we set up the subscribers
-        sub_pose = n->subscribe(pose_topic_name, 1,
+        sub_pose = n.subscribe(pose_topic_name, 1,
                                 &AugmentedCamera::PoseCallback, this);
     }
     else{
@@ -63,9 +66,9 @@ AugmentedCamera::AugmentedCamera(ros::NodeHandlePtr n, image_transport::ImageTra
         // [dictionary_id, board_w, board_h,
         // square_length_in_meters, marker_length_in_meters]
         std::vector<float> board_params = std::vector<float>(5, 0.0);
-        if(!n->getParam("board_params", board_params))
+        if(!n.getParam("board_params", board_params))
         {
-            if(!n->getParam("/calibrations/board_params", board_params))
+            if(!n.getParam("/calibrations/board_params", board_params))
                 ROS_ERROR("Ros parameter board_param is required. board_param="
                                   "[dictionary_id, board_w, board_h, "
                                   "square_length_in_meters, marker_length_in_meters]");
@@ -142,7 +145,7 @@ cv::Mat AugmentedCamera::LockAndGetImage() {
 
         ros::spinOnce();
         loop_rate.sleep();
-        ROS_WARN_ONCE(("Waiting 5s for images on ."+img_topic).c_str());
+        ROS_WARN_ONCE(("Waiting 5s for images on "+img_topic).c_str());
         if (ros::Time::now() > timeout_time)
             throw std::runtime_error("Timeout: No Image on."+img_topic);
     }

@@ -21,7 +21,7 @@
 class TaskRingTransfer : public SimTask{
 public:
 
-    TaskRingTransfer(ros::NodeHandlePtr n);
+    TaskRingTransfer();
 
     ~TaskRingTransfer();
 
@@ -59,8 +59,6 @@ private:
     SimFiveLinkGripper * grippers[1];
 
     SimObject *hook_mesh;
-
-    ros::Time time_last;
 
     // -------------------------------------------------------------------------
     // graphics

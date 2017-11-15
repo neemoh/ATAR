@@ -66,7 +66,7 @@ enum class SHTaskState: uint8_t {Idle, OnGoing, Finished};
 class TaskSteadyHand : public SimTask{
 public:
 
-    TaskSteadyHand(ros::NodeHandlePtr n);
+    TaskSteadyHand();
 
     ~TaskSteadyHand();
 

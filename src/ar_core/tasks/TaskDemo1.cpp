@@ -5,14 +5,12 @@
 #include "TaskDemo1.h"
 #include <custom_conversions/Conversions.h>
 
-TaskDemo1::TaskDemo1(ros::NodeHandlePtr n)
-        :
-        SimTask(n)
+TaskDemo1::TaskDemo1()
 {
 
     // Initialize the graphics with default values. Check Demo2 to see more
     // details about the parameters you can pass to the Rendering class.
-    graphics = std::make_unique<Rendering>(n);
+    graphics = std::make_unique<Rendering>();
 
     // CREATE SIMULATED OBJECTS
     // -------------------------------------------------------------------------

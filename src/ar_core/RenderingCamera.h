@@ -28,8 +28,7 @@ class RenderingCamera
 {
 public:
 
-    RenderingCamera(ros::NodeHandlePtr n,
-                    const std::vector<int> view_resolution={640, 480},
+    RenderingCamera(const std::vector<int> view_resolution={640, 480},
                     image_transport::ImageTransport *it=NULL,
                     const std::string cam_name="", const std::string ns="");
 

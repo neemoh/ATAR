@@ -22,19 +22,19 @@ TaskHandler::TaskHandler(std::string node_name)
         task_ptr(nullptr)
 {
 
-    n = ros::NodeHandlePtr(new ros::NodeHandle(node_name));
+    ros::NodeHandle n(node_name);
 
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
                                        ros::console::levels::Info) )
         ros::console::notifyLoggerLevelsChanged();
 
-    if (n->getParam("recources_directory", RESOURCES_DIRECTORY))
+    if (n.getParam("recources_directory", RESOURCES_DIRECTORY))
         ROS_DEBUG("recources directory: %s", RESOURCES_DIRECTORY.c_str());
     else
         ROS_ERROR("Parameter '%s' is required. ",
-                  n->resolveName("recources_directory").c_str());
+                  n.resolveName("recources_directory").c_str());
 
-    subscriber_control_events = n->subscribe(
+    subscriber_control_events = n.subscribe(
             "/atar/control_events", 1, &TaskHandler::ControlEventsCallback, this);
 
     ROS_INFO("Task Handler is ready!");
@@ -106,26 +106,26 @@ void TaskHandler::StartTask(const uint task_id) {
     if(task_id ==1){
         // allocate anew dynamic task
         ROS_DEBUG("Starting new TestTask task. ");
-        task_ptr   = new TaskDemo1(n);
+        task_ptr   = new TaskDemo1();
     }
     else if(task_id ==2){
         ROS_DEBUG("Starting new BuzzWireTask task. ");
-        task_ptr   = new TaskDemo2(n);
+        task_ptr   = new TaskDemo2();
     }
     else if(task_id ==3){
-            task_ptr = new TaskDemo3(n);
+            task_ptr = new TaskDemo3();
     }
     else if(task_id ==4){
         ROS_DEBUG("Starting new BuzzWireTask task. ");
-        task_ptr   = new TaskSteadyHand(n);
+        task_ptr   = new TaskSteadyHand();
     }
     else if(task_id ==5){
         ROS_DEBUG("Starting new TaskRingTransfer. ");
-        task_ptr   = new TaskRingTransfer(n);
+        task_ptr   = new TaskRingTransfer();
     }
     else if(task_id ==6){
         ROS_DEBUG("Starting new TaskDeformable . ");
-        task_ptr   = new TaskDeformable(n);
+        task_ptr   = new TaskDeformable();
     }
     else if(task_id ==7){
 

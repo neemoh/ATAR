@@ -9,17 +9,18 @@
 void AddLightActors(vtkRenderer *r);
 
 
-Rendering::Rendering(ros::NodeHandlePtr n,
-                     const std::vector<int> view_resolution,
-                     const bool ar_mode,
-                     const int n_views,
-                     const bool one_window_per_view,
+Rendering::Rendering(std::vector<int> view_resolution,
+                     bool ar_mode,
+                     int n_views,
+                     bool one_window_per_view,
                      bool borders_off,
                      std::vector<int> window_positions
 )
         :
         ar_mode_(ar_mode), n_views(n_views), it(NULL)
 {
+
+    ros::NodeHandle n("~");
     //--------------------------------------------------------------------------
     // check the passed arguments
     if(n_views >3)
@@ -41,22 +42,22 @@ Rendering::Rendering(ros::NodeHandlePtr n,
     std::string cams_namespace;
 
     if(ar_mode_){
-        GetCameraNames(n, n_views, cam_names, cams_namespace);
-        it = new image_transport::ImageTransport(*n);
+        GetCameraNames( n_views, cam_names, cams_namespace);
+        it = new image_transport::ImageTransport(n);
     }
 
     for (int k = 0; k < n_views; ++k) {
         if(ar_mode_)
-            cameras[k] = new RenderingCamera(n, view_resolution, it,
+            cameras[k] = new RenderingCamera(view_resolution, it,
                                              cam_names[k], cams_namespace);
         else
-            cameras[k] = new RenderingCamera(n, view_resolution);
+            cameras[k] = new RenderingCamera(view_resolution);
     }
 
-    n->param<bool>("with_shadows", with_shadows_, false);
+    n.param<bool>("with_shadows", with_shadows_, false);
     bool offScreen_rendering;
-    n->param<bool>("offScreen_rendering", offScreen_rendering, false);
-    n->param<bool>("publish_overlayed_images", publish_overlayed_images_, false);
+    n.param<bool>("offScreen_rendering", offScreen_rendering, false);
+    n.param<bool>("publish_overlayed_images", publish_overlayed_images_, false);
 
     SetupLights();
 
@@ -139,10 +140,10 @@ Rendering::Rendering(ros::NodeHandlePtr n,
 
     // set the cam trs if there is more than 1 view
     std::vector<double> vect_temp = std::vector<double>(7, 0.0);
-    if (n->getParam("/calibrations/cam0_frame_to_cam1_frame", vect_temp))
+    if (n.getParam("/calibrations/cam0_frame_to_cam1_frame", vect_temp))
         conversions::PoseVectorToKDLFrame(vect_temp, cam0_to_cam1_tr);
     vect_temp = std::vector<double>(7, 0.0);
-    if (n->getParam("/calibrations/cam0_frame_to_cam2_frame", vect_temp))
+    if (n.getParam("/calibrations/cam0_frame_to_cam2_frame", vect_temp))
         conversions::PoseVectorToKDLFrame(vect_temp, cam0_to_cam2_tr);
 
     // calling SetMainCameraPose once to apply the cam_to_cam transforms
@@ -401,18 +402,19 @@ void Rendering::SetupLights() {
 }
 
 
-void Rendering::GetCameraNames(ros::NodeHandlePtr n, const int num_views,
+void Rendering::GetCameraNames(int num_views,
                                std::string cam_names[], std::string
                                &c_namespace) {
 
-    n->getParam("cams_namespace", c_namespace);
+    ros::NodeHandle n("~");
+    n.getParam("cams_namespace", c_namespace);
 
     std::stringstream param_name;
     int name_count = 0;
     for (int k = 0; k < num_views; ++k) {
         param_name.str("");// empty the stream
         param_name << "cam_" << k << "_name";
-        if (n->getParam(param_name.str(), cam_names[k]))
+        if (n.getParam(param_name.str(), cam_names[k]))
             name_count++;
     }
     if(name_count!=num_views) {

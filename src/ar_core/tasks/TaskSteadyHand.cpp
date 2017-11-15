@@ -11,9 +11,8 @@
 #include <vtkSphereSource.h>
 
 
-TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
+TaskSteadyHand::TaskSteadyHand()
         :
-        SimTask(n),
         destination_ring_counter(0),
         ac_params_changed(true),
         task_state(SHTaskState::Idle)
@@ -26,7 +25,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     std::vector<int> view_resolution = {640, 480};
     std::vector<int> window_positions={1280, 0};
 
-    graphics = std::make_unique<Rendering>(n, view_resolution, ar_mode, n_views,
+    graphics = std::make_unique<Rendering>(view_resolution, ar_mode, n_views,
                                            one_window_per_view, borders_off,window_positions);
 
     // prevent tools from hitting things at the initialization
@@ -389,7 +388,7 @@ TaskSteadyHand::TaskSteadyHand(ros::NodeHandlePtr n)
     graphics->AddActorsToScene(GetActors());
 
     // Publisher for the task state
-    publisher_task_state = n->advertise<custom_msgs::TaskState>(
+    publisher_task_state = nh->advertise<custom_msgs::TaskState>(
             "/atar/task_state", 1);
 };
 //------------------------------------------------------------------------------

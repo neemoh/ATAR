@@ -55,11 +55,10 @@
 class Rendering {
 public:
 
-    Rendering(ros::NodeHandlePtr n,
-              const std::vector<int> view_resolution={640,480},
-              const bool ar_mode=false,
-              const int num_views =1,
-              const bool one_window_per_view=false,
+    Rendering(std::vector<int> view_resolution={640,480},
+              bool ar_mode=false,
+              int num_views =1,
+              bool one_window_per_view=false,
               bool borders_off=false,
               std::vector<int> window_positions={100,50,740,50,1380,50});
 
@@ -91,8 +90,8 @@ public:
 
 private:
 
-    void GetCameraNames(ros::NodeHandlePtr n, const int num_views,
-                            std::string cam_names[], std::string &ns);
+    void GetCameraNames(int num_views, std::string cam_names[], std::string
+    &ns);
 
     void AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer>);
 

@@ -7,9 +7,9 @@
 #include "SimTask.h"
 
 
-SimTask::SimTask(ros::NodeHandlePtr n)
+SimTask::SimTask()
         :
-        nh(n),
+        nh(ros::NodeHandlePtr(new ros::NodeHandle("~"))),
         time_last(ros::Time::now()),
         graphics(nullptr),
         dynamics_world(nullptr){

@@ -7,8 +7,7 @@
 
 
 //----------------------------------------------------------------------------
-RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
-                                 const std::vector<int> view_resolution,
+RenderingCamera::RenderingCamera(const std::vector<int> view_resolution,
                                  image_transport::ImageTransport *it,
                                  const std::string cam_name, const std::string ns)
         :
@@ -21,6 +20,9 @@ RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
         , cx_(view_resolution[0]/2)
         , cy_(view_resolution[1]/2)
 {
+
+    ros::NodeHandle n("~");
+
     // if there is no name and image transport we assume the camera is not
     // augmented reality type
     if(cam_name!="" && it!=NULL)
@@ -39,7 +41,7 @@ RenderingCamera::RenderingCamera(ros::NodeHandlePtr n,
         camera_image_ = vtkSmartPointer<vtkImageData>::New();
         camera_real = vtkSmartPointer<vtkCamera>::New();
 
-        ar_camera = new AugmentedCamera(n, it, cam_name, ns);
+        ar_camera = new AugmentedCamera( it, cam_name, ns);
 
         ar_camera->GetIntrinsicParams(fx_, fy_, cx_, cy_);
 

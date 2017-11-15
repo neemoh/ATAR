@@ -25,7 +25,7 @@ extern std::string                      RESOURCES_DIRECTORY;
 class SimTask{
 public:
 
-    explicit SimTask(ros::NodeHandlePtr n);
+    explicit SimTask();
 
     virtual ~SimTask();
 
