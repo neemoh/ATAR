@@ -136,16 +136,18 @@ void AugmentedCamera::ReadCameraParameters(const std::string file_path) {
 //------------------------------------------------------------------------------
 cv::Mat AugmentedCamera::LockAndGetImage() {
     ros::Rate loop_rate(2);
-    ros::Time timeout_time = ros::Time::now() + ros::Duration(1);
+    ros::Time timeout_time = ros::Time::now() + ros::Duration(5);
 
     while(ros::ok() && image.empty()) {
+
         ros::spinOnce();
         loop_rate.sleep();
+        ROS_WARN_ONCE(("Waiting 5s for images on ."+img_topic).c_str());
         if (ros::Time::now() > timeout_time)
-            ROS_WARN_STREAM(("Timeout: No Image on."+img_topic+
-                             " Trying again...").c_str());
+            throw std::runtime_error("Timeout: No Image on."+img_topic);
     }
     new_image = false;
+    ROS_INFO(("Received an image on "+ img_topic).c_str());
     return image;
 }
 
