@@ -18,8 +18,9 @@
 #include <vtkSetGet.h>
 /**
  * \class RenderingCamera
- * \brief This is a Subclass of vtkCamera augmented with intrinsic and extrinsic
- * camera information.
+ * \brief This class integrates various elements needed to make a vtk AR view
+ * . These include two vtk cameras for rendering the virtual scene and the
+ * real camera images (if in ar_mode)
  * Changing the size of the rendering window is taken into consideration to get
  * a correct rendering view (still need to add).
  */
@@ -28,11 +29,11 @@ class RenderingCamera
 {
 public:
 
-    RenderingCamera(const std::vector<int> view_resolution={640, 480},
-                    image_transport::ImageTransport *it=NULL,
-                    const std::string cam_name="", const std::string ns="");
+    explicit RenderingCamera(std::vector<int> view_resolution={640, 480},
+                    image_transport::ImageTransport *it= nullptr,
+                    std::string cam_name="", std::string ns="");
 
-    ~RenderingCamera() {if(ar_camera!=NULL) delete ar_camera;};
+    ~RenderingCamera() {delete ar_camera;};
 
     KDL::Frame GetWorldToCamTr(){ return world_to_cam_tr;};
 
@@ -48,23 +49,23 @@ private:
 
     void operator=(const RenderingCamera&);  // Purposefully not implemented.
 
-
+    // Initialize and configure the image actor used in the ar_mode according
+    // to the received image
     void ConfigureBackgroundImage(cv::Mat img);
 
-    /**
-    * \brief Update the view angle of the virtual Camera according to window size
-     * Note that the windows is the opengl window here,
-    */
+    // Update the view angle of the virtual Camera according to window size
     void UpdateVirtualView(const int *window_size);
 
     // Set up the background scene_camera to fill the renderer with the image
-
     void UpdateBackgroundImage(const int *window_size);
 
+    // Positioning, orienting and scaling the real camera images according to
+    // current window size
     void SetCameraToFaceImage(const int *window_siz,
                               const int *imageSize, const double *spacing,
                               const double *origin);
 
+    // Send the pose of the camera to manipulators
     void UpdateCamPoseFollowers(const KDL::Frame &pose);
 
 public:
@@ -74,8 +75,7 @@ public:
     vtkSmartPointer<vtkImageActor>          image_actor_;
 
 private:
-
-    AugmentedCamera*                    ar_camera=NULL;
+    AugmentedCamera*                    ar_camera= nullptr;
     bool                                is_ar = false;
     bool                                is_initialized = false;
     std::vector<Manipulator*>           interested_manipulators;
