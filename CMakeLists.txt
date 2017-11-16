@@ -239,7 +239,7 @@ add_executable(
         src/ar_core/AugmentedCamera.cpp
         src/ar_core/AugmentedCamera.h
         src/ar_core/SimTask.cpp
-        src/ar_core/SimMechanism.h)
+        src/ar_core/SimMechanism.h src/ar_core/ManipulatorToWorldCalibration.cpp src/ar_core/ManipulatorToWorldCalibration.h)
 
 
 target_link_libraries(

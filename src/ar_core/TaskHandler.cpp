@@ -6,6 +6,7 @@
 #include <custom_conversions/Conversions.h>
 #include <src/ar_core/tasks/TaskDemo2.h>
 #include <src/ar_core/tasks/TaskDemo3.h>
+#include <src/ar_core/tasks/TaskDemo4.h>
 #include "ControlEvents.h"
 // tasks
 #include "src/deprecated/TaskBuzzWire.h"
@@ -57,12 +58,9 @@ bool TaskHandler::UpdateWorld() {
     ros::Time start =ros::Time::now();
 
     // update the moving graphics_actors
-    if(task_ptr) {
+    if(task_ptr)
         task_ptr->StepWorld();
-        // arm calibration
-        if(control_event== CE_CALIB_ARM1)
-            task_ptr->StartManipulatorToWorldFrameCalibration(0);
-    }
+
 
     // check time performance
     double dt = (ros::Time::now() - start).toNSec()/1000000;
@@ -79,8 +77,6 @@ bool TaskHandler::UpdateWorld() {
 void TaskHandler::HandleTaskEvent() {
 
     if (new_task_event){
-
-        ROS_INFO("Task %d Selected", running_task_id);
 
         //close tasks if it was already running
         if(task_ptr)
@@ -103,35 +99,26 @@ void TaskHandler::HandleTaskEvent() {
 void TaskHandler::StartTask(const uint task_id) {
 
     // create the task
+
+    if(task_id>0 && task_id<8)
+        ROS_DEBUG("Creating new Task %iu", task_id);
+
     if(task_id ==1){
-        // allocate anew dynamic task
-        ROS_DEBUG("Starting new TestTask task. ");
         task_ptr   = new TaskDemo1();
     }
-    else if(task_id ==2){
-        ROS_DEBUG("Starting new BuzzWireTask task. ");
+    else if(task_id ==2)
         task_ptr   = new TaskDemo2();
-    }
-    else if(task_id ==3){
-            task_ptr = new TaskDemo3();
-    }
-    else if(task_id ==4){
-        ROS_DEBUG("Starting new BuzzWireTask task. ");
+    else if(task_id ==3)
+        task_ptr = new TaskDemo3();
+    else if(task_id ==4)
+        task_ptr = new TaskDemo4();
+    else if(task_id ==5)
         task_ptr   = new TaskSteadyHand();
-    }
-    else if(task_id ==5){
-        ROS_DEBUG("Starting new TaskRingTransfer. ");
+    else if(task_id ==6)
         task_ptr   = new TaskRingTransfer();
-    }
-    else if(task_id ==6){
-        ROS_DEBUG("Starting new TaskDeformable . ");
+    else if(task_id ==7)
         task_ptr   = new TaskDeformable();
-    }
-    else if(task_id ==7){
-
-    }
-    else if(task_id ==8) {
-
+    else if(task_id ==8){
     }
     if(task_ptr) {
         // assign the tool pose pointers
@@ -163,7 +150,7 @@ void TaskHandler::Cleanup() {
 
 // -----------------------------------------------------------------------------
 void TaskHandler::ControlEventsCallback(const std_msgs::Int8ConstPtr
-                                   &msg) {
+                                        &msg) {
 
     control_event = msg->data;
     ROS_DEBUG("Received control event %d", control_event);
@@ -186,6 +173,14 @@ void TaskHandler::ControlEventsCallback(const std_msgs::Int8ConstPtr
             break;
 
         case CE_TOGGLE_FULLSCREEN:
+            break;
+
+        case CE_CALIB_ARM1:
+            task_ptr->StartManipulatorToWorldFrameCalibration(0);
+            break;
+
+        case CE_CALIB_ARM2:
+            task_ptr->StartManipulatorToWorldFrameCalibration(1);
             break;
 
         case CE_START_TASK1:

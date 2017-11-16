@@ -5,6 +5,7 @@
 #include <kdl_conversions/kdl_msg.h>
 #include <custom_conversions/Conversions.h>
 #include "Manipulator.h"
+#include "ManipulatorToWorldCalibration.h"
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
 
 Manipulator::Manipulator(
@@ -15,7 +16,8 @@ Manipulator::Manipulator(
                          KDL::Frame initial_pose)
         :
         n(ros::NodeHandlePtr(new ros::NodeHandle("~"))),
-        pose_world(initial_pose)
+        pose_world(initial_pose),
+        arm_ns(arm_ns)
 {
 
     //--------------------------------------------------------------------------
@@ -26,7 +28,7 @@ Manipulator::Manipulator(
     sub_gripper = n->subscribe(arm_ns+gripper_topic, 1,
                                &Manipulator::GripperCallback, this);
 
-    if(twist_topic!="")
+    if(!twist_topic.empty())
         sub_twist = n->subscribe(arm_ns+twist_topic, 1,
                                  &Manipulator::TwistCallback, this);
 
@@ -77,77 +79,35 @@ void Manipulator::SetWorldToCamTr(const KDL::Frame &in) {
 
 // -----------------------------------------------------------------------------
 void Manipulator::DoArmToWorldFrameCalibration() {
+    ROS_INFO("Starting AMnipulator to world calibration thread.");
 
-    // TODO: OLD IMPLEMENTATION. NEEDS TO BE FIXED
-    //// REMOVE THIS LINE
-    int arm_id = 0;
-    /////
+    // bind the haptics thread
+    calibration_thread = boost::thread(
+            boost::bind(&Manipulator::CalibrationThread, this));
+}
 
-    std::string cam_name;
-    n->getParam("left_cam_name", cam_name);
 
-    cv::Mat camera_matrix[2];
-    cv::Mat camera_distortion[2];
+void Manipulator::CalibrationThread(){
 
-    //getting the name of the arms
-    std::stringstream param_name;
-    std::string slave_name;
-
-    param_name << std::string("slave_") << arm_id + 1 << "_name";
-    n->getParam(param_name.str(), slave_name);
-
-    std::stringstream arm_pose_namespace;
-    arm_pose_namespace << std::string("/dvrk/") <<slave_name
-                       << "/position_cartesian_current";
-
-    std::stringstream cam_pose_namespace;
-    std::string left_cam_name;
-    n->getParam("left_cam_name", left_cam_name);
-    cam_pose_namespace << std::string("/") << left_cam_name
-                       << "/world_to_camera_transform";
-
-    std::string cam_image_name_space ;
-    n->getParam("left_image_topic_name", cam_image_name_space);
-
-    // putting the calibration point on the corners of the board squares
-    // the parameter can be set directly, unless there is the global
-    // /calibrations/board_params
-    double calib_points_distance = 0.01;
-    std::vector<float> board_params = std::vector<float>(5, 0.0);
-
-    if(!n->getParam("calib_points_distance", calib_points_distance)){
-        if(n->getParam("/calibrations/board_params", board_params))
-            calib_points_distance = board_params[3];
-    };
-
-    int num_calib_points;
-    n->param<int>("number_of_calibration_points", num_calib_points, 6);
-
-    ArmToWorldCalibration AWC;
-    KDL::Frame world_to_arm_frame;
-    std::vector<double> calib_point_center
-            = {board_params[1]/2 * calib_points_distance
-                    , board_params[2]/2 * calib_points_distance};
-
-    if(AWC.DoCalibration(
-            cam_image_name_space, cam_pose_namespace.str(),
-            arm_pose_namespace.str(),
-            camera_matrix[0], camera_distortion[0], (uint) num_calib_points,
-            calib_points_distance, calib_point_center, world_to_arm_frame
-    )){
+    ManipulatorToWorldCalibration cal(this);
+    KDL::Frame world_to_local_tr;
+    if(cal.DoCalibration(world_to_local_tr)){
 
         // set ros param
-        param_name.str("");
-        param_name << std::string("/calibrations/world_frame_to_") <<
-                   slave_name << "_frame";
+        std::string param =
+                "/calibrations/world_frame_to_"+arm_ns+"_frame";
 
         std::vector<double> vec7(7, 0.0);
-        conversions::KDLFrameToVector(world_to_arm_frame, vec7);
-        n->setParam(param_name.str(), vec7);
+        conversions::KDLFrameToVector(world_to_local_tr, vec7);
+        n->setParam(param, vec7);
 
         // set output
-        local_to_world_frame_tr = world_to_arm_frame.Inverse();
+        local_to_world_frame_tr = world_to_local_tr.Inverse();
     }
+    
+    // not really needed..
+    calibration_thread.interrupt();
+
 
 }
 

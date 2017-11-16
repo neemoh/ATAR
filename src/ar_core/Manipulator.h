@@ -34,6 +34,7 @@
 // TO BE COMPLETED
 
 #include <ros/ros.h>
+#include <boost/thread/thread.hpp>
 #include <geometry_msgs/PoseStamped.h>
 #include <kdl/frames.hpp>
 #include <std_msgs/Float32.h>
@@ -73,8 +74,17 @@ public:
     void SetWorldToCamTr(const KDL::Frame &in);  // needed for AR
 
     KDL::Frame GetWorldToLocalTr(){return local_to_world_frame_tr.Inverse();};
+
+
 private:
+    void CalibrationThread();
+
+private:
+    std::string arm_ns;
+
     ros::NodeHandlePtr n; // made it a member just for the calibration method
+
+    boost::thread calibration_thread;
 
     KDL::Frame pose_local;
     KDL::Frame pose_world;
