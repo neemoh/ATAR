@@ -9,7 +9,7 @@
 #include <QPageLayout>
 #include "ui_mainwindow.h"
 
-#include "rosclass.hpp"
+#include "RosBridge.hpp"
 #include "cvimagewidget.h"
 
 namespace Ui {

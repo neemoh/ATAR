@@ -271,9 +271,9 @@ set (gui_hdr
         ${PROJECT_INCLUDE_DIR}/cvimagewidget.h)
 set (gui_src
         src/gui/mainwindow.cpp
-        src/gui/rosclass.cpp
-        src/gui/PerformanceEvaluators.h
-        src/gui/PerformanceEvaluators.cpp)
+        src/gui/RosBridge.cpp
+        src/gui/SteadyHandPerfEval.h
+        src/gui/SteadyHandPerfEval.cpp)
 
 qt5_wrap_cpp(gui_hdr_moc ${gui_hdr})
 qt5_wrap_ui (gui_ui_moc src/gui/mainwindow.ui)
@@ -292,7 +292,7 @@ target_link_libraries (gui_libs
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES})
 
-add_executable(gui src/gui/ui_node.cpp)
+add_executable(gui src/gui/main_gui.cpp)
 target_link_libraries (gui
         ${catkin_LIBRARIES}
         gui_libs)

@@ -25,7 +25,7 @@
 #include <custom_msgs/ActiveConstraintParameters.h>
 #include <custom_msgs/TaskState.h>
 
-#include "../PerformanceEvaluators.h"
+#include "src/gui/SteadyHandPerfEval.h"
 
 class RosBridge : public QThread
 {

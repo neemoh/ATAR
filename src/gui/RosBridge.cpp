@@ -75,10 +75,7 @@ RosBridge::RosBridge(QObject *parent, std::string node_name)
 
 
 RosBridge::~RosBridge(){
-    //    delete task_frame_to_slave_frame;;
-    qDebug() << "In RosBridge dsstructor";
     ros::shutdown();
-    qDebug() << "RosBridge dsstructor end";
 
 }
 
@@ -751,8 +748,9 @@ std::vector<double> RosBridge::VectorizeData(){
 
 void RosBridge::CleanUpAndQuit(){
 
-    //TODO cleanup
     ros::shutdown();
+    ros::Rate pause(2);
+    pause.sleep();
 
     delete [] subscriber_slave_pose_current;
     delete [] subscriber_master_pose_current;
