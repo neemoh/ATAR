@@ -6,7 +6,7 @@
 
 #include <cv_bridge/cv_bridge.h>
 
-#include "rosclass.hpp"
+#include "RosBridge.hpp"
 
 #include <custom_msgs/ActiveConstraintParameters.h>
 #include "custom_msgs/TaskState.h"

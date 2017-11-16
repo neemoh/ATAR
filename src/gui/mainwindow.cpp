@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->button_haptics_disable->setChecked(true);
 
-    QTimer *timer = new QTimer(this);
+    timer = new QTimer(this);
 
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 
@@ -82,7 +82,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::onTimeout()
 {
-
     ui->line_edit_num_repetitions->setText(QString::number(ros_obj.GetRepetitionNumber()));
 
     ui->line_edit_duration->setText(QString::number(ros_obj.task_state.time_stamp, 'f', 1));
@@ -174,7 +173,7 @@ void MainWindow::task_7_clicked()
 void MainWindow::task_8_clicked()
 {
     ros_obj.SetStateLabel(8);
-    qDebug() << "clicked task 8";
+    ROS_DEBUG("clicked task 8");
     std_msgs::Int8 msg;
     msg.data =  CE_START_TASK8;
     ros_obj.publisher_control_events.publish(msg);
@@ -240,7 +239,7 @@ void MainWindow::calib_arm2_clicked(){
 
 void MainWindow::kill_core_clicked(){
 
-    ROS_INFO("Exiting...");
+    ROS_INFO("Killiitang ar_core node...");
 
     std_msgs::Int8 msg;
     msg.data =  CE_EXIT;
@@ -256,9 +255,12 @@ void MainWindow::exit_clicked(){
     ros_obj.publisher_control_events.publish(msg);
 
     ros_obj.CleanUpAndQuit();
-    close();
 
     timer->stop();
+    close();
+
+    ROS_INFO("a...");
+
 
 }
 

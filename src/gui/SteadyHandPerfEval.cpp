@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <algorithm>
-#include "PerformanceEvaluators.h"
+#include "SteadyHandPerfEval.h"
 
 
 #define MAX(a, b) ((a > b) ? a : b)
