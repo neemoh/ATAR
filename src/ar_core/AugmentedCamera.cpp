@@ -241,4 +241,10 @@ bool AugmentedCamera::DetectCharucoBoardPose(KDL::Frame &pose, cv::Mat image) {
     return true;
 }
 
+void AugmentedCamera::GetIntrinsicMatrices(cv::Mat &cam_mat, cv::Mat &dist_mat) {
+        cam_mat = camera_matrix;
+        dist_mat = camera_distortion;
+
+}
+
 

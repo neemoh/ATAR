@@ -24,7 +24,7 @@ ManipulatorToWorldCalibration::ManipulatorToWorldCalibration(
     ar_camera = new AugmentedCamera( it, cam_name, ns);
 
     // get the intrinsics
-    ar_camera->GetIntrinsicMatices(cam_matrix, cam_distortation);
+    ar_camera->GetIntrinsicMatrices(cam_matrix, cam_distortation);
 
 
     // putting the calibration point on the corners of the board squares

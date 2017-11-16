@@ -26,6 +26,9 @@ public:
 
     void GetIntrinsicParams(double& fx, double &fy, double &cx, double &cy);
 
+    // returns the camera intrinsic matrices
+    void GetIntrinsicMatrices(cv::Mat &cam_mat, cv::Mat &dist_mat);
+
     // returns true if there is a new pose available and will write it on &pose
     bool GetNewWorldToCamTr(KDL::Frame &pose);
 
@@ -44,7 +47,7 @@ public:
 
 private:
 
-    void ReadCameraParameters(const std::string file_path);
+    void ReadCameraParameters(std::string file_path);
 
     bool DetectCharucoBoardPose(KDL::Frame &pose, cv::Mat image);
 

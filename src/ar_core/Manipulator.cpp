@@ -104,7 +104,7 @@ void Manipulator::CalibrationThread(){
         // set output
         local_to_world_frame_tr = world_to_local_tr.Inverse();
     }
-    
+
     // not really needed..
     calibration_thread.interrupt();
 
