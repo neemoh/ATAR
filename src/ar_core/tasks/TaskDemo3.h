@@ -10,8 +10,9 @@
 // file on a paper and measure the length of the black squares and the marker
 // squares with a ruler. Update the last two elements of the board_params
 // parameter of the test_ar.launch file with these measurements. When you run
-// the task 4 virtual cubes should be placed on 4 black squares of the board
-// when the board is in the field of the view of the camera.
+// the task 4 virtual cubes should be placed on 4 on the corners of the board
+// when the board is in the field of the view of the camera with a text mesh
+// shown in the middle.
 
 #include <src/ar_core/SimTask.h>
 

@@ -2,6 +2,7 @@
 // Created by nima on 14/11/17.
 //
 
+#include <vtkAxesActor.h>
 #include "TaskDemo3.h"
 
 TaskDemo3::TaskDemo3()
@@ -43,18 +44,58 @@ TaskDemo3::TaskDemo3()
 
         // define object Pose
         KDL::Frame pose(KDL::Rotation::Quaternion(0., 0., 0., 1.),
-                        KDL::Vector(positions[i][0], positions[i][1], 0.0));
+                        KDL::Vector(positions[i][0], positions[i][1], 0.025));
 
         // construct the object
         cube[i] = new SimObject(ObjectShape::BOX, ObjectType::NOPHYSICS,
                              dimensions,pose);
 
         // we can access all the properties of a VTK actor
-        cube[i]->GetActor()->GetProperty()->SetColor(colors.Red);
+        cube[i]->GetActor()->GetProperty()->SetColor(colors.Coral);
 
         // we need to add the SimObject to the task. Without this step
         // the object is not going to be used
         AddSimObjectToTask(cube[i]);
     }
 
+
+    // -------------------------------------------------------------------------
+    // Create and add mesh text
+    KDL::Frame pose(KDL::Vector(4*distance, 2*distance, 0.05));
+    pose.M.DoRotY(M_PI);
+    SimObject *mesh = new SimObject(ObjectShape::MESH, ObjectType::NOPHYSICS,
+                                    RESOURCES_DIRECTORY+"/mesh/text.obj",pose);
+    mesh->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
+    AddSimObjectToTask(mesh);
+
+
+    //    // -------------------------------------------------------------------------
+    //    double board_dimensions[3] = {0.16, 0.125, 0.004};
+    //
+    //    KDL::Frame poseb(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
+    //            , KDL::Vector( board_dimensions[0] / 3 + 0.02,
+    //                           board_dimensions[1] / 2 - 0.02,
+    //                           -board_dimensions[2]/ 2) );
+    //
+    //    std::vector<double> dim = {
+    //            board_dimensions[0], board_dimensions[1], board_dimensions[2]
+    //    };
+    //    SimObject* board = new SimObject(ObjectShape::BOX, ObjectType::NOPHYSICS,
+    //                                     dim, poseb);
+    //    board->GetActor()->GetProperty()->SetColor(colors.GrayLight);
+    //    AddSimObjectToTask(board);
+
+    // -------------------------------------------------------------------------
+    // You're not limited to SimObjects of course! You can add any vtk actor
+    // Here we add a reference frame
+    vtkSmartPointer<vtkAxesActor> task_coordinate_axes =
+        vtkSmartPointer<vtkAxesActor>::New();
+
+    task_coordinate_axes->SetXAxisLabelText("");
+    task_coordinate_axes->SetYAxisLabelText("");
+    task_coordinate_axes->SetZAxisLabelText("");
+    task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
+    task_coordinate_axes->SetShaftType(vtkAxesActor::LINE_SHAFT);
+    task_coordinate_axes->SetTipType(vtkAxesActor::SPHERE_TIP);
+    graphics->AddActorToScene(task_coordinate_axes);
 }
