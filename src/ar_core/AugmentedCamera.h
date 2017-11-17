@@ -29,10 +29,14 @@ public:
     // returns the camera intrinsic matrices
     void GetIntrinsicMatrices(cv::Mat &cam_mat, cv::Mat &dist_mat);
 
-    // returns true if there is a new pose available and will write it on &pose
+    // returns true if there is a new pose available from subscriber or
+    // calculate it using charuco board and will write it on &pose
     bool GetNewWorldToCamTr(KDL::Frame &pose);
 
     // this returns the pose of the cam regardless of it being new or not
+    // Warning: if you rely on the charuco board estimation of this class you
+    // should call GetNewWorldToCamTr because GetWorldToCamTr deos not
+    // calculate the pose.
     KDL::Frame GetWorldToCamTr(){return world_to_cam_tr;};
 
     bool IsImageNew();
