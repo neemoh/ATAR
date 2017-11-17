@@ -239,7 +239,7 @@ device to the image frame (i.e. the image you see in the display, i.e. the
 camera!). THe image frame is opencv style: X axis is left to right, y is
 top to bottom and so z is perpendicular into the image. Note that we are
 only interested in the rotation from the master base to the image. This tr
-is set by setting a parameter "/calibrations"+arm_ns+"_frame_to_image_frame"
+is set by setting a parameter "/calibrations"+arm_name+"_frame_to_image_frame"
 with 4 elements representing the quaternion rotation. Check the
 params_calibrations_test_vr.yaml file to see examples of this.
 

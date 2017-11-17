@@ -6,27 +6,12 @@
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_calibrations_ar.yaml" />
-        <rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
     </group>
 
     <node pkg="uvc_camera" type="uvc_camera_node" name="asus_webcam">
         <param name="device" type="string" value="/dev/video0" />
         <param name="camera_name" type="string" value="$(arg left_cam_name)" />
     </node>
-
-    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
-          <!--name="extrinsic_left" output="screen" >-->
-        <!--<param name="camera_name" value="$(arg left_cam_name)"/>-->
-        <!--<param name= "cams_namespace" value= "$(arg cams_namespace)" />-->
-        <!--<param name="show_image" value="false"/>-->
-    <!--</node>-->
-
-    <!--<node pkg="atar" type="extrinsic_calib_charuco"-->
-          <!--name="extrinsic_right" output="screen" >-->
-        <!--<param name="camera_name" value="$(arg right_cam_name)"/>-->
-        <!--<param name= "cams_namespace" value= "$(arg cams_namespace)" />-->
-        <!--<param name="show_image" value="false"/>-->
-    <!--</node>-->
 
     <!-- Node recording the data-->
     <node pkg="atar" type="gui" name="gui" output="screen">
@@ -48,19 +33,17 @@
         <param name= "cam_1_name" value= "$(arg left_cam_name)" />
         <param name= "cam_2_name" value= "$(arg right_cam_name)" />
 
+        <remap from="/ar_core/image" to="asus_webcam/image_raw"/>
+
+        <!--Charuco board used for extrinsic and manipulator to world
+        calibrations. Vector consists of: -->
+        <!--[dictionary_id, board_w, board_h, square_length_in_meters,
+        marker_length_in_meters]-->
+        <rosparam param="board_params"> [0, 6, 4, 0.0247, 0.0185]</rosparam>
+
         <!-- About stl_files_dir:
         The directory of the stl files -->
         <param name= "recources_directory" value= "$(find atar)/resources" />
-
-        <!--
-        About desired_pose_update_frequency:
-        The overlayed images will be published only when new images are
-        received. The desired pose according to the active constraint
-        geometry on the other hand needs to be update faster (even if the ac
-        geometry may be updated at the rate of the received images if it is
-        generated based on the image).
-        -->
-        <!--<param name= "/desired_pose_update_frequency" value= "$(arg haptic_referesh_rate)" />-->
 
         <!--
         num_calib_points: Number of points used for arm to world calibration.
