@@ -32,7 +32,7 @@ ManipulatorToWorldCalibration::ManipulatorToWorldCalibration(
     // /calibrations/board_params
     double calib_points_distance = 0.01;
     std::vector<float> board_params = std::vector<float>(5, 0.0);
-    n.getParam("/calibrations/board_params", board_params);
+    n.getParam("board_params", board_params);
     calib_points_distance = board_params[3];
 
     int num_calib_points = 6;
@@ -68,7 +68,9 @@ void ManipulatorToWorldCalibration::PutDrawings(cv::Mat img
 
     if(!calibration_done) {
 
-        conversions::KDLFrameToRvectvec(ar_camera->GetWorldToCamTr(),
+        KDL::Frame temp;
+        ar_camera->GetNewWorldToCamTr(temp);
+        conversions::KDLFrameToRvectvec(temp,
                                         cam_rvec,
                                         cam_tvec);
         // -------------------- draw  calibration points------------------------
