@@ -22,6 +22,8 @@ public:
 
 private:
     Manipulator *slave[2];
+    SimForceps * forceps;
+
 };
 
 

@@ -16,8 +16,8 @@
 // communicated to the manipulator every time it changes. Now about the rest
 // of the kinematics chain:
 //
-// - VR: The manipulator is interfacing with a master device. Here the
-// local_to_world_frame_tr is calculated as:
+// - VR or MASTER MODE: The manipulator is interfacing with a master device.
+// Here the local_to_world_frame_tr is calculated as:
 // local_to_world_frame_tr.M = camera_to_world_frame_tr.M *local_to_image_frame_rot;
 // where local_to_image_frame_rot is the tr from the base of the master
 // device to the image frame (i.e. the image you see in the display, i.e. the
@@ -28,10 +28,21 @@
 // with 4 elements representing the quaternion rotation. Check the
 // params_calibrations_ar.yaml file to see examples of this.
 //
-// - AR: In the augmented reality case we are interfacing with a slave arm
-// that is seen in the camera images. Here we need to find the transformation
-// from the slave to the world frame by performing a calibration procedure.
-// TO BE COMPLETED
+// - AR or SLAVE MODE: In the augmented reality case we are interfacing with a
+// slave arm that is seen in the camera images. Here we need to find the
+// transformation from the slave to the world frame by performing a
+// calibration procedure. This calibration is done by pointing at 6 known
+// points on a charuco board and is implemented as a separate temporary
+// thread when the DoArmToWorldFrameCalibration method is called. Here we
+// directly calculate the local_to_world_frame_tr and therefore we don't need
+// to SetWorldToCamTrfrom outside like in the VR case. After the calibration
+// a ros parameter is set called:
+//             "/calibrations/world_frame_to_"+arm_name+"_frame";
+// you can set this parameter in the params_calibrations_ar.yaml so that you
+// don't have to repeat the calibration as long as the base of the robot does
+// not move with respect to the world (board) coordinate.
+
+
 
 #include <ros/ros.h>
 #include <boost/thread/thread.hpp>
@@ -81,7 +92,7 @@ private:
 
 private:
     std::string arm_name;
-
+    bool master_mode;
     ros::NodeHandlePtr n; // made it a member just for the calibration thread
 
     boost::thread calibration_thread;

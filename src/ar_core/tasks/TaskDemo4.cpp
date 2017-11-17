@@ -3,11 +3,8 @@
 //
 
 #include <vtkAxesActor.h>
+#include <src/ar_core/SimForceps.h>
 #include "TaskDemo4.h"
-
-void TaskDemo4::TaskLoop() {
-
-}
 
 TaskDemo4::TaskDemo4() {
 
@@ -21,7 +18,16 @@ TaskDemo4::TaskDemo4() {
                                 "/posepublishing");
 
     // for correct calibration, the master needs the pose of the camera
-    graphics->SetManipulatorInterestedInCamPose(slave[0]);
+//    graphics->SetManipulatorInterestedInCamPose(slave[0]);
+
+
+    // -------------------------------------------------------------------------
+    // Create one SimForceps to be connected to master[0]
+    KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
+    forceps_init_pose.M.DoRotZ(M_PI/2);
+    forceps = new SimForceps(forceps_init_pose);
+    // add to simulation
+    AddSimMechanismToTask(forceps);
 
 
     // -------------------------------------------------------------------------
@@ -36,4 +42,12 @@ TaskDemo4::TaskDemo4() {
     task_coordinate_axes->SetShaftType(vtkAxesActor::LINE_SHAFT);
     task_coordinate_axes->SetTipType(vtkAxesActor::SPHERE_TIP);
     graphics->AddActorToScene(task_coordinate_axes);
+}
+
+
+
+void TaskDemo4::TaskLoop() {
+
+    // update the pose of the virtual forceps from the real manipulator
+    forceps->SetPoseAndJawAngle(slave[0]->GetPoseWorld(), 0);
 }

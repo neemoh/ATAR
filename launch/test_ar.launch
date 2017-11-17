@@ -6,10 +6,11 @@
     <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_calibrations_ar.yaml" />
+        <rosparam command="load" file="$(find atar)/launch/params_charuco_board_4_6_polimi_test.yaml" />
     </group>
 
     <node pkg="uvc_camera" type="uvc_camera_node" name="asus_webcam">
-        <param name="device" type="string" value="/dev/video0" />
+        <param name="device" type="string" value="/dev/video1" />
         <param name="camera_name" type="string" value="$(arg left_cam_name)" />
     </node>
 

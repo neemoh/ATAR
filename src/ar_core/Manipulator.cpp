@@ -36,14 +36,28 @@ Manipulator::Manipulator(
     //--------------------------------------------------------------------------
     // Get the transformation to the display and calculate the tr to the
     // world frame
-    std::string param = "/calibrations/"+arm_name+"_frame_to_image_frame";
-    std::vector<double> vect_temp = std::vector<double>(4, 0.0);
+    std::string master_mode_param =
+            "/calibrations/"+arm_name+"_frame_to_image_frame";
+    std::vector<double> vect_master = std::vector<double>(4, 0.0);
 
-    if (n->getParam(param, vect_temp)){
-        conversions::QuatVectorToKDLRot(vect_temp, local_to_image_frame_rot);
+    std::string slave_mode_param =
+            "/calibrations/world_frame_to_"+arm_name+"_frame";
+    std::vector<double> vec_slave = std::vector<double>(7, 0.0);
+
+    if (n->getParam(master_mode_param, vect_master)) {
+        conversions::QuatVectorToKDLRot(vect_master, local_to_image_frame_rot);
+        master_mode = true;
+    }
+    else if(n->getParam(slave_mode_param, vec_slave))
+    {
+        conversions::PoseVectorToKDLFrame(vec_slave, local_to_world_frame_tr);
+        local_to_world_frame_tr = local_to_world_frame_tr.Inverse();
+        master_mode = false;
     }
     else
-        ROS_WARN("Parameter %s was not found.", param.c_str());
+        ROS_WARN("Neither %s nor %s parameter was found. Manipulator may not "
+                         "be correctly calibrated.",
+                 master_mode_param.c_str(), slave_mode_param.c_str());
 
 }
 
@@ -71,20 +85,29 @@ void Manipulator::TwistCallback(const geometry_msgs::TwistStampedConstPtr
 
 // -----------------------------------------------------------------------------
 void Manipulator::SetWorldToCamTr(const KDL::Frame &in) {
-
-    camera_to_world_frame_tr = in.Inverse();
-    local_to_world_frame_tr.M = camera_to_world_frame_tr.M *
-                                local_to_image_frame_rot;
+    if(master_mode) {
+        camera_to_world_frame_tr = in.Inverse();
+        local_to_world_frame_tr.M = camera_to_world_frame_tr.M *
+                                    local_to_image_frame_rot;
+    } else
+        ROS_WARN_ONCE("SetWorldToCamTr is needed when manipulator is in master"
+                              " mode.");
 }
 
 
 // -----------------------------------------------------------------------------
 void Manipulator::DoArmToWorldFrameCalibration() {
-    ROS_INFO("Starting manipulator to world calibration thread.");
 
-    // bind the haptics thread
-    calibration_thread = boost::thread(
-            boost::bind(&Manipulator::CalibrationThread, this));
+    if(!master_mode) {
+        ROS_INFO("Starting manipulator to world calibration thread.");
+
+        // bind the haptics thread
+        calibration_thread = boost::thread(
+                boost::bind(&Manipulator::CalibrationThread, this));
+    } else
+        ROS_WARN("Manipulator to world calibration is used "
+                         "when manipulator is in slave mode.");
+
 }
 
 

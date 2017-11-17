@@ -228,7 +228,7 @@ method (check the Demo2Task). After doing that the camera pose will be
 communicated to the manipulator every time it changes. Now about the rest of 
 the kinematics chain:
 
-##### VR: 
+##### VR or MASTER MODE: 
 The manipulator is interfacing with a master device. Here the 
 local_to_world_frame_tr is calculated as:
 
@@ -243,15 +243,24 @@ is set by setting a parameter "/calibrations"+arm_name+"_frame_to_image_frame"
 with 4 elements representing the quaternion rotation. Check the
 params_calibrations_test_vr.yaml file to see examples of this.
 
-##### AR: 
-In the augmented reality case we are interfacing with a slave arm
-that is seen in the camera images. Here we need to find the transformation
-from the slave to the world frame by performing a calibration procedure. 
-TO BE COMPLETED
+##### AR or SLAVE MODE: 
+In the augmented reality case we are interfacing with a slave arm that is 
+seen in the camera images. Here we need to find the transformation from the 
+slave to the world frame by performing a calibration procedure. This 
+calibration is done by pointing at 6 known points on a charuco board and is 
+implemented as a separate temporary thread when the 
+DoArmToWorldFrameCalibration method is called. Here we directly calculate the
+local_to_world_frame_tr and therefore we don't need to SetWorldToCamTrfrom 
+outside like in the VR case. After the calibration a ros parameter is set 
+called: "/calibrations/world_frame_to_"+arm_name+"_frame"
+you can set this parameter in the params_calibrations_ar.yaml so that you 
+don't have to repeat the calibration as long as the base of the robot does 
+not move with respect to the world (board) coordinate. 
+
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_references_frames.png)
 
 ## TODO: Augmented Reality 
-Things to explain: camera. Calibrations (intrinsic, extrinsic, arm to world)
+Things to explain: camera. Calibrations (intrinsic, extrinsic)
 
 intrinsic calib files: make a folder named camera_info in the .ros folder in your 
                        home directory and copy the default_intrinsics.yaml file from the 
