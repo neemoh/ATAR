@@ -24,7 +24,7 @@
 // camera!). THe image frame is opencv style: X axis is left to right, y is
 // top to bottom and so z is perpendicular into the image. Note that we are
 // only interested in the rotation from the master base to the image. This tr
-// is set by setting a parameter "/calibrations"+arm_ns+"_frame_to_image_frame"
+// is set by setting a parameter "/calibrations"+arm_name+"_frame_to_image_frame"
 // with 4 elements representing the quaternion rotation. Check the
 // params_calibrations_ar.yaml file to see examples of this.
 //
@@ -43,9 +43,9 @@
 class Manipulator {
 
 public:
-    Manipulator(std::string topic_ns,
+    Manipulator(std::string arm_name,
                 std::string pose_topic,
-                std::string gripper_topic,
+                std::string gripper_topic= "",
                 std::string twist_topic = "",
                 KDL::Frame initial_pose=KDL::Frame());
 
@@ -80,9 +80,9 @@ private:
     void CalibrationThread();
 
 private:
-    std::string arm_ns;
+    std::string arm_name;
 
-    ros::NodeHandlePtr n; // made it a member just for the calibration method
+    ros::NodeHandlePtr n; // made it a member just for the calibration thread
 
     boost::thread calibration_thread;
 

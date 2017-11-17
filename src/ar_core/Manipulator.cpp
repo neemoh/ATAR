@@ -9,33 +9,34 @@
 #include <src/arm_to_world_calibration/ArmToWorldCalibration.h>
 
 Manipulator::Manipulator(
-                         const std::string arm_ns,
-                         const std::string pose_topic,
-                         const std::string gripper_topic,
-                         const std::string twist_topic,
-                         KDL::Frame initial_pose)
+        const std::string arm_name,
+        const std::string pose_topic,
+        const std::string gripper_topic,
+        const std::string twist_topic,
+        KDL::Frame initial_pose)
         :
         n(ros::NodeHandlePtr(new ros::NodeHandle("~"))),
         pose_world(initial_pose),
-        arm_ns(arm_ns)
+        arm_name(arm_name)
 {
 
     //--------------------------------------------------------------------------
     // Define subscribers
-    sub_pose = n->subscribe(arm_ns+pose_topic, 1,
+    sub_pose = n->subscribe(pose_topic, 1,
                             &Manipulator::PoseCallback, this);
 
-    sub_gripper = n->subscribe(arm_ns+gripper_topic, 1,
-                               &Manipulator::GripperCallback, this);
+    if(!gripper_topic.empty())
+        sub_gripper = n->subscribe(gripper_topic, 1,
+                                   &Manipulator::GripperCallback, this);
 
     if(!twist_topic.empty())
-        sub_twist = n->subscribe(arm_ns+twist_topic, 1,
+        sub_twist = n->subscribe(twist_topic, 1,
                                  &Manipulator::TwistCallback, this);
 
     //--------------------------------------------------------------------------
     // Get the transformation to the display and calculate the tr to the
     // world frame
-    std::string param = "/calibrations"+arm_ns+"_frame_to_image_frame";
+    std::string param = "/calibrations/"+arm_name+"_frame_to_image_frame";
     std::vector<double> vect_temp = std::vector<double>(4, 0.0);
 
     if (n->getParam(param, vect_temp)){
@@ -79,7 +80,7 @@ void Manipulator::SetWorldToCamTr(const KDL::Frame &in) {
 
 // -----------------------------------------------------------------------------
 void Manipulator::DoArmToWorldFrameCalibration() {
-    ROS_INFO("Starting AMnipulator to world calibration thread.");
+    ROS_INFO("Starting manipulator to world calibration thread.");
 
     // bind the haptics thread
     calibration_thread = boost::thread(
@@ -95,7 +96,7 @@ void Manipulator::CalibrationThread(){
 
         // set ros param
         std::string param =
-                "/calibrations/world_frame_to_"+arm_ns+"_frame";
+                "/calibrations/world_frame_to_"+arm_name+"_frame";
 
         std::vector<double> vec7(7, 0.0);
         conversions::KDLFrameToVector(world_to_local_tr, vec7);
