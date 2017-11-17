@@ -46,6 +46,7 @@ TaskDemo2::TaskDemo2()
     sphere_tool = new SimObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
                                 std::vector<double>(1,0.005));
     sphere_tool->GetActor()->GetProperty()->SetColor(colors.OrangeRed);
+    AddSimObjectToTask(sphere_tool);
 
     // --------------------------------------------------------
     // create a floor
