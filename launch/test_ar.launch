@@ -10,7 +10,7 @@
     </group>
 
     <node pkg="uvc_camera" type="uvc_camera_node" name="asus_webcam">
-        <param name="device" type="string" value="/dev/video1" />
+        <param name="device" type="string" value="/dev/video0" />
         <param name="camera_name" type="string" value="$(arg left_cam_name)" />
     </node>
 
