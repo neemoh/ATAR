@@ -25,6 +25,8 @@ double Turquoise[3]	 {0.25, 0.88, 0.82};
 double BlueDodger[3] {0.12, 0.57, 1.0};
 double BlueNavy[3]   {0.,   0.,   0.5};
 double BlueMidnight[3] {0.1,   0.1,   0.45};
+double RedDark[3]    {0.55,   0.,   0.};
+double RedFirebrick[3]    {0.70,   0.13,   0.13};
 
 
 };
