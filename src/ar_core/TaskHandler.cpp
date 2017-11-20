@@ -7,6 +7,7 @@
 #include <src/ar_core/tasks/TaskDemo2.h>
 #include <src/ar_core/tasks/TaskDemo3.h>
 #include <src/ar_core/tasks/TaskDemo4.h>
+#include <src/ar_core/tasks/TaskActiveConstraintDesign.h>
 #include "ControlEvents.h"
 // tasks
 #include "src/deprecated/TaskBuzzWire.h"
@@ -100,7 +101,7 @@ void TaskHandler::StartTask(const uint task_id) {
 
     // create the task
 
-    if(task_id>0 && task_id<8)
+    if(task_id>0 && task_id<10)
         ROS_DEBUG("Creating new Task %iu", task_id);
 
     if(task_id ==1){
@@ -119,6 +120,11 @@ void TaskHandler::StartTask(const uint task_id) {
     else if(task_id ==7)
         task_ptr   = new TaskDeformable();
     else if(task_id ==8){
+        task_ptr = new TaskActiveConstraintDesign();
+    }
+    else if(task_id ==9){
+    }
+    else if(task_id ==10){
     }
     if(task_ptr) {
         // assign the tool pose pointers
