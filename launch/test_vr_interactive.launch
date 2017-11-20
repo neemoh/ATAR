@@ -1,0 +1,75 @@
+<launch>
+    <arg name="slave_1_name" value="PSM1_DUMMY"/>
+    <arg name="slave_2_name" value="PSM2_DUMMY"/>
+    <arg name="master_1_name" value="MTMR"/>
+    <arg name="master_2_name" value="MTML"/>
+
+    <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
+    <group ns="calibrations">
+        <rosparam command="load" file="$(find atar)/launch/params_calibrations_test_vr.yaml" />
+    </group>
+
+
+    <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
+    <node pkg="atar" type="ar_core" name="ar_core" output="screen">
+
+        <!-- About stl_files_dir:
+        The directory of the stl files -->
+        <param name= "recources_directory" value= "$(find atar)/resources" />
+
+        <!--Activate or deactivate haptic guidance -->
+        <param name= "publish_overlayed_images" value= "false" />
+
+        <!--add shadows to the graphics. Works on dedicated GPUs. -->
+        <!--NOTE: SHADOWS DON'T WORK IF THERE ARE MORE THAN ONE WINDOW.MULTIPLE VIEWS IN ONE WINDOW IS FINE-->
+        <param name= "with_shadows" value= "false" />
+
+        <!--If the generated images are to be published on
+        ros, to help alleviate the considerable bottleneck of grabbing the
+        images from the gpu, activate this flag so that the rendering is done
+         off screen and not shown in opengl windows.-->
+        <param name= "offScreen_rendering" value= "false" />
+
+    </node>
+
+    <!-- Node GUI and recording the data-->
+    <node pkg="atar" type="gui" name="gui" output="screen">
+        <!--records data at the frequency of task_state topic-->
+        <param name="number_of_arms" value="2"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
+    </node>
+
+    <node pkg="atar" type="teleop_dummy_dvrk" name="teleop_dummy_dvrk"
+          output="screen">
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
+        <param name="scaling" value="0.5"/>
+        <rosparam param="initial_slave1_position"> [0.03, 0.04, 0.05]</rosparam>
+        <rosparam param="initial_slave2_position"> [0.07, 0.05, 0.05]</rosparam>
+    </node>
+
+    <node pkg="sigma" type="master" name="sigma7" output="screen">
+
+        <param name="frequency" value="200" />
+
+        <!--sigma can simulate a button with the gripper. THat is when yoy
+        close the gripper it resists a bit at the end and and springs back
+        when you release it.-->
+        <param name="enable_gripper_button" value="true" />
+
+        <!--we can lock the orientation when the pedal is released. This is
+        useful for teleoperation-->
+        <param name="lock_orientation" value="true" />
+
+        <!-- The topic from which the node reads wrenches to be applied by
+        the device-->
+        <param name="wrench_topic" value="/sigma7/sigma0/forceFeedback"/>
+
+    </node>
+
+</launch>

@@ -613,7 +613,7 @@ void TaskSteadyHand::CalculatedDesiredRingPose(
     // point is put on the intersection of the x axis of the ring with its
     // inner circle and the other point is simillar but along the y axis.
     // The estimated tangent is the cross product of the two vectors
-    // connecting these points to their corresponding closest point on the
+    // connecting these points to their correspondin closest point on the
     // surface of the thin tube (after normalization). This is just a quick
     // and non-ideal approximation.
     // Note that we could have used the central point instead of the tool
