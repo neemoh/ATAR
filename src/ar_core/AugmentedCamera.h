@@ -51,7 +51,7 @@ public:
 
 private:
 
-    void ReadCameraParameters(std::string file_path);
+    bool ReadCameraParameters(std::string file_path);
 
     bool DetectCharucoBoardPose(KDL::Frame &pose, cv::Mat image);
 

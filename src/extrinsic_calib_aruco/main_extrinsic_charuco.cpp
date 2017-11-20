@@ -16,7 +16,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <custom_conversions/Conversions.h>
 #include <pwd.h>
-#include "src/intrinsic_calib/IntrinsicCalibrationCharuco.h"
+#include "src/ar_core/IntrinsicCalibrationCharuco.h"
 
 using namespace std;
 using namespace cv;

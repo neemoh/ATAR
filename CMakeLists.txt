@@ -81,8 +81,8 @@ SUBDIRS( src/ar_core/LoadObjGL/VHACD)
 
 add_executable(extrinsic_calib_charuco
         src/extrinsic_calib_aruco/main_extrinsic_charuco.cpp
-        src/intrinsic_calib/IntrinsicCalibrationCharuco.cpp
-        src/intrinsic_calib/IntrinsicCalibrationCharuco.h)
+        src/ar_core/IntrinsicCalibrationCharuco.cpp
+        src/ar_core/IntrinsicCalibrationCharuco.h)
 
 target_link_libraries(extrinsic_calib_charuco
         ${catkin_LIBRARIES})
@@ -231,15 +231,20 @@ add_executable(
         src/ar_core/SimFiveLinkGripper.h
         src/ar_core/SimForceps.cpp
         src/ar_core/SimForceps.h
+        src/ar_core/SimTask.cpp
+        src/ar_core/SimMechanism.h
         src/ar_core/Colors.hpp
         src/ar_core/VTKConversions.h
         src/ar_core/VTKConversions.cpp
         src/ar_core/Manipulator.cpp
         src/ar_core/Manipulator.h
+        src/ar_core/ManipulatorToWorldCalibration.cpp
+        src/ar_core/ManipulatorToWorldCalibration.h
         src/ar_core/AugmentedCamera.cpp
         src/ar_core/AugmentedCamera.h
-        src/ar_core/SimTask.cpp
-        src/ar_core/SimMechanism.h src/ar_core/ManipulatorToWorldCalibration.cpp src/ar_core/ManipulatorToWorldCalibration.h)
+        src/ar_core/IntrinsicCalibrationCharuco.cpp
+        src/ar_core/IntrinsicCalibrationCharuco.h
+)
 
 
 target_link_libraries(

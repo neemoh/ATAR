@@ -3,8 +3,16 @@
 //
 
 #include "AugmentedCamera.h"
+#include "IntrinsicCalibrationCharuco.h"
 #include <pwd.h>
 #include <custom_conversions/Conversions.h>
+
+//#include <sys/stat.h>
+
+//inline bool FileExists (const std::string& name) {
+//    struct stat buffer;
+//    return (stat (name.c_str(), &buffer) == 0);
+//}
 
 AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
                                  const std::string cam_name, const std::string ns)
@@ -12,24 +20,57 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
 
     ros::NodeHandle n("~");
 
-    // AR camera
-    struct passwd *pw = getpwuid(getuid());
-    const char *home_dir = pw->pw_dir;
-    std::stringstream path;
-    path << std::string(home_dir) << std::string("/.ros/camera_info/")
-         << cam_name << "_intrinsics.yaml";
-    ReadCameraParameters(path.str());
-
-    // --------------------Images
-    // image subscriber
+    // image subscriber topic
     img_topic = "/"+cam_name+ "/image_raw";
     if(ns!="")
         img_topic = "/"+ns+"/"+cam_name+ "/image_raw";
 
+    // Read board parameters which we might need to use either for intrinsic
+    // or extrinsic calibration
+    // board_params comprises: [dictionary_id, board_w, board_h,
+    // square_length_in_meters, marker_length_in_meters]
+    std::vector<float> board_params = std::vector<float>(5, 0.0);
+    bool found_board_params = true;
+    if(!n.getParam("board_params", board_params));
+    if(!n.getParam("/calibrations/board_params", board_params))
+        found_board_params = false;
+
+    // ------------------------------------------
+    // INTRINSICS
+    // ------------------------------------------
+    struct passwd *pw = getpwuid(getuid());
+    const char *home_dir = pw->pw_dir;
+    std::string path =
+            std::string(home_dir) + "/.ros/camera_info/"+ cam_name
+            +"_intrinsics.yaml";
+
+    if(!ReadCameraParameters(path)){
+        ROS_WARN("Unable to read the camera intrinsic file= %s. Starting the "
+                         "intrinsic calibration process...",path.c_str());
+        if(!found_board_params)
+            throw std::runtime_error(
+                    "Ros parameter board_param is not found. This parameter "
+                            "is needed for intrinsic calibration. board_param="
+                            "[dictionary_id, board_w, board_h, "
+                            "square_length_in_meters, marker_length_in_meters]");
+
+
+        IntrinsicCalibrationCharuco IC_ptr(img_topic, board_params);
+        double intrinsic_calib_err;
+        if(!IC_ptr.DoCalibration(path, intrinsic_calib_err,camera_matrix,
+                                 camera_distortion))
+            throw std::runtime_error("Intrinsic Calibration failed. Please "
+                                             "repeat.");
+    }
+
+
+    // --------------------Images
     sub_image = it->subscribe(img_topic, 1, &AugmentedCamera::ImageCallback, this);
 
 
-    // ------------------------------------------- CAM POSE
+    // ------------------------------------------
+    // EXTRINSIC (CAM POSE)
+    // ------------------------------------------
     // we first try to read the poses as parameters and later update the
     // poses if new messages are arrived on the topics
 
@@ -40,18 +81,18 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
     // --------------- 1- it can be set as a parameter
     std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
     if(n.getParam("/calibrations/world_frame_to_"+cam_name+"_frame",
-                   temp_vec)){
+                  temp_vec)){
         conversions::PoseVectorToKDLFrame(temp_vec, world_to_cam_tr);
         ROS_WARN("Using constant pose for augmented camera.");
     }
 
-    // --------------- 2- it can be read from a topic
-    // is something being published?
+        // --------------- 2- it can be read from a topic
+        // is something being published?
     else if (ros::topic::waitForMessage<geometry_msgs::PoseStamped>
             (pose_topic_name, ros::Duration(0.5))){
         // now we set up the subscribers
         sub_pose = n.subscribe(pose_topic_name, 1,
-                                &AugmentedCamera::PoseCallback, this);
+                               &AugmentedCamera::PoseCallback, this);
     }
     else{
         is_pose_from_subscriber = false;
@@ -62,21 +103,15 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
                  pose_topic_name.c_str());
 
         // Read boardparameters
-        // board_params comprises:
-        // [dictionary_id, board_w, board_h,
-        // square_length_in_meters, marker_length_in_meters]
-        std::vector<float> board_params = std::vector<float>(5, 0.0);
-        if(!n.getParam("board_params", board_params))
-        {
-            if(!n.getParam("/calibrations/board_params", board_params))
-                ROS_ERROR("Ros parameter board_param is required. board_param="
-                                  "[dictionary_id, board_w, board_h, "
-                                  "square_length_in_meters, marker_length_in_meters]");
-        }
+        if(!found_board_params)
+            throw std::runtime_error(
+                    "Ros parameter board_param is not found. This parameter "
+                            "is needed for extrinsic calibration. board_param="
+                            "[dictionary_id, board_w, board_h, "
+                            "square_length_in_meters, marker_length_in_meters]");
 
-        dictionary =
-                cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME
-                                                           (board_params[0]));
+        dictionary = cv::aruco::getPredefinedDictionary
+                (cv::aruco::PREDEFINED_DICTIONARY_NAME(board_params[0]));
         // create charuco board object
         charuco_board = cv::aruco::CharucoBoard::create((int)board_params[1],
                                                         (int)board_params[2],
@@ -115,25 +150,30 @@ AugmentedCamera::GetIntrinsicParams(double &fx, double &fy, double &cx, double &
 }
 
 //------------------------------------------------------------------------------
-void AugmentedCamera::ReadCameraParameters(const std::string file_path) {
+bool AugmentedCamera::ReadCameraParameters(const std::string file_path) {
 
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
 
-    if (!fs.isOpened())
-        throw std::runtime_error("Unable to read the camera parameters file.");
-    fs["camera_matrix"] >> camera_matrix;
+    if (fs.isOpened()){
 
-    // check if we got something
-    if(camera_matrix.empty()){
-        ROS_ERROR("camera_matrix not found in '%s' ", file_path.c_str());
-        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
-    }
+        fs["camera_matrix"] >> camera_matrix;
+        // check if we got something
+        if (camera_matrix.empty()) {
+            ROS_WARN("camera_matrix not found in '%s'. . ",file_path.c_str());
+            return false;
+        }
 
-    fs["distortion_coefficients"] >> camera_distortion;
-    if(camera_distortion.empty()){
-        ROS_ERROR("distortion_coefficients  not found in '%s' ", file_path.c_str());
-        throw std::runtime_error("ERROR: Intrinsic camera parameters not found.");
-    }
+        fs["distortion_coefficients"] >> camera_distortion;
+        if (camera_distortion.empty()) {
+            ROS_WARN("distortion_coefficients not found in '%s'. . ",file_path.c_str());
+            return false;
+        }
+        return true;
+    } else
+
+        return false;
+
+
 }
 
 //------------------------------------------------------------------------------
@@ -142,15 +182,17 @@ cv::Mat AugmentedCamera::LockAndGetImage() {
     ros::Time timeout_time = ros::Time::now() + ros::Duration(5);
 
     while(ros::ok() && image.empty()) {
-
         ros::spinOnce();
         loop_rate.sleep();
-        ROS_WARN_ONCE(("Waiting 5s for images on "+img_topic).c_str());
+
+        ROS_WARN_STREAM_ONCE("Waiting 5s for images on "+img_topic);
+
         if (ros::Time::now() > timeout_time)
             throw std::runtime_error("Timeout: No Image on."+img_topic);
     }
+
     new_image = false;
-    ROS_INFO(("Received an image on "+ img_topic).c_str());
+    ROS_INFO_STREAM("Received an image on "+ img_topic);
     return image;
 }
 
@@ -242,8 +284,8 @@ bool AugmentedCamera::DetectCharucoBoardPose(KDL::Frame &pose, cv::Mat image) {
 }
 
 void AugmentedCamera::GetIntrinsicMatrices(cv::Mat &cam_mat, cv::Mat &dist_mat) {
-        cam_mat = camera_matrix;
-        dist_mat = camera_distortion;
+    cam_mat = camera_matrix;
+    dist_mat = camera_distortion;
 
 }
 
