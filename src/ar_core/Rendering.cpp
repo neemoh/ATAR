@@ -39,17 +39,15 @@ Rendering::Rendering(std::vector<int> view_resolution,
     }
     //--------------------------------------------------------------------------
     std::string cam_names[n_views];
-    std::string cams_namespace;
 
     if(ar_mode_){
-        GetCameraNames( n_views, cam_names, cams_namespace);
+        GetCameraNames( n_views, cam_names);
         it = new image_transport::ImageTransport(n);
     }
 
     for (int k = 0; k < n_views; ++k) {
         if(ar_mode_)
-            cameras[k] = new RenderingCamera(view_resolution, it,
-                                             cam_names[k], cams_namespace);
+            cameras[k] = new RenderingCamera(view_resolution, it, cam_names[k]);
         else
             cameras[k] = new RenderingCamera(view_resolution);
     }
@@ -402,12 +400,9 @@ void Rendering::SetupLights() {
 }
 
 
-void Rendering::GetCameraNames(int num_views,
-                               std::string cam_names[], std::string
-                               &c_namespace) {
+void Rendering::GetCameraNames(int num_views, std::string cam_names[]) {
 
     ros::NodeHandle n("~");
-    n.getParam("cams_namespace", c_namespace);
 
     std::stringstream param_name;
     int name_count = 0;

@@ -31,7 +31,7 @@ public:
 
     explicit RenderingCamera(std::vector<int> view_resolution={640, 480},
                     image_transport::ImageTransport *it= nullptr,
-                    std::string cam_name="", std::string ns="");
+                    std::string cam_name="");
 
     ~RenderingCamera() {delete ar_camera;};
 

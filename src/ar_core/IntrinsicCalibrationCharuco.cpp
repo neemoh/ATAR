@@ -3,6 +3,7 @@
 //
 
 #include <opencv-3.2.0-dev/opencv2/opencv.hpp>
+#include <utility>
 #include "IntrinsicCalibrationCharuco.h"
 #include <ros/ros.h>
 #include <image_transport/subscriber.h>
@@ -11,9 +12,10 @@
 
 
 IntrinsicCalibrationCharuco::IntrinsicCalibrationCharuco(
-        std::string img_topic_namespace,
-        std::vector<float> charuco_board_params) :
-        image_topic_ns(img_topic_namespace)
+        std::string &img_topic,
+        std::vector<float> charuco_board_params)
+        :
+        image_topic_name(std::move(img_topic))
 {
 
     if(charuco_board_params.size()!=5)
@@ -45,17 +47,17 @@ bool IntrinsicCalibrationCharuco::DoCalibration(std::string outputFile,
                                                 double &repError,
                                                 cv::Mat &cameraMatrix,
                                                 cv::Mat &distCoeffs) {
-
-
-
-    ros::NodeHandle n("IntrinsicCalibrationCharuco");
+    ros::NodeHandle n("~");
     ros::Rate loop_rate = ros::Rate(50);
     image_transport::ImageTransport it = image_transport::ImageTransport(n);
-    image_transport::Subscriber sub = it.subscribe(image_topic_ns, 1,
+    image_transport::Subscriber sub = it.subscribe(image_topic_name, 1,
                                                    &IntrinsicCalibrationCharuco::CameraImageCallback, this);
     std::string window_name = "Intrinsic calibration";
     ROS_INFO("Intrinsic Calibration with Charuco board started. Follow the "
                      "instructions shown on the image.");
+
+    LockAndGetImage();
+
     // -----------------------------------------------------------------------//
 
     while(ros::ok() && !finished_capturing ){
@@ -165,7 +167,7 @@ void IntrinsicCalibrationCharuco::CameraImageCallback(
     // callback, but let's bet on the low refresh rate of images and do it
     // anyways!
 
-    cv::Mat image, imageCopy;
+    cv::Mat imageCopy;
 
     try {
         image = cv_bridge::toCvCopy(msg, "bgr8")->image;
@@ -282,4 +284,25 @@ bool IntrinsicCalibrationCharuco::saveCameraParams(
     fs << "avg_reprojection_error" << totalAvgErr;
 
     return true;
+}
+
+cv::Mat IntrinsicCalibrationCharuco::LockAndGetImage() {
+    ros::Rate loop_rate(2);
+    ros::Time timeout_time = ros::Time::now() + ros::Duration(5);
+
+    while(ros::ok() && image.empty()) {
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        ROS_WARN_STREAM_ONCE("IntrinsicCalibrationCharuco Waiting 5s for "
+                                     "images on "+image_topic_name);
+
+        if (ros::Time::now() > timeout_time)
+            throw std::runtime_error("IntrinsicCalibrationCharuco Timeout: No"
+                                             " Image on "+image_topic_name);
+    }
+
+    ROS_INFO_STREAM("IntrinsicCalibrationCharuco Received an image on "+
+                            image_topic_name);
+    return image;
 }

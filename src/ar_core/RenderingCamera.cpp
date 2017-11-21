@@ -9,7 +9,7 @@
 //----------------------------------------------------------------------------
 RenderingCamera::RenderingCamera(const std::vector<int> view_resolution,
                                  image_transport::ImageTransport *it,
-                                 const std::string cam_name, const std::string ns)
+                                 const std::string cam_name)
         :
         intrinsic_matrix(vtkMatrix4x4::New())
         ,camera_virtual(vtkSmartPointer<vtkCamera>::New())
@@ -41,7 +41,7 @@ RenderingCamera::RenderingCamera(const std::vector<int> view_resolution,
         camera_image_ = vtkSmartPointer<vtkImageData>::New();
         camera_real = vtkSmartPointer<vtkCamera>::New();
 
-        ar_camera = new AugmentedCamera( it, cam_name, ns);
+        ar_camera = new AugmentedCamera( it, cam_name);
 
         ar_camera->GetIntrinsicParams(fx_, fy_, cx_, cy_);
 

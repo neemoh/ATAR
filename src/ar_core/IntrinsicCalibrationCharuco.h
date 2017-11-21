@@ -9,10 +9,11 @@
 #include <vector>
 #include <opencv2/aruco/charuco.hpp>
 #include <sensor_msgs/Image.h>
+#include <image_transport/image_transport.h>
 
 class IntrinsicCalibrationCharuco {
 public:
-    IntrinsicCalibrationCharuco(std::string img_topic_namespace,
+    IntrinsicCalibrationCharuco(std::string &img_topic_namespace,
                                 std::vector<float> charuco_board_param);
 
 
@@ -29,6 +30,8 @@ private:
                                  aspectRatio, int flags,
                                  const cv::Mat &cameraMatrix, const cv::Mat
                                  &distCoeffs, double totalAvgErr);
+    cv::Mat LockAndGetImage();
+
 private:
     cv::Ptr<cv::aruco::CharucoBoard> charuco_board;
     cv::Ptr<cv::aruco::Dictionary> dictionary;
@@ -39,8 +42,8 @@ private:
     std::vector< std::vector< int > > allIds;
     std::vector< cv::Mat > allImgs;
     cv::Size imgSize;
-    std::string image_topic_ns;
-
+    std::string image_topic_name;
+    cv::Mat image;
 
 };
 

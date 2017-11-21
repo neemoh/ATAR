@@ -1,5 +1,4 @@
 <launch>
-    <arg name="cams_namespace" value=""/>
     <arg name= "left_cam_name" value= "asus_webcam" />
     <arg name= "right_cam_name" value= "asus_webcam" />
 
@@ -21,20 +20,20 @@
     <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
     <node pkg="atar" type="ar_core" name="ar_core" output="screen">
 
-        <!-- About cam_name and namespace:
+        <!-- About cam_name:
         1- Expecting to find the intrinsic calibration file of each camera in
-         ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml
-        2- Expecting to read the camera images from the topic:
-        /cams_namespace/cam_<cam_number>_name/image_raw
-        You can neglect and not set the cams_namespace if you don't have one.
-        -->
-        <param name= "cams_namespace" value= "$(arg cams_namespace)" />
+         ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml or on the
+         camera_info topic. if not intrinsic calibration is started.
 
+        2- Expecting to read the camera images from the topic:
+        /cam_<cam_number>_name/image_raw
+        use remap if the images are published on a different topic. For example:
+        <remap from="/$(arg left_cam_name)/image_raw" to="/dvrk/$(arg
+        left_cam_name)/image_raw"/>
+        -->
         <param name= "cam_0_name" value= "$(arg left_cam_name)" />
         <param name= "cam_1_name" value= "$(arg left_cam_name)" />
         <param name= "cam_2_name" value= "$(arg right_cam_name)" />
-
-        <remap from="/ar_core/image" to="asus_webcam/image_raw"/>
 
         <!--Charuco board used for extrinsic and manipulator to world
         calibrations. Vector consists of: -->
@@ -45,11 +44,6 @@
         <!-- About stl_files_dir:
         The directory of the stl files -->
         <param name= "recources_directory" value= "$(find atar)/resources" />
-
-        <!--
-        num_calib_points: Number of points used for arm to world calibration.
-        -->
-        <param name= "number_of_calibration_points" value= "6" />
 
         <!--Activate or deactivate haptic guidance -->
         <param name= "publish_overlayed_images" value= "false" />

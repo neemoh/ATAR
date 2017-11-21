@@ -18,7 +18,7 @@ class AugmentedCamera {
 public:
 
     explicit AugmentedCamera(image_transport::ImageTransport *it=NULL,
-             std::string cam_name="", const std::string ns="");
+             std::string cam_name="");
 
     // callbacks
     void ImageCallback(const sensor_msgs::ImageConstPtr &msg);
@@ -66,8 +66,8 @@ private:
     KDL::Frame                  world_to_cam_tr;
     bool                        is_pose_from_subscriber =true;
 
-    cv::Mat                     camera_matrix= cv::Mat_<double>(3,3);
-    cv::Mat                     camera_distortion= cv::Mat_<double>(1,5);
+    cv::Mat                     camera_matrix= cv::Mat::zeros(3, 3, CV_32F);
+    cv::Mat                     camera_distortion= cv::Mat::zeros(1, 5, CV_32F);
 
     // pose estimation
     cv::Ptr<cv::aruco::CharucoBoard>   charuco_board;

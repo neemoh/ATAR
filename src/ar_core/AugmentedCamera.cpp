@@ -15,15 +15,15 @@
 //}
 
 AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
-                                 const std::string cam_name, const std::string ns)
+                                 const std::string cam_name)
 {
 
     ros::NodeHandle n("~");
 
     // image subscriber topic
     img_topic = "/"+cam_name+ "/image_raw";
-    if(!ns.empty())
-        img_topic = "/"+ns+"/"+cam_name+ "/image_raw";
+    // correct for remap
+    img_topic=n.resolveName(img_topic,/*remap = */true);
 
     // Read board parameters which we might need to use either for intrinsic
     // or extrinsic calibration
@@ -47,13 +47,13 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
             std::string(home_dir) + "/.ros/camera_info/"+ cam_name
             +"_intrinsics.yaml";
 
-    if(!ReadIntrinsicsFromFile(file_addr)) {
-
+    if(ReadIntrinsicsFromFile(file_addr))
+        ROS_INFO("Read intrinsics from file.");
+    else {
         // ------------------------------------------
         // 2- There was no file. Check if info is available as a topic
         std::string caminfo_topic_name = "/"+cam_name+ "/camera_info";
-        if(!ns.empty())
-            caminfo_topic_name = "/"+ns+"/"+cam_name+ "/camera_info";
+        caminfo_topic_name=n.resolveName(caminfo_topic_name,/*remap = */true);
 
         if (ros::topic::waitForMessage<sensor_msgs::CameraInfo>
                 (caminfo_topic_name, ros::Duration(1))){
@@ -66,10 +66,14 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
         }
         // check if the topic has non-zero data
         // 3- if not start the intrinsic calibration
-        if(camera_matrix.at<double>(0,0)+camera_matrix.at<double>(0,2)<0.001){
+        std::cout <<"hete: " << camera_matrix.at<double>(0,0)+camera_matrix
+                .at<double>(0,2) << std::endl;
+        if(camera_matrix.at<double>(0,0)+camera_matrix.at<double>(0,2)> 1.)
+            ROS_INFO("Read intrinsics from camera_info topic.");
+        else{
 
             ROS_WARN("Unable to read the camera intrinsics from file = %s or "
-                             "non-zero values from camera_info topic or file="
+                             "non-zero values from camera_info topic="
                              " %s. Starting the intrinsic calibration "
                              "process...",file_addr.c_str(),
                      caminfo_topic_name.c_str());
@@ -81,19 +85,19 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
                                 "[dictionary_id, board_w, board_h, "
                                 "square_length_in_meters, marker_length_in_meters]");
 
-
-            IntrinsicCalibrationCharuco IC_ptr(img_topic, board_params);
-            double intrinsic_calib_err;
-            if(!IC_ptr.DoCalibration(file_addr, intrinsic_calib_err,camera_matrix,
-                                     camera_distortion))
-                throw std::runtime_error("Intrinsic Calibration failed. Please "
-                                                 "repeat.");
+            {
+                IntrinsicCalibrationCharuco IC(img_topic, board_params);
+                double intrinsic_calib_err;
+                if (!IC.DoCalibration(file_addr, intrinsic_calib_err,
+                                      camera_matrix,
+                                      camera_distortion))
+                    throw std::runtime_error(
+                            "Intrinsic Calibration failed. Please "
+                                    "repeat.");
+            }
         }
 
     }
-
-
-
 
     // --------------------Images
     sub_image = it->subscribe(img_topic, 1, &AugmentedCamera::ImageCallback, this);
@@ -104,11 +108,9 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
     // ------------------------------------------
     // we first try to read the poses as parameters and later update the
     // poses if new messages are arrived on the topics
-
-    std::string pose_topic_name = "/"+cam_name+ "/world_to_camera_transform";
-    if(!ns.empty())
-        pose_topic_name = "/"+ns+"/"+cam_name+ "/world_to_camera_transform";
-
+    std::string pose_topic_name = n.resolveName(
+            "/"+cam_name+"/world_to_camera_transform",/*remap = */true);
+    
     // --------------- 1- it can be set as a parameter
     std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
     if(n.getParam("/calibrations/world_frame_to_"+cam_name+"_frame",
@@ -218,7 +220,7 @@ cv::Mat AugmentedCamera::LockAndGetImage() {
         ros::spinOnce();
         loop_rate.sleep();
 
-        ROS_WARN_STREAM_ONCE("Waiting 5s for images on "+img_topic);
+        ROS_WARN_STREAM_ONCE("Waiting 5s for images on "+ img_topic);
 
         if (ros::Time::now() > timeout_time)
             throw std::runtime_error("Timeout: No Image on."+img_topic);

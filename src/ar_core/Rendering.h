@@ -90,8 +90,7 @@ public:
 
 private:
 
-    void GetCameraNames(int num_views, std::string cam_names[], std::string
-    &ns);
+    void GetCameraNames(int num_views, std::string cam_names[]);
 
     void AddShadowPass(vtkSmartPointer<vtkOpenGLRenderer>);
 

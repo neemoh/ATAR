@@ -21,7 +21,7 @@ ManipulatorToWorldCalibration::ManipulatorToWorldCalibration(
     std::string cam_name;
     n.getParam("cam_0_name", cam_name);
 
-    ar_camera = new AugmentedCamera( it, cam_name, ns);
+    ar_camera = new AugmentedCamera( it, cam_name);
 
     // get the intrinsics
     ar_camera->GetIntrinsicMatrices(cam_matrix, cam_distortation);
