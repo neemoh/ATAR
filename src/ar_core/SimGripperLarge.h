@@ -2,17 +2,17 @@
 // Created by nima on 12/08/17.
 //
 
-#ifndef ATAR_FORCEPS_H
-#define ATAR_FORCEPS_H
+#ifndef ATAR_GRIPPERLARGE_H
+#define ATAR_GRIPPERLARGE_H
 
 #include "SimObject.h"
 #include "SimMechanism.h"
 #include <kdl/frames.hpp>
 
-class SimForceps : public SimMechanism{
+class SimGripperLarge : public SimMechanism{
 
 public:
-    explicit SimForceps(KDL::Frame init_pose=KDL::Frame());
+    explicit SimGripperLarge(KDL::Frame init_pose=KDL::Frame());
 
     void SetPoseAndJawAngle(KDL::Frame pose,
                             double grip_angle);
@@ -27,4 +27,4 @@ private:
 
 
 
-#endif //ATAR_FORCEPS_H
+#endif //ATAR_GRIPPERLARGE_H

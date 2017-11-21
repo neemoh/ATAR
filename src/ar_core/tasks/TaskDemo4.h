@@ -7,6 +7,7 @@
 
 
 #include <src/ar_core/SimTask.h>
+#include <src/ar_core/SimForceps.h>
 
 class TaskDemo4 : public SimTask {
 public:

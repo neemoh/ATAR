@@ -222,6 +222,7 @@ add_executable(
         src/ar_core/BulletVTKMotionState.h
         src/ar_core/SimObject.cpp
         src/ar_core/SimObject.h
+        src/ar_core/SimTask.cpp
         src/ar_core/SimTask.h
         ${tasks_src}
         ${tasks_h}
@@ -229,10 +230,11 @@ add_executable(
         src/ar_core/SimSoftObject.h
         src/ar_core/SimFiveLinkGripper.cpp
         src/ar_core/SimFiveLinkGripper.h
+        src/ar_core/SimMechanism.h
         src/ar_core/SimForceps.cpp
         src/ar_core/SimForceps.h
-        src/ar_core/SimTask.cpp
-        src/ar_core/SimMechanism.h
+        src/ar_core/SimGripperLarge.cpp
+        src/ar_core/SimGripperLarge.h
         src/ar_core/Colors.hpp
         src/ar_core/VTKConversions.h
         src/ar_core/VTKConversions.cpp

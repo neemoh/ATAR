@@ -11,7 +11,7 @@
 #define ATAR_TASKDEMO2_H
 
 #include <src/ar_core/SimTask.h>
-#include <src/ar_core/SimForceps.h>
+#include <src/ar_core/SimGripperLarge.h>
 
 class TaskDemo2 : public SimTask {
 public:
@@ -38,7 +38,7 @@ private:
 
     // this object is a simulated mechanism that will represent one of our
     // tools.
-    SimForceps * forceps;
+    SimGripperLarge * gripper;
 
 };
 

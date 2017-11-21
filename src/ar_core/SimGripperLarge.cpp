@@ -2,11 +2,11 @@
 // Created by nima on 10/08/17.
 //
 
-#include "SimForceps.h"
+#include "SimGripperLarge.h"
 #include <vtkProperty.h>
 extern std::string                      RESOURCES_DIRECTORY;
 
-SimForceps::SimForceps(const KDL::Frame init_pose)
+SimGripperLarge::SimGripperLarge(const KDL::Frame init_pose)
 {
 
     auto jaws_axis_y_offset = -0.001f;
@@ -25,7 +25,8 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
     // create jaw 1
     sim_objects_.emplace_back(new SimObject(ObjectShape::MESH,
                                             ObjectType::DYNAMIC,
-                                            RESOURCES_DIRECTORY+ "/mesh/jaw.obj",
+                                            RESOURCES_DIRECTORY+
+                                                    "/mesh/jaw_large.obj",
                                             init_pose,
                                             gripper_density,
                                             gripper_friction));
@@ -44,7 +45,8 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
                                                   -link0_axis_z_offset);
     sim_objects_.emplace_back(new SimObject(ObjectShape::MESH,
                                             ObjectType::DYNAMIC,
-                                            RESOURCES_DIRECTORY+ "/mesh/jaw.obj",
+                                            RESOURCES_DIRECTORY+
+                                                    "/mesh/jaw_large.obj",
                                             gripper_pose,
                                             gripper_density,
                                             gripper_friction));
@@ -76,7 +78,7 @@ SimForceps::SimForceps(const KDL::Frame init_pose)
     constraints_[1]->setMaxMotorImpulse(200);
 }
 
-void SimForceps::SetPoseAndJawAngle(const KDL::Frame pose,
+void SimGripperLarge::SetPoseAndJawAngle(const KDL::Frame pose,
                                  const double grip_angle) {
 
     KDL::Frame link_pose = pose;
@@ -91,7 +93,7 @@ void SimForceps::SetPoseAndJawAngle(const KDL::Frame pose,
 }
 
 
-bool SimForceps::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
+bool SimGripperLarge::IsGraspingObject(btDiscreteDynamicsWorld* bt_world,
                                btCollisionObject *obj) {
 
     MyContactResultCallback result0, result1;

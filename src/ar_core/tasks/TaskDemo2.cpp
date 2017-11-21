@@ -35,11 +35,11 @@ TaskDemo2::TaskDemo2()
     // DEFINE OBJECTS
     // -------------------------------------------------------------------------
     // Create one SimForceps to be connected to master[0]
-    KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
-    forceps_init_pose.M.DoRotZ(M_PI/2);
-    forceps = new SimForceps(forceps_init_pose);
+    KDL::Frame gripper_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
+    gripper_init_pose.M.DoRotZ(M_PI/2);
+    gripper = new SimGripperLarge(gripper_init_pose);
     // add to simulation
-    AddSimMechanismToTask(forceps);
+    AddSimMechanismToTask(gripper);
 
     // --------------------------------------------------------
     // create a sphere and use it as a tool for master[1]
@@ -97,7 +97,7 @@ TaskDemo2::~TaskDemo2() {
 void TaskDemo2::TaskLoop() {
 
     // update the pose of the virtual forceps from the real manipulator
-    forceps->SetPoseAndJawAngle(master[0]->GetPoseWorld(),
+    gripper->SetPoseAndJawAngle(master[0]->GetPoseWorld(),
                                 master[0]->GetGripper());
 
     // update the position of the spherical tool
