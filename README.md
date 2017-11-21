@@ -266,14 +266,74 @@ intrinsic calib files: make a folder named camera_info in the .ros folder in you
                        home directory and copy the default_intrinsics.yaml file from the 
                        /ATAR/resources folder in camera_info.
 ### AR Camera
+This class used to interface with a camera through ros is similar to what the 
+Manipulator class is for a robot arm. It reads images, intrinsic and 
+extrinsic calibrations and in case nothing is found on topics for the latter 
+two, it calculates them. For each view we create one ARCamera and for each 
+ARCamera you need to provide a cam_name as a ros parameter cam_<NUMBER>_name 
+where <Number> is from 0 to 2 (e.g: cam_0_name). Check out test_ar.launch.
+Here are some details about each of these 3 tasks:
 
+#### 1- reading images
+This simply uses image transport from ros to read images that are published 
+on a topic. We are of course assuming that an external node is publishing 
+the images. For example for a simple usb camera you can use the uvc_camera 
+package of ros. The topic we listen to is:
 * "/"+cam_name+ "/image_raw"
-* intrinsic calibration file
-* "/calibrations/world_frame_to_"+cam_name+"_frame"
-* "/"+cam_name+ "/world_to_camera_transform"
+You can use remap in the lunch file if your camera node publishes the images 
+on a different topic:
 
-Place the intrinsic calibration file of each camera in ~/.ros/camera_info/ 
-named as <cam_name>_intrinsics.yaml
+        <remap from="/ar_core/left/image_raw" to="/dvrk/left/image_raw"/>
+ 
+#### 2- Intrinsic calibration file
+Intrinsic camera parameters are needed for a correct mapping of the 3D world 
+to the camera images. We can get the parameters in two way:
+* A yaml file. We search in your home directory under the .ros/camera_info 
+directory for a file named as <camera_name>_intrinsics.yaml
+* Subscribe to camera_info topic. This is the ros way of accessing intrinsic 
+parameters that is: the camera node that publishes the images publishes also 
+a topic called camera_info that contains needed parameters about the camera.
+* If ARCamera doesn't find the parameters from any of the above two, it 
+starts the intrinsic calibration procedure with a charuco board (explained 
+bellow) in which you need to take at least 15 different poses of the board in
+front of the camera (instructions are shown on the image). If the calibration
+is successful we create a yaml file and put it in the camera_info directory. 
+unfortunately this file has a different format than that used by ros and 
+that's why we name it <camera_name>_intrinsics.yaml although ros camera_files
+are supposed to be called <camera_name>.yaml.
+
+#### 3- Extrinsic calibration
+Extrinsic calibration refers basically to the pose of the camera with 
+respect to a world reference frame. In ATAR we need this pose to correctly 
+map the virtual 3D world to the real world of the images. Like intrinsic 
+calibration here we use a charuco board again. To make things simpler we 
+assume that the world_reference frame is on a corner of the charuco board. 
+This means that if both intrinsic and extrinsic calibrations are correct, 
+when you position a small virtual sphere at [0, 0, 0] it should appear on 
+a corner of the charuco board. The extrinsic (i.e. camera pose) is found in 
+two ways in ARCamera
+* Read as a PoseStamped message from one of the following topics:
+"/calibrations/world_frame_to_"+cam_name+"_frame"
+"/"+cam_name+ "/world_to_camera_transform"
+* Calculated at each iteration using the aruco library and the charuco board.
+
+
+###### Charuco board
+Both for intrinsic and extrinsic calibrations we rely on a charuco board. 
+This is a checker board that has some fiducial markers (called aruco) instead
+of its white squares. We use the aruco library to detect those markers in the
+camera image and perform intrinsic or extrinsic calibration based on the 
+markers' spatial information. You need to print a charuco board (for 
+example charuco_d0_h4_w6_sl200_m10_ml150.png that is in the resources folder) on a 
+paper and make it solid by attaching it to a cardboard. Then you'll need to 
+set the parameters of the board in your lunch file so that atar knows what to
+look for. In the test_ar.launch file you can see what are the elements 
+of board_params. 
+If you want to make a different board run
+```
+rosrun atar create_charuco_board <YOUR PARAMS>
+ 
+```
 
 ## Miscellaneous
 
