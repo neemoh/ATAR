@@ -21,7 +21,7 @@ public:
                           btCollisionObject* obj);
 
 private:
-    std::vector<std::vector<double> > link_dims_;
+    std::vector<double> link_dims_;
 
 };
 

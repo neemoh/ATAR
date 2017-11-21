@@ -9,18 +9,17 @@ extern std::string                      RESOURCES_DIRECTORY;
 SimGripperLarge::SimGripperLarge(const KDL::Frame init_pose)
 {
 
-    auto jaws_axis_y_offset = -0.001f;
-    auto link0_axis_z_offset = 0.004f;
+    auto jaws_axis_y_offset = -0.003f;
+    auto link0_axis_z_offset = 0.006f;
 
-    link_dims_.push_back({0.001, 0.003, 0.003});
-    float gripper_density = 500000; // kg/m3
+    link_dims_ = std::vector<double>({0.003, 0.003, 0.003});
+    float gripper_density = 50000; // kg/m3
     float gripper_friction = 50;
 
     // create the kinematic link
     sim_objects_.emplace_back(new SimObject(ObjectShape::BOX, ObjectType::KINEMATIC,
-                                             link_dims_[0], init_pose, 0.0, 0));
-    sim_objects_[0]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f,
-                                                          0.7f);
+                                             link_dims_, init_pose, 0.0, 0));
+    sim_objects_[0]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
 
     // create jaw 1
     sim_objects_.emplace_back(new SimObject(ObjectShape::MESH,
@@ -30,7 +29,7 @@ SimGripperLarge::SimGripperLarge(const KDL::Frame init_pose)
                                             init_pose,
                                             gripper_density,
                                             gripper_friction));
-    sim_objects_[1]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
+    sim_objects_[1]->GetActor()->GetProperty()->SetColor(1.0,  0.35, 0.);
     sim_objects_[1]->GetBody()->setContactStiffnessAndDamping(500, 100);
     sim_objects_[1]->GetBody()->setRollingFriction(btScalar(0.1));
     sim_objects_[1]->GetBody()->setSpinningFriction(btScalar(0.1));
@@ -50,7 +49,7 @@ SimGripperLarge::SimGripperLarge(const KDL::Frame init_pose)
                                             gripper_pose,
                                             gripper_density,
                                             gripper_friction));
-    sim_objects_[2]->GetActor()->GetProperty()->SetColor(0.7f, 0.7f, 0.7f);
+    sim_objects_[2]->GetActor()->GetProperty()->SetColor(1.0,  0.35, 0.);
     sim_objects_[2]->GetBody()->setContactStiffnessAndDamping(500, 100);
     sim_objects_[2]->GetBody()->setRollingFriction(btScalar(0.1));
 
@@ -82,7 +81,7 @@ void SimGripperLarge::SetPoseAndJawAngle(const KDL::Frame pose,
                                  const double grip_angle) {
 
     KDL::Frame link_pose = pose;
-    link_pose.p  = link_pose * KDL::Vector( 0.0 , 0.0, -link_dims_[0][2]/2);
+    link_pose.p  = link_pose * KDL::Vector( 0.0 , 0.0, -link_dims_[2]/2);
 
     sim_objects_[0]->SetKinematicPose(link_pose);
 
