@@ -7,7 +7,7 @@
 
 
 #include <src/ar_core/SimTask.h>
-#include <src/ar_core/SimForceps.h>
+#include <src/ar_core/SimGripperLarge.h>
 
 class TaskDemo4 : public SimTask {
 public:
@@ -23,7 +23,7 @@ public:
 
 private:
     Manipulator *slave[2];
-    SimForceps * forceps;
+    SimGripperLarge * gripper;
 
 };
 

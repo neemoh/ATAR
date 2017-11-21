@@ -15,7 +15,8 @@ TaskDemo4::TaskDemo4() {
 
     // Define a master manipulator
     slave[0] = new Manipulator("lwr",
-                                "/posepublishing");
+                                "/posepublishing",
+                                "/gripperAnglepublishing");
 
     // for correct calibration, the master needs the pose of the camera
 //    graphics->SetManipulatorInterestedInCamPose(slave[0]);
@@ -25,9 +26,9 @@ TaskDemo4::TaskDemo4() {
     // Create one SimForceps to be connected to master[0]
     KDL::Frame forceps_init_pose = KDL::Frame(KDL::Vector(0.05, 0.11, 0.08));
     forceps_init_pose.M.DoRotZ(M_PI/2);
-    forceps = new SimForceps(forceps_init_pose);
+    gripper = new SimGripperLarge(forceps_init_pose);
     // add to simulation
-    AddSimMechanismToTask(forceps);
+    AddSimMechanismToTask(gripper);
 
 
     // -------------------------------------------------------------------------
@@ -42,6 +43,44 @@ TaskDemo4::TaskDemo4() {
     task_coordinate_axes->SetShaftType(vtkAxesActor::LINE_SHAFT);
     task_coordinate_axes->SetTipType(vtkAxesActor::SPHERE_TIP);
     graphics->AddActorToScene(task_coordinate_axes);
+
+
+    // --------------------------------------------------------
+    // create a floor
+    SimObject* plane;
+    plane = new SimObject(ObjectShape::PLANE, ObjectType::DYNAMIC,
+                          std::vector<double>({0.15,0.10}),
+                          KDL::Frame(KDL::Vector(0.075, 0.05, 0.001)), 0, 0.9);
+    plane->GetActor()->GetProperty()->SetColor(colors.GrayLight);
+
+    // add to simulation
+    AddSimObjectToTask(plane);
+    // -------------------------------------------------------------------------
+    // Create 6 dynamic cubes
+    SimObject *cube;
+    {
+        // define object dimensions
+        std::vector<double> dimensions = {0.02, 0.02, 0.008};
+
+        // define object Pose
+        KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
+                , KDL::Vector(0.07, 0.055, 0.05 ));
+
+        for (int i = 0; i < 6; ++i) {
+            // increment the pose of each object
+            pose.p = pose.p+ KDL::Vector(0.001, 0.0, 0.008);
+
+            // construct the object. Sor Sphere and planes we can have a
+            // texture image too!
+            cube = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC,
+                                 dimensions, pose, 20000);
+            cube->GetActor()->GetProperty()->SetColor(colors.BlueNavy);
+
+            // we need to add the SimObject to the task. Without this step
+            // the object is not going to be used
+            AddSimObjectToTask(cube);
+        }
+    }
 }
 
 
@@ -49,5 +88,6 @@ TaskDemo4::TaskDemo4() {
 void TaskDemo4::TaskLoop() {
 
     // update the pose of the virtual forceps from the real manipulator
-    forceps->SetPoseAndJawAngle(slave[0]->GetPoseWorld(), 0);
+    gripper->SetPoseAndJawAngle(slave[0]->GetPoseWorld(),
+                                slave[0]->GetGripper());
 }

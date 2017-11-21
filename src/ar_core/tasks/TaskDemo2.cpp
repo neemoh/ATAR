@@ -19,9 +19,13 @@ TaskDemo2::TaskDemo2()
             /*window_positions=*/std::vector<int>({300,50}));
 
     // Define a master manipulator
-    master[0] = new Manipulator("/dvrk/PSM1_DUMMY",
-                                "/position_cartesian_current",
-                                "/gripper_position_current");
+//    master[0] = new Manipulator("/dvrk/PSM1_DUMMY",
+//                                "/position_cartesian_current",
+//                                "/gripper_position_current");
+    master[0] = new Manipulator("sigma",
+                                "/sigma/sigma0/dummy_slave_pose",
+                                "/sigma/sigma0/gripper_angle",
+                                "/sigma/sigma0/buttons");
 
     // for correct calibration, the master needs the pose of the camera
     graphics->SetManipulatorInterestedInCamPose(master[0]);
@@ -63,7 +67,7 @@ TaskDemo2::TaskDemo2()
     SimObject *cube;
     {
         // define object dimensions
-        std::vector<double> dimensions = {0.01, 0.01, 0.005};
+        std::vector<double> dimensions = {0.02, 0.02, 0.005};
 
         // define object Pose
         KDL::Frame pose(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
@@ -77,7 +81,7 @@ TaskDemo2::TaskDemo2()
             // texture image too!
             cube = new SimObject(ObjectShape::BOX, ObjectType::DYNAMIC,
                                  dimensions, pose, 20000);
-            cube->GetActor()->GetProperty()->SetColor(colors.Coral);
+            cube->GetActor()->GetProperty()->SetColor(colors.BlueNavy);
 
             // we need to add the SimObject to the task. Without this step
             // the object is not going to be used
@@ -97,8 +101,10 @@ TaskDemo2::~TaskDemo2() {
 void TaskDemo2::TaskLoop() {
 
     // update the pose of the virtual forceps from the real manipulator
-    gripper->SetPoseAndJawAngle(master[0]->GetPoseWorld(),
-                                master[0]->GetGripper());
+    auto temp_pose = master[0]->GetPoseWorld();
+    // rotate the tool locally
+    temp_pose.M.DoRotY(-M_PI/2.);
+    gripper->SetPoseAndJawAngle(temp_pose, master[0]->GetGripper());
 
     // update the position of the spherical tool
     sphere_tool->SetKinematicPose(master[1]->GetPoseWorld());

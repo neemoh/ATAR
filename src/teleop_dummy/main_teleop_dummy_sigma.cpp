@@ -42,8 +42,6 @@ void MasterPoseCurrentCallback(
 
 }
 
-
-
 void ControlEventsCallback(const std_msgs::Int8ConstPtr
                            &msg) {
 
@@ -57,7 +55,6 @@ void ControlEventsCallback(const std_msgs::Int8ConstPtr
         default:
             break;
     }
-
 }
 
 
@@ -73,16 +70,15 @@ int main(int argc, char * argv[]) {
 
     // ------------------------------------- Buttons---------------------------
     ros::Subscriber sub_clutch_clutch = n.subscribe(
-            "/sigma7/sigma0/buttons", 1, ButtonsCallback);
-
+            "/sigma/sigma0/buttons", 1, ButtonsCallback);
 
     // ------------ MATERS POSE
-    ros::Subscriber sub_master_1_current_pose =  n.subscribe("/sigma/right/pose",
+    ros::Subscriber sub_master_current_pose =  n.subscribe("/sigma/sigma0/pose",
                                                              1, MasterPoseCurrentCallback);
 
     // ------------ SLAVE PUBLISH POSE
 
-    std::string pose_topic = std::string("/sigma_slave/position_cartesian_current");
+    std::string pose_topic = std::string("/sigma/sigma0/dummy_slave_pose");
     ros::Publisher pub_slave_pose
             = n.advertise<geometry_msgs::PoseStamped>(pose_topic, 1);
 
@@ -102,15 +98,11 @@ int main(int argc, char * argv[]) {
     KDL::Frame slave_pose;
 
     // get initial tool position
-    std::vector<double> init_tool_position[2]= {{0., 0., 0.} , {0., 0., 0.}};
-    n.getParam("initial_tool_1_position", init_tool_position[0]);
-    n.getParam("initial_tool_2_position", init_tool_position[1]);
-    slave_pose.p = KDL::Vector(init_tool_position[0][0],
-                               init_tool_position[0][1],
-                               init_tool_position[0][2]);
-    slave_pose.p = KDL::Vector(init_tool_position[1][0],
-                               init_tool_position[1][1],
-                               init_tool_position[1][2]);
+    std::vector<double> init_tool_position= {0., 0., 0.};
+    n.getParam("initial_tool_1_position", init_tool_position);
+    slave_pose.p = KDL::Vector(init_tool_position[0],
+                               init_tool_position[1],
+                               init_tool_position[2]);
 
     while(ros::ok()){
 
