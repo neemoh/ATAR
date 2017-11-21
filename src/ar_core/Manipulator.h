@@ -50,6 +50,7 @@
 #include <kdl/frames.hpp>
 #include <std_msgs/Float32.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <sensor_msgs/Joy.h>
 
 class Manipulator {
 
@@ -57,6 +58,7 @@ public:
     Manipulator(std::string arm_name,
                 std::string pose_topic,
                 std::string gripper_topic= "",
+                std::string pedals_topic = "",
                 std::string twist_topic = "",
                 KDL::Frame initial_pose=KDL::Frame());
 
@@ -65,6 +67,8 @@ public:
     void GripperCallback(const std_msgs::Float32ConstPtr &msg);
 
     void TwistCallback(const geometry_msgs::TwistStampedConstPtr &msg);
+
+    void PedalsCallback(const sensor_msgs::Joy &msg);
 
     void GetPoseLocal(KDL::Frame& pose){pose = pose_local;};
 
@@ -79,6 +83,8 @@ public:
     void GetTwistLocal(KDL::Twist& twist){twist = twist_local;};
 
     void GetTwistWorld(KDL::Twist& twist){twist = twist_world;};
+
+    void GetPedals(int pdls[]) {pdls = pedals;};
 
     void DoArmToWorldFrameCalibration();
 
@@ -106,10 +112,12 @@ private:
     KDL::Twist twist_local;
     KDL::Twist twist_world;
     double gripper_angle;
+    int pedals[];
 
     ros::Subscriber sub_pose;
     ros::Subscriber sub_gripper;
     ros::Subscriber sub_twist;
+    ros::Subscriber sub_pedals;
 };
 
 

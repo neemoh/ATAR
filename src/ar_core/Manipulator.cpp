@@ -12,6 +12,7 @@ Manipulator::Manipulator(
         const std::string arm_name,
         const std::string pose_topic,
         const std::string gripper_topic,
+        const std::string pedals_topic,
         const std::string twist_topic,
         KDL::Frame initial_pose)
         :
@@ -32,6 +33,10 @@ Manipulator::Manipulator(
     if(!twist_topic.empty())
         sub_twist = n->subscribe(twist_topic, 1,
                                  &Manipulator::TwistCallback, this);
+
+    if(!pedals_topic.empty())
+        sub_pedals = n->subscribe(pedals_topic, 1,
+                                 &Manipulator::PedalsCallback, this);
 
     //--------------------------------------------------------------------------
     // Get the transformation to the display and calculate the tr to the
@@ -132,6 +137,14 @@ void Manipulator::CalibrationThread(){
     // not really needed..
     calibration_thread.interrupt();
 
+
+}
+
+void Manipulator::PedalsCallback(const sensor_msgs::Joy &msg) {
+
+    for (int i = 0; i < msg.buttons.size(); ++i) {
+        pedals[i] = msg.buttons[i];
+    }
 
 }
 

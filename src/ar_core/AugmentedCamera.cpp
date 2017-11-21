@@ -110,7 +110,7 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
     // poses if new messages are arrived on the topics
     std::string pose_topic_name = n.resolveName(
             "/"+cam_name+"/world_to_camera_transform",/*remap = */true);
-    
+
     // --------------- 1- it can be set as a parameter
     std::vector<double> temp_vec = std::vector<double>( 7, 0.0);
     if(n.getParam("/calibrations/world_frame_to_"+cam_name+"_frame",

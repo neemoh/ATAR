@@ -35,12 +35,12 @@ TaskSteadyHand::TaskSteadyHand()
     slaves[0] = new Manipulator("/dvrk/PSM1_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current",
-                                "", tool_current_pose[0]);
+                                "", "",tool_current_pose[0]);
 
     slaves[1] = new Manipulator("/dvrk/PSM2_DUMMY",
                                 "/position_cartesian_current",
                                 "/gripper_position_current",
-                                "", tool_current_pose[1]);
+                                "", "",tool_current_pose[1]);
 
     // set the manipulators to follow cam pose for correct kinematics
     // calibration. Cam pose here is cam_0.
