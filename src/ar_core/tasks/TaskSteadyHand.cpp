@@ -385,8 +385,6 @@ TaskSteadyHand::TaskSteadyHand()
         graphics_actors.emplace_back(score_sphere_actor);
     }
 
-    graphics->AddActorsToScene(GetActors());
-
     // Publisher for the task state
     publisher_task_state = nh->advertise<custom_msgs::TaskState>(
             "/atar/task_state", 1);
