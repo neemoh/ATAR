@@ -53,9 +53,9 @@ bool IntrinsicCalibrationCharuco::DoCalibration(std::string outputFile,
     image_transport::ImageTransport it = image_transport::ImageTransport(n);
     image_transport::Subscriber sub = it.subscribe(image_topic_ns, 1,
                                                    &IntrinsicCalibrationCharuco::CameraImageCallback, this);
-    ROS_INFO("IntrinsicCalibrationCharuco subscribed to %s", image_topic_ns
-            .c_str());
     std::string window_name = "Intrinsic calibration";
+    ROS_INFO("Intrinsic Calibration with Charuco board started. Follow the "
+                     "instructions shown on the image.");
     // -----------------------------------------------------------------------//
 
     while(ros::ok() && !finished_capturing ){
@@ -208,8 +208,8 @@ void IntrinsicCalibrationCharuco::CameraImageCallback(
         );
 
     cv::putText(
-        imageCopy, "Press 'c' to add current frame. 'f' to finish and "
-            "calibrate.",
+        imageCopy, "Press 'c' to add frame, 'f' to finish and "
+            "calibrate. Take at least 15 frames.",
         cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(
             255,
             0, 0

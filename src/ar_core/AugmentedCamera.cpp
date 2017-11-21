@@ -22,7 +22,7 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
 
     // image subscriber topic
     img_topic = "/"+cam_name+ "/image_raw";
-    if(ns!="")
+    if(!ns.empty())
         img_topic = "/"+ns+"/"+cam_name+ "/image_raw";
 
     // Read board parameters which we might need to use either for intrinsic
@@ -35,33 +35,64 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
     if(!n.getParam("/calibrations/board_params", board_params))
         found_board_params = false;
 
+
     // ------------------------------------------
     // INTRINSICS
     // ------------------------------------------
+    // 1- First we check if there is a calib file in the .ros/camera_info folder
+
     struct passwd *pw = getpwuid(getuid());
     const char *home_dir = pw->pw_dir;
-    std::string path =
+    std::string file_addr =
             std::string(home_dir) + "/.ros/camera_info/"+ cam_name
             +"_intrinsics.yaml";
 
-    if(!ReadCameraParameters(path)){
-        ROS_WARN("Unable to read the camera intrinsic file= %s. Starting the "
-                         "intrinsic calibration process...",path.c_str());
-        if(!found_board_params)
-            throw std::runtime_error(
-                    "Ros parameter board_param is not found. This parameter "
-                            "is needed for intrinsic calibration. board_param="
-                            "[dictionary_id, board_w, board_h, "
-                            "square_length_in_meters, marker_length_in_meters]");
+    if(!ReadIntrinsicsFromFile(file_addr)) {
+
+        // ------------------------------------------
+        // 2- There was no file. Check if info is available as a topic
+        std::string caminfo_topic_name = "/"+cam_name+ "/camera_info";
+        if(!ns.empty())
+            caminfo_topic_name = "/"+ns+"/"+cam_name+ "/camera_info";
+
+        if (ros::topic::waitForMessage<sensor_msgs::CameraInfo>
+                (caminfo_topic_name, ros::Duration(1))){
+            sub_camera_info = n.subscribe(caminfo_topic_name, 1,
+                                          &AugmentedCamera::CamInfoCallback, this);
+            // spin and wait a bit
+            ros::spinOnce();
+            ros::Rate slp(5);
+            slp.sleep();
+        }
+        // check if the topic has non-zero data
+        // 3- if not start the intrinsic calibration
+        if(camera_matrix.at<double>(0,0)+camera_matrix.at<double>(0,2)<0.001){
+
+            ROS_WARN("Unable to read the camera intrinsics from file = %s or "
+                             "non-zero values from camera_info topic or file="
+                             " %s. Starting the intrinsic calibration "
+                             "process...",file_addr.c_str(),
+                     caminfo_topic_name.c_str());
+
+            if(!found_board_params)
+                throw std::runtime_error(
+                        "Parameter board_param is not found. This parameter "
+                                "is needed for intrinsic calibration. board_param="
+                                "[dictionary_id, board_w, board_h, "
+                                "square_length_in_meters, marker_length_in_meters]");
 
 
-        IntrinsicCalibrationCharuco IC_ptr(img_topic, board_params);
-        double intrinsic_calib_err;
-        if(!IC_ptr.DoCalibration(path, intrinsic_calib_err,camera_matrix,
-                                 camera_distortion))
-            throw std::runtime_error("Intrinsic Calibration failed. Please "
-                                             "repeat.");
+            IntrinsicCalibrationCharuco IC_ptr(img_topic, board_params);
+            double intrinsic_calib_err;
+            if(!IC_ptr.DoCalibration(file_addr, intrinsic_calib_err,camera_matrix,
+                                     camera_distortion))
+                throw std::runtime_error("Intrinsic Calibration failed. Please "
+                                                 "repeat.");
+        }
+
     }
+
+
 
 
     // --------------------Images
@@ -75,7 +106,7 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
     // poses if new messages are arrived on the topics
 
     std::string pose_topic_name = "/"+cam_name+ "/world_to_camera_transform";
-    if(ns!="")
+    if(!ns.empty())
         pose_topic_name = "/"+ns+"/"+cam_name+ "/world_to_camera_transform";
 
     // --------------- 1- it can be set as a parameter
@@ -102,7 +133,7 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
                          "estimate pose with charuco board",
                  pose_topic_name.c_str());
 
-        // Read boardparameters
+        // Read board parameters
         if(!found_board_params)
             throw std::runtime_error(
                     "Ros parameter board_param is not found. This parameter "
@@ -142,7 +173,9 @@ void AugmentedCamera::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg
 
 void
 AugmentedCamera::GetIntrinsicParams(double &fx, double &fy, double &cx, double &cy) {
-
+    if(camera_matrix.empty())
+        throw std::runtime_error("Cam matrix is empty. Something went wrong "
+                                         "in loading the intrinsic params.");
     fx = camera_matrix.at<double>(0, 0);
     fy = camera_matrix.at<double>(1, 1);
     cx = camera_matrix.at<double>(0, 2);
@@ -150,7 +183,7 @@ AugmentedCamera::GetIntrinsicParams(double &fx, double &fy, double &cx, double &
 }
 
 //------------------------------------------------------------------------------
-bool AugmentedCamera::ReadCameraParameters(const std::string file_path) {
+bool AugmentedCamera::ReadIntrinsicsFromFile(std::string file_path) {
 
     cv::FileStorage fs(file_path, cv::FileStorage::READ);
 
@@ -248,7 +281,7 @@ bool AugmentedCamera::DetectCharucoBoardPose(KDL::Frame &pose, cv::Mat image) {
 
     // interpolate charuco corners
     int interpolatedCorners = 0;
-    if (marker_ids.size() > 0)
+    if (!marker_ids.empty())
         interpolatedCorners =
                 cv::aruco::interpolateCornersCharuco(marker_corners,
                                                      marker_ids, image,
@@ -287,6 +320,14 @@ void AugmentedCamera::GetIntrinsicMatrices(cv::Mat &cam_mat, cv::Mat &dist_mat) 
     cam_mat = camera_matrix;
     dist_mat = camera_distortion;
 
+}
+
+void
+AugmentedCamera::CamInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg) {
+    camera_matrix.at<double>(0, 0) = msg->P[0]; // fx
+    camera_matrix.at<double>(1, 1) = msg->P[5]; // fy
+    camera_matrix.at<double>(0, 2)= msg->P[2];  //cx
+    camera_matrix.at<double>(1, 2)= msg->P[6];  //cy
 }
 
 

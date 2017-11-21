@@ -11,18 +11,21 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <sensor_msgs/CameraInfo.h>
 #include <opencv2/aruco/charuco.hpp>
 
 class AugmentedCamera {
 public:
 
-    AugmentedCamera(image_transport::ImageTransport *it=NULL,
-             const std::string cam_name="", const std::string ns="");
+    explicit AugmentedCamera(image_transport::ImageTransport *it=NULL,
+             std::string cam_name="", const std::string ns="");
 
     // callbacks
     void ImageCallback(const sensor_msgs::ImageConstPtr &msg);
 
     void PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+
+    void CamInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
 
     void GetIntrinsicParams(double& fx, double &fy, double &cx, double &cy);
 
@@ -51,7 +54,7 @@ public:
 
 private:
 
-    bool ReadCameraParameters(std::string file_path);
+    bool ReadIntrinsicsFromFile(std::string file_path);
 
     bool DetectCharucoBoardPose(KDL::Frame &pose, cv::Mat image);
 
@@ -63,14 +66,15 @@ private:
     KDL::Frame                  world_to_cam_tr;
     bool                        is_pose_from_subscriber =true;
 
-    cv::Mat                     camera_matrix;
-    cv::Mat                     camera_distortion;
+    cv::Mat                     camera_matrix= cv::Mat_<double>(3,3);
+    cv::Mat                     camera_distortion= cv::Mat_<double>(1,5);
 
     // pose estimation
     cv::Ptr<cv::aruco::CharucoBoard>   charuco_board;
     cv::Ptr<cv::aruco::Dictionary> dictionary;
     image_transport::Subscriber sub_image;
     ros::Subscriber             sub_pose;
+    ros::Subscriber             sub_camera_info;
 };
 
 
