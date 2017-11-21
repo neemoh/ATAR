@@ -135,16 +135,16 @@ add_executable(
         teleop_dummy_dvrk
         src/teleop_dummy/main_teleop_dummy_dvrk.cpp)
 
-#add_executable(
-#        teleop_dummy_sigma
-#        src/teleop_dummy/main_teleop_dummy_sigma.cpp)
+add_executable(
+        teleop_dummy_sigma
+        src/teleop_dummy/main_teleop_dummy_sigma.cpp)
 
 set(executables
         stereo_image_view
         stereo_image_split
         stereo_usb_cam_publisher
         teleop_dummy_dvrk
-        #        teleop_dummy_sigma
+        teleop_dummy_sigma
         )
 
 foreach (_ex ${executables})
