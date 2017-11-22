@@ -59,15 +59,18 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
                 (caminfo_topic_name, ros::Duration(1))){
             sub_camera_info = n.subscribe(caminfo_topic_name, 1,
                                           &AugmentedCamera::CamInfoCallback, this);
-            // spin and wait a bit
+            
+            // wait till we get the message to check if it has non-zero values
             ros::spinOnce();
-            ros::Rate slp(5);
-            slp.sleep();
+            ros::Rate wait(1);
+            wait.sleep();
+            ros::spinOnce();
+                wait.sleep();
         }
         // check if the topic has non-zero data
         // 3- if not start the intrinsic calibration
-        std::cout <<"hete: " << camera_matrix.at<double>(0,0)+camera_matrix
-                .at<double>(0,2) << std::endl;
+        std::cout << camera_matrix << std::endl;
+    
         if(camera_matrix.at<double>(0,0)+camera_matrix.at<double>(0,2)> 1.)
             ROS_INFO("Read intrinsics from camera_info topic.");
         else{
@@ -326,10 +329,15 @@ void AugmentedCamera::GetIntrinsicMatrices(cv::Mat &cam_mat, cv::Mat &dist_mat) 
 
 void
 AugmentedCamera::CamInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg) {
-    camera_matrix.at<double>(0, 0) = msg->P[0]; // fx
-    camera_matrix.at<double>(1, 1) = msg->P[5]; // fy
-    camera_matrix.at<double>(0, 2)= msg->P[2];  //cx
-    camera_matrix.at<double>(1, 2)= msg->P[6];  //cy
+    
+//    camera_matrix = cv::Mat_<double>(3,3, &msg->K[0]);
+    
+    camera_matrix.at<double>(0, 0) = msg->K[0]; // fx
+    camera_matrix.at<double>(1, 1) = msg->K[4]; // fy
+    camera_matrix.at<double>(0, 2)= msg->K[2];  //cx
+    camera_matrix.at<double>(1, 2)= msg->K[5];  //cy
+    
+    
 }
 
 
