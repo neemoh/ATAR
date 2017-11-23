@@ -30,11 +30,11 @@ TaskHandler::TaskHandler(std::string node_name)
                                        ros::console::levels::Info) )
         ros::console::notifyLoggerLevelsChanged();
 
-    if (n.getParam("recources_directory", RESOURCES_DIRECTORY))
-        ROS_DEBUG("recources directory: %s", RESOURCES_DIRECTORY.c_str());
+    if (n.getParam("resources_directory", RESOURCES_DIRECTORY))
+        ROS_DEBUG("resources_directoryy: %s", RESOURCES_DIRECTORY.c_str());
     else
         ROS_ERROR("Parameter '%s' is required. ",
-                  n.resolveName("recources_directory").c_str());
+                  n.resolveName("resources_directory").c_str());
 
     subscriber_control_events = n.subscribe(
             "/atar/control_events", 1, &TaskHandler::ControlEventsCallback, this);

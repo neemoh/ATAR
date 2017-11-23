@@ -55,7 +55,7 @@ Rendering::Rendering(std::vector<int> view_resolution,
     n.param<bool>("with_shadows", with_shadows_, false);
     bool offScreen_rendering;
     n.param<bool>("offScreen_rendering", offScreen_rendering, false);
-    n.param<bool>("publish_overlayed_images", publish_overlayed_images_, false);
+    n.param<bool>("publish_overlaid_images", publish_overlaid_images_, false);
 
     SetupLights();
 
@@ -115,7 +115,7 @@ Rendering::Rendering(std::vector<int> view_resolution,
         if(ar_mode_)
             render_window_[j]->AddRenderer(background_renderer_[i]);
 
-        if(publish_overlayed_images_) {
+        if(publish_overlaid_images_) {
             window_to_image_filter_[j] =
                     vtkSmartPointer<vtkWindowToImageFilter>::New();
             window_to_image_filter_[j]->SetInput(render_window_[j]);
@@ -254,7 +254,7 @@ void Rendering::Render() {
     }
 
     // Copy the rendered image to memory, show it and/or publish it.
-    if(publish_overlayed_images_)
+    if(publish_overlaid_images_)
         PublishRenderedImages();
 }
 

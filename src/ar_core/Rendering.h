@@ -104,7 +104,7 @@ private:
     int n_views;
     bool with_shadows_;
     bool ar_mode_;
-    bool publish_overlayed_images_;
+    bool publish_overlaid_images_;
 
     // transfroms between cameras used if cam 1 or both cam 1 and cam2 exist
     // and when the SetMainCameraPose method is called externally

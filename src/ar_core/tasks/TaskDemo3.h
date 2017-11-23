@@ -9,7 +9,7 @@
 // the images of a real camera. Print the charuco_d0_h4_w6_sl200_m10_ml150
 // file on a paper and measure the length of the black squares and the marker
 // squares with a ruler. Update the last two elements of the board_params
-// parameter of the test_ar.launch file with these measurements. When you run
+// parameter of the test3_ar.launch file with these measurements. When you run
 // the task 4 virtual cubes should be placed on 4 on the corners of the board
 // when the board is in the field of the view of the camera with a text mesh
 // shown in the middle.
