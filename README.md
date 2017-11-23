@@ -118,8 +118,13 @@ fix soon!).
 The block diagram above shows the main elements of a task class. You can have
 a look at the TaskDemo1 and TaskDemo2 for minimal examples. The main 
 elements are the Rendering, SimObjects and manipulators that are explained in 
-the following. There are two methods of the Task class that are called 
-periodically:
+the following. 
+
+The usual flow is that you create SimObjects (or vtk actors or
+ Bullet bodies) and add them to the world in the constructor. Then in one 
+ of the following two periodically called functions you write task logic 
+ and other things that need to be done on runtime. There are two methods of 
+ the Task class that are called periodically:
 * TaskLoop: This is called from the main thread at a refresh rate of about 30
  Hz which makes it the choice for updating graphics and task related logic.
  * HapticsThread: This method is called from a separate thread and you can 
