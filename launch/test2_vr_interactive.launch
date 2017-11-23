@@ -1,43 +1,42 @@
 <launch>
 
-    <!-- parameters used by some nodes regarding the transformations among the cams, arms and task-space -->
+    <!-- Parameters regarding the transformations among the cams, arms and
+    world frame.
+    Namespace is here because params used to be used by a few nodes...-->
     <group ns="calibrations">
         <rosparam command="load" file="$(find atar)/launch/params_calibrations_test_vr.yaml" />
     </group>
 
+    <!--____________________________________________________________________-->
+    <!-- Node GUI -->
+    <node pkg="atar" type="gui" name="gui" output="screen"> </node>
 
-    <!-- This node is now supposed to generate the ac geometry, control task states, and overlay graphics-->
+    <!--____________________________________________________________________-->
+    <!-- The core ATAR node-->
     <node pkg="atar" type="ar_core" name="ar_core" output="screen">
 
-        <!-- About stl_files_dir:
-        The directory of the stl files -->
-        <param name= "recources_directory" value= "$(find atar)/resources" />
+        <!--The directory of mesh and textures -->
+        <param name= "resources_directory" value= "$(find atar)/resources" />
 
-        <!--Activate or deactivate haptic guidance -->
-        <param name= "publish_overlayed_images" value= "false" />
-
-        <!--add shadows to the graphics. Works on dedicated GPUs. -->
-        <!--NOTE: SHADOWS DON'T WORK IF THERE ARE MORE THAN ONE WINDOW.MULTIPLE VIEWS IN ONE WINDOW IS FINE-->
+        <!--add shadows to the graphics. Works on dedicated GPUs -->
+        <!--NOTE: SHADOWS DON'T WORK IF THERE ARE MORE THAN ONE WINDOW.
+        MULTIPLE VIEWS IN ONE WINDOW IS FINE-->
         <param name= "with_shadows" value= "false" />
 
-        <!--If the generated images are to be published on
-        ros, to help alleviate the considerable bottleneck of grabbing the
-        images from the gpu, activate this flag so that the rendering is done
-         off screen and not shown in opengl windows.-->
-        <param name= "offScreen_rendering" value= "false" />
-
     </node>
 
-    <!-- Node GUI and recording the data-->
-    <node pkg="atar" type="gui" name="gui" output="screen">
-    </node>
-
+    <!--____________________________________________________________________-->
+    <!--The teleop dummy nodes simulate a slave by simply incrementing the
+        position of the end-effector of a master to allow for clutching, and
+        handle the buttons etc.-->
     <node pkg="atar" type="teleop_dummy_sigma" name="teleop_dummy_sigma"
           output="screen">
         <param name="scaling" value="0.5"/>
         <rosparam param="initial_slave_position"> [0.03, 0.04, 0.05]</rosparam>
     </node>
 
+    <!--____________________________________________________________________-->
+    <!--The node interfacing with a sigma master device-->
     <node pkg="sigma" type="master" name="sigma" output="screen">
 
         <param name="frequency" value="200" />

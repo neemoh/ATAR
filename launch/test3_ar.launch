@@ -1,0 +1,62 @@
+<launch>
+    <arg name= "left_cam_name" value= "asus_webcam" />
+    <arg name= "right_cam_name" value= "asus_webcam" />
+
+    <!-- Parameters regarding the transformations among the cams, arms and
+        world frame.
+        Namespace is here because params used to be used by other nodes...-->    <group ns="calibrations">
+        <rosparam command="load" file="$(find atar)/launch/params_calibrations_ar.yaml" />
+    </group>
+
+    <!--____________________________________________________________________-->
+    <!--Run the node that captures the images from the camera-->
+    <node pkg="uvc_camera" type="uvc_camera_node" name="asus_webcam">
+        <param name="device" type="string" value="/dev/video0" />
+        <param name="camera_name" type="string" value="$(arg left_cam_name)" />
+    </node>
+
+    <!--____________________________________________________________________-->
+    <!-- Run the GUI node -->
+    <node pkg="atar" type="gui" name="gui" output="screen">
+    </node>
+
+    <!--____________________________________________________________________-->
+    <!-- The core atar node-->
+    <node pkg="atar" type="ar_core" name="ar_core" output="screen">
+
+        <!-- About cam_name:
+        1- Expecting to read the camera images from the topic:
+        /cam_<cam_number>_name/image_raw
+        Use remap if the images are published on a different topic. For example:
+        <remap from="/$(arg left_cam_name)/image_raw"
+        to="/dvrk/$(arg left_cam_name)/image_rectified/>
+
+        2- Expecting to find the intrinsic calibration file of each camera in
+         ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml
+          IF file does not exists we check for non-zero values on the
+         <cam_name>/camera_info topic.
+         If not intrinsic calibration is started.
+        -->
+        <param name= "cam_0_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_1_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_2_name" value= "$(arg right_cam_name)" />
+
+        <!--Charuco board used for extrinsic, intrinsic and manipulator to
+        world calibrations. Vector consists of: -->
+        <!--[dictionary_id, board_w, board_h, square_length_in_meters,
+        marker_length_in_meters]-->
+        <rosparam param="board_params"> [0, 6, 4, 0.0247, 0.0185]</rosparam>
+
+        <!--The directory of mesh and textures -->
+        <param name= "resources_directory" value= "$(find atar)/resources" />
+
+        <!--add shadows to the graphics. Works on dedicated GPUs -->
+        <!--NOTE: SHADOWS DON'T WORK IF THERE ARE MORE THAN ONE WINDOW.
+        MULTIPLE VIEWS IN ONE WINDOW IS FINE-->
+        <param name= "with_shadows" value= "false" />
+
+        <!-- <param name="image_transport" value="compressed"/> --> <!--
+         Remove if image is not received over network -->
+    </node>
+
+</launch>

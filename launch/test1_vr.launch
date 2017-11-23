@@ -1,0 +1,30 @@
+<launch>
+
+    <!--____________________________________________________________________-->
+    <!-- Node GUI -->
+    <node pkg="atar" type="gui" name="gui" output="screen"> </node>
+
+    <!--____________________________________________________________________-->
+    <!-- The core ATAR node-->
+    <node pkg="atar" type="ar_core" name="ar_core" output="screen">
+
+        <!--The directory of mesh and textures -->
+        <param name= "resources_directory" value= "$(find atar)/resources" />
+
+        <!--add shadows to the graphics. Works on dedicated GPUs -->
+        <!--NOTE: SHADOWS DON'T WORK IF THERE ARE MORE THAN ONE WINDOW.
+        MULTIPLE VIEWS IN ONE WINDOW IS FINE-->
+        <param name= "with_shadows" value= "false" />
+
+    </node>
+
+    <!--____________________________________________________________________-->
+    <!-- Parameters regarding the transformations among the cams, arms and
+        world frame.
+        Namespace is here because params used to be used by other nodes...-->
+    <group ns="calibrations">
+        <rosparam command="load" file="$(find atar)/launch/params_calibrations_test_vr.yaml" />
+    </group>
+
+
+</launch>
