@@ -76,6 +76,8 @@ public:
 
     KDL::Frame GetPoseWorld(){return pose_world;};
 
+    KDL::Frame GetPoseImage(){return pose_image;};
+
     void GetGripper(double& gripper){gripper = gripper_angle;};
 
     double GetGripperAngles(){return gripper_angle;};
@@ -84,7 +86,7 @@ public:
 
     void GetTwistWorld(KDL::Twist& twist){twist = twist_world;};
 
-    void GetButtons(int *pdls) { pdls = pedals;};
+    void GetButtons(int pdls[]);
 
     void DoArmToWorldFrameCalibration();
 
@@ -104,6 +106,7 @@ private:
     boost::thread calibration_thread;
 
     KDL::Frame pose_local;
+    KDL::Frame pose_image;
     KDL::Frame pose_world;
     KDL::Frame local_to_world_frame_tr;
     KDL::Frame camera_to_world_frame_tr;  //i.e. camera to world

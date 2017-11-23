@@ -36,7 +36,7 @@ Manipulator::Manipulator(
 
     if(!pedals_topic.empty())
         sub_pedals = n->subscribe(pedals_topic, 1,
-                                 &Manipulator::PedalsCallback, this);
+                                  &Manipulator::PedalsCallback, this);
 
     //--------------------------------------------------------------------------
     // Get the transformation to the display and calculate the tr to the
@@ -70,6 +70,10 @@ Manipulator::Manipulator(
 void Manipulator::PoseCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
 
     tf::poseMsgToKDL(msg->pose, pose_local);
+
+    pose_image.p =  local_to_image_frame_rot * pose_local.p;
+    pose_image.M =  local_to_image_frame_rot * pose_local.M;
+
     pose_world =  local_to_world_frame_tr * pose_local;
 
 }
@@ -144,6 +148,14 @@ void Manipulator::PedalsCallback(const sensor_msgs::Joy &msg) {
 
     for (int i = 0; i < msg.buttons.size(); ++i) {
         pedals[i] = msg.buttons[i];
+    }
+
+}
+
+void Manipulator::GetButtons(int *pdls) {
+
+    for (int i = 0; i < sizeof(pdls)/sizeof(pdls[0]); ++i) {
+        pdls[i] = pedals[i];
     }
 
 }
