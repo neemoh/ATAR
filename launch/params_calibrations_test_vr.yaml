@@ -6,7 +6,7 @@
   # for stereo views.
   cam0_frame_to_cam1_frame: [0., 0., 0., 0., 0., 0., 1.]
 
-  cam0_frame_to_cam2_frame: [0.017, 0., 0., 0., 0., 0., 1.]
+  cam0_frame_to_cam2_frame: [0.012, 0., 0., 0., 0., 0., 1.]
 
 
   ################ VR
@@ -16,8 +16,8 @@
   # that takes the master poses to the image frame (opencv style: x is left
   # to right and y is top to bottom)
 
-  PSM1_DUMMY_frame_to_image_frame: [ 0.0, 0.7071, -0.7071, 0.0]
+  PSM1_DUMMY_frame_to_image_frame: [ 0.0, 0.9239, -0.3827, 0.0]
 
-  PSM2_DUMMY_frame_to_image_frame: [ 0.0, 0.7071, -0.7071, 0.0]
+  PSM2_DUMMY_frame_to_image_frame: [ 0.0, 0.9239, -0.3827, 0.0]
 
   sigma_frame_to_image_frame: [ 0.5, 0.5, -0.5, 0.5]
