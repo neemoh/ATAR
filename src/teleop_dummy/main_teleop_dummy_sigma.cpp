@@ -99,7 +99,7 @@ int main(int argc, char * argv[]) {
 
     // get initial tool position
     std::vector<double> init_tool_position= {0., 0., 0.};
-    n.getParam("initial_tool_1_position", init_tool_position);
+    n.getParam("initial_slave_position", init_tool_position);
     slave_pose.p = KDL::Vector(init_tool_position[0],
                                init_tool_position[1],
                                init_tool_position[2]);
