@@ -24,9 +24,10 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
 
     // -------------------------------------------------------------------------
     // Define a master manipulator
-    master = new Manipulator("sigma7",
-                             "/sigma7/sigma0/pose",
-                             "/sigma7/sigma0/gripper_angle");
+    master = new Manipulator("sigma",
+                             "/sigma/sigma0/dummy_slave_pose",
+                             "/sigma/sigma0/gripper_angle",
+                             "/sigma/sigma0/buttons");
 
     // for correct calibration, the master needs the pose of the camera
     graphics->SetManipulatorInterestedInCamPose(master);
@@ -47,7 +48,7 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
                           std::vector<double>({0.15,0.10}),
                           KDL::Frame(KDL::Vector(0.075, 0.05, 0.001)));
     // add to simulation
-//    AddSimObjectToTask(plane);
+    AddSimObjectToTask(plane);
     // -------------------------------------------------------------------------
     // Create a mesh object
     SimObject *kidney;
@@ -63,7 +64,7 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
                                RESOURCES_DIRECTORY+"/mesh/kidney.obj", mesh_pose);
         kidney->GetActor()->GetProperty()->SetColor(colors.RedDark);
 
-//        AddSimObjectToTask(kidney);
+        AddSimObjectToTask(kidney);
     }
 
     // cell locator stuff
@@ -128,11 +129,30 @@ void TaskActiveConstraintDesign::TaskLoop() {
     // rotate the camera
     auto rotate_cam_now = (bool)buttons[1];
     if(rotate_cam_now){
-        auto cam_pose = graphics->GetMainCameraPose();
-        cam_pose.p += master_pose.p;
-        cam_pose.M = master_pose.M.Inverse() * cam_pose.M * master_pose.M;
-        graphics->SetMainCameraPose(cam_pose);
-    }
+        if(first_iteration_cam_move) {
+            master_initial_pose_for_cam_move =  master->GetPoseWorld();;
+            camera_initial_pose_for_cam_move = graphics->GetMainCameraPose();
+            first_iteration_cam_move = false;
+        }
+        else {
+            KDL::Frame delta_master;
+            delta_master.p =  master->GetPoseWorld().p -
+                    master_initial_pose_for_cam_move.p;
+            KDL::Frame cam_pose;
+            KDL::Rotation temp;
+            temp.DoRotX(-M_PI_2);
+            delta_master.p = temp * cam_pose.M *delta_master.p;
+
+            cam_pose.p = camera_initial_pose_for_cam_move.p + delta_master.p;
+//            cam_pose.M = delta_master.M.Inverse() *
+//                    camera_initial_pose_for_cam_move.M * delta_master.M;
+            cam_pose.M = camera_initial_pose_for_cam_move.M;
+            graphics->SetMainCameraPose(cam_pose);
+        }
+    } else
+        first_iteration_cam_move = true;
+
+
 
     // Finding closest point from tool to mesh
     double closest_point[3] = {0.0, 0.0, 0.0};

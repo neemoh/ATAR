@@ -32,7 +32,7 @@
     <node pkg="atar" type="teleop_dummy_sigma" name="teleop_dummy_sigma"
           output="screen">
         <param name="scaling" value="0.5"/>
-        <rosparam param="initial_slave_position"> [0.03, 0.04, 0.05]</rosparam>
+        <rosparam param="initial_slave_position"> [0.13, -0.04,-0.01]</rosparam>
     </node>
 
     <!--____________________________________________________________________-->
@@ -55,5 +55,8 @@
         <param name="wrench_topic" value="/sigma/sigma0/forceFeedback"/>
 
     </node>
+
+
+
 
 </launch>
