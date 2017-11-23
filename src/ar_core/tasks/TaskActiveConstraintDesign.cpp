@@ -21,6 +21,17 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
     temp_pose.p = KDL::Vector(0.06, -0.05, 0.28);
 
     graphics->SetMainCameraPose(temp_pose);
+
+    // -------------------------------------------------------------------------
+    // Define a master manipulator
+    master = new Manipulator("sigma7",
+                             "/sigma7/sigma0/pose",
+                             "/sigma7/sigma0/gripper_angle");
+
+    // for correct calibration, the master needs the pose of the camera
+    graphics->SetManipulatorInterestedInCamPose(master);
+
+
     // -------------------------------------------------------------------------
     // static floor
     // always add a floor under the workspace of your task to prevent objects
@@ -36,7 +47,7 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
                           std::vector<double>({0.15,0.10}),
                           KDL::Frame(KDL::Vector(0.075, 0.05, 0.001)));
     // add to simulation
-    AddSimObjectToTask(plane);
+//    AddSimObjectToTask(plane);
     // -------------------------------------------------------------------------
     // Create a mesh object
     SimObject *kidney;
@@ -52,9 +63,8 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
                                RESOURCES_DIRECTORY+"/mesh/kidney.obj", mesh_pose);
         kidney->GetActor()->GetProperty()->SetColor(colors.RedDark);
 
-        AddSimObjectToTask(kidney);
+//        AddSimObjectToTask(kidney);
     }
-
 
     // cell locator stuff
     cellLocator = vtkSmartPointer<vtkCellLocator>::New();
@@ -62,7 +72,7 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
     cellLocator->BuildLocator();
 
     // -------------------------------------------------------------------------
-    // Create 6 dynamic spheres
+    // Create a sphere as tool
     {
         // define object dimensions
         std::vector<double> sphere_dimensions = {0.005};
@@ -70,40 +80,95 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
         // construct the object. Sor Sphere and planes we can have a
         // texture image too!
         sphere_tool = new SimObject(ObjectShape::SPHERE, ObjectType::KINEMATIC,
-                                  sphere_dimensions);
+                                    sphere_dimensions);
         // we need to add the SimObject to the task. Without this step
         // the object is not going to be used
         AddSimObjectToTask(sphere_tool);
     }
 
 
+    //-----------------------------------------------------------------------
+    // Drawing line from tool to the closest point
+    vtkSmartPointer<vtkPolyDataMapper> closest_line_mapper =
+            vtkPolyDataMapper::New();
+    vtkSmartPointer<vtkActor> closest_actor = vtkActor::New();
 
-    // -------------------------------------------------------------------------
-    // Define a master manipulator
-    master = new Manipulator("sigma7",
-                                "/sigma7/sigma0/pose",
-                                "/sigma7/sigma0/gripper_angle");
+    closest_line_mapper->SetInputData(closestLine->GetOutput());
+    closest_line_mapper->Update();
 
-    // for correct calibration, the master needs the pose of the camera
-    graphics->SetManipulatorInterestedInCamPose(master);
+    // Define closest line properties
+    closest_actor->SetMapper(closest_line_mapper);
+    closest_actor->GetProperty()->SetColor(colors.BlueDodger);
+    closest_actor->GetProperty()->SetLineWidth(2);
 
+    // add closest point line to the graphics
+    graphics->AddActorToScene(closest_actor);
+
+
+    //-----------------------------------------------------------------------
+    // path
+    path.GetActor()->GetProperty()->SetColor(colors.Gold);
+    path.GetActor()->GetProperty()->SetLineWidth(7);
+
+    // Add actor of trajectory line to graphics
+    graphics->AddActorToScene(path.GetActor());
+}
+
+//------------------------------------------------------------------------------
+void TaskActiveConstraintDesign::TaskLoop() {
+
+    // Update virtual tool pose
+    KDL::Frame master_pose = master->GetPoseWorld();
+    sphere_tool->SetKinematicPose(master_pose);
+
+    // get the buttons of the master
+    int buttons[2];
+    master->GetButtons(buttons);
+
+    // rotate the camera
+    auto rotate_cam_now = (bool)buttons[1];
+    if(rotate_cam_now){
+        auto cam_pose = graphics->GetMainCameraPose();
+        cam_pose.p += master_pose.p;
+        cam_pose.M = master_pose.M.Inverse() * cam_pose.M * master_pose.M;
+        graphics->SetMainCameraPose(cam_pose);
+    }
+
+    // Finding closest point from tool to mesh
+    double closest_point[3] = {0.0, 0.0, 0.0};
+    FindClosestPointToMesh(closest_point);
+
+    // Update the closest point line
+    double current_point[3] = {master_pose.p[0],
+                               master_pose.p[1], master_pose.p[2]};
+    closestLine->SetPoint1(current_point);
+    closestLine->SetPoint2(closest_point);
+    closestLine->Update();
+
+    // Draw the path line on mesh
+    bool draw_now = master->GetGripperAngles()<0.01;
+
+    if(draw_now)
+        path.InsertNewPoint(KDL::Vector(closest_point[0],
+                                        closest_point[1],closest_point[2]));
 
 }
 
-void TaskActiveConstraintDesign::TaskLoop() {
+//------------------------------------------------------------------------------
+TaskActiveConstraintDesign::~TaskActiveConstraintDesign() {
 
+    delete master;
 
-    sphere_tool->SetKinematicPose(master->GetPoseWorld());
+}
 
-    // -------------------------------------------------------------------------
-    // Finding closest point from tool to board
+//------------------------------------------------------------------------------
+void TaskActiveConstraintDesign::FindClosestPointToMesh(double * out) {
 
+    KDL::Vector tool_pos_in_mesh_frame = mesh_pose.Inverse() *sphere_tool->GetPose().p;
 
-    KDL::Vector center_point_in_mesh_local = mesh_pose.Inverse() *sphere_tool->GetPose().p;
-
-    double board_central_point_in_mesh_local[3] = {center_point_in_mesh_local[0],
-                                                   center_point_in_mesh_local[1],
-                                                   center_point_in_mesh_local[2]};
+    double board_central_point_in_mesh_local[3] = {tool_pos_in_mesh_frame[0],
+                                                   tool_pos_in_mesh_frame[1],
+                                                   tool_pos_in_mesh_frame[2]};
 
     double closest_point[3] = {0.0, 0.0, 0.0};
     double closestPointDist2; //the squared distance to the closest point
@@ -114,84 +179,14 @@ void TaskActiveConstraintDesign::TaskLoop() {
     cellLocator->FindClosestPoint(board_central_point_in_mesh_local, closest_point,
                                   cell_id, subId, closestPointDist2);
 
-    KDL::Vector closest_point_to_center_point = mesh_pose *
-                                                KDL::Vector(closest_point[0], closest_point[1], closest_point[2]);
+    KDL::Vector closest_point_in_world_frame = mesh_pose *
+                                               KDL::Vector(closest_point[0],
+                                                           closest_point[1],
+                                                           closest_point[2]);
 
-    closest_point[0] = closest_point_to_center_point.data[0];
-    closest_point[1] = closest_point_to_center_point.data[1];
-    closest_point[2] = closest_point_to_center_point.data[2];
-
-    //-----------------------------------------------------------------------
-    // Drawing line from tool to closest point
-
-    // Line initialized in .h to create a new one every loop
-    vtkSmartPointer<vtkPolyDataMapper> closestLineMapper = vtkPolyDataMapper::New();
-    vtkSmartPointer<vtkActor> closestActor = vtkActor::New();
-
-    double currentPoint[3] = {sphere_tool->GetPose().p[0],
-                              sphere_tool->GetPose().p[1],
-                              sphere_tool->GetPose().p[2]};
-
-    // define two points for the line to be drawn
-    closestLine->SetPoint1(currentPoint);
-    closestLine->SetPoint2(closest_point);
-    closestLine->Update();
-
-    closestLineMapper->SetInputData(closestLine->GetOutput());
-    closestLineMapper->Update();
-
-    // Define closest line properties
-    closestActor->SetMapper(closestLineMapper);
-    closestActor->GetProperty()->SetColor(colors.Red);
-    closestActor->GetProperty()->SetLineWidth(2);
-
-    // add closest point line to the graphics
-    graphics->AddActorToScene(closestActor);
-
-    //-----------------------------------------------------------------------
-    // Draw trajectory line on board
-
-    // Initialize new line
-    line = vtkLineSource::New();
-    lineMapper = vtkPolyDataMapper::New();
-    vtkSmartPointer<vtkActor> actor = vtkActor::New();
-
-    // If it's the first segment of trajectory then draw the first point...
-
-    ROS_INFO("%f",master->GetGripper());
-    if(master->GetGripper()<0.1) {
-        if (start) {
-            line->SetPoint1(closest_point);
-            line->SetPoint2(closest_point);
-            start = false;
-        }
-            //... else draw the trajectory
-        else {
-            line->SetPoint1(lastPoint);
-            line->SetPoint2(closest_point);
-        }
-        line->Update();
-
-        // update last point for trajectory
-        lastPoint[0] = closest_point[0];
-        lastPoint[1] = closest_point[1];
-        lastPoint[2] = closest_point[2];
-
-        lineMapper->SetInputData(line->GetOutput());
-        lineMapper->Update();
-
-        // Define trajectory line property
-        actor->SetMapper(lineMapper);
-        actor->GetProperty()->SetColor(colors.Gold);
-        actor->GetProperty()->SetLineWidth(7);
-
-        // Add actor of trajectory line to graphics
-        graphics->AddActorToScene(actor);
-    }
+    out[0] = closest_point_in_world_frame.data[0];
+    out[1] = closest_point_in_world_frame.data[1];
+    out[2] = closest_point_in_world_frame.data[2];
 }
 
-TaskActiveConstraintDesign::~TaskActiveConstraintDesign() {
 
-    delete master;
-
-}
