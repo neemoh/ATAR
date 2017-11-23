@@ -31,9 +31,9 @@ AugmentedCamera::AugmentedCamera(image_transport::ImageTransport *it,
     // square_length_in_meters, marker_length_in_meters]
     std::vector<float> board_params = std::vector<float>(5, 0.0);
     bool found_board_params = true;
-    if(!n.getParam("board_params", board_params));
-    if(!n.getParam("/calibrations/board_params", board_params))
-        found_board_params = false;
+    if(!n.getParam("board_params", board_params))
+        if(!n.getParam("/calibrations/board_params", board_params))
+            found_board_params = false;
 
 
     // ------------------------------------------
