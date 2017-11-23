@@ -104,7 +104,7 @@ void TaskDemo2::TaskLoop() {
     auto temp_pose = master[0]->GetPoseWorld();
     // rotate the tool locally
     temp_pose.M.DoRotY(-M_PI/2.);
-    gripper->SetPoseAndJawAngle(temp_pose, master[0]->GetGripper());
+    gripper->SetPoseAndJawAngle(temp_pose, master[0]->GetGripperAngles());
 
     // update the position of the spherical tool
     sphere_tool->SetKinematicPose(master[1]->GetPoseWorld());

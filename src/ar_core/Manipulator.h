@@ -78,13 +78,13 @@ public:
 
     void GetGripper(double& gripper){gripper = gripper_angle;};
 
-    double GetGripper(){return gripper_angle;};
+    double GetGripperAngles(){return gripper_angle;};
 
     void GetTwistLocal(KDL::Twist& twist){twist = twist_local;};
 
     void GetTwistWorld(KDL::Twist& twist){twist = twist_world;};
 
-    void GetPedals(int pdls[]) {pdls = pedals;};
+    void GetButtons(int *pdls) { pdls = pedals;};
 
     void DoArmToWorldFrameCalibration();
 

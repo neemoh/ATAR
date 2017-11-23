@@ -89,5 +89,5 @@ void TaskDemo4::TaskLoop() {
 
     // update the pose of the virtual forceps from the real manipulator
     gripper->SetPoseAndJawAngle(slave[0]->GetPoseWorld(),
-                                slave[0]->GetGripper());
+                                slave[0]->GetGripperAngles());
 }
