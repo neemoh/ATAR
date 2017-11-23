@@ -338,3 +338,10 @@ rosrun atar create_charuco_board <YOUR PARAMS>
 ## Miscellaneous
 
 * Grasping:  
+
+
+## TODO:
+* After Manipulator to world calibration, the calculated transformation is 
+used and set as a param, but not saved in the params_calibrations.YAML file. 
+So if the ros master is restarted the transformation is lost.
+* Add the option of directly reading usb camera in the ARCamera class.
