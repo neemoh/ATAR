@@ -1,6 +1,6 @@
 <launch>
-    <arg name= "left_cam_name" value= "asus_webcam" />
-    <arg name= "right_cam_name" value= "asus_webcam" />
+    <arg name= "left_cam_name" value= "trust" />
+    <arg name= "right_cam_name" value= "trust" />
 
     <!-- Parameters regarding the transformations among the cams, arms and
         world frame.
@@ -10,8 +10,8 @@
 
     <!--____________________________________________________________________-->
     <!--Run the node that captures the images from the camera-->
-    <node pkg="uvc_camera" type="uvc_camera_node" name="asus_webcam">
-        <param name="device" type="string" value="/dev/video0" />
+    <node pkg="uvc_camera" type="uvc_camera_node" name="trust">
+        <param name="device" type="string" value="/dev/video1" />
         <param name="camera_name" type="string" value="$(arg left_cam_name)" />
     </node>
 

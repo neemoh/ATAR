@@ -10,7 +10,7 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
     // create a rendering object with desired parameters
     graphics = std::make_unique<Rendering>(
             /*view_resolution=*/std::vector<int>({920, 640}),
-            /*ar_mode=*/false,
+            /*ar_mode=*/true,
             /*n_views=*/1,
             /*one_window_per_view=*/false,
             /*borders_off=*/false,
@@ -42,27 +42,28 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
     AddSimObjectToTask(floor);
 
     // -------------------------------------------------------------------------
-    // create a floor
-    SimObject* plane;
-    plane = new SimObject(ObjectShape::PLANE, ObjectType::DYNAMIC,
-                          std::vector<double>({0.15,0.10}),
-                          KDL::Frame(KDL::Vector(0.075, 0.05, 0.001)));
-    // add to simulation
-    AddSimObjectToTask(plane);
+//    // create a floor
+//    SimObject* plane;
+//    plane = new SimObject(ObjectShape::PLANE, ObjectType::DYNAMIC,
+//                          std::vector<double>({0.15,0.10}),
+//                          KDL::Frame(KDL::Vector(0.075, 0.05, 0.001)));
+//    // add to simulation
+//    AddSimObjectToTask(plane);
     // -------------------------------------------------------------------------
     // Create a mesh object
     SimObject *kidney;
     {
         // define object Pose
         mesh_pose = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
-                , KDL::Vector(0.06, 0.06, 0.02 ));
+                , KDL::Vector(0.15, 0.12, 0.02 ));
         mesh_pose.M.DoRotZ(M_PI);
         mesh_pose.M.DoRotX(M_PI/2);
 
         // construct the object
-        kidney = new SimObject(ObjectShape::MESH, ObjectType::DYNAMIC,
-                               RESOURCES_DIRECTORY+"/mesh/kidney.obj", mesh_pose);
-        kidney->GetActor()->GetProperty()->SetColor(colors.RedDark);
+        kidney = new SimObject(ObjectShape::MESH, ObjectType::NOPHYSICS,
+                               RESOURCES_DIRECTORY+"/mesh/kidney_wire.obj",
+                               mesh_pose);
+        kidney->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
 
         AddSimObjectToTask(kidney);
     }
