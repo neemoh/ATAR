@@ -119,7 +119,7 @@ void SimTask::AddSimObjectToTask(SimObject *obj) {
     if(obj) {
         if (obj->GetObjectType() != NOVISUALS) {
             if (graphics)
-                graphics->AddActorToScene(obj->GetActor());
+                graphics->AddActorToScene(obj->GetActor(), obj->IsShadowOn());
             else
                 throw std::runtime_error("Oops! It seems that the graphics was "
                                                  "not constructed.");
