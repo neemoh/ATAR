@@ -225,7 +225,7 @@ Rendering::AddActorsToScene(std::vector<vtkSmartPointer<vtkProp> > actors) {
 }
 //------------------------------------------------------------------------------
 void
-Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
+Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor, bool with_shadow) {
 
     vtkSmartPointer<vtkInformation> key_properties = vtkSmartPointer<vtkInformation>::New();
     key_properties->Set(vtkShadowMapBakerPass::OCCLUDER(),0);
@@ -233,7 +233,7 @@ Rendering::AddActorToScene(vtkSmartPointer<vtkProp> actor) {
 
     for (int j = 0; j < n_views; ++j) {
 
-        if(with_shadows_)
+        if(with_shadows_ && with_shadow)
             actor->SetPropertyKeys(key_properties);
         scene_renderer_[j]->AddViewProp(actor);
 

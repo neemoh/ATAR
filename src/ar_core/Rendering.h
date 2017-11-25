@@ -70,7 +70,7 @@ public:
 
     void AddActorsToScene(std::vector< vtkSmartPointer<vtkProp> > actors);
 
-    void AddActorToScene(vtkSmartPointer<vtkProp> actor);
+    void AddActorToScene(vtkSmartPointer<vtkProp> actor, bool with_shadow=true);
 
     void RemoveAllActorsFromScene();
 

@@ -161,6 +161,10 @@ public:
 
     ObjectType GetObjectType(){return object_type_;}
 
+    void DisableShadow(bool in){with_shadow=in;};
+    
+    bool IsShadowOn(){return with_shadow;};
+    
 private:
 
     int id_;
@@ -169,7 +173,7 @@ private:
     vtkSmartPointer<vtkActor>    actor_;
     BulletVTKMotionState  *      motion_state_;
     btCollisionShape *           collision_shape_;
-
+    bool                         with_shadow;
 };
 
 // -----------------------------------------------------------------------------
