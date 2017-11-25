@@ -18,7 +18,7 @@
 #include "SimMechanism.h"
 #include "Colors.hpp"
 #include <memory>
-#include "sss.h"
+//#include "sss.h"
 
 extern std::string                      RESOURCES_DIRECTORY;
 
