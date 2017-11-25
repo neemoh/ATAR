@@ -9,12 +9,12 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
 
     // create a rendering object with desired parameters
     graphics = std::make_unique<Rendering>(
-            /*view_resolution=*/std::vector<int>({920, 640}),
+            /*view_resolution=*/std::vector<int>({640, 480}),
             /*ar_mode=*/true,
-            /*n_views=*/1,
+            /*n_views=*/3,
             /*one_window_per_view=*/false,
-            /*borders_off=*/false,
-            /*window_positions=*/std::vector<int>({300,50}));
+            /*borders_off=*/true,
+            /*window_positions=*/std::vector<int>({1280,0}));
 
     auto temp_pose = graphics->GetMainCameraPose();
     temp_pose.M.DoRotX(-30./180.*M_PI);
@@ -24,14 +24,21 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
 
     // -------------------------------------------------------------------------
     // Define a master manipulator
-    master = new Manipulator("sigma",
-                             "/sigma/sigma0/dummy_slave_pose",
-                             "/sigma/sigma0/gripper_angle",
-                             "/sigma/sigma0/buttons");
-
-    // for correct calibration, the master needs the pose of the camera
+    
+    // Define two tools
+    slave = new Manipulator("PSM2",
+        "/dvrk/PSM2/position_cartesian_current",
+        "/dvrk/PSM2/gripper_position_current");
+    
+    master = new Manipulator("MTMR",
+        "/dvrk/MTMR/position_cartesian_current",
+        "/dvrk/MTMR/gripper_position_current",
+        "/dvrk/footpedals/camera");
+    
+    // set the manipulators to follow cam pose for correct kinematics
+    // calibration. Cam pose here is cam_0.
+//    graphics->SetManipulatorInterestedInCamPose(slave);
     graphics->SetManipulatorInterestedInCamPose(master);
-
 
     // -------------------------------------------------------------------------
     // static floor
@@ -55,13 +62,13 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
     {
         // define object Pose
         mesh_pose = KDL::Frame(KDL::Rotation::Quaternion( 0., 0., 0., 1.)
-                , KDL::Vector(0.15, 0.12, 0.02 ));
+                , KDL::Vector(0.08, 0.16, 0.04 ));
         mesh_pose.M.DoRotZ(M_PI);
-        mesh_pose.M.DoRotX(M_PI/2);
+        mesh_pose.M.DoRotX(M_PI_2 - 15./180.*M_PI);
 
         // construct the object
         kidney = new SimObject(ObjectShape::MESH, ObjectType::NOPHYSICS,
-                               RESOURCES_DIRECTORY+"/mesh/kidney_wire.obj",
+                               RESOURCES_DIRECTORY+"/mesh/kidney_half_wire.obj",
                                mesh_pose);
         kidney->GetActor()->GetProperty()->SetColor(colors.BlueDodger);
 
@@ -77,7 +84,7 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
     // Create a sphere as tool
     {
         // define object dimensions
-        std::vector<double> sphere_dimensions = {0.005};
+        std::vector<double> sphere_dimensions = {0.002};
 
         // construct the object. Sor Sphere and planes we can have a
         // texture image too!
@@ -104,54 +111,54 @@ TaskActiveConstraintDesign::TaskActiveConstraintDesign()
     closest_actor->GetProperty()->SetLineWidth(2);
 
     // add closest point line to the graphics
-    graphics->AddActorToScene(closest_actor);
+    graphics->AddActorToScene(closest_actor, false);
 
 
     //-----------------------------------------------------------------------
     // path
     path.GetActor()->GetProperty()->SetColor(colors.Gold);
-    path.GetActor()->GetProperty()->SetLineWidth(7);
+    path.GetActor()->GetProperty()->SetLineWidth(4);
 
     // Add actor of trajectory line to graphics
-    graphics->AddActorToScene(path.GetActor());
+    graphics->AddActorToScene(path.GetActor(), false);
 }
 
 //------------------------------------------------------------------------------
 void TaskActiveConstraintDesign::TaskLoop() {
 
     // Update virtual tool pose
-    KDL::Frame master_pose = master->GetPoseWorld();
+    KDL::Frame master_pose = slave->GetPoseWorld();
     sphere_tool->SetKinematicPose(master_pose);
 
     // get the buttons of the master
-    int buttons[2];
+    int buttons[1];
     master->GetButtons(buttons);
 
     // rotate the camera
-    auto rotate_cam_now = (bool)buttons[1];
-    if(rotate_cam_now){
-        if(first_iteration_cam_move) {
-            master_initial_pose_for_cam_move =  master->GetPoseWorld();;
-            camera_initial_pose_for_cam_move = graphics->GetMainCameraPose();
-            first_iteration_cam_move = false;
-        }
-        else {
-            KDL::Frame delta_master;
-            delta_master.p =  master->GetPoseWorld().p -
-                    master_initial_pose_for_cam_move.p;
-            KDL::Frame cam_pose;
-            KDL::Rotation temp;
-            temp.DoRotX(-M_PI_2);
-            delta_master.p = temp * cam_pose.M *delta_master.p;
-
-            cam_pose.p = camera_initial_pose_for_cam_move.p + delta_master.p;
-//            cam_pose.M = delta_master.M.Inverse() *
-//                    camera_initial_pose_for_cam_move.M * delta_master.M;
-            cam_pose.M = camera_initial_pose_for_cam_move.M;
-            graphics->SetMainCameraPose(cam_pose);
-        }
-    } else
-        first_iteration_cam_move = true;
+//    auto rotate_cam_now = (bool)buttons[1];
+//    if(rotate_cam_now){
+//        if(first_iteration_cam_move) {
+//            master_initial_pose_for_cam_move =  master->GetPoseWorld();;
+//            camera_initial_pose_for_cam_move = graphics->GetMainCameraPose();
+//            first_iteration_cam_move = false;
+//        }
+//        else {
+//            KDL::Frame delta_master;
+//            delta_master.p =  master->GetPoseWorld().p -
+//                    master_initial_pose_for_cam_move.p;
+//            KDL::Frame cam_pose;
+//            KDL::Rotation temp;
+//            temp.DoRotX(-M_PI_2);
+//            delta_master.p = temp * cam_pose.M *delta_master.p;
+//
+//            cam_pose.p = camera_initial_pose_for_cam_move.p + delta_master.p;
+////            cam_pose.M = delta_master.M.Inverse() *
+////                    camera_initial_pose_for_cam_move.M * delta_master.M;
+//            cam_pose.M = camera_initial_pose_for_cam_move.M;
+//            graphics->SetMainCameraPose(cam_pose);
+//        }
+//    } else
+//        first_iteration_cam_move = true;
 
 
 
@@ -167,11 +174,13 @@ void TaskActiveConstraintDesign::TaskLoop() {
     closestLine->Update();
 
     // Draw the path line on mesh
-    bool draw_now = master->GetGripperAngles()<0.01;
-
+    bool draw_now = master->GetGripperAngles()<0.5;
+    std::cout << buttons[0] << std::endl;
     if(draw_now)
         path.InsertNewPoint(KDL::Vector(closest_point[0],
                                         closest_point[1],closest_point[2]));
+    if(buttons[0])
+        path.Clear();
 
 }
 

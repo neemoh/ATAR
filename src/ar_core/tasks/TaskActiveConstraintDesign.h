@@ -24,7 +24,11 @@ public:
     ~TaskActiveConstraintDesign() override;
 
     void TaskLoop() override;
-
+    
+    void StartManipulatorToWorldFrameCalibration(const uint arm_id) override
+    {
+        slave->DoArmToWorldFrameCalibration();
+    };
 private:
 
     void FindClosestPointToMesh(double closest_point[]);
@@ -33,6 +37,7 @@ private:
 private:
     SimObject *sphere_tool;
     Manipulator * master;
+    Manipulator * slave;
 
     int count=0;
     // path

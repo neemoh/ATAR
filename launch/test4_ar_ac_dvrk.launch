@@ -1,0 +1,106 @@
+<launch>
+    <arg name="slave_1_name" value="PSM1_DUMMY"/>
+    <arg name="slave_2_name" value="PSM2_DUMMY"/>
+    <arg name="master_1_name" value="MTMR"/>
+    <arg name="master_2_name" value="MTML"/>
+    <arg name= "left_cam_name" value= "trust" />
+    <arg name= "right_cam_name" value= "trust" />
+
+    <!-- Parameters regarding the transformations among the cams, arms and
+        world frame.
+        Namespace is here because params used to be used by other nodes...-->    <group ns="calibrations">
+        <rosparam command="load" file="$(find atar)/launch/params_calibrations_ar.yaml" />
+    </group>
+
+    <!--____________________________________________________________________-->
+    <!-- Node GUI and recording the data-->
+    <node pkg="atar" type="gui" name="gui" output="screen">
+        <!--records data at the frequency of task_state topic-->
+        <param name="number_of_arms" value="2"/>
+        <param name="slave_1_name" value="$(arg slave_1_name)"/>
+        <param name="master_1_name" value="$(arg master_1_name)"/>
+        <param name="slave_2_name" value="$(arg slave_2_name)"/>
+        <param name="master_2_name" value="$(arg master_2_name)"/>
+    </node>
+  <!--____________________________________________________________________-->
+    <!--Run the node that captures the images from the camera-->
+    <node pkg="uvc_camera" type="uvc_camera_node" name="trust">
+        <param name="device" type="string" value="/dev/video0" />
+        <param name="camera_name" type="string" value="$(arg left_cam_name)" />
+
+    </node>
+
+    <!--____________________________________________________________________-->
+    <!-- The core atar node-->
+    <node pkg="atar" type="ar_core" name="ar_core" output="screen">
+        <!-- About cam_name:
+        1- Expecting to read the camera images from the topic:
+        /cam_<cam_number>_name/image_raw
+        Use remap if the images are published on a different topic. For example:
+        <remap from="/$(arg left_cam_name)/image_raw"
+        to="/dvrk/$(arg left_cam_name)/image_rectified/>
+
+        2- Expecting to find the intrinsic calibration file of each camera in
+         ~/.ros/camera_info/ named as <cam_name>_intrinsics.xml
+          IF file does not exists we check for non-zero values on the
+         <cam_name>/camera_info topic.
+         If not intrinsic calibration is started.
+        -->
+        <param name= "cam_0_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_1_name" value= "$(arg left_cam_name)" />
+        <param name= "cam_2_name" value= "$(arg right_cam_name)" />
+        <!--The directory of mesh and textures -->
+        <param name= "resources_directory" value= "$(find atar)/resources" />
+
+        <!--Charuco board used for extrinsic, intrinsic and manipulator to
+        world calibrations. Vector consists of: -->
+        <!--[dictionary_id, board_w, board_h, square_length_in_meters,
+        marker_length_in_meters]-->
+        <rosparam param="board_params"> [0, 6, 4, 0.0247, 0.0185]</rosparam>
+
+        <!--add shadows to the graphics. Works on dedicated GPUs -->
+        <!--NOTE: SHADOWS DON'T WORK IF THERE ARE MORE THAN ONE WINDOW.
+        MULTIPLE VIEWS IN ONE WINDOW IS FINE-->
+        <param name= "with_shadows" value= "true" />
+
+    </node>
+
+    <!--____________________________________________________________________-->
+    <!--The teleop dummy nodes simulate a slave by simply incrementing the
+        position of the end-effector of a master to allow for clutching, and
+        handle the buttons etc.-->
+    <!--<node pkg="atar" type="teleop_dummy_dvrk" name="teleop_dummy_dvrk"-->
+          <!--output="screen">-->
+        <!--<param name="slave_1_name" value="$(arg slave_1_name)"/>-->
+        <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
+        <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
+        <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
+        <!--<param name="scaling" value="0.5"/>-->
+        <!--<rosparam param="initial_slave1_position"> [0.03, 0.04, 0.05]</rosparam>-->
+        <!--<rosparam param="initial_slave2_position"> [0.07, 0.05, 0.05]</rosparam>-->
+    <!--</node>-->
+
+    <!--____________________________________________________________________-->
+    <!-- The dvrk_active_constraint_enforcement node generates wrench based
+        on the received desired pose and current pose of each master/slave couple.
+        The node generates wrench when receives desired pose, so the loop rate
+        depends on the frequency of the desired pose topic. The
+        sampling_frequency param is for filtering.
+        -->
+    <!--<node pkg="active_constraints" type="dvrk_active_constraint_enforcement" name="dvrk_ac_enforce" output="screen">-->
+        <!--<param name="number_of_arms" value="2"/>-->
+        <!--<param name="slave_1_name" value="$(arg slave_1_name)"/>-->
+        <!--<param name="slave_2_name" value="$(arg slave_2_name)"/>-->
+        <!--<param name="master_1_name" value="$(arg master_1_name)"/>-->
+        <!--<param name="master_2_name" value="$(arg master_2_name)"/>-->
+        <!--&lt;!&ndash;the ac params will be overwritten if new message arrives&ndash;&gt;-->
+        <!--<param name="max_force" value="3"/>-->
+        <!--<param name="max_torque" value="0.03"/>&lt;!&ndash; 0.03 &ndash;&gt;-->
+        <!--<param name="linear_elastic_coeff" value="1000"/>-->
+        <!--<param name="linear_damping_coeff" value="10"/>-->
+        <!--<param name="angular_elastic_coeff" value="0.04"/>-->
+        <!--<param name="angular_damping_coeff" value="0.002"/>-->
+        <!--<param name="sampling_frequency" value="500"/>-->
+    <!--</node>-->
+
+</launch>

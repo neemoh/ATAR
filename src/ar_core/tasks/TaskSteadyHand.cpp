@@ -17,16 +17,15 @@ TaskSteadyHand::TaskSteadyHand()
         ac_params_changed(true),
         task_state(SHTaskState::Idle)
 {
-
-    bool ar_mode = false;
-    int n_views = 3;
-    bool one_window_per_view = false;
-    bool borders_off  = true;
-    std::vector<int> view_resolution = {640, 480};
-    std::vector<int> window_positions={1280, 0};
-
-    graphics = std::make_unique<Rendering>(view_resolution, ar_mode, n_views,
-                                           one_window_per_view, borders_off,window_positions);
+    
+    // create a rendering object with desired parameters
+    graphics = std::make_unique<Rendering>(
+        /*view_resolution=*/std::vector<int>({640, 480}),
+        /*ar_mode=*/false,
+        /*n_views=*/3,
+        /*one_window_per_view=*/false,
+        /*borders_off=*/true,
+        /*window_positions=*/std::vector<int>({1280,0}));
 
     // prevent tools from hitting things at the initialization
     tool_current_pose[0].p = KDL::Vector(0.1, 0.1, 0.05);

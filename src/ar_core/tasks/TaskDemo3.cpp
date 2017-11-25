@@ -97,5 +97,5 @@ TaskDemo3::TaskDemo3()
     task_coordinate_axes->SetTotalLength(0.01, 0.01, 0.01);
     task_coordinate_axes->SetShaftType(vtkAxesActor::LINE_SHAFT);
     task_coordinate_axes->SetTipType(vtkAxesActor::SPHERE_TIP);
-    graphics->AddActorToScene(task_coordinate_axes);
+    graphics->AddActorToScene(task_coordinate_axes, false);
 }

@@ -192,7 +192,7 @@ TaskRingTransfer::TaskRingTransfer()
     task_coordinate_axes->SetShaftType(vtkAxesActor::CYLINDER_SHAFT);
     bool show_ref_frames = 1;
     if(show_ref_frames)
-        graphics->AddActorToScene(task_coordinate_axes);
+        graphics->AddActorToScene(task_coordinate_axes, false);
 
     
     
