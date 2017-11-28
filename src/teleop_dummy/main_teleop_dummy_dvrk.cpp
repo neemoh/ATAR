@@ -211,22 +211,22 @@ int main(int argc, char * argv[]) {
     ros::spinOnce();
 
     std_msgs::String string_msg;
-    if(master_state[0].data() != std::string("DVRK_READY")) {
-        string_msg.data = "Home";
-        pub_master_1_state.publish(string_msg);
-        ROS_INFO( "Attempting to Home %s", master_names[0].c_str());
-    } else
-        ROS_INFO( "%s is alreade Homed.", master_names[0].c_str());
-
-    // second master arm
-    if(num_arms==2) {
-        if (master_state[1].data() != std::string("DVRK_READY")) {
-            string_msg.data = "Home";
-            pub_master_2_state.publish(string_msg);
-            ROS_INFO( "Attempting to Home %s", master_names[1].c_str());
-        } else
-            ROS_INFO( "%s is alreade Homed.", master_names[1].c_str());
-    }
+//    if(master_state[0].data() != std::string("DVRK_READY")) {
+//        string_msg.data = "Home";
+//        pub_master_1_state.publish(string_msg);
+//        ROS_INFO( "Attempting to Home %s", master_names[0].c_str());
+//    } else
+//        ROS_INFO( "%s is alreade Homed.", master_names[0].c_str());
+//
+//    // second master arm
+//    if(num_arms==2) {
+//        if (master_state[1].data() != std::string("DVRK_READY")) {
+//            string_msg.data = "Home";
+//            pub_master_2_state.publish(string_msg);
+//            ROS_INFO( "Attempting to Home %s", master_names[1].c_str());
+//        } else
+//            ROS_INFO( "%s is alreade Homed.", master_names[1].c_str());
+//    }
 
     KDL::Vector master_position_at_clutch_instance[2];
     KDL::Vector slave_position_at_clutch_instance[2];

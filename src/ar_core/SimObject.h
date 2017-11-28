@@ -173,7 +173,7 @@ private:
     vtkSmartPointer<vtkActor>    actor_;
     BulletVTKMotionState  *      motion_state_;
     btCollisionShape *           collision_shape_;
-    bool                         with_shadow;
+    bool                         with_shadow = true;
 };
 
 // -----------------------------------------------------------------------------

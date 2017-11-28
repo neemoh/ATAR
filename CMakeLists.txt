@@ -246,7 +246,9 @@ add_executable(
         src/ar_core/AugmentedCamera.h
         src/ar_core/IntrinsicCalibrationCharuco.cpp
         src/ar_core/IntrinsicCalibrationCharuco.h
-        src/ar_core/SimDrawPath.cpp src/ar_core/SimDrawPath.h)
+        src/ar_core/SimDrawPath.cpp
+        src/ar_core/SimDrawPath.h
+)
 
 
 target_link_libraries(
