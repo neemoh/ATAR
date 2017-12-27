@@ -272,12 +272,6 @@ not move with respect to the world (board) coordinate.
 
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_references_frames.png)
 
-## TODO: Augmented Reality 
-Things to explain: camera. Calibrations (intrinsic, extrinsic)
-
-intrinsic calib files: make a folder named camera_info in the .ros folder in your 
-                       home directory and copy the default_intrinsics.yaml file from the 
-                       /ATAR/resources folder in camera_info.
 ### AR Camera
 This class used to interface with a camera through ros is similar to what the 
 Manipulator class is for a robot arm. It reads images, intrinsic and 
@@ -359,7 +353,7 @@ So if the ros master is restarted the transformation is lost.
 ## License
 This software is released under a BSD license:
 
-Copyright 2017 Nima Enayati
+Copyright 2017 Nima Enayati.
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
