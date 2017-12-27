@@ -209,7 +209,7 @@ file(GLOB tasks_h "src/ar_core/tasks/Task*.h")
 
 add_executable(
         ar_core
-        src/ar_core/main_ar.cpp
+        src/ar_core/main.cpp
         src/ar_core/RenderingCamera.cpp
         src/ar_core/RenderingCamera.h
         src/ar_core/Rendering.cpp

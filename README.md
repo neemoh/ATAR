@@ -211,8 +211,8 @@ input device of some sort. The Manipulator class helps you to read the
 cartesian pose and twist of that device (assuming some other node is 
 publishing them) and transform them to the virtual world reference frame. 
 Check TaskDemo2 for an example of this. You can use the SimMechanism class to
- make a virtual tool that follows the pose of the real manipulator. I have 
- already created one called:
+make a virtual tool that follows the pose of the real manipulator. I have 
+already created one called:
   * SimForceps. It consists of 3 links. first is a small box representing the
    base. The other two are jaws (mesh objects) that are connected with an 
    elastic link to the base cube. The angle of the jaws is set with a 
@@ -222,6 +222,14 @@ Check TaskDemo2 for an example of this. You can use the SimMechanism class to
    grab something with them. That's why the jaws sometimes get distorted! 
    since are actually dynamic objects and when they hit something their 
    elastic constraint let's them move too far from the base...
+
+#### Grasping: 
+Grasping is a challenging interaction to simulate. The 
+multi-lateral physical interaction between the surface of the tool and the 
+object creates a large amount of energy which leads to the instability. I did
+not find the time to dig more into this and tried to stabilize the grasp by 
+adding more friction and contact damping.
+
 
 #### Hand-Eye Calibrations
 The local to world transformation is found differently in VR and AR cases. The
@@ -340,13 +348,35 @@ rosrun atar create_charuco_board <YOUR PARAMS>
  
 ```
 
-## Miscellaneous
-
-* Grasping:  
-
 
 ## TODO:
 * After Manipulator to world calibration, the calculated transformation is 
 used and set as a param, but not saved in the params_calibrations.YAML file. 
 So if the ros master is restarted the transformation is lost.
 * Add the option of directly reading usb camera in the ARCamera class.
+
+
+## License
+This software is released under a BSD license:
+
+Copyright 2017 Nima Enayati
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are met:
+Redistributions of source code must retain the above copyright notice, this 
+list of conditions and the following disclaimer.
+Redistributions in binary form must reproduce the above copyright notice, 
+this list of conditions and the following disclaimer in the documentation 
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
