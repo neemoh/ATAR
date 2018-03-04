@@ -19,6 +19,15 @@ base) and a qt graphical user interface. Bullet Physics library is used for the
 rigid and soft body dynamics simulation and graphics are generated using the 
 Visualization toolkit (VTK).
 
+For citation please refer to:
+
+```
+N. Enayati, A. M. Okamura, A. Mariani, E. Pellegrini, M. Coad, G. Ferrigno, 
+and E. De Momi, Robotic Assistance-as-Needed for Enhanced Visuomotor Learning 
+in Surgical  Robotics  Training: An Experimental Study, IEEE International 
+Conference on Robotics and Automation, 2018.
+``` 
+
 ![example_screenshots](https://github.com/neemoh/ATAR/blob/master/resources/Screenshot_for_readme.png)
 
 ## Prerequisites
