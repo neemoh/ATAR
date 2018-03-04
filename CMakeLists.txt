@@ -85,7 +85,8 @@ add_executable(extrinsic_calib_charuco
         src/ar_core/IntrinsicCalibrationCharuco.h)
 
 target_link_libraries(extrinsic_calib_charuco
-        ${catkin_LIBRARIES})
+        ${catkin_LIBRARIES}
+${OpenCV_LIBRARIES})
 
 add_executable(create_aruco_board
         src/utils/create_aruco_board.cpp)

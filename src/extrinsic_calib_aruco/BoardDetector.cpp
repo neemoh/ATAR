@@ -31,7 +31,7 @@ BoardDetector::BoardDetector(ArucoBoard board, CameraIntrinsics camera, double n
           camera_(camera)
 {
     aruco_.DetectorParams = cv::aruco::DetectorParameters::create();
-    aruco_.DetectorParams->doCornerRefinement = true;
+    //aruco_.DetectorParams->doCornerRefinement = true;
 
     aruco_.Dictionary = cv::aruco::getPredefinedDictionary(
             cv::aruco::PREDEFINED_DICTIONARY_NAME(board.DictionaryID));

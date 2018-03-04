@@ -266,7 +266,7 @@ bool DetectCharucoBoardPose(cv::Mat &image,
 
     Ptr<aruco::DetectorParameters> detector_params =
             aruco::DetectorParameters::create();
-    detector_params->doCornerRefinement = true;
+    //detector_params->doCornerRefinement = true;
 
     // detect markers
     aruco::detectMarkers(image, dictionary, markerCorners, markerIds,

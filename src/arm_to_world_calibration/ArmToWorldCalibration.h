@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <kdl/frames.hpp>
-#include <opencv-3.2.0-dev/opencv2/core/mat.hpp>
+#include <opencv2/core/mat.hpp>
 #include <sensor_msgs/Image.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <Eigen/Dense>

@@ -2,7 +2,7 @@
 // Created by nima on 29/05/17.
 //
 
-#include <opencv-3.2.0-dev/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <utility>
 #include "IntrinsicCalibrationCharuco.h"
 #include <ros/ros.h>
@@ -39,7 +39,7 @@ IntrinsicCalibrationCharuco::IntrinsicCalibrationCharuco(
             dictionary);
     detector_params =
             cv::aruco::DetectorParameters::create();
-    detector_params->doCornerRefinement = true;
+    //detector_params->doCornerRefinement = true;
 
 }
 

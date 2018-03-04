@@ -272,7 +272,7 @@ bool AugmentedCamera::DetectCharucoBoardPose(KDL::Frame &pose, cv::Mat image) {
 
     cv::Ptr<cv::aruco::DetectorParameters> detector_params =
             cv::aruco::DetectorParameters::create();
-    detector_params->doCornerRefinement = true;
+    //detector_params->doCornerRefinement = true;
 
     // detect markers
     cv::aruco::detectMarkers(image, dictionary, marker_corners,
